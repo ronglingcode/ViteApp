@@ -49,7 +49,7 @@ export const isEquity = (): boolean => {
     return settings.isEquity;
 };
 let currentDay = new Date();
-if (window.TradingData.Settings.currentDayStr) {
+if (window.TradingData &&window.TradingData.Settings.currentDayStr) {
     currentDay = new Date(window.TradingData.Settings.currentDayStr); // '2022-11-04 6:30',
 }
 let currentDayStr = `${currentDay.getFullYear()}-${currentDay.getMonth() + 1}-${currentDay.getDate()}`;
