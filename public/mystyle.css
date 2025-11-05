@@ -1,0 +1,347 @@
+body {
+    font-family: Arial, Verdana, Tahoma;
+    margin: 1px;
+}
+
+.controls {
+    padding: 5px 10px 0 10px;
+}
+
+.chartContainer {
+    border: 2px solid gray;
+    margin: 0;
+}
+
+.tvchart {
+    padding: 3px;
+}
+
+.chartContainer {
+    display: none;
+}
+
+.chartContainer.active {
+    border-color: #0091ea;
+}
+
+.topbar {
+    padding: 5px;
+    font-size: 13px;
+}
+
+.active .topbar {
+    background-color: #81d4fa;
+}
+
+.topbar {
+    background-color: #ECEFF1;
+}
+
+.currentPrice {
+    margin: 0 10px;
+}
+
+.topBarRight {
+    float: right;
+    display: none;
+}
+
+.topBarRight2 {
+    float: right;
+    display: none;
+}
+
+.quantityBar {
+    padding: 5px;
+    border-bottom: solid 1px grey;
+    font-size: 13px;
+}
+
+.exitButtons {
+    display: none;
+}
+
+.exitButtons span,
+.timeframebuttons span {
+    margin: 0 2px;
+    border: solid 1px grey;
+    padding: 1px 2px;
+    font-size: 13px;
+}
+
+.lastBar {
+    padding: 5px;
+    border-bottom: solid 1px black;
+    font-size: 13px;
+}
+
+.quantityBar button {
+    margin: 0 2px;
+}
+
+.quantityBar input {
+    width: 60px;
+}
+
+.tradingPlansLong span,
+.tradingPlansShort span {
+    margin: 0 2px;
+    border: solid 1px grey;
+    padding: 1px 2px;
+}
+
+.tradingPlansLong span:hover,
+.tradingPlansShort span:hover,
+.exitButtons span:hover,
+.timeframebuttons span:hover,
+.sideBar .longButton:hover,
+.sideBar .shortButton:hover,
+.sizingButton:hover {
+    cursor: pointer;
+}
+
+.tradingPlans .long,
+.tradingPlansLong {
+    color: green;
+}
+
+.tradingPlans .short,
+.tradingPlansShort {
+    color: red;
+}
+
+#logs {
+    padding: 2px 0 2px 10px;
+    font-size: 14px;
+    width: 200px;
+    word-wrap: break-word;
+}
+
+#logs .Info {
+    color: #424242;
+}
+
+#logs .Success {
+    color: green;
+}
+
+#logs .Error {
+    color: #c62828;
+}
+
+.ohlc_h {
+    color: green;
+}
+
+.ohlc_l {
+    color: #c62828;
+}
+
+.currentCandle span {
+    margin: 0 2px;
+}
+
+.currentCandle {
+    display: none;
+}
+
+span.algo {
+    margin: 0 2px;
+    border: solid 1px grey;
+    padding: 1px 2px;
+}
+
+.algo.active {
+    font-weight: bold;
+}
+
+.redText {
+    color: red;
+    font-weight: bold;
+}
+
+.greenText {
+    color: green;
+    font-weight: bold;
+}
+
+.neutralText {
+    color: darkgoldenrod;
+    font-weight: bold;
+}
+
+.twoColumnsWithChart {
+    display: flex;
+}
+
+.sideBar {
+    width: 130px;
+    flex-direction: column;
+}
+
+.alpacaQuote,
+.schwabQuote {
+    width: 100px;
+    flex-direction: column;
+}
+
+.schwabQuote,
+.alpacaQuote {
+    display: none;
+}
+
+.timeAndSales {
+    display: none;
+}
+
+.sideBar,
+.alpacaQuote,
+.schwabQuote {
+    font-size: 10px;
+    border-left: solid black 1px;
+    padding: 0 2px 0 4px;
+    text-align: center;
+}
+
+.sideBar .longButton,
+.sideBar .shortButton {
+    margin: 5px 2px 5px 0px;
+    color: white;
+    padding: 4px 2px;
+    font-size: 10px;
+    text-align: center;
+    border-radius: 2px;
+}
+
+.sideBar .longButton {
+    background-color: #2E7D32;
+}
+
+.sideBar .shortButton {
+    background-color: #f44336;
+}
+
+.sideBar .tradebookButtons,
+.sideBar .level1QuoteSize,
+.sideBar .level1QuoteLargeOrders,
+.sideBar .timeAndSales {
+    border-bottom: solid 1px black;
+}
+
+.sizingButton {
+    border: solid 1px black;
+    margin: 1px;
+    padding: 2px;
+    display: inline-block;
+    font-size: 10px;
+}
+
+#traderFocus {
+    vertical-align: top;
+    /*
+    background: #0b1020;
+    color: #e6eaf2;*/
+    background: #ffffff;
+    color: #0f172a;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+#traderFocusColumn {
+    vertical-align: top;
+    width: 500px;
+    font-size: 14px;
+    /*
+    background: #12182b;
+    border: 1px solid #1f2842;
+    */
+    background: #ffffff;
+    border: 1px solid #1f2842;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .3);
+    line-height: 1.6;
+    margin: 3px;
+}
+
+#traderFocus .sectionTitle {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: .2px;
+    color: #2563eb;
+    /* blue */
+    /* color: #60a5fa; */
+    /* bright blue */
+    margin: 5px 0 5px 0;
+}
+
+#traderFocus .symbolTitle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+#traderFocus .subtitle {
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    /*color: #a5b0c5;*/
+    color: #475569;
+    margin: 6px 0 6px 0;
+}
+
+#traderFocus .tag {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #1e293b;
+    color: #60a5fa;
+}
+
+#traderFocus .tag-long {
+    /*
+    color: #34d399;
+    background: #0e1f19;
+    */
+    color: #16a34a;
+    background: #e8f7ee
+}
+
+#traderFocus .tag-short {
+    /*
+    color: #f87171;
+    background: #2a1515;
+    */
+    color: #991b1b;
+    background: #fee2e2
+}
+
+#traderFocus .ticker {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed #1f2842;
+}
+
+#traderFocus .ticker-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+#traderFocus ul {
+    margin: 0;
+    padding-left: 30px;
+}
+
+#traderFocus li {
+    margin: 0;
+}
+
+.tradeInterval {
+    display: none;
+}
