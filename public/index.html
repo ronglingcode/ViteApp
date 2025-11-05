@@ -1,90 +1,368 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <script src="startup.js"></script>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Welcome to Firebase Hosting</title>
+<html lang="en">
 
-    <!-- update the version number as needed -->
-    <script defer src="/__/firebase/12.5.0/firebase-app-compat.js"></script>
-    <!-- include only the Firebase features as you need -->
-    <script defer src="/__/firebase/12.5.0/firebase-auth-compat.js"></script>
-    <script defer src="/__/firebase/12.5.0/firebase-database-compat.js"></script>
-    <script defer src="/__/firebase/12.5.0/firebase-firestore-compat.js"></script>
-    <script defer src="/__/firebase/12.5.0/firebase-functions-compat.js"></script>
-    <script defer src="/__/firebase/12.5.0/firebase-messaging-compat.js"></script>
-    <script defer src="/__/firebase/12.5.0/firebase-storage-compat.js"></script>
-    <script defer src="/__/firebase/12.5.0/firebase-analytics-compat.js"></script>
-    <script defer src="/__/firebase/12.5.0/firebase-remote-config-compat.js"></script>
-    <script defer src="/__/firebase/12.5.0/firebase-performance-compat.js"></script>
-    <!-- 
-      initialize the SDK after all desired features are loaded, set useEmulator to false
-      to avoid connecting the SDK to running emulators.
-    -->
-    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+<head>
+  <meta charset="utf-8" />
+  <!--<link rel="icon" href="/favicon.ico" />-->
+  <link rel="icon" href="/small_icon.png" />
+  <title>Trading Scripts</title>
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+  <script src="https://tradingdata-15425.web.app/watchlist/recentData.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+  <link rel="stylesheet" type="text/css" href="mystyle.css">
+  <!--<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>-->
+  <script src="startup.js"></script>
+  <script type="module" src="tos/tosClient.js"></script>
+</head>
 
-    <style media="screen">
-      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
-      #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
-      #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
-      #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
-      #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
-      #message a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; }
-      #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
-      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
-      @media (max-width: 600px) {
-        body, #message { margin-top: 0; background: white; box-shadow: none; }
-        body { border-top: 16px solid #ffa100; }
-      }
-    </style>
-  </head>
-  <body>
-    <div id="message">
-      <h2>Welcome</h2>
-      <h1>Firebase Hosting Setup Complete</h1>
-      <p>You're seeing this because you've successfully setup Firebase Hosting. Now it's time to go build something extraordinary!</p>
-      <a target="_blank" href="https://firebase.google.com/docs/hosting/">Open Hosting Documentation</a>
-    </div>
-    <p id="load">Firebase SDK Loading&hellip;</p>
+<body>
+  <table>
+    <tr>
+      <td id="traderFocus">
+        <div id="traderFocusColumn">
+          <div id="traderFocusPlans">
+            <div class="sectionTitle">A+ Setups</div>
+          </div>
+          <div id="traderFocusInstructions">
+            <div class="sectionTitle">Trade Management</div>
+          </div>
+        </div>
+      </td>
+      <td style="vertical-align: top;">
+        <table>
+          <tr>
+            <td>
+              <div id="chartContainer0" class="chartContainer">
+                <div id="topbar0" class="topbar">
+                  <span id="symbol0"></span>
+                  <span class="currentPrice"></span>
+                  <span class="currentVolume"></span>
+                  <span class="tradeInterval"></span>
+                  [<span class="bid"></span> x <span class="ask"></span>] = <span class="spread">0.1</span>
 
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const loadEl = document.querySelector('#load');
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-        // // The Firebase SDK is initialized and available here!
-        //
-        // firebase.auth().onAuthStateChanged(user => { });
-        // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
-        // firebase.firestore().doc('/foo/bar').get().then(() => { });
-        // firebase.functions().httpsCallable('yourFunction')().then(() => { });
-        // firebase.messaging().requestPermission().then(() => { });
-        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
-        // firebase.analytics(); // call to activate
-        // firebase.analytics().logEvent('tutorial_completed');
-        // firebase.performance(); // call to activate
-        //
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
 
-        try {
-          let app = firebase.app();
-          let features = [
-            'auth', 
-            'database', 
-            'firestore',
-            'functions',
-            'messaging', 
-            'storage', 
-            'analytics', 
-            'remoteConfig',
-            'performance',
-          ].filter(feature => typeof app[feature] === 'function');
-          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
-        } catch (e) {
-          console.error(e);
-          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
-        }
-      });
-    </script>
-  </body>
+                  <span class="topBarRight2">State:</span>
+                  <span class="topBarRight">
+
+                  </span>
+                </div>
+                <div class="quantityBar">
+                  Qty: <input value="%" /><button>%</button><button>100</button> |
+                  <span class="currentCandle"><span class="ohlc_o">O:0</span><span class="ohlc_h">H:0</span><span
+                      class="ohlc_l">L:0</span><span class="ohlc_c">C:0</span> |</span>
+                  <span class="positionCount">pos: 0</span> |
+                  <input value="" />
+                  <span class="tradingPlans">
+                    <span class="tradingPlansLong">
+                      <span class="tpBreakout">B/O</span>
+                    </span>
+                    <span class="tradingPlansShort">
+                      <span class="tpBreakout">B/D</span>
+                    </span>
+                  </span>
+                </div>
+                <div class="twoColumnsWithChart">
+                  <div class="left">
+                    <div class="lastBar">
+                      <span class="timeframebuttons">
+                        <span>M1</span><span>M5</span><span>M15</span><span>M30</span>
+                      </span>
+                      <span class="exitButtons">
+                        <span>reset 1</span><span>reset all</span>
+                        <span>trail 1</span><span>trail 1 all</span>
+                        <span>trail 5</span><span>trail 5 all</span>
+
+                      </span>
+                      <span class="exitOrders">Exits: </span>
+                    </div>
+                    <div id="chart0" class="tvchart"></div>
+                    <div id="chart0M5" class="tvchart" style="display: none;"></div>
+                    <div id="chart0M15" class="tvchart" style="display: none;"></div>
+                    <div id="chart0M30" class="tvchart" style="display: none;"></div>
+                    <div id="chart0popup" class="tvchart" style="display: none;">
+                      <div class="question">question</div>
+                      <textarea class="answer">answer</textarea>
+                      <button class="submit">Submit</button>
+                    </div>
+                  </div>
+                  <div class="sideBar">
+                    <div class="tradebookButtons"></div>
+                    <div class="level1QuotePrice"></div>
+                    <div class="level1QuoteSize"></div>
+                    <div class="level1QuoteLargeOrders"></div>
+                    <div class="timeAndSales"></div>
+                  </div>
+                  <div class="alpacaQuote">
+                    <div></div>
+                    <div></div>
+                  </div>
+                  <div class="schwabQuote">
+                    <div></div>
+                    <div></div>
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div id="chartContainer2" class="chartContainer">
+                <div id="topbar2" class="topbar">
+                  <span id="symbol2"></span>
+                  <span class="currentPrice"></span>
+                  <span class="currentVolume"></span>
+                  <span class="tradeInterval"></span>
+                  [<span class="bid"></span> x <span class="ask"></span>] = <span class="spread">0.1</span>
+                  <span class="topBarRight2">State:</span>
+                  <span class="topBarRight">
+
+                  </span>
+                </div>
+                <div class="quantityBar">
+                  Qty: <input value="%" /><button>%</button><button>100</button> |
+                  <span class="currentCandle"><span class="ohlc_o">O:0</span><span class="ohlc_h">H:0</span><span
+                      class="ohlc_l">L:0</span><span class="ohlc_c">C:0</span> |</span>
+                  <span class="positionCount">pos: 0</span> |
+                  <input value="" />
+                  <span class="tradingPlans">
+                    <span class="tradingPlansLong">
+                      <span class="tpBreakout">B/O</span>
+                    </span>
+                    <span class="tradingPlansShort">
+                      <span class="tpBreakout">B/D</span>
+                    </span>
+                  </span>
+                </div>
+                <div class="twoColumnsWithChart">
+                  <div class="left">
+                    <div class="lastBar">
+                      <span class="timeframebuttons">
+                        <span>M1</span><span>M5</span><span>M15</span><span>M30</span>
+                      </span>
+                      <span class="exitButtons">
+                        <span>reset 1</span><span>reset all</span>
+                        <span>trail 1</span><span>trail 1 all</span>
+                        <span>trail 5</span><span>trail 5 all</span>
+
+                      </span>
+                      <span class="exitOrders">Exits: </span>
+                    </div>
+                    <div id="chart2" class="tvchart left"></div>
+                    <div id="chart2M5" class="tvchart left" style="display: none;"></div>
+                    <div id="chart2M15" class="tvchart left" style="display: none;"></div>
+                    <div id="chart2M30" class="tvchart left" style="display: none;"></div>
+                    <div id="chart2popup" class="tvchart" style="display: none;">
+                      <div class="question">question</div>
+                      <textarea class="answer">answer</textarea>
+                      <button class="submit">Submit</button>
+                    </div>
+                  </div>
+                  <div class="sideBar">
+                    <div class="tradebookButtons"></div>
+                    <div class="level1QuotePrice"></div>
+                    <div class="level1QuoteSize"></div>
+                    <div class="level1QuoteLargeOrders"></div>
+                    <div class="timeAndSales"></div>
+                  </div>
+                  <div class="alpacaQuote">
+                    <div></div>
+                    <div></div>
+                  </div>
+                  <div class="schwabQuote">
+                    <div></div>
+                    <div></div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </table>
+        <table>
+          <tr>
+            <td>
+              <div id="chartContainer1" class="chartContainer">
+                <div id="topbar1" class="topbar">
+                  <span id="symbol1"></span>
+                  <span class="currentPrice"></span>
+                  <span class="currentVolume"></span>
+                  <span class="tradeInterval"></span>
+                  [<span class="bid"></span> x <span class="ask"></span>] = <span class="spread">0.1</span>
+
+                  <span class="topBarRight2">State:</span>
+                  <span class="topBarRight">
+
+                  </span>
+                </div>
+                <div class="quantityBar">
+                  Qty: <input value="%" /><button>%</button><button>100</button> |
+                  <span class="currentCandle"><span class="ohlc_o">O:0</span><span class="ohlc_h">H:0</span><span
+                      class="ohlc_l">L:0</span><span class="ohlc_c">C:0</span> |</span>
+                  <span class="positionCount">pos: 0</span> |
+                  <input value="" />
+                  <span class="tradingPlans">
+                    <span class="tradingPlansLong">
+                      <span class="tpBreakout">B/O</span>
+                    </span>
+                    <span class="tradingPlansShort">
+                      <span class="tpBreakout">B/D</span>
+                    </span>
+                  </span>
+                </div>
+                <div class="twoColumnsWithChart">
+                  <div class="left">
+                    <div class="lastBar">
+                      <span class="timeframebuttons">
+                        <span>M1</span><span>M5</span><span>M15</span><span>M30</span>
+                      </span>
+                      <span class="exitButtons">
+                        <span>reset 1</span><span>reset all</span>
+                        <span>trail 1</span><span>trail 1 all</span>
+                        <span>trail 5</span><span>trail 5 all</span>
+
+                      </span>
+                      <span class="exitOrders">Exits: </span>
+                    </div>
+                    <div id="chart1" class="tvchart left"></div>
+                    <div id="chart1M5" class="tvchart left" style="display: none;"></div>
+                    <div id="chart1M15" class="tvchart left" style="display: none;"></div>
+                    <div id="chart1M30" class="tvchart left" style="display: none;"></div>
+                    <div id="chart1popup" class="tvchart" style="display: none;">
+                      <div class="question">question</div>
+                      <textarea class="answer">answer</textarea>
+                      <button class="submit">Submit</button>
+                    </div>
+                  </div>
+                  <div class="sideBar">
+                    <div class="tradebookButtons"></div>
+                    <div class="level1QuotePrice"></div>
+                    <div class="level1QuoteSize"></div>
+                    <div class="level1QuoteLargeOrders"></div>
+                    <div class="timeAndSales"></div>
+                  </div>
+                  <div class="alpacaQuote">
+                    <div></div>
+                    <div></div>
+                  </div>
+                  <div class="schwabQuote">
+                    <div></div>
+                    <div></div>
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div id="chartContainer3" class="chartContainer">
+                <div id="topbar3" class="topbar">
+                  <span id="symbol3"></span>
+                  <span class="currentPrice"></span>
+                  <span class="currentVolume"></span>
+                  <span class="tradeInterval"></span>
+                  [<span class="bid"></span> x <span class="ask"></span>] = <span class="spread">0.1</span>
+
+
+                  <span class="topBarRight2">State:</span>
+                  <span class="topBarRight">
+
+                  </span>
+                </div>
+                <div class="quantityBar">
+                  Qty: <input value="%" /><button>%</button><button>100</button> |
+                  <span class="currentCandle"><span class="ohlc_o">O:0</span><span class="ohlc_h">H:0</span><span
+                      class="ohlc_l">L:0</span><span class="ohlc_c">C:0</span> |</span>
+                  <span class="positionCount">pos: 0</span> |
+                  <input value="" />
+                  <span class="tradingPlans">
+                    <span class="tradingPlansLong">
+                      <span class="tpBreakout">B/O</span>
+                    </span>
+                    <span class="tradingPlansShort">
+                      <span class="tpBreakout">B/D</span>
+                    </span>
+                  </span>
+                </div>
+                <div class="twoColumnsWithChart">
+                  <div class="left">
+                    <div class="lastBar">
+                      <span class="timeframebuttons">
+                        <span>M1</span><span>M5</span><span>M15</span><span>M30</span>
+                      </span>
+                      <span class="exitButtons">
+                        <span>reset 1</span><span>reset all</span>
+                        <span>trail 1</span><span>trail 1 all</span>
+                        <span>trail 5</span><span>trail 5 all</span>
+
+                      </span>
+                      <span class="exitOrders">Exits: </span>
+                    </div>
+                    <div id="chart3" class="tvchart left"></div>
+                    <div id="chart3M5" class="tvchart left" style="display: none;"></div>
+                    <div id="chart3M15" class="tvchart left" style="display: none;"></div>
+                    <div id="chart3M30" class="tvchart left" style="display: none;"></div>
+                    <div id="chart3popup" class="tvchart" style="display: none;">
+                      <div class="question">question</div>
+                      <textarea class="answer">answer</textarea>
+                      <button class="submit">Submit</button>
+                    </div>
+                  </div>
+                  <div class="sideBar">
+                    <div class="tradebookButtons"></div>
+                    <div class="level1QuotePrice"></div>
+                    <div class="level1QuoteSize"></div>
+                    <div class="level1QuoteLargeOrders"></div>
+                    <div class="timeAndSales"></div>
+                  </div>
+                  <div class="alpacaQuote">
+                    <div></div>
+                    <div></div>
+                  </div>
+                  <div class="schwabQuote">
+                    <div></div>
+                    <div></div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+      <td style="vertical-align: top;">
+        <div id="logs">
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="controls">
+    <span style="display: none">
+      <button>B: Buy b/o</button>
+      <button>Shift + B: Buy MKT</button>
+      <button>S: Sell b/o</button>
+      <button>Shift + S: Sell MKT</button>
+      <button>F: Flatten</button>
+      <button>C: Cancel All</button>
+      <button>Q: Cancel Entry</button>
+      <button>T: Move All Stops</button>
+      <button>E: Move Half Stop to Breakeven</button>
+      <button>G: Set Price Target</button>
+      <button>Shit + G: Market Out Half</button>
+      <button>O: Trail stop 5</button>
+      <button>I: Trail stop 15</button>
+      <button>0-9: Adjust Order</button>
+    </span>
+    Total trades: <span id="totalTrades">0</span>
+    <button id="update_account_ui">Update acct UI</button>
+    <button id="check_quantity">Check quantity</button>
+    <button id="show_execution">Show executions</button>
+    <button id="show_execution_detail">Show exec more</button>
+    <button id="export_trades">Export trades</button>
+    <button id="gen_scripts">TOS Scripts</button>
+    <button id="test_popup">Test popup</button>
+  </div>
+
+  <div>
+    <div id="print_plan"></div>
+  </div>
+  <script type="module" src="/dist/main.js"></script>
+  <script type="module" src="main.js"></script>
+</body>
+
 </html>

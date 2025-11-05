@@ -34,6 +34,8 @@ import * as TraderFocus from './controllers/traderFocus';
 
 declare let window: Models.MyWindow;
 
+console.log('main.ts loaded');
+
 window.HybridApp.Algo = {
   TakeProfit: TakeProfit,
   RiskManager: RiskManager,
