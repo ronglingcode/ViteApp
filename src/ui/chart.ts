@@ -810,21 +810,8 @@ const drawTradeManagementInChart = (symbol: string, position: Models.Position | 
     let atr = Models.getAtr(symbol).average;
     let symbolData = Models.getSymbolData(symbol);
     finalTargets.forEach(target => {
-        let targetPrice = target.level;
-        if (target.atr > 0) {
-            if (isLong) {
-                targetPrice = symbolData.lowOfDay + target.atr * atr;
-            } else {
-                targetPrice = symbolData.highOfDay - target.atr * atr;
-            }
-        } else if (target.rrr > 0) {
-            let risk = Math.abs(breakoutTradeState.entryPrice - breakoutTradeState.stopLossPrice);
-            if (isLong) {
-                targetPrice = breakoutTradeState.entryPrice + target.rrr * risk;
-            } else {
-                targetPrice = breakoutTradeState.entryPrice - target.rrr * risk;
-            }
-        }
+        let targetPrice = Models.getLevelFromSingleExitTarget(
+            symbolData, isLong, target, atr, breakoutTradeState.entryPrice, breakoutTradeState.stopLossPrice);
         allCharts.forEach(chart => {
             let line = createPriceLine(chart.candleSeries, targetPrice, target.text, "black", null, false, "solid");
             chart.tradeManagementLevels.push(line);

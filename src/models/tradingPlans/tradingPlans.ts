@@ -480,21 +480,7 @@ export const calculateTargets = (symbol: string, isLong: boolean) => {
     let symbolData = Models.getSymbolData(symbol);
     let result: TradingPlansModels.SingleExitTarget[] = [];
     finalTargets.forEach(target => {
-        let targetPrice = target.level;
-        if (target.atr > 0) {
-            if (isLong) {
-                targetPrice = symbolData.lowOfDay + target.atr * atr;
-            } else {
-                targetPrice = symbolData.highOfDay - target.atr * atr;
-            }
-        } else if (target.rrr > 0) {
-            let risk = Math.abs(breakoutTradeState.entryPrice - breakoutTradeState.stopLossPrice);
-            if (isLong) {
-                targetPrice = breakoutTradeState.entryPrice + target.rrr * risk;
-            } else {
-                targetPrice = breakoutTradeState.entryPrice - target.rrr * risk;
-            }
-        }
+        let targetPrice = Models.getLevelFromSingleExitTarget(symbolData, isLong, target, atr, breakoutTradeState.entryPrice, breakoutTradeState.stopLossPrice);
         result.push({
             level: targetPrice,
             text: target.text,

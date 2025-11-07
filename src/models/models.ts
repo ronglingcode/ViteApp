@@ -1785,3 +1785,33 @@ export interface ExitOrderToDraw {
     riskMultiples: number,
     orderData: OrderModel,
 }
+
+export const getLevelFromSingleExitTarget = (symbolData: SymbolData, isLong: boolean, target: TradingPlansModels.SingleExitTarget,
+    atr: number, entryPrice: number, stopLossPrice: number
+) => {
+    let candidates: number[] = [];
+    if (target.level > 0) {
+        candidates.push(target.level);
+    }
+
+    if (target.atr > 0) {
+        if (isLong) {
+            candidates.push(symbolData.lowOfDay + target.atr * atr);
+        } else {
+            candidates.push(symbolData.highOfDay - target.atr * atr);
+        }
+    } 
+    if (target.rrr > 0) {
+    let risk = Math.abs(entryPrice - stopLossPrice);
+    if (isLong) {
+            candidates.push(entryPrice + target.rrr * risk);
+        } else {
+            candidates.push(entryPrice - target.rrr * risk);
+        }
+    }
+    if (isLong) {
+        return Math.min(...candidates);
+    } else {
+        return Math.max(...candidates);
+    }
+}
