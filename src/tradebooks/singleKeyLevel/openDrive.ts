@@ -11,8 +11,11 @@ import * as AutoTrader from '../../algorithms/autoTrader';
 import * as LiveStats from '../../ui/liveStats';
 import type { TradebookState } from '../tradebookStates';
 import * as TradebookUtil from '../tradebookUtil';
+import * as ExitRulesCheckerNew from '../../controllers/exitRulesCheckerNew';
+import * as Patterns from '../../algorithms/patterns';
 
 export class OpenDrive extends SingleKeyLevelTradebook {
+    public disableExitRules: boolean = false;
     public static readonly openDriveLong: string = 'openDriveLong';
     public static readonly openDriveShort: string = 'openDriveShort';
     public getID(): string {
@@ -160,5 +163,172 @@ export class OpenDrive extends SingleKeyLevelTradebook {
     getTightStopLevels(): Models.DisplayLevel[] {
         let tightStopLevels = TradebookUtil.getTightStopLevelsForTrend(this.symbol, this.isLong);
         return tightStopLevels;
+    }
+
+    getDisallowedReasonToAdjustSingleLimitOrder(
+        symbol: string, keyIndex: number, order: Models.OrderModel,
+        pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
+        let allowedReason: Models.CheckRulesResult = {
+            allowed: false,
+            reason: "default disallow",
+        };
+        if (this.disableExitRules) {
+            allowedReason.allowed = true;
+            allowedReason.reason = "disabled";
+            return allowedReason;
+        }
+        if (!Patterns.hasLevelRetest(symbol, this.isLong, this.getKeyLevel())) {
+            allowedReason.reason = "not retested key level";
+            allowedReason.allowed = true;
+            return allowedReason;
+        }
+        
+        let isMarketOrder = false;
+        let newResult = ExitRulesCheckerNew.isAllowedForLimitOrderForAllTradebooks(
+            symbol, this.isLong, isMarketOrder, newPrice, keyIndex, pair, logTags);
+        if (newResult.allowed) {
+            return newResult;
+        }
+        if (Patterns.hasLostKeyLevel(symbol, this.isLong, this.getKeyLevel())) {
+            allowedReason.reason = "lost key level";
+            allowedReason.allowed = true;
+            return allowedReason;
+        }
+        if (Patterns.isPriceWorseThanKeyLevel(symbol, this.isLong, this.getKeyLevel(), newPrice)) {
+            allowedReason.reason = "new price is worse than key level";
+            allowedReason.allowed = false;
+            return allowedReason;
+        }
+
+        return allowedReason;
+    }
+
+    getDisallowedReasonToAdjustSingleStopOrder(
+        symbol: string, keyIndex: number, order: Models.OrderModel, pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
+        if (this.disableExitRules) {
+            return {
+                allowed: true,
+                reason: "disabled",
+            };
+        }
+        Firestore.logInfo(`breakout tradebook check rules`, logTags);
+        let result: Models.CheckRulesResult = {
+            allowed: false,
+            reason: "default disallow",
+        };
+        let isMarketOrder = false;
+        let newResult = ExitRulesCheckerNew.isAllowedForSingleOrderForAllTradebooks(
+            symbol, this.isLong, isMarketOrder, newPrice, keyIndex, logTags);
+        if (newResult.allowed) {
+            return newResult;
+        }
+        if (!Patterns.hasLevelRetest(symbol, this.isLong, this.getKeyLevel())) {
+            result.reason = "not retested key level";
+            result.allowed = true;
+            return result;
+        }
+
+        if (Patterns.hasLostKeyLevel(symbol, this.isLong, this.getKeyLevel())) {
+            result.reason = "lost key level";
+            result.allowed = true;
+            return result;
+        }
+        if (Patterns.isPriceWorseThanKeyLevel(symbol, this.isLong, this.getKeyLevel(), newPrice)) {
+            result.reason = "new price is worse than key level";
+            result.allowed = false;
+            return result;
+        }
+        let pullbackStatus = Patterns.getFirstPullbackStatus(symbol);
+        if (pullbackStatus.status == "recovered") {
+            // allow move stop to the pivot
+            if (this.isLong) {
+                if (newPrice > pullbackStatus.pivot) {
+                    result.reason = "new price is higher than 1st pullback low";
+                    result.allowed = false;
+                    return result;
+                } else {
+                    result.reason = "new price respects 1st pullback low";
+                    result.allowed = true;
+                    return result;
+                }
+            } else {
+                if (newPrice < pullbackStatus.pivot) {
+                    result.reason = "new price is lower than 1st pullback high";
+                    result.allowed = false;
+                    return result;
+                } else {
+                    result.reason = "new price respects 1st pullback high";
+                    result.allowed = true;
+                    return result;
+                }
+            }
+        } else {
+            // pullback not started or recovered yet, only allow move stop to the low of breakout candle
+            let breakoutCandle = Patterns.getFirstBreakoutCandle(symbol, this.isLong, this.getKeyLevel());
+            if (breakoutCandle) {
+                if (this.isLong) {
+                    if (newPrice > breakoutCandle.low) {
+                        result.reason = "new price is higher than breakout candle low";
+                        result.allowed = false;
+                        return result;
+                    } else {
+                        result.reason = "new price respects breakout candle low";
+                        result.allowed = true;
+                        return result;
+                    }
+                } else {
+                    if (newPrice < breakoutCandle.high) {
+                        result.reason = "new price is lower than breakdown candle high";
+                        result.allowed = false;
+                        return result;
+                    } else {
+                        result.reason = "new price respects breakdown candle high";
+                        result.allowed = true;
+                        return result;
+                    }
+                }
+            } else {
+                result.reason = "breakout candle not found";
+                result.allowed = false;
+                return result;
+            }
+        }
+    }
+
+    getDisallowedReasonToMarketOutSingleOrder(symbol: string, keyIndex: number, logTags: Models.LogTags): Models.CheckRulesResult {
+        if (this.disableExitRules) {
+            return {
+                allowed: true,
+                reason: "disabled",
+            };
+        }
+        let result: Models.CheckRulesResult = {
+            allowed: false,
+            reason: "default disallow",
+        };
+        let isMarketOrder = true;
+        let currentPrice = Models.getCurrentPrice(symbol);
+        let newResult = ExitRulesCheckerNew.isAllowedForSingleOrderForAllTradebooks(
+            symbol, this.isLong, isMarketOrder, currentPrice, keyIndex, logTags);
+        if (newResult.allowed) {
+            return newResult;
+        }
+        if (!Patterns.hasLevelRetest(symbol, this.isLong, this.getKeyLevel())) {
+            result.reason = "not retested key level";
+            result.allowed = true;
+            return result;
+        }
+        if (Patterns.hasLostKeyLevel(symbol, this.isLong, this.getKeyLevel())) {
+            result.reason = "lost key level";
+            result.allowed = true;
+            return result;
+        }
+        if (Patterns.isPriceWorseThanKeyLevel(symbol, this.isLong, this.getKeyLevel(), currentPrice)) {
+            result.reason = "new price is worse than key level";
+            result.allowed = false;
+            return result;
+        }
+
+        return result;
     }
 }

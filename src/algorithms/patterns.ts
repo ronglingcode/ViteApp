@@ -876,7 +876,14 @@ export const getFirstBreakoutCandle = (symbol: string, isLong: boolean, level: n
     }
     return null;
 }
-
+export const hasLevelRetest = (symbol: string, isLong: boolean, level: number) => {
+    let symbolData = Models.getSymbolData(symbol);
+    if (isLong) {
+        return symbolData.lowOfDay <= level;
+    } else {
+        return symbolData.highOfDay >= level;
+    }
+}
 
 export const hasApproachedTargetToAdd = (symbol: string, isLong: boolean) => {
     let symbolData = Models.getSymbolData(symbol);
