@@ -35,6 +35,37 @@ export const isAllowedForAllOrdersForAllTradebooks = (symbol: string, isLong: bo
         allowedReason.reason = `allow when exit count is more than ${TakeProfit.BatchCount}`;
         return allowedReason;
     }
+    // allow if break incremental trailing stop
+    let second = Helper.getSecondsSinceMarketOpen(new Date());
+    if (120 <= second && second < 300) {
+        // first 5 minutes, use the high/low of 2nd candle
+        let candles = Models.getM1ClosedCandlesSinceOpen(symbol);
+        let secondCandle = candles[1];
+        if (isLong && newPrice <= secondCandle.low) {
+            allowedReason.allowed = true;
+            allowedReason.reason = "low of 2nd M1 candle";
+            return allowedReason;
+        }
+        if (!isLong && newPrice >= secondCandle.high) {
+            allowedReason.allowed = true;
+            allowedReason.reason = "high of 2nd M1 candle";
+            return allowedReason;
+        }
+    } else if (second >= 600) {
+        let candles = Models.getCandlesFromM1SinceOpen(symbol);
+        let m5Candles = Models.aggregateCandles(candles, 5);
+        let secondM5Candle = m5Candles[1];
+        if (isLong && newPrice <= secondM5Candle.low) {
+            allowedReason.allowed = true;
+            allowedReason.reason = "low of 2nd M5 candle";
+            return allowedReason;
+        }
+        if (!isLong && newPrice >= secondM5Candle.high) {
+            allowedReason.allowed = true;
+            allowedReason.reason = "high of 2nd M5 candle";
+            return allowedReason;
+        }
+    }
     return allowedReason;
 }
 export const isAllowedForLimitOrderForAllTradebooks = (
