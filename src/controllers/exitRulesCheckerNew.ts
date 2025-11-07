@@ -8,43 +8,63 @@ import * as TradebooksManager from "../tradebooks/tradebooksManager";
 import * as TakeProfit from "../algorithms/takeProfit";
 import * as ExitRulesCheckerSimple from './exitRulesCheckerSimple';
 import * as Helper from "../utils/helper";
+import * as TradingPlans from "../models/tradingPlans/tradingPlans";
 import * as Patterns from "../algorithms/patterns";
 
 export const isAllowedForAllOrdersForAllTradebooks = (symbol: string, isLong: boolean, isMarketOrder: boolean, newPrice: number, logTags: Models.LogTags) => {
     let { planConfigs, exitPairsCount } = getCommonInfo(symbol);
+    let allowedReason: Models.CheckRulesResult = {
+        allowed: false,
+        reason: "default disallow",
+    };
     let seconds = Helper.getSecondsSinceMarketOpen(new Date());
-    if (seconds > 60 * 30) {
-        Firestore.logInfo(`allow after 30 minutes since open`, logTags);
-        return true;
+    if (seconds > 60 * 15) {
+        allowedReason.allowed = true;
+        allowedReason.reason = "allow after 15 minutes since open";
+        return allowedReason;
     }
     if (RiskManager.isOverSized(symbol)) {
         Firestore.logInfo(`allow exit when over sized`, logTags);
-        return true;
+        allowedReason.allowed = true;
+        allowedReason.reason = "allow when over sized";
+        return allowedReason;
     }
     let exitCount = Models.getExitOrdersPairs(symbol).length;
     if (exitCount > TakeProfit.BatchCount) {
-        Firestore.logInfo(`allow exit when more than ${TakeProfit.BatchCount} partials`, logTags);
-        return true;
+        allowedReason.allowed = true;
+        allowedReason.reason = `allow when exit count is more than ${TakeProfit.BatchCount}`;
+        return allowedReason;
     }
-    return false;
+    return allowedReason;
 }
 export const isAllowedForLimitOrderForAllTradebooks = (
     symbol: string, isLong: boolean, isMarketOrder: boolean, newPrice: number, keyIndex: number,
     exitPair: Models.ExitPair, logTags: Models.LogTags) => {
-    let allowedByAll = isAllowedForAllOrdersForAllTradebooks(symbol, isLong, isMarketOrder, newPrice, logTags);
-    if (allowedByAll) {
-        return true;
+    let allowedByAll = isAllowedForSingleOrderForAllTradebooks(
+        symbol, isLong, isMarketOrder, newPrice, keyIndex, logTags);
+    if (allowedByAll.allowed) {
+        return allowedByAll;
     }
+    let allowedReason: Models.CheckRulesResult = {
+        allowed: false,
+        reason: "default disallow",
+    };
     if (Rules.isIncreasingTarget(isLong, newPrice, exitPair)) {
-        return true;
+        allowedReason.allowed = true;
+        allowedReason.reason = "allow when increasing target";
+        return allowedReason;
     }
-    return false;
+    return allowedReason;
 }
 export const isAllowedForSingleOrderForAllTradebooks = (symbol: string, isLong: boolean, isMarketOrder: boolean, newPrice: number, keyIndex: number, logTags: Models.LogTags) => {
     let allowedForAllOrders = isAllowedForAllOrdersForAllTradebooks(symbol, isLong, isMarketOrder, newPrice, logTags);
-    if (allowedForAllOrders) {
-        return true;
+    if (allowedForAllOrders.allowed) {
+        return allowedForAllOrders;
     }
+    let allowedReason: Models.CheckRulesResult = {
+        allowed: false,
+        reason: "default disallow",
+    };
     let { planConfigs, exitPairsCount } = getCommonInfo(symbol);
     if (planConfigs) {
         let allowCount = planConfigs.allowFirstFewExitsCount + 1;
@@ -52,19 +72,46 @@ export const isAllowedForSingleOrderForAllTradebooks = (symbol: string, isLong: 
         if (extraCount > 0 &&
             (isMarketOrder || keyIndex < extraCount)) {
             Firestore.logInfo(`allow exit for the first ${allowCount} exits`, logTags);
-            return true;
+            allowedReason.allowed = true;
+            allowedReason.reason = `allow for the first ${allowCount} exits`;
+            return allowedReason;
         }
     }
     if (Rules.isAllowedForAddedPosition(symbol, isLong, isMarketOrder, newPrice, keyIndex, false)) {
-        return true;
+        allowedReason.allowed = true;
+        allowedReason.reason = "added position";
+        return allowedReason;
     }
 
     let spread = Models.getCurrentSpread(symbol);
     let failedMinimumTarget = ExitRulesCheckerSimple.failedMinimumTargetForSingle(symbol, newPrice, keyIndex, spread, logTags);
     if (!failedMinimumTarget) {
-        return true;
+        allowedReason.allowed = true;
+        allowedReason.reason = "meet minimum target";
+        return allowedReason;
     }
-    return false;
+    let threshold = TradingPlans.getMinTarget(symbol, isLong, keyIndex);
+    if (threshold == -1) {
+        allowedReason.allowed = true;
+        allowedReason.reason = "no target for first few partials";
+        return allowedReason;
+    }
+    
+    // use 0.1 ATR as buffer
+    let buffer = Models.getAtr(symbol).average * 0.1;
+    let thresholdWithBuffer = isLong ? threshold - buffer : threshold + buffer;
+    if ((isLong && newPrice >= thresholdWithBuffer) || (!isLong && newPrice <= thresholdWithBuffer)) {
+        allowedReason.allowed = true;
+        allowedReason.reason = `meet min target, threshold: ${threshold}, with buffer: ${thresholdWithBuffer}`;
+        return allowedReason;
+    }
+    let symbolData = Models.getSymbolData(symbol);
+    if ((isLong &&  symbolData.highOfDay >= threshold) || (!isLong && symbolData.lowOfDay <= threshold)) {
+        allowedReason.allowed = true;
+        allowedReason.reason =`has reached minimum target: ${threshold}`;
+        return allowedReason;
+    }
+    return allowedReason;
 }
 
 export const getCommonInfo = (symbol: string) => {

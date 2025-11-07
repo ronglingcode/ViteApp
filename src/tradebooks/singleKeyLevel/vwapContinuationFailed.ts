@@ -249,13 +249,12 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
         };
         let isMarketOrder = false;
 
-        result.allowed = ExitRulesCheckerNew.isAllowedForLimitOrderForAllTradebooks(
+        let newResult = ExitRulesCheckerNew.isAllowedForLimitOrderForAllTradebooks(
             symbol, this.isLong, isMarketOrder, newPrice, keyIndex, pair, logTags);
-        if (result.allowed) {
-            result.reason = "allowed by all";
-            return result;
+        if (newResult.allowed) {
+            return newResult;
         }
-        if (Patterns.lostVwap(symbol, this.isLong, newPrice)) {
+        if (Patterns.isPriceWorseThanVwap(symbol, this.isLong, newPrice)) {
             result.reason = "lose vwap";
             result.allowed = true;
             return result;
@@ -288,15 +287,14 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
             reason: "default reason",
         };
         let isMarketOrder = false;
-        result.allowed = ExitRulesCheckerNew.isAllowedForSingleOrderForAllTradebooks(
+        let newResult = ExitRulesCheckerNew.isAllowedForSingleOrderForAllTradebooks(
             symbol, this.isLong, isMarketOrder, newPrice, keyIndex, logTags);
-        if (result.allowed) {
-            result.reason = "allowed by all";
-            return result;
+        if (newResult.allowed) {
+            return newResult;
         }
 
-        if (Patterns.lostVwap(symbol, this.isLong, newPrice)) {
-            result.reason = "lose vwap";
+        if (Patterns.isPriceWorseThanVwap(symbol, this.isLong, newPrice)) {
+            result.reason = "new price is worse than vwap";
             result.allowed = true;
             return result;
         }
@@ -328,13 +326,12 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
         };
         let isMarketOrder = true;
         let currentPrice = Models.getCurrentPrice(symbol);
-        result.allowed = ExitRulesCheckerNew.isAllowedForSingleOrderForAllTradebooks(
+        let newResult = ExitRulesCheckerNew.isAllowedForSingleOrderForAllTradebooks(
             symbol, this.isLong, isMarketOrder, currentPrice, keyIndex, logTags);
-        if (result.allowed) {
-            result.reason = "allowed by all";
-            return result;
+        if (newResult.allowed) {
+            return newResult;
         }
-        if (Patterns.lostVwap(symbol, this.isLong, Models.getCurrentPrice(symbol))) {
+        if (Patterns.isPriceWorseThanVwap(symbol, this.isLong, Models.getCurrentPrice(symbol))) {
             result.reason = "lose vwap";
             result.allowed = true;
             return result;

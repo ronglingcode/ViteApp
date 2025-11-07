@@ -76,7 +76,7 @@ export const tryAdjustSingleLimitExit = (symbol: string, positionIsLong: boolean
     order: Models.OrderModel, pair: Models.ExitPair,
     newPrice: number, isFromBatch: boolean, totalPairsCount: number, logTags: Models.LogTags) => {
     let allowed = ExitRulesCheckerNew.isAllowedToAdjustSingleLimitOrder(symbol, keyIndex, order, pair, newPrice, logTags)
-    if (!allowed) {
+    if (!isFromBatch && !allowed) {
         Firestore.logError(`Rules blocked adjusting order for ${symbol}`, logTags);
         return;
     }
@@ -90,7 +90,7 @@ export const tryAdjustSingleStopExit = (symbol: string, positionIsLong: boolean,
     order: Models.OrderModel, pair: Models.ExitPair,
     newPrice: number, isFromBatch: boolean, totalPairsCount: number, logTags: Models.LogTags) => {
     let allowed = ExitRulesCheckerNew.checkAdjustSingleStopOrderRules(symbol, keyIndex, order, pair, newPrice, logTags)
-    if (!allowed) {
+    if (!isFromBatch && !allowed) {
         Firestore.logError(`Rules blocked adjusting order for ${symbol}`, logTags);
         return;
     }

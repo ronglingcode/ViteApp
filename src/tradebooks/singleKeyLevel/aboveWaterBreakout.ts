@@ -136,48 +136,4 @@ export class AboveWaterBreakout extends BaseBreakoutTradebook {
         ]);
         return instructions;
     }
-
-
-    getDisallowedReasonToAdjustSingleLimitOrder(
-        symbol: string, keyIndex: number, order: Models.OrderModel,
-        pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
-        Firestore.logInfo(`breakout tradebook check rules`, logTags);
-        let result: Models.CheckRulesResult = {
-            allowed: false,
-            reason: "default reason",
-        };
-        let isMarketOrder = false;
-        result.allowed = ExitRulesCheckerNew.isAllowedForLimitOrderForAllTradebooks(
-            symbol, this.isLong, isMarketOrder, newPrice, keyIndex, pair, logTags);
-        if (result.allowed) {
-            result.reason = "allowed by all";
-            return result;
-        }
-        let targets = TradingPlans.calculateTargets(symbol, this.isLong);
-        let minTargets = TradingPlans.populateTargets(targets, this.isLong);
-        let threshold = minTargets[keyIndex];
-        if (threshold == -1) {
-            result.reason = "no target for first few partials";
-            result.allowed = true;
-            return result;
-        }
-        // use 0.1 ATR as buffer
-        let buffer = Models.getAtr(symbol).average * 0.1;
-        let thresholdWithBuffer = this.isLong ? threshold - buffer : threshold + buffer;
-        if ((this.isLong && newPrice >= thresholdWithBuffer) || (!this.isLong && newPrice <= thresholdWithBuffer)) {
-            result.allowed = true;
-            result.reason = `meet min target, threshold: ${threshold}, with buffer: ${thresholdWithBuffer}`;
-            return result;
-        }
-
-        // TODO: if lost key level after entry
-        /*
-        if (Patterns.hasLostKeyLevel(symbol, this.isLong, this.getKeyLevel())) {
-            result.reason = "lost key level";
-            result.allowed = true;
-            return result;
-        }*/
-
-        return result;
-    }
 }

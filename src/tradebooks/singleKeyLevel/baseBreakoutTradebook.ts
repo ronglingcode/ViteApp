@@ -13,7 +13,7 @@ import * as Calculator from '../../utils/calculator';
 import { TradebookState, TradebookStateHelper } from '../tradebookStates';
 
 export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
-    public disableExitRules: boolean = true;
+    public disableExitRules: boolean = false;
     constructor(symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan, tradebookName: string, buttonLabel: string) {
         super(symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel);
@@ -80,31 +80,34 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
     getDisallowedReasonToAdjustSingleLimitOrder(
         symbol: string, keyIndex: number, order: Models.OrderModel,
         pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
-        if (this.disableExitRules) {
-            return {
-                allowed: true,
-                reason: "disabled",
-            };
-        }
-        Firestore.logInfo(`breakout tradebook check rules`, logTags);
-        let result: Models.CheckRulesResult = {
+        let allowedReason: Models.CheckRulesResult = {
             allowed: false,
-            reason: "default reason",
+            reason: "default disallow",
         };
+        if (this.disableExitRules) {
+            allowedReason.allowed = true;
+            allowedReason.reason = "disabled";
+            return allowedReason;
+        }
+        
         let isMarketOrder = false;
-        result.allowed = ExitRulesCheckerNew.isAllowedForLimitOrderForAllTradebooks(
+        let newResult = ExitRulesCheckerNew.isAllowedForLimitOrderForAllTradebooks(
             symbol, this.isLong, isMarketOrder, newPrice, keyIndex, pair, logTags);
-        if (result.allowed) {
-            result.reason = "allowed by all";
-            return result;
+        if (newResult.allowed) {
+            return newResult;
         }
         if (Patterns.hasLostKeyLevel(symbol, this.isLong, this.getKeyLevel())) {
-            result.reason = "lost key level";
-            result.allowed = true;
-            return result;
+            allowedReason.reason = "lost key level";
+            allowedReason.allowed = true;
+            return allowedReason;
+        }
+        if (Patterns.isPriceWorseThanKeyLevel(symbol, this.isLong, this.getKeyLevel(), newPrice)) {
+            allowedReason.reason = "new price is worse than key level";
+            allowedReason.allowed = false;
+            return allowedReason;
         }
 
-        return result;
+        return allowedReason;
     }
 
     getDisallowedReasonToAdjustSingleStopOrder(
@@ -118,14 +121,13 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
         Firestore.logInfo(`breakout tradebook check rules`, logTags);
         let result: Models.CheckRulesResult = {
             allowed: false,
-            reason: "default reason",
+            reason: "default disallow",
         };
         let isMarketOrder = false;
-        result.allowed = ExitRulesCheckerNew.isAllowedForSingleOrderForAllTradebooks(
+        let newResult = ExitRulesCheckerNew.isAllowedForSingleOrderForAllTradebooks(
             symbol, this.isLong, isMarketOrder, newPrice, keyIndex, logTags);
-        if (result.allowed) {
-            result.reason = "allowed by all";
-            return result;
+        if (newResult.allowed) {
+            return newResult;
         }
 
         if (Patterns.hasLostKeyLevel(symbol, this.isLong, this.getKeyLevel())) {
@@ -133,7 +135,11 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
             result.allowed = true;
             return result;
         }
-
+        if (Patterns.isPriceWorseThanKeyLevel(symbol, this.isLong, this.getKeyLevel(), newPrice)) {
+            result.reason = "new price is worse than key level";
+            result.allowed = false;
+            return result;
+        }
         let pullbackStatus = Patterns.getFirstPullbackStatus(symbol);
         if (pullbackStatus.status == "recovered") {
             // allow move stop to the pivot
@@ -198,22 +204,25 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
                 reason: "disabled",
             };
         }
-        Firestore.logInfo(`breakout tradebook check rules`, logTags);
         let result: Models.CheckRulesResult = {
             allowed: false,
-            reason: "default reason",
+            reason: "default disallow",
         };
         let isMarketOrder = true;
         let currentPrice = Models.getCurrentPrice(symbol);
-        result.allowed = ExitRulesCheckerNew.isAllowedForSingleOrderForAllTradebooks(
+        let newResult = ExitRulesCheckerNew.isAllowedForSingleOrderForAllTradebooks(
             symbol, this.isLong, isMarketOrder, currentPrice, keyIndex, logTags);
-        if (result.allowed) {
-            result.reason = "allowed by all";
-            return result;
+        if (newResult.allowed) {
+            return newResult;
         }
         if (Patterns.hasLostKeyLevel(symbol, this.isLong, this.getKeyLevel())) {
             result.reason = "lost key level";
             result.allowed = true;
+            return result;
+        }
+        if (Patterns.isPriceWorseThanKeyLevel(symbol, this.isLong, this.getKeyLevel(), currentPrice)) {
+            result.reason = "new price is worse than key level";
+            result.allowed = false;
             return result;
         }
 

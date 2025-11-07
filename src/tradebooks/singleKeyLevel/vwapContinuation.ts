@@ -14,8 +14,10 @@ import * as LiveStats from '../../ui/liveStats';
 import { TradebookState } from '../tradebookStates';
 import * as TradebooksManager from '../tradebooksManager';
 import * as TradebookUtil from '../tradebookUtil';
+import * as ExitRulesCheckerNew from '../../controllers/exitRulesCheckerNew';
 
 export class VwapContinuation extends SingleKeyLevelTradebook {
+    public disableExitRules: boolean = false;
     public static readonly vwapContinuationLong: string = 'VwapContinuationLong';
     public static readonly vwapContinuationShort: string = 'VwapContinuationShort';
     private highOfDayToBreakout: number = 0;
@@ -282,5 +284,90 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
     getTightStopLevels(): Models.DisplayLevel[] {
         let tightStopLevels = TradebookUtil.getTightStopLevelsForTrend(this.symbol, this.isLong);
         return tightStopLevels;
+    }
+
+    getDisallowedReasonToAdjustSingleLimitOrder(
+        symbol: string, keyIndex: number, order: Models.OrderModel,
+        pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
+        let allowedReason: Models.CheckRulesResult = {
+            allowed: false,
+            reason: "default disallow",
+        };
+        if (this.disableExitRules) {
+            allowedReason.allowed = true;
+            allowedReason.reason = "disabled";
+            return allowedReason;
+        }
+        
+        let isMarketOrder = false;
+        let newResult = ExitRulesCheckerNew.isAllowedForLimitOrderForAllTradebooks(
+            symbol, this.isLong, isMarketOrder, newPrice, keyIndex, pair, logTags);
+        if (newResult.allowed) {
+            return newResult;
+        }
+        if (Patterns.isPriceWorseThanVwap(symbol, this.isLong, newPrice)) {
+            allowedReason.reason = "new price is worse than vwap";
+            allowedReason.allowed = false;
+            return allowedReason;
+        }
+
+        return allowedReason;
+    }
+
+    getDisallowedReasonToAdjustSingleStopOrder(
+        symbol: string, keyIndex: number, order: Models.OrderModel, pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
+        if (this.disableExitRules) {
+            return {
+                allowed: true,
+                reason: "disabled",
+            };
+        }
+        Firestore.logInfo(`breakout tradebook check rules`, logTags);
+        let result: Models.CheckRulesResult = {
+            allowed: false,
+            reason: "default disallow",
+        };
+        let isMarketOrder = false;
+        let newResult = ExitRulesCheckerNew.isAllowedForSingleOrderForAllTradebooks(
+            symbol, this.isLong, isMarketOrder, newPrice, keyIndex, logTags);
+        if (newResult.allowed) {
+            return newResult;
+        }
+
+        if (Patterns.isPriceWorseThanVwap(symbol, this.isLong, newPrice)) {
+            result.reason = "new price is worse than vwap";
+            result.allowed = false;
+            return result;
+        }
+        return result;
+    }
+
+    getDisallowedReasonToMarketOutSingleOrder(symbol: string, keyIndex: number, logTags: Models.LogTags): Models.CheckRulesResult {
+        if (this.disableExitRules) {
+            return {
+                allowed: true,
+                reason: "disabled",
+            };
+        }
+        Firestore.logInfo(`breakout tradebook check rules`, logTags);
+        let result: Models.CheckRulesResult = {
+            allowed: false,
+            reason: "default disallow",
+        };
+        let isMarketOrder = true;
+        let currentPrice = Models.getCurrentPrice(symbol);
+        let newResult = ExitRulesCheckerNew.isAllowedForSingleOrderForAllTradebooks(
+            symbol, this.isLong, isMarketOrder, currentPrice, keyIndex, logTags);
+        if (newResult.allowed) {
+            return newResult;
+        }
+        
+        if (Patterns.isPriceWorseThanVwap(symbol, this.isLong, currentPrice)) {
+            result.reason = "new price is worse than vwap";
+            result.allowed = false;
+            return result;
+        }
+
+        return result;
     }
 } 

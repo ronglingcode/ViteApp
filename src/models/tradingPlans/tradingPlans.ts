@@ -464,6 +464,12 @@ export const getTradingTiming = (symbol: string, basePlan: TradingPlansModels.Ba
         stopTradingAfterSeconds,
     }
 }
+export const getMinTarget = (symbol: string, isLong: boolean, keyIndex: number) => {
+    let targets = calculateTargets(symbol, isLong);
+    let minTargets = populateTargets(targets, isLong);
+    let threshold = minTargets[keyIndex];
+    return threshold;
+}
 
 export const calculateTargets = (symbol: string, isLong: boolean) => {
     let breakoutTradeState = TradingState.getBreakoutTradeState(symbol, isLong);

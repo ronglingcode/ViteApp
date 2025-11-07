@@ -608,6 +608,23 @@ export const getFirstPullbackStatus = (symbol: string) => {
     }
     return result;
 }
+export const isPriceWorseThanVwap = (symbol: string, isLong: boolean, price: number) => {
+    let vwap = Models.getCurrentVwap(symbol);
+    if (isLong) {
+        return price < vwap;
+    } else {
+        return price > vwap;
+    }
+}
+export const isPriceWorseThanKeyLevel = (symbol: string, isLong: boolean, 
+    keyLevel: number, price: number) => {
+    if (isLong) {
+        return price < keyLevel;
+    } else {
+        return price > keyLevel;
+    }
+}
+
 /**
  * closed one candle below the key level
  */
@@ -860,14 +877,6 @@ export const getFirstBreakoutCandle = (symbol: string, isLong: boolean, level: n
     return null;
 }
 
-export const lostVwap = (symbol: string, isLong: boolean, newPrice: number) => {
-    let vwap = Models.getCurrentVwap(symbol);
-    if (isLong) {
-        return newPrice < vwap;
-    } else {
-        return newPrice > vwap;
-    }
-}
 
 export const hasApproachedTargetToAdd = (symbol: string, isLong: boolean) => {
     let symbolData = Models.getSymbolData(symbol);
