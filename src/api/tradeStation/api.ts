@@ -4,11 +4,12 @@ import * as config from '../../config/config'
 import * as Models from '../../models/models'
 import * as orderFactory from './orderFactory'
 import * as Firestore from '../../firestore';
+import * as GlobalSettings from '../../config/globalSettings';
 declare let window: Models.MyWindow;
 
 export const getAuthUrl = () => {
     let authUrl = 'https://signin.tradestation.com/oauth/token';
-    let localauthUrl = 'http://localhost:5000/tradeStationApi/oauth/token';
+    let localauthUrl = `${GlobalSettings.losthostWithPort}/tradeStationApi/oauth/token`;
     let current = window.location.hostname;
     if (current == 'localhost') {
         return authUrl;

@@ -1,4 +1,5 @@
 import * as Helper from '../utils/helper';
+import * as GlobalSettings from '../config/globalSettings';
 
 export const saveLevelOneQuote = async (symbol: string,
     bidPrice: number, bidSize: number, askPrice: number, askSize: number) => {
@@ -13,7 +14,7 @@ export const saveLevelOneQuote = async (symbol: string,
     };
 
     try {
-        const response = await fetch('http://localhost:5000/save/level1quote', {
+        const response = await fetch(`${GlobalSettings.losthostWithPort}/save/level1quote`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

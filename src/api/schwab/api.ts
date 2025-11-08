@@ -9,6 +9,7 @@ import * as Models from '../../models/models';
 import * as Firestore from '../../firestore';
 import * as Config from '../../config/config';
 import * as OrderFactory from './orderFactory';
+import * as GlobalSettings from '../../config/globalSettings';
 declare let window: Models.MyWindow;
 
 const API_HOST = "https://api.schwabapi.com";
@@ -31,7 +32,7 @@ export const testReplaceOrder = () => {
     }
 }
 export const getAuthApiHost = () => {
-    let local = "http://localhost:5000/schwabApi";
+    let local = `${GlobalSettings.losthostWithPort}/schwabApi`;
     let host = window.location.hostname;
     if (host == 'localhost') {
         return API_HOST
@@ -41,7 +42,7 @@ export const getAuthApiHost = () => {
 }
 export const getTraderApiHost = () => {
     let host = window.location.hostname;
-    let local = "http://localhost:5000/schwabApi";
+    let local = `${GlobalSettings.losthostWithPort}/schwabApi`;
     if (host == 'localhost') {
         return local;//TRADER_API_HOST;
     } else {
