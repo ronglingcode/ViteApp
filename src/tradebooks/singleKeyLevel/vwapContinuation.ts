@@ -349,7 +349,6 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
                 reason: "disabled",
             };
         }
-        Firestore.logInfo(`breakout tradebook check rules`, logTags);
         let result: Models.CheckRulesResult = {
             allowed: false,
             reason: "default disallow",

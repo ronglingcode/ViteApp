@@ -19,7 +19,7 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
 
     public legCounter: number = 0;
     public lowOfDayToBreak: number = 0;
-    public disableExitRules: boolean = true;
+    public disableExitRules: boolean = false;
     public getID(): string {
         return this.isLong ? VwapContinuationFailed.longVwapPushDownFailed : VwapContinuationFailed.shortVwapBounceFailed;
     }
@@ -242,10 +242,9 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
                 reason: "disabled",
             };
         }
-        Firestore.logInfo(`breakout tradebook check rules`, logTags);
         let result: Models.CheckRulesResult = {
             allowed: false,
-            reason: "default reason",
+            reason: "default disallow",
         };
         let isMarketOrder = false;
 
@@ -281,10 +280,9 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
                 reason: "disabled",
             };
         }
-        Firestore.logInfo(`breakout tradebook check rules`, logTags);
         let result: Models.CheckRulesResult = {
             allowed: false,
-            reason: "default reason",
+            reason: "default disallow",
         };
         let isMarketOrder = false;
         let newResult = ExitRulesCheckerNew.isAllowedForSingleOrderForAllTradebooks(
@@ -319,10 +317,9 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
                 reason: "disabled",
             };
         }
-        Firestore.logInfo(`breakout tradebook check rules`, logTags);
         let result: Models.CheckRulesResult = {
             allowed: false,
-            reason: "default reason",
+            reason: "default disallow",
         };
         let isMarketOrder = true;
         let currentPrice = Models.getCurrentPrice(symbol);
@@ -331,7 +328,7 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
         if (newResult.allowed) {
             return newResult;
         }
-        if (Patterns.isPriceWorseThanVwap(symbol, this.isLong, Models.getCurrentPrice(symbol))) {
+        if (Patterns.isPriceWorseThanVwap(symbol, this.isLong, currentPrice)) {
             result.reason = "lose vwap";
             result.allowed = true;
             return result;

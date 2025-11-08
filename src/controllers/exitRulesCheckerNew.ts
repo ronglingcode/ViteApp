@@ -102,7 +102,6 @@ export const isAllowedForSingleOrderForAllTradebooks = (symbol: string, isLong: 
         let extraCount = exitPairsCount - (TakeProfit.BatchCount - allowCount);
         if (extraCount > 0 &&
             (isMarketOrder || keyIndex < extraCount)) {
-            Firestore.logInfo(`allow exit for the first ${allowCount} exits`, logTags);
             allowedReason.allowed = true;
             allowedReason.reason = `allow for the first ${allowCount} exits`;
             return allowedReason;
