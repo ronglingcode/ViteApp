@@ -1815,3 +1815,18 @@ export const getLevelFromSingleExitTarget = (symbolData: SymbolData, isLong: boo
         return Math.max(...candidates);
     }
 }
+
+export interface CamarillaPivots {
+    R1: number,
+    R2: number,
+    R3: number,
+    R4: number,
+    R5: number,
+    R6: number,
+    S1: number,
+    S2: number,
+    S3: number,
+    S4: number,
+    S5: number,
+    S6: number
+}
