@@ -1,2 +1,2 @@
 export const advancedLevelOneQuoteFeaturesEnabled: boolean = false;
-export const losthostWithPort: string = "https://localhost:3000";
+export const losthostWithPort: string = "http://localhost:3000";
