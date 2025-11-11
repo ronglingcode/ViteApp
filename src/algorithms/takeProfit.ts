@@ -4,12 +4,13 @@ import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as TradingState from '../models/tradingState';
 import * as Firestore from '../firestore';
 import * as MinimumTarget from './minimumTarget';
+import * as GlobalSettings from '../config/globalSettings';
 export interface ProfitTargetByPercentage {
     price: number,
     percentage: number,
 }
 
-export const BatchCount = 10;
+export const BatchCount = GlobalSettings.batchCount;
 export const SizePerBatch = 1 / BatchCount;
 
 export const getTargetPriceByRiskReward = (symbol: string, isLong: boolean,

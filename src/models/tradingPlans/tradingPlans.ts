@@ -3,6 +3,7 @@ import * as Helper from '../../utils/helper';
 import * as Firestore from '../../firestore';
 import * as TradingPlansModels from './tradingPlansModels';
 import * as TradingState from '../tradingState';
+import * as GlobalSettings from '../../config/globalSettings';
 declare let window: Models.MyWindow;
 
 
@@ -509,7 +510,7 @@ export const calculateTargets = (symbol: string, isLong: boolean) => {
 export const populateTargets = (targets: TradingPlansModels.SingleExitTarget[], isLong: boolean) => {
     let results: number[] = [];
     // TODO: define batch count in a top level place
-    let batchCount = 10;
+    let batchCount = GlobalSettings.batchCount;
     for (let i = 0; i < batchCount; i++) {
         results.push(-1);
     }
