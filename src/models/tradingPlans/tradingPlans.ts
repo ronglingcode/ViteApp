@@ -465,13 +465,11 @@ export const getTradingTiming = (symbol: string, basePlan: TradingPlansModels.Ba
         stopTradingAfterSeconds,
     }
 }
-export const getMinTarget = (symbol: string, isLong: boolean, keyIndex: number) => {
+export const getMinTarget = (symbol: string, isLong: boolean, partialIndex: number) => {
     let targets = calculateTargets(symbol, isLong);
-    Firestore.logInfo(`targets`);
-    Firestore.logInfo(targets);
     let minTargets = populateTargets(targets, isLong);
-    let threshold = minTargets[keyIndex];
-    Firestore.logInfo(`min targets for index ${keyIndex}`);
+    let threshold = minTargets[partialIndex];
+    Firestore.logInfo(`min targets for partial ${partialIndex}`);
     Firestore.logInfo(minTargets)
     return threshold;
 }

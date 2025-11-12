@@ -10,6 +10,7 @@ import * as ExitRulesCheckerSimple from './exitRulesCheckerSimple';
 import * as Helper from "../utils/helper";
 import * as TradingPlans from "../models/tradingPlans/tradingPlans";
 import * as Patterns from "../algorithms/patterns";
+import * as GlobalSettings from '../config/globalSettings';
 
 export const isAllowedForAllOrdersForAllTradebooks = (symbol: string, isLong: boolean, isMarketOrder: boolean, newPrice: number, logTags: Models.LogTags) => {
     let { planConfigs, exitPairsCount } = getCommonInfo(symbol);
@@ -87,7 +88,18 @@ export const isAllowedForLimitOrderForAllTradebooks = (
     }
     return allowedReason;
 }
+export const getPartialIndex = (symbol: string, keyIndex: number) => {
+    let maxPartialsCount = GlobalSettings.batchCount;
+    let totalPairsCount = Models.getExitPairs(symbol).length;
+    let exitedCount = 0;
+    if (totalPairsCount < maxPartialsCount) {
+        maxPartialsCount = totalPairsCount;
+        exitedCount = maxPartialsCount - totalPairsCount;
+    }
+    return keyIndex + exitedCount;
+}
 export const isAllowedForSingleOrderForAllTradebooks = (symbol: string, isLong: boolean, isMarketOrder: boolean, newPrice: number, keyIndex: number, logTags: Models.LogTags) => {
+    let partialIndex = getPartialIndex(symbol, keyIndex);
     let allowedForAllOrders = isAllowedForAllOrdersForAllTradebooks(symbol, isLong, isMarketOrder, newPrice, logTags);
     if (allowedForAllOrders.allowed) {
         return allowedForAllOrders;
@@ -120,10 +132,10 @@ export const isAllowedForSingleOrderForAllTradebooks = (symbol: string, isLong: 
         allowedReason.reason = "meet minimum target";
         return allowedReason;
     }
-    let threshold = TradingPlans.getMinTarget(symbol, isLong, keyIndex);
+    let threshold = TradingPlans.getMinTarget(symbol, isLong, partialIndex);
     if (threshold == -1) {
         allowedReason.allowed = true;
-        allowedReason.reason = "no target for first few partials";
+        allowedReason.reason = `no target (-1) for partial ${partialIndex}`;
         return allowedReason;
     }
     
