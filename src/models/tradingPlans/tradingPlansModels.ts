@@ -174,7 +174,6 @@ export interface PlanConfigs {
     requireReversal: boolean,
     alwaysAllowFlatten: boolean,
     alwaysAllowMoveStop: boolean,
-    allowFirstFewExitsCount: number,
     setupQuality: SetupQuality,
 }
 export interface LevelMomentumPlan extends BasePlan {

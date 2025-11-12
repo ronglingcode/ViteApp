@@ -18,10 +18,6 @@ const R2Target: TradingPlansModels.ExitTargets = {
 export const overrideTradingPlans = (plan: TradingPlansModels.BasePlan,
     planType: TradingPlansModels.PlanType) => {
     plan.planType = planType;
-    if (plan.planConfigs.allowFirstFewExitsCount > 3) {
-        plan.planConfigs.allowFirstFewExitsCount = 3;
-    }
-
     // https://sunrisetrading.atlassian.net/browse/TPS-393
     // be consistent with sizing to keep it simple
     //plan.planConfigs.size = 0.27;

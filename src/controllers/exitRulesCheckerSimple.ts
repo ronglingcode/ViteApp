@@ -31,10 +31,6 @@ export const isAllowedForAll = (symbol: string, logTags: Models.LogTags) => {
     if (breakoutTradeState.plan.planConfigs.setupQuality == TradingPlansModels.SetupQuality.Scalp) {
         return true;
     }
-    if (planConfigs?.allowFirstFewExitsCount == TakeProfit.BatchCount && !isHigherTimeFrame) {
-        Firestore.logInfo(`allow early exits for scalp`, logTags);
-        return true;
-    }
     if (breakoutTradeState.hasValue) {
         if (breakoutTradeState.maxPullbackReached > 0.75) {
             Firestore.logInfo(`allow early exits due to pullback ${breakoutTradeState.maxPullbackReached} > 0.75`, logTags);
@@ -59,15 +55,6 @@ export const isAllowedForSingle = (symbol: string, isLong: boolean, isMarketOrde
     }
 
     let { exitPairsCount, planConfigs } = getCommonInfo(symbol);
-    if (planConfigs) {
-        let allowCount = planConfigs.allowFirstFewExitsCount;
-        let extraCount = exitPairsCount - (TakeProfit.BatchCount - allowCount);
-        if (extraCount > 0 &&
-            (isMarketOrder || keyIndex < extraCount)) {
-            Firestore.logInfo(`allow exit for the first ${allowCount} exits`, logTags);
-            return true;
-        }
-    }
 
     let entryInSeconds = Models.getLastEntryTimeFromNowInSeconds(symbol);
     let allowedFirstFewCount = Math.floor(entryInSeconds / 300) * 2;

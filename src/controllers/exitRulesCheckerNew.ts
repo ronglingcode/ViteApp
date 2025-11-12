@@ -109,16 +109,7 @@ export const isAllowedForSingleOrderForAllTradebooks = (symbol: string, isLong: 
         reason: "default disallow",
     };
     let { planConfigs, exitPairsCount } = getCommonInfo(symbol);
-    if (planConfigs) {
-        let allowCount = planConfigs.allowFirstFewExitsCount + 1;
-        let extraCount = exitPairsCount - (TakeProfit.BatchCount - allowCount);
-        if (extraCount > 0 &&
-            (isMarketOrder || keyIndex < extraCount)) {
-            allowedReason.allowed = true;
-            allowedReason.reason = `allow for the first ${allowCount} exits`;
-            return allowedReason;
-        }
-    }
+
     if (Rules.isAllowedForAddedPosition(symbol, isLong, isMarketOrder, newPrice, keyIndex, false)) {
         allowedReason.allowed = true;
         allowedReason.reason = "added position";
@@ -138,7 +129,7 @@ export const isAllowedForSingleOrderForAllTradebooks = (symbol: string, isLong: 
         allowedReason.reason = `no target (-1) for partial ${partialIndex}`;
         return allowedReason;
     }
-    
+
     // use 0.1 ATR as buffer
     let buffer = Models.getAtr(symbol).average * 0.1;
     let thresholdWithBuffer = isLong ? threshold - buffer : threshold + buffer;
@@ -148,9 +139,9 @@ export const isAllowedForSingleOrderForAllTradebooks = (symbol: string, isLong: 
         return allowedReason;
     }
     let symbolData = Models.getSymbolData(symbol);
-    if ((isLong &&  symbolData.highOfDay >= threshold) || (!isLong && symbolData.lowOfDay <= threshold)) {
+    if ((isLong && symbolData.highOfDay >= threshold) || (!isLong && symbolData.lowOfDay <= threshold)) {
         allowedReason.allowed = true;
-        allowedReason.reason =`has reached minimum target: ${threshold}`;
+        allowedReason.reason = `has reached minimum target: ${threshold}`;
         return allowedReason;
     }
     return allowedReason;
