@@ -804,16 +804,11 @@ const drawTradeManagementInChart = (symbol: string, position: Models.Position | 
         });
     });
     // draw final target
-    let topPlan = TradingPlans.getTradingPlans(symbol);
-    let directionalPlan = isLong ? topPlan.long : topPlan.short;
-    let finalTargets = directionalPlan.finalTargets;
-    let atr = Models.getAtr(symbol).average;
-    let symbolData = Models.getSymbolData(symbol);
+    let finalTargets = TradingPlans.calculateTargets(symbol, isLong);
+    TradingPlans.populateTargetsLabels(symbol, finalTargets);
     finalTargets.forEach(target => {
-        let targetPrice = Models.getLevelFromSingleExitTarget(
-            symbolData, isLong, target, atr, breakoutTradeState.entryPrice, breakoutTradeState.stopLossPrice);
         allCharts.forEach(chart => {
-            let line = createPriceLine(chart.candleSeries, targetPrice, target.text, "black", null, false, "solid");
+            let line = createPriceLine(chart.candleSeries, target.level, target.label ?? "", "black", null, false, "solid");
             chart.tradeManagementLevels.push(line);
         });
     });

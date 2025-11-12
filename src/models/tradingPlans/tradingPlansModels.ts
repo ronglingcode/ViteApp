@@ -248,6 +248,7 @@ export interface SingleExitTarget {
     atr: number,
     level: number,
     text: string,
+    label?: string,
 }
 export interface ExitTargetsSet {
     priceLevels: number[],

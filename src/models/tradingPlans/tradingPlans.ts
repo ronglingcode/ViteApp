@@ -507,7 +507,6 @@ export const calculateTargets = (symbol: string, isLong: boolean) => {
  */
 export const populateTargets = (targets: TradingPlansModels.SingleExitTarget[], isLong: boolean) => {
     let results: number[] = [];
-    // TODO: define batch count in a top level place
     let batchCount = GlobalSettings.batchCount;
     for (let i = 0; i < batchCount; i++) {
         results.push(-1);
@@ -524,4 +523,21 @@ export const populateTargets = (targets: TradingPlansModels.SingleExitTarget[], 
         }   
     }
     return results;
+}
+export const populateTargetsLabels = (symbol: string, targets: TradingPlansModels.SingleExitTarget[]) => {
+    let batchCount = GlobalSettings.batchCount;
+    let totalPartialCount = Models.getExitPairs(symbol).length;
+    if (totalPartialCount > batchCount) {
+        totalPartialCount = batchCount;
+    }
+    let usedCount = 0;
+
+    for (let i = targets.length-1; i >=0; i--) {
+        let target = targets[i];
+        let end = totalPartialCount-usedCount;
+        let start = end - target.partialCount + 1;
+        usedCount += target.partialCount;
+        let label = `${target.text}:${target.partialCount}0%(${start}-${end})`;
+        target.label = label;
+    }
 }
