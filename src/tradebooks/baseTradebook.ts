@@ -80,7 +80,7 @@ export abstract class Tradebook {
         Firestore.logInfo(`base tradebook check rules`, logTags);
         let result: Models.CheckRulesResult = {
             allowed: true,
-            reason: "default reason",
+            reason: "base tradebook",
         };
         return result;
     }
@@ -89,7 +89,7 @@ export abstract class Tradebook {
         Firestore.logInfo(`base tradebook check rules`, logTags);
         let result: Models.CheckRulesResult = {
             allowed: true,
-            reason: "default reason",
+            reason: "base tradebook",
         };
         return result;
     }
@@ -98,7 +98,7 @@ export abstract class Tradebook {
         Firestore.logInfo(`base tradebook check rules`, logTags);
         let result: Models.CheckRulesResult = {
             allowed: true,
-            reason: "default reason",
+            reason: "base tradebook",
         };
         return result;
     }
