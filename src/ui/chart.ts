@@ -851,47 +851,6 @@ const drawProfitRatio = (symbol: string, position: Models.Position | undefined,
             let l = createPriceLine(widget.candleSeries, target, `${ratio}R`, "black", null, false, "solid");
             widget.profitRatios.push(l);
         });
-        // most of time, ATR expectation is not accurate due to selecting gappers with high volume.
-        /*
-        let atrRatios = [1, 1.5, 2];
-        atrRatios.forEach(ratio => {
-            let upTarget = lod + atr * ratio;
-            let downTarget = hod - atr * ratio;
-            let targets = [
-                Helper.roundPrice(symbol, upTarget),
-                Helper.roundPrice(symbol, downTarget)
-            ];
-            targets.forEach(target => {
-                let l = createPriceLine(widget.candleSeries, target, `${ratio}atr`, "black", null, false, "solid");
-                widget.profitRatios.push(l);
-            });
-        });*/
-    }
-    let symbolState = TradingState.getSymbolState(symbol);
-    let breakoutTradeState = TradingState.getBreakoutTradeState(symbol, isLong);
-    let exitPairs = Models.getExitPairs(symbol);
-    let plan = TradingPlans.getTradingPlans(symbol);
-    let logTags: Models.LogTags = {
-        logSessionName: `draw-${symbol}`,
-    };
-    let exitTargets = symbolState.activeBasePlan?.targets;
-    let minimumExitTargets = exitTargets?.minimumTargets;
-    let minimumProfitTarget = TakeProfit.getMinimumProfitTargetForSingle(symbol,
-        isLong, breakoutTradeState.entryPrice, breakoutTradeState.stopLossPrice,
-        0, exitPairs.length, plan.atr, minimumExitTargets, logTags,
-    );
-    let oldMinTarget = 0;
-    if (widget.minTarget) {
-        oldMinTarget = widget.minTarget.options().price;
-    }
-
-    if (minimumProfitTarget != oldMinTarget) {
-        if (widget.minTarget) {
-            widget.candleSeries.removePriceLine(widget.minTarget);
-        }
-        widget.minTarget = createPriceLine(
-            widget.candleSeries, minimumProfitTarget, `Min R`, "blue", null, false, "solid",
-        );
     }
 };
 

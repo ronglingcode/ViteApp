@@ -210,7 +210,6 @@ export interface ChartWidget {
     exitOrderPairs: ExitPair[],
     exitOrdersPriceLines: LightweightCharts.IPriceLine[],
     profitRatios: LightweightCharts.IPriceLine[],
-    minTarget?: LightweightCharts.IPriceLine,
     initialQuantity: number,
     initialStopPrice: number,
     initialCost: number,
@@ -1800,10 +1799,10 @@ export const getLevelFromSingleExitTarget = (symbolData: SymbolData, isLong: boo
         } else {
             candidates.push(symbolData.highOfDay - target.atr * atr);
         }
-    } 
+    }
     if (target.rrr > 0) {
-    let risk = Math.abs(entryPrice - stopLossPrice);
-    if (isLong) {
+        let risk = Math.abs(entryPrice - stopLossPrice);
+        if (isLong) {
             candidates.push(entryPrice + target.rrr * risk);
         } else {
             candidates.push(entryPrice - target.rrr * risk);

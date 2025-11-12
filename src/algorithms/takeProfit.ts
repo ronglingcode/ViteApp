@@ -101,47 +101,6 @@ export const applyProfitStrategyByPercentage = (
     return results;
 };
 
-export const getMinimumProfitTargetForSingle = (symbol: string, isLong: boolean, entryPrice: number, stopLossPrice: number,
-    keyIndex: number, exitPairsCount: number, atr: TradingPlansModels.AverageTrueRange,
-    minimumExitTargets: TradingPlansModels.ExitTargetsSet | undefined, logTags: Models.LogTags) => {
-    let risk = Math.abs(entryPrice - stopLossPrice);
-    risk = Helper.roundPrice(symbol, risk);
-
-    let minTargetsSet = MinimumTarget.defaultMinimumTargets;
-    if (minimumExitTargets) {
-        minTargetsSet = minimumExitTargets;
-    }
-    let index = MinimumTarget.getIndex(BatchCount, exitPairsCount, keyIndex);
-    let minTargets = MinimumTarget.getProfitTargetsListFromConfig(
-        symbol, isLong, entryPrice, stopLossPrice, BatchCount, atr, true, minTargetsSet, "min profit", logTags,
-    )
-    let result = minTargets[index];
-    //Firestore.logInfo(`index: ${index} entry: ${entryPrice} risk: ${risk} atr: ${atr.average} minTarget: ${result}`, logTags);
-    //Firestore.logInfo(minTargets, logTags);
-    if (index > BatchCount - 2) {
-        if (isCurrentTradeFirstSignal(symbol, isLong)) {
-            let twoRTarget = MinimumTarget.profitToTarget(symbol, isLong, entryPrice, 2 * risk);
-            Firestore.logInfo(`override to 2R for first signal for target[${index}] to ${twoRTarget}`, logTags);
-            result = twoRTarget;
-        }
-    }
-    return result;
-};
-
-export const getMinimumProfitTargetForBatch = (symbol: string, isLong: boolean, isHalf: boolean, entryPrice: number, stopLossPrice: number,
-    exitPairsCount: number, dailyRange: number,
-    minimumExitTargets: TradingPlansModels.ExitTargetsSet | undefined, logTags: Models.LogTags) => {
-    let risk = Math.abs(entryPrice - stopLossPrice);
-
-    let p = MinimumTarget.getMinimumProfitForBatch(risk, dailyRange);
-    if (isHalf) {
-        p = MinimumTarget.getMinimumProfitForHalf(risk, dailyRange);
-    }
-    let result = isLong ? entryPrice + p : entryPrice - p;
-    Firestore.logInfo(`risk: ${risk} minTarget: ${result}`, logTags);
-    return result;
-};
-
 export const isCurrentTradeFirstSignal = (symbol: string, isLong: boolean) => {
     let currentTrade = Models.getCurrentOpenTrade(symbol);
     if (!currentTrade || currentTrade.entries.length == 0) {

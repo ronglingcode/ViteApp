@@ -67,45 +67,6 @@ export const isAllowedForSingle = (symbol: string, isLong: boolean, isMarketOrde
     return false;
 }
 
-export const failedMinimumTargetForBatch = (symbol: string, newPrice: number, isHalf: boolean, logTags: Models.LogTags) => {
-    let { isLong, exitPairsCount, breakoutTradeState, todayRange, minimumExitTargets } = getCommonInfo(symbol);
-    let minimumProfitTarget = TakeProfit.getMinimumProfitTargetForBatch(symbol,
-        isLong, isHalf, breakoutTradeState.entryPrice, breakoutTradeState.stopLossPrice, exitPairsCount,
-        todayRange, minimumExitTargets, logTags,
-    );
-
-    if ((isLong && newPrice < minimumProfitTarget) || (!isLong && newPrice > minimumProfitTarget)) {
-        Firestore.logError(`new target ${newPrice} is closer than minimum target ${minimumProfitTarget}`, logTags)
-        return true;
-    } else {
-        Firestore.logInfo(`hard rules passed, new price: ${newPrice}, min target: $${minimumProfitTarget}`, logTags);
-    }
-    return false;
-}
-export const failedMinimumTargetForSingle = (symbol: string, newPrice: number, keyIndex: number,
-    allowedSpread: number, logTags: Models.LogTags) => {
-    let { isLong, exitPairsCount, breakoutTradeState, minimumExitTargets, atr } = getCommonInfo(symbol);
-    let minimumProfitTarget = TakeProfit.getMinimumProfitTargetForSingle(symbol,
-        isLong, breakoutTradeState.entryPrice, breakoutTradeState.stopLossPrice, keyIndex, exitPairsCount,
-        atr, minimumExitTargets, logTags,
-    );
-
-    if (allowedSpread! = 0) {
-        if (isLong) {
-            minimumProfitTarget = minimumProfitTarget - allowedSpread;
-        } else {
-            minimumProfitTarget = minimumProfitTarget + allowedSpread;
-        }
-    }
-    if ((isLong && newPrice < minimumProfitTarget) || (!isLong && newPrice > minimumProfitTarget)) {
-        Firestore.logError(`new target ${newPrice} is closer than minimum target ${minimumProfitTarget}`, logTags)
-        return true;
-    } else {
-        Firestore.logInfo(`hard rules passed, new price: ${newPrice}, min target: $${minimumProfitTarget}`, logTags);
-    }
-
-    return false;
-}
 
 // return true if ok to flatten
 // see some trade examples in https://sunrisetrading.atlassian.net/browse/TPS-80
@@ -133,15 +94,6 @@ export const checkFlattenRules = (symbol: string, logTags: Models.LogTags) => {
     if (Rules.isAllowedAsPaperCut(symbol, breakoutTradeState.entryPrice, breakoutTradeState.stopLossPrice, currentPrice)) {
         Firestore.logInfo(`allow for paper cut`, logTags);
         return true;
-    }
-    if (exitPairsCount == 1) {
-        if (failedMinimumTargetForSingle(symbol, currentPrice, TakeProfit.BatchCount - 1, 0, logTags)) {
-            return false;
-        }
-    } else {
-        if (failedMinimumTargetForBatch(symbol, currentPrice, false, logTags)) {
-            return false;
-        }
     }
 
     return true;
