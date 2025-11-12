@@ -123,15 +123,16 @@ export const isAllowedForSingleOrderForAllTradebooks = (symbol: string, isLong: 
         return allowedReason;
     }
 
-    // use 0.1 ATR as buffer
-    let buffer = Models.getAtr(symbol).average * 0.1;
+    // use 0.1 today's current high-low range as buffer
+    let symbolData = Models.getSymbolData(symbol);
+    let buffer = (symbolData.highOfDay- symbolData.lowOfDay) * 0.1;
     let thresholdWithBuffer = isLong ? threshold - buffer : threshold + buffer;
     if ((isLong && newPrice >= thresholdWithBuffer) || (!isLong && newPrice <= thresholdWithBuffer)) {
         allowedReason.allowed = true;
         allowedReason.reason = `meet min target, threshold: ${threshold}, with buffer: ${thresholdWithBuffer}`;
         return allowedReason;
     }
-    let symbolData = Models.getSymbolData(symbol);
+    
     if ((isLong && symbolData.highOfDay >= threshold) || (!isLong && symbolData.lowOfDay <= threshold)) {
         allowedReason.allowed = true;
         allowedReason.reason = `has reached minimum target: ${threshold}`;
