@@ -116,13 +116,6 @@ export const isAllowedForSingleOrderForAllTradebooks = (symbol: string, isLong: 
         return allowedReason;
     }
 
-    let spread = Models.getCurrentSpread(symbol);
-    let failedMinimumTarget = ExitRulesCheckerSimple.failedMinimumTargetForSingle(symbol, newPrice, keyIndex, spread, logTags);
-    if (!failedMinimumTarget) {
-        allowedReason.allowed = true;
-        allowedReason.reason = "meet minimum target";
-        return allowedReason;
-    }
     let threshold = TradingPlans.getMinTarget(symbol, isLong, partialIndex);
     if (threshold == -1) {
         allowedReason.allowed = true;
