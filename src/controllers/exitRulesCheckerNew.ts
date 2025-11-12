@@ -93,7 +93,6 @@ export const getPartialIndex = (symbol: string, keyIndex: number) => {
     let totalPairsCount = Models.getExitPairs(symbol).length;
     let exitedCount = 0;
     if (totalPairsCount < maxPartialsCount) {
-        maxPartialsCount = totalPairsCount;
         exitedCount = maxPartialsCount - totalPairsCount;
     }
     return keyIndex + exitedCount;
