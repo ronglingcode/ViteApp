@@ -76,10 +76,7 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
             Firestore.logError(`checkRule: not in tradable area, using 50% size`, logTags);
         }
     }
-    if (Rules.isSpreadTooLarge(symbol)) {
-        Firestore.logError(`spread too big, use 75% size`, logTags);
-        finalSize = initialSize * 0.75;
-    }
+    
     return finalSize;
 }
 
