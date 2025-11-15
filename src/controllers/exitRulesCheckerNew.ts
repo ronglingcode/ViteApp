@@ -128,7 +128,7 @@ export const isAllowedForSingleOrderForAllTradebooks = (symbol: string, isLong: 
     let thresholdWithBuffer = isLong ? threshold - buffer : threshold + buffer;
     if ((isLong && newPrice >= thresholdWithBuffer) || (!isLong && newPrice <= thresholdWithBuffer)) {
         allowedReason.allowed = true;
-        allowedReason.reason = `meet min target, threshold: ${threshold}, with buffer: ${thresholdWithBuffer}`;
+        allowedReason.reason = `new target ${newPrice} meets threshold: ${threshold}, with buffer: ${thresholdWithBuffer}`;
         return allowedReason;
     }
     
