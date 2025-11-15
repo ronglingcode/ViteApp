@@ -75,12 +75,13 @@ export const adjustAllStopExitsWithoutRule = async (symbol: string, newPrice: nu
 export const tryAdjustSingleLimitExit = (symbol: string, positionIsLong: boolean, keyIndex: number,
     order: Models.OrderModel, pair: Models.ExitPair,
     newPrice: number, isFromBatch: boolean, totalPairsCount: number, logTags: Models.LogTags) => {
-    let allowed = ExitRulesCheckerNew.isAllowedToAdjustSingleLimitOrder(symbol, keyIndex, order, pair, newPrice, logTags)
-    if (!isFromBatch && !allowed) {
-        Firestore.logError(`Rules blocked adjusting order for ${symbol}`, logTags);
-        return;
+    if (!isFromBatch) {
+        let allowed = ExitRulesCheckerNew.isAllowedToAdjustSingleLimitOrder(symbol, keyIndex, order, pair, newPrice, logTags)
+        if (!allowed) {
+            Firestore.logError(`Rules blocked adjusting order for ${symbol}`, logTags);
+            return;
+        }
     }
-
     OrderFlow.adjustExitPairsWithNewPrice(symbol, [pair], newPrice, false, positionIsLong, logTags);
     afterAdjustSingleExit(symbol, totalPairsCount);
 }
@@ -89,10 +90,12 @@ export const tryAdjustSingleLimitExit = (symbol: string, positionIsLong: boolean
 export const tryAdjustSingleStopExit = (symbol: string, positionIsLong: boolean, keyIndex: number,
     order: Models.OrderModel, pair: Models.ExitPair,
     newPrice: number, isFromBatch: boolean, totalPairsCount: number, logTags: Models.LogTags) => {
-    let allowed = ExitRulesCheckerNew.checkAdjustSingleStopOrderRules(symbol, keyIndex, order, pair, newPrice, logTags)
-    if (!isFromBatch && !allowed) {
-        Firestore.logError(`Rules blocked adjusting order for ${symbol}`, logTags);
-        return;
+    if (!isFromBatch) {
+        let allowed = ExitRulesCheckerNew.checkAdjustSingleStopOrderRules(symbol, keyIndex, order, pair, newPrice, logTags)
+        if (!allowed) {
+            Firestore.logError(`Rules blocked adjusting order for ${symbol}`, logTags);
+            return;
+        }
     }
     OrderFlow.adjustExitPairsWithNewPrice(symbol, [pair], newPrice, true, positionIsLong, logTags);
     afterAdjustSingleExit(symbol, totalPairsCount);

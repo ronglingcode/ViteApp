@@ -302,10 +302,9 @@ export const keyGPressedWithShift = async (symbol: string) => {
     let allowedPairs: Models.ExitPair[] = [];
     for (let i = 0; i < exitPairs.length / 2; i++) {
         let keyIndex = i;
-        let allowed = ExitRulesCheckerNew.isAllowedToMarketOutSingleOrder(symbol, keyIndex, logTags);
-        if (allowed) {
-            allowedPairs.push(exitPairs[i]);
-        }
+        //let allowed = ExitRulesCheckerNew.isAllowedToMarketOutSingleOrder(symbol, keyIndex, logTags);
+        allowedPairs.push(exitPairs[i]);
+
     }
     for (let i = 0; i < allowedPairs.length; i++) {
         marketOutExitPair(symbol, allowedPairs[i], logTags);
