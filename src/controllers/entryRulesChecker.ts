@@ -76,7 +76,7 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
             Firestore.logError(`checkRule: not in tradable area, using 50% size`, logTags);
         }
     }
-    
+
     return finalSize;
 }
 
@@ -260,7 +260,7 @@ export const checkRedToGreenPlanEntryRules = (symbol: string, isLong: boolean, e
         return 0;
     }
 
-    let hasReversalBarSinceOpen = Patterns.hasReversalBarSinceOpen(symbol, isLong, plan.strictMode, plan.considerCurrentCandleAfterOneMinute);
+    let hasReversalBarSinceOpen = Patterns.hasReversalBarSinceOpen(symbol, isLong, plan.strictMode, plan.considerCurrentCandleAfterOneMinute, "checkRedToGreenPlanEntryRules");
     let firstBarIsPinBar = Patterns.firstBarIsPinBar(symbol);
     if (!hasReversalBarSinceOpen && !firstBarIsPinBar) {
         Firestore.logError(`checkRule: no reversal bar yet`, logTags);
@@ -410,7 +410,7 @@ export const conditionallyHasReversalBarSinceOpen = (symbol: string,
     strictMode: boolean, considerCurrentCandleAfterOneMinute: boolean) => {
     let plan = TradingPlans.getTradingPlans(symbol);
     let openPrice = Models.getOpenPrice(symbol);
-    let hasReversal = Patterns.hasReversalBarSinceOpen(symbol, isLong, strictMode, considerCurrentCandleAfterOneMinute);
+    let hasReversal = Patterns.hasReversalBarSinceOpen(symbol, isLong, strictMode, considerCurrentCandleAfterOneMinute, "conditional");
     if (!openPrice) {
         return hasReversal;
     }

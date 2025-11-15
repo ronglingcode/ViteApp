@@ -81,7 +81,7 @@ export const loop = (symbol: string, isLong: boolean, isFirstLoop: boolean,
 
     // wait for conditions to meet to submit orders
     let currentCandle = Models.getCurrentCandle(symbol);
-    let hasReversal = Patterns.hasReversalBarSinceOpen(symbol, isLong, plan.strictMode, plan.considerCurrentCandleAfterOneMinute);
+    let hasReversal = Patterns.hasReversalBarSinceOpen(symbol, isLong, plan.strictMode, plan.considerCurrentCandleAfterOneMinute, "loop");
     let scale = Models.getLiquidityScale(symbol);
     let enoughAtr = meetAtrRule(symbol, currentCandle, logTags);
     if (enoughAtr && hasReversal && scale > 0) {

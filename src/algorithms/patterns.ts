@@ -138,10 +138,11 @@ export const firstBarIsPinBar = (symbol: string) => {
  * including current bar which may not be closed. 
  */
 export const hasReversalBarSinceOpen = (symbol: string, isLong: boolean,
-    strictMode: boolean, considerCurrentCandleAfterOneMinute: boolean) => {
+    strictMode: boolean, considerCurrentCandleAfterOneMinute: boolean,
+    caller: string) => {
     let candles = Models.getUndefinedCandlesSinceOpen(symbol);
     if (candles.length == 0) {
-        Firestore.logError(`no candles after open, hasReversalBarSinceOpen`);
+        Firestore.logError(`${caller} no candles after open, hasReversalBarSinceOpen`);
         return false;
     } else if (candles.length == 1) {
         return isReversalBar(symbol, candles[0], isLong, strictMode);
@@ -616,7 +617,7 @@ export const isPriceWorseThanVwap = (symbol: string, isLong: boolean, price: num
         return price > vwap;
     }
 }
-export const isPriceWorseThanKeyLevel = (symbol: string, isLong: boolean, 
+export const isPriceWorseThanKeyLevel = (symbol: string, isLong: boolean,
     keyLevel: number, price: number) => {
     if (isLong) {
         return price < keyLevel;
