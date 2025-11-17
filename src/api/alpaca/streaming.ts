@@ -27,7 +27,7 @@ export const showStreamingData = (dataType: any) => {
     }
 
     if (currentText.length > 35) {
-        currentText = currentText.slice(10);
+        currentText = currentText.slice(1);
     }
     network.innerHTML = currentText;
 }
