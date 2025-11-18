@@ -76,17 +76,16 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
             Firestore.logError(`checkRule: not in tradable area, using 50% size`, logTags);
         }
     }
-
+    let volumes = Models.getVolumesSinceOpen(symbol);
+    if (volumes.length >= 3) {
+        let secondMinuteVolume = volumes[1].value;
+        if (secondMinuteVolume < 150*1000){
+            finalSize = initialSize * 0.5;
+            Firestore.logError(`2nd minute volume ${secondMinuteVolume} is less than 150K, using 50% size`, logTags);
+        }
+    }
     return finalSize;
 }
-
-
-/**
- * Return a number between 0 to 1 for share size multiplier. 
- * 0 means cannot make the trade, 1 means trade with full size
- * Used by entries and algo entries.
- * Not used by adding partials/reloads.
- */
 export const checkGlobalEntryRules = (symbol: string, isLong: boolean,
     basePlan: TradingPlansModels.BasePlan, logTags: Models.LogTags,
     entryPrice: number, stopOutPrice: number) => {
