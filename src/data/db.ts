@@ -347,6 +347,35 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
             Chart.updateUI(symbol, "tradeInterval", Helper.numberToString(symbolData.tradeTimeIntervalInMilliseconds) + "ms");
         }
         symbolData.lastTradeTime = tradeTime;
+
+        // Track time and sales per second
+        let currentSecond = Math.floor(timesale.tradeTime / 1000);
+        let lastEntry = symbolData.timeAndSalesPerSecond[symbolData.timeAndSalesPerSecond.length - 1];
+        
+        if (lastEntry && lastEntry.second === currentSecond) {
+            // Increment count for current second
+            lastEntry.count++;
+        } else {
+            // Add new entry for this second
+            symbolData.timeAndSalesPerSecond.push({
+                second: currentSecond,
+                count: 1
+            });
+        }
+
+        // Keep only last 3 seconds
+        let threeSecondsAgo = currentSecond - 3;
+        symbolData.timeAndSalesPerSecond = symbolData.timeAndSalesPerSecond.filter(
+            entry => entry.second > threeSecondsAgo
+        );
+
+        // Update UI with last 3 seconds count
+        let last3SecondsText = symbolData.timeAndSalesPerSecond
+            .slice(-3)
+            .reverse()
+            .map(entry => entry.count)
+            .join(', ');
+        Chart.updateUI(symbol, "timeAndSalesLast3Sec", `T&S: ${last3SecondsText}`);
     }
 
     symbolData.totalVolume += lastSize;
@@ -741,4 +770,24 @@ const updateVwapCount = (symbolData: Models.SymbolData, closePrice: number) => {
     } else if (closePrice < previousVwap) {
         symbolData.premktBelowVwapCount++;
     }
+}
+
+/**
+ * Get time and sales per second data for the last 3 seconds
+ * @param symbol - The stock symbol
+ * @returns Array of time and sales data per second
+ */
+export const getTimeAndSalesPerSecond = (symbol: string): Models.TimeAndSalesPerSecond[] => {
+    let symbolData = Models.getSymbolData(symbol);
+    return symbolData.timeAndSalesPerSecond;
+}
+
+/**
+ * Get total count of time and sales in the last 3 seconds
+ * @param symbol - The stock symbol
+ * @returns Total count
+ */
+export const getTimeAndSalesLast3SecondsTotal = (symbol: string): number => {
+    let symbolData = Models.getSymbolData(symbol);
+    return symbolData.timeAndSalesPerSecond.reduce((total, entry) => total + entry.count, 0);
 }

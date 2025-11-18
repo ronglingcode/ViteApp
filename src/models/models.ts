@@ -325,10 +325,16 @@ export interface SymbolData {
     totalTradingAmount: number,
     schwabLevelOneQuote: LevelOneQuote,
     alpacaLevelOneQuote: LevelOneQuote,
+    timeAndSalesPerSecond: TimeAndSalesPerSecond[],
 };
 
 export interface KeyAreaData {
     candles: SimpleCandle[],
+}
+
+export interface TimeAndSalesPerSecond {
+    second: number,  // Unix timestamp in seconds
+    count: number,
 }
 export interface TradeManagementInstructions {
     mapData: Map<string, string[]>,
@@ -1003,6 +1009,7 @@ export const getDefaultSymbolData = () => {
             bidSize: 0,
             askSize: 0,
         },
+        timeAndSalesPerSecond: [],
     };
     return result;
 };
