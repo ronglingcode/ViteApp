@@ -349,7 +349,7 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
         symbolData.lastTradeTime = tradeTime;
 
         // Track time and sales per second
-        let currentSecond = Math.floor(timesale.tradeTime / 1000);
+        let currentSecond = Math.floor(tradeTime.getTime() / 1000);
         let lastEntry = symbolData.timeAndSalesPerSecond[symbolData.timeAndSalesPerSecond.length - 1];
         
         if (lastEntry && lastEntry.second === currentSecond) {
@@ -374,8 +374,8 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
             .slice(-3)
             .reverse()
             .map(entry => entry.count)
-            .join(', ');
-        Chart.updateUI(symbol, "timeAndSalesLast3Sec", `T&S: ${last3SecondsText}`);
+            .join(',');
+            Chart.updateUI(symbol, "timeAndSalesLast3Sec", `(${last3SecondsText})`);
     }
 
     symbolData.totalVolume += lastSize;
