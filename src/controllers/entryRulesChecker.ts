@@ -78,10 +78,20 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
     }
     let volumes = Models.getVolumesSinceOpen(symbol);
     if (volumes.length >= 3) {
-        let secondMinuteVolume = volumes[1].value;
-        if (secondMinuteVolume < 150*1000){
+        let metMinimumVolume = false;
+        let maxVolume = 0;
+        for (let i = 1; i < volumes.length; i++) {
+            if (volumes[i].value > maxVolume) {
+                maxVolume = volumes[i].value;
+            }
+            if (volumes[i].value >= 150*1000) {
+                metMinimumVolume = true;
+                break;
+            }
+        }
+        if (!metMinimumVolume) {
             finalSize = initialSize * 0.5;
-            Firestore.logError(`2nd minute volume ${secondMinuteVolume} is less than 150K, using 50% size`, logTags);
+            Firestore.logError(`did not meet minimum volume ${maxVolume} < 150K, using 50% size`, logTags);
         }
     }
     return finalSize;
