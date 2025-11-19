@@ -78,13 +78,27 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
     }
     let volumes = Models.getVolumesSinceOpen(symbol);
     if (volumes.length >= 3) {
+        let maxVolumeIndex = 0;
+        let maxVolume = volumes[0].value;
+        let lastClosedIndex = volumes.length-2;
+        for (let i = 1; i <= lastClosedIndex; i++) {
+            if (volumes[i].value > maxVolume) {
+                maxVolume = volumes[i].value;
+                maxVolumeIndex = i;
+            }
+        }
+        let volumeToCheckStartIndex = maxVolumeIndex;
+        if ((maxVolumeIndex+1) <= lastClosedIndex) {
+            volumeToCheckStartIndex = maxVolumeIndex+1;
+        }
+
         let metMinimumVolume = false;
-        let maxVolume = 0;
-        for (let i = 1; i < volumes.length; i++) {
+        maxVolume = volumes[volumeToCheckStartIndex].value;
+        for (let i = volumeToCheckStartIndex; i < volumes.length; i++) {
             if (volumes[i].value > maxVolume) {
                 maxVolume = volumes[i].value;
             }
-            if (volumes[i].value >= 150*1000) {
+            if (maxVolume >= 150*1000) {
                 metMinimumVolume = true;
                 break;
             }
