@@ -231,8 +231,8 @@ const verifyTradingPlansForSingleDirection = (symbol: string, plan: TradingPlans
         Firestore.logError(`${symbol} missing first target to add`);
         return false;
     }
-    if (plan.finalTargets.length == 0) {
-        Firestore.logError(`${symbol} missing final targets, length is zero`);
+    if (plan.finalTargets.length < 2) {
+        Firestore.logError(`${symbol} need at least 2 final targets, length is ${plan.finalTargets.length}`);
         return false;
     }
     for (let i = 0; i < plan.finalTargets.length; i++) {
