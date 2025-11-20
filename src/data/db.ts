@@ -690,8 +690,8 @@ export const updateFromLevelOneQuote = (quote: Models.Quote) => {
         symbolData.askSize = quote.askSize;
     }
 
-    Chart.updateUI(symbol, "bid", `${symbolData.bidPrice}(${symbolData.bidSize})`);
-    Chart.updateUI(symbol, "ask", `${symbolData.askPrice}(${symbolData.askSize})`);
+    Chart.updateUI(symbol, "bid", `${symbolData.bidPrice}`);
+    Chart.updateUI(symbol, "ask", `${symbolData.askPrice}`);
     let spread = Models.getCurrentSpread(symbol);
     spread = Helper.roundPrice(symbol, spread);
     let topPlan = TradingPlans.getTradingPlans(symbol);
@@ -701,7 +701,7 @@ export const updateFromLevelOneQuote = (quote: Models.Quote) => {
     spreadInATRPercent = Math.round(spreadInATRPercent * 100) / 100;
     OrderFlowManager.updateQuote(symbol, symbolData.bidSize, symbolData.askSize, symbolData.bidPrice, symbolData.askPrice, spreadInAtr);
 
-    Chart.updateUI(symbol, "spread", `${spread}, ${spreadInATRPercent}% atr`);
+    Chart.updateUI(symbol, "spread", `${spread}`);
     Chart.updateUI(symbol, "level1QuotePrice", `${symbolData.bidPrice} x ${symbolData.askPrice}`);
     Chart.updateUI(symbol, "level1QuoteSize", `${symbolData.bidSize} x ${symbolData.askSize}`);
 
