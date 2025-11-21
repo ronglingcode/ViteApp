@@ -14,7 +14,7 @@ declare let window: Models.MyWindow;
 
 
 export const createWebSocket = async () => {
-    let socketUrl = "wss://delayed.massive.com/stocks";
+    let socketUrl = "wss://socket.massive.com/stocks";
     let websocket = new WebSocket(socketUrl);
 
     websocket.onmessage = function (messageEvent) {
@@ -30,7 +30,9 @@ export const createWebSocket = async () => {
                     console.log(message);
                 }
             } else if (message.ev == 'T') {
-                handleTimeAndSalesData(message);
+                if (GlobalSettings.marketDataSource == "massive") {
+                    handleTimeAndSalesData(message);
+                }
             }
             else {
                 console.log(message);
@@ -75,15 +77,47 @@ export const subscribeLevelOneQuotes = (webSocket: WebSocket) => {
     console.log(request);
     sendWebsocketRequest(webSocket, request);
 }
-export const handleTimeAndSalesData = (data: any) => {
-    let record: Models.TimeSale = {
-        symbol: data.sym,
-        tradeTime: data.t,
-        lastPrice: data.p,
-        lastSize: data.s,
-        seq: data.q,
-        receivedTime: new Date(),
+
+const createTimeSale = (c: any) => {
+    let has_non_update = false;
+    let tradeTime = Helper.numberToDate(c.t);
+    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(tradeTime);
+    if (secondsSinceMarketOpen >= 0) {
+        if (c.c) {
+            for (let i = 0; i < c["c"].length; i++) {
+                let condition = c["c"][i];
+                if (StreamingHandler.conditionsNotUpdateLastPrice.includes(condition)) {
+                    has_non_update = true;
+                    break;
+                }
+            }
+        } else {
+            console.log(c);
+        }
     }
-    //console.log(data);
-    //console.log(record);
+    if (has_non_update) {
+        //console.log(c)
+        return null;
+    }
+
+    let symbol = c.sym;
+    let record: Models.TimeSale = {
+        symbol: symbol,
+        receivedTime: new Date(),
+    };
+    if (c.t != null) {
+        record.tradeTime = c.t;
+    }
+    if (c.p != null)
+        record.lastPrice = c.p;
+    if (c.s != null)
+        record.lastSize = c.s;
+    //console.log(`${c["p"]}, ${c["s"] / 100}`);
+    return record;
+}
+export const handleTimeAndSalesData = (data: any) => {
+    let record = createTimeSale(data);
+    if (record) {
+        DB.updateFromTimeSale(record);
+    }
 }

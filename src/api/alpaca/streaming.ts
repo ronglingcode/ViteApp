@@ -51,7 +51,9 @@ export const createWebSocketForMarketData = async () => {
                 }
             } else if (type == 't') {
                 // handle trades streaming data
-                StreamingHandler.handleTimeAndSalesData(element);
+                if (GlobalSettings.marketDataSource == "alpaca") {
+                    StreamingHandler.handleTimeAndSalesData(element);
+                }
             } else if (type == 'q') {
                 handleQuoteUpdates(element);
             } else if (type == "subscription") {
