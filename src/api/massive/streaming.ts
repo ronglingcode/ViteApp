@@ -86,7 +86,7 @@ const createTimeSale = (c: any) => {
         if (c.c) {
             for (let i = 0; i < c["c"].length; i++) {
                 let condition = c["c"][i];
-                if (StreamingHandler.conditionsNotUpdateLastPrice.includes(condition)) {
+                if (StreamingHandler.conditionsNotUpdateLastPriceNumbers.includes(condition)) {
                     has_non_update = true;
                     break;
                 }

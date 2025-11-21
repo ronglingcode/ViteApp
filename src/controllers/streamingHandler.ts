@@ -11,6 +11,9 @@ export const conditionsNotUpdateHighLow = [
 export const conditionsNotUpdateLastPrice = [
     "W", "C", "T", "U", "M", "Q", "N", "H", "I", "V", "7"
 ];
+export const conditionsNotUpdateLastPriceNumbers = [
+    2,7,12,13,15,16,20,21,37,52,53
+];
 export const conditionsNotUpdateVolume = [
     "M", "Q", "9"
 ];
