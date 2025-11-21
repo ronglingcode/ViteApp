@@ -36,6 +36,7 @@ import * as KeyboardHandler from './controllers/keyboardHandler';
 import * as AlpacaStreaming from './api/alpaca/streaming';
 import * as ScwabStreaming from './api/schwab/streaming';
 import * as MassiveStreaming from './api/massive/streaming';
+import * as MassiveApi from './api/massive/api';
 import * as DB from './data/db';
 import './tosClient';
 
@@ -169,7 +170,9 @@ if (showTargetsButton) {
 let testPopButton = document.getElementById("test_popup");
 if (testPopButton) {
     testPopButton.addEventListener("click", () => {
-        QuestionPopup.show('APLD');
+        MassiveApi.getPriceHistory('AAPL', 1).then((candles) => {
+
+        });
     });
 }
 

@@ -2,11 +2,13 @@ import * as tradeStationApi from "./tradeStation/api";
 import * as tdAmeritradeApi from "./tdAmeritrade/api";
 import * as schwabApi from "./schwab/api";
 import * as alpacaApi from "./alpaca/api";
+import * as massiveApi from "./massive/api";
 import * as Helper from '../utils/helper';
 import * as TimeHelper from '../utils/timeHelper';
 import type { Quote, Candle } from '../models/models';
 import * as Models from '../models/models';
 import * as Firestore from '../firestore';
+import * as GlobalSettings from '../config/globalSettings';
 declare let window: Models.MyWindow;
 
 export const getQuote = async (symbol: string) => {
@@ -92,8 +94,13 @@ export const getPriceHistory = async (symbol: string, isFutures: boolean, timefr
             // console.log(`${symbol}: ${bar.IsEndOfHistory}, ${bar.IsRealtime}`);
         });
     } else {
-        let bars = await alpacaApi.getPriceHistory(symbol, timeframe);
-        candles = bars;
+        if (GlobalSettings.marketDataSource == "alpaca") {
+            let bars = await alpacaApi.getPriceHistory(symbol, timeframe);
+            candles = bars;
+        } else if (GlobalSettings.marketDataSource == "massive") {
+            let bars = await massiveApi.getPriceHistory(symbol, timeframe);
+            candles = bars;
+        }
     }
     return candles;
 };

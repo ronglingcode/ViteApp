@@ -1,6 +1,8 @@
 import * as Firestore from '../../firestore';
 import * as Secret from '../../config/secret';
+import * as Models from '../../models/models';
 import * as TimeHelper from '../../utils/timeHelper';
+import * as Helper from '../../utils/helper';
 
 export const getPriceHistory = async (symbol: string, timeframe: number) => {
     let apiKey = Secret.massive().apiKey;
@@ -11,8 +13,8 @@ export const getPriceHistory = async (symbol: string, timeframe: number) => {
     let tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
     let tomorrowString = TimeHelper.formatDateToYYYYMMDD(tomorrow);
-    
-    let url = `${host}/v2/aggs/ticker/${symbol}/range/${timeframe}/minute/${todayString}/${tomorrowString}?adjusted=true&sort=asc&limit=120&apiKey=${apiKey}`;
+
+    let url = `${host}/v2/aggs/ticker/${symbol}/range/${timeframe}/minute/${todayString}/${tomorrowString}?adjusted=true&sort=asc&limit=1000&apiKey=${apiKey}`;
 
     return getBars(symbol, url);
 };
@@ -23,13 +25,25 @@ export const getBars = async (symbol: string, url: string) => {
     };
     let response = await fetch(url, config);
     let responseJson = await response.json();
-    let candles: any[] = [];
-    let data = responseJson.bars[symbol];
-    if (data) {
-       console.log(data);
-    } else {
-        Firestore.logError(`no data for getBars()`);
-    }
-
-    return true;
+    let results = responseJson.results;
+    let candles: Models.CandlePlus[] = [];
+    results.forEach((result: any) => {
+        let startTime = result.t;
+        let startDate = new Date(startTime);
+        let candle: Models.CandlePlus = {
+            time: Helper.jsDateToTradingViewUTC(startDate),
+            open: result.o,
+            close: result.c,
+            high: result.h,
+            low: result.l,
+            symbol: symbol,
+            volume: result.v,
+            datetime: startTime,
+            vwap: result.vw,
+            minutesSinceMarketOpen: Helper.getMinutesSinceMarketOpen(startDate),
+            firstTradeTime: startTime,
+        };
+        candles.push(candle);
+    });
+    return candles;
 };

@@ -84,6 +84,6 @@ export const handleTimeAndSalesData = (data: any) => {
         seq: data.q,
         receivedTime: new Date(),
     }
-    console.log(data);
-    console.log(record);
+    //console.log(data);
+    //console.log(record);
 }
