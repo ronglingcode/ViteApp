@@ -35,6 +35,7 @@ import * as StreamingHandler from './controllers/streamingHandler';
 import * as KeyboardHandler from './controllers/keyboardHandler';
 import * as AlpacaStreaming from './api/alpaca/streaming';
 import * as ScwabStreaming from './api/schwab/streaming';
+import * as MassiveStreaming from './api/massive/streaming';
 import * as DB from './data/db';
 import './tosClient';
 
@@ -43,41 +44,41 @@ declare let window: Models.MyWindow;
 console.log('main.ts loaded');
 
 window.HybridApp.Algo = {
-  TakeProfit: TakeProfit,
-  RiskManager: RiskManager,
-  Watchlist: Watchlist,
-  AutoTrader: AutoTrader,
+    TakeProfit: TakeProfit,
+    RiskManager: RiskManager,
+    Watchlist: Watchlist,
+    AutoTrader: AutoTrader,
 };
 window.HybridApp.Api = {
-  Broker: Broker,
-  MarketData: MarketData,
-  TdaApi: tdaApi,
-  SchwabApi: schwabApi,
-  AlpacaApi: alpacaApi,
-  GoogleDocsApi: googleDocsApi,
+    Broker: Broker,
+    MarketData: MarketData,
+    TdaApi: tdaApi,
+    SchwabApi: schwabApi,
+    AlpacaApi: alpacaApi,
+    GoogleDocsApi: googleDocsApi,
 };
 window.HybridApp.Config = Config;
 window.HybridApp.Controllers = {
-  Handler: Handler,
-  OrderFlow: OrderFlow,
-  OrderFlowManager: OrderFlowManager,
-  TraderFocus: TraderFocus,
+    Handler: Handler,
+    OrderFlow: OrderFlow,
+    OrderFlowManager: OrderFlowManager,
+    TraderFocus: TraderFocus,
 };
 
 window.HybridApp.Models = {
-  Models: Models,
-  TradingState: TradingState,
-  TradingPlans: TradingPlans,
+    Models: Models,
+    TradingState: TradingState,
+    TradingPlans: TradingPlans,
 };
 window.HybridApp.UI = {
-  Chart: Chart,
-  UI: UI,
-  QuestionPopup: QuestionPopup,
+    Chart: Chart,
+    UI: UI,
+    QuestionPopup: QuestionPopup,
 };
 window.HybridApp.Utils = {
-  'Helper': Helper,
-  'WebRequest': WebRequest,
-  TimeHelper: TimeHelper,
+    'Helper': Helper,
+    'WebRequest': WebRequest,
+    TimeHelper: TimeHelper,
 };
 window.HybridApp.Firestore = Firestore;
 window.HybridApp.Settings = window.HybridApp.Settings || {};
@@ -85,91 +86,91 @@ window.HybridApp.Settings.checkSpread = true;
 
 let showExecutionButton = document.getElementById("show_execution");
 if (showExecutionButton) {
-  showExecutionButton.addEventListener("click", () => {
-    Broker.generateExecutionScript(false);
-  });
+    showExecutionButton.addEventListener("click", () => {
+        Broker.generateExecutionScript(false);
+    });
 }
 
 let showExecutionDetailsButton = document.getElementById("show_execution_detail");
 if (showExecutionDetailsButton) {
-  showExecutionDetailsButton.addEventListener("click", () => {
-    Broker.generateExecutionScript(true);
-  });
+    showExecutionDetailsButton.addEventListener("click", () => {
+        Broker.generateExecutionScript(true);
+    });
 }
 let exportButton = document.getElementById("export_trades");
 if (exportButton) {
-  exportButton.addEventListener("click", () => {
-    TvTools.exportTrades();
-  });
+    exportButton.addEventListener("click", () => {
+        TvTools.exportTrades();
+    });
 }
 let preparationButton = document.getElementById("prepare");
 if (preparationButton) {
-  preparationButton.addEventListener("click", () => {
-    let root = document.getElementById("print_plan");
-    if (!root) {
-      return;
-    }
-    let wl = Models.getWatchlist();
-    wl.forEach(watchlistItem => {
-      let symbol = watchlistItem.symbol;
-      let plan = TradingPlans.getTradingPlans(symbol);
-      if (root) {
-        Printer.printStockPlan(root, plan);
-      }
+    preparationButton.addEventListener("click", () => {
+        let root = document.getElementById("print_plan");
+        if (!root) {
+            return;
+        }
+        let wl = Models.getWatchlist();
+        wl.forEach(watchlistItem => {
+            let symbol = watchlistItem.symbol;
+            let plan = TradingPlans.getTradingPlans(symbol);
+            if (root) {
+                Printer.printStockPlan(root, plan);
+            }
+        });
     });
-  });
 }
 
 let checkQuantityButton = document.getElementById("check_quantity");
 if (checkQuantityButton) {
-  checkQuantityButton.addEventListener("click", () => {
-    let watchlist = Models.getWatchlist();
-    watchlist.forEach(item => {
-      let q = RiskManager.getQuanityWithoutStopLoss(item.symbol);
-      if (q > 0) {
-        Firestore.logError(`${item.symbol} has ${q} shares without stop loss`);
-      } else {
-        Firestore.logInfo(`${item.symbol} check quantity is good`);
-      }
+    checkQuantityButton.addEventListener("click", () => {
+        let watchlist = Models.getWatchlist();
+        watchlist.forEach(item => {
+            let q = RiskManager.getQuanityWithoutStopLoss(item.symbol);
+            if (q > 0) {
+                Firestore.logError(`${item.symbol} has ${q} shares without stop loss`);
+            } else {
+                Firestore.logInfo(`${item.symbol} check quantity is good`);
+            }
+        });
     });
-  });
 }
 
 let syncAccountButton = document.getElementById("update_account_ui");
 if (syncAccountButton) {
-  syncAccountButton.addEventListener("click", () => {
-    Chart.updateAccountUIStatus([], 'sync button');
-    TraderFocus.updateUI();
-  });
+    syncAccountButton.addEventListener("click", () => {
+        Chart.updateAccountUIStatus([], 'sync button');
+        TraderFocus.updateUI();
+    });
 }
 
 let tosScriptsButton = document.getElementById("gen_scripts");
 if (tosScriptsButton) {
-  tosScriptsButton.addEventListener("click", () => {
-    TradingPlans.generateScriptsForTradableAreas();
-    //TradingPlans.generateTosScripts();
-  });
+    tosScriptsButton.addEventListener("click", () => {
+        TradingPlans.generateScriptsForTradableAreas();
+        //TradingPlans.generateTosScripts();
+    });
 }
 
 let showTargetsButton = document.getElementById("show_targets");
 if (showTargetsButton) {
-  showTargetsButton.addEventListener("click", () => {
-    let positions = Models.getOpenPositions();
-    positions.forEach(position => {
-      let isLong = position.netQuantity > 0;
-      let tp = TradingPlans.getTradingPlans(position.symbol);
-      let msg = `${position.symbol}: `;
-      let pt = isLong ? tp.analysis.profitTargetsForLong : tp.analysis.profitTargetsForShort;
-      msg += `${pt.targets}, will blow past levels: ${pt.willBlowPastThoseLevels}. ${pt.summary}`;
-      Firestore.logInfo(msg);
+    showTargetsButton.addEventListener("click", () => {
+        let positions = Models.getOpenPositions();
+        positions.forEach(position => {
+            let isLong = position.netQuantity > 0;
+            let tp = TradingPlans.getTradingPlans(position.symbol);
+            let msg = `${position.symbol}: `;
+            let pt = isLong ? tp.analysis.profitTargetsForLong : tp.analysis.profitTargetsForShort;
+            msg += `${pt.targets}, will blow past levels: ${pt.willBlowPastThoseLevels}. ${pt.summary}`;
+            Firestore.logInfo(msg);
+        });
     });
-  });
 }
 let testPopButton = document.getElementById("test_popup");
 if (testPopButton) {
-  testPopButton.addEventListener("click", () => {
-    QuestionPopup.show('APLD');
-  });
+    testPopButton.addEventListener("click", () => {
+        QuestionPopup.show('APLD');
+    });
 }
 
 Firestore.addToLogView('version 1.34', 'Info');
@@ -191,6 +192,7 @@ window.TradingApp.TOS.initialize().then(async () => {
     AlpacaStreaming.createWebSocketForMarketData();
     AlpacaStreaming.createWebSocket();
     ScwabStreaming.createWebSocket();
+    MassiveStreaming.createWebSocket();
     let previousDate = await MarketData.getPreviousTradingDate();
 
 

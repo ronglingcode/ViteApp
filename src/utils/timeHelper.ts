@@ -1,3 +1,15 @@
+/**
+ * Format a Date object to YYYY-MM-DD string
+ * @param date - Date to format
+ * @returns Formatted date string
+ */
+export const formatDateToYYYYMMDD = (date: Date): string => {
+    let yyyy = date.getFullYear();
+    let mm = String(date.getMonth() + 1).padStart(2, '0');
+    let dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+};
+
 export const getPreciseTimeString = (date: Date) => {
     let hours = date.getHours().toString().padStart(2, '0');
     let minutes = date.getMinutes().toString().padStart(2, '0');

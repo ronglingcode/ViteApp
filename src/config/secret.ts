@@ -91,3 +91,16 @@ export const firebaseConfig = () => {
         measurementId: data.measurementId
     }
 };
+
+export const massive = () => {
+    let td = localStorage.getItem('tradingscripts.massive');
+    if (td == null) {
+        console.error(`no secrets in local storage`)
+        td = '{}';
+    }
+
+    let data = JSON.parse(td);
+    return {
+        apiKey: data.apiKey,
+    }
+};
