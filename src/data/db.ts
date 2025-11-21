@@ -351,7 +351,7 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
         // Track time and sales per second
         let currentSecond = Math.floor(tradeTime.getTime() / 1000);
         let lastEntry = symbolData.timeAndSalesPerSecond[symbolData.timeAndSalesPerSecond.length - 1];
-        
+
         if (lastEntry && lastEntry.second === currentSecond) {
             // Increment count for current second
             lastEntry.count++;
@@ -375,7 +375,7 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
             .reverse()
             .map(entry => entry.count)
             .join(',');
-            Chart.updateUI(symbol, "timeAndSalesLast3Sec", `(${last3SecondsText})`);
+        Chart.updateUI(symbol, "timeAndSalesLast3Sec", `(${last3SecondsText})`);
     }
 
     symbolData.totalVolume += lastSize;
@@ -664,10 +664,9 @@ export const getExtremePrice = (symbol: string, up: boolean, secondsSinceMarketO
 };
 
 export const getTypicalPrice = (candle: Models.Candle) => {
-    /*
     if (candle.vwap > 0) {
         return candle.vwap;
-    }*/
+    }
 
     return (candle.high + candle.low + candle.close) / 3;
 };
