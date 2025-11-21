@@ -8,6 +8,7 @@ import * as OrderFlowManager from '../../controllers/orderFlowManager';
 import * as LevelOneQuote from '../../models/levelOneQuote';
 import * as Firestore from '../../firestore';
 import * as GlobalSettings from '../../config/globalSettings';
+import * as TimeHelper from '../../utils/timeHelper';
 declare let window: Models.MyWindow;
 
 
@@ -50,8 +51,10 @@ export const createWebSocket = async () => {
                 if (service === "LEVELONE_EQUITIES") {
                     if (command == "SUBS") {
                         let contents = element.content;
+                        let timestamp = element.timestamp;
+                        let receivedTime = new Date(timestamp);
                         contents.forEach((c: any) => {
-                            handleQuoteUpdates(c);
+                            handleQuoteUpdates(c, receivedTime);
                         });
                     } else {
                         console.log('unknown command');
@@ -89,8 +92,8 @@ export const createWebSocket = async () => {
     }
 }
 
-
-export const handleQuoteUpdates = (data: any) => {
+export const handleQuoteUpdates = (data: any, receivedTime: Date) => {
+    //console.log(TimeHelper.getPreciseTimeString(receivedTime));
     let quote = createLevelOneQuote(data);
     if (DB.levelOneQuoteSource == DB.levelOneQuoteSourceSchwab) {
         DB.updateFromLevelOneQuote(quote);
