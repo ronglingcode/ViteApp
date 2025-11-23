@@ -51,6 +51,18 @@ export class OpenProfitTaking extends Tradebook {
 
     validateEntry(entryPrice: number, stopOutPrice: number, logTags: Models.LogTags): number {
         // TODO: Add more validation rules as needed
+        let openPrice = Models.getCurrentPrice(this.symbol);
+        if (this.isLong) {
+            if (openPrice < this.openProfitTakingPlan.mustOpenWithin) {
+                Firestore.logError(`open price ${openPrice} < threshold ${this.openProfitTakingPlan.mustOpenWithin}`, logTags);
+                return 0;
+            }
+        } else {
+            if (openPrice > this.openProfitTakingPlan.mustOpenWithin) {
+                Firestore.logError(`open price ${openPrice} > threshold ${this.openProfitTakingPlan.mustOpenWithin}`, logTags);
+                return 0;
+            }
+        }
         return 0.21;
     }
 
