@@ -30,9 +30,7 @@ export const createWebSocket = async () => {
                     console.log(message);
                 }
             } else if (message.ev == 'T') {
-                if (GlobalSettings.marketDataSource == "massive") {
-                    handleTimeAndSalesData(message);
-                }
+                handleTimeAndSalesData(message);
             }
             else {
                 console.log(message);
@@ -95,10 +93,6 @@ const createTimeSale = (c: any) => {
             console.log(c);
         }
     }
-    if (has_non_update) {
-        //console.log(c)
-        return null;
-    }
 
     let symbol = c.sym;
     let record: Models.TimeSale = {
@@ -113,11 +107,18 @@ const createTimeSale = (c: any) => {
     if (c.s != null)
         record.lastSize = c.s;
     //console.log(`${c["p"]}, ${c["s"] / 100}`);
-    return record;
+    let shouldFilter = has_non_update;
+    return {record, shouldFilter};
 }
 export const handleTimeAndSalesData = (data: any) => {
-    let record = createTimeSale(data);
-    if (record) {
-        DB.updateFromTimeSale(record);
+    let {record, shouldFilter} = createTimeSale(data);
+    Chart.addToTimeAndSales(record.symbol, 'massiveFeed', false, record);
+    if (!shouldFilter) {
+        Chart.addToTimeAndSales(record.symbol, 'massiveFeed', true, record);
+    }
+    if (GlobalSettings.marketDataSource == "massive") {
+        if (!shouldFilter) {
+            DB.updateFromTimeSale(record);
+        }
     }
 }

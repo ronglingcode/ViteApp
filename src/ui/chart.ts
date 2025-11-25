@@ -545,21 +545,29 @@ export const addToQuoteBar = (symbol: string, classname: string, quotes: Models.
         quoteBar.appendChild(li);
     }
 }
-export const addToTimeAndSales = (widget: Models.ChartWidget, lastPrice: number, lastSize: number) => {
-    let target = widget.htmlContents.timeAndSales;
-    let li = document.createElement("div");
-    li.innerText = `${lastPrice} ${lastSize}`;
-    if (!target.firstChild) {
-        target.appendChild(li);
-    } else {
-        target.insertBefore(li, target.firstChild);
+export const addToTimeAndSales = (
+    symbol: string,classname: string,filtered: boolean, record: Models.TimeSale
+) => {
+    let widget = Models.getChartWidget(symbol);
+    if (!widget) {
+        return;
     }
-    target.insertBefore(li, target.firstChild);
-    while (target.children.length > 4) {
-        let lastChild = target.lastChild;
+    let container = widget.htmlContents.container;
+    let classnameToUse = filtered ? `${classname}Filtered` : `${classname}Unfiltered`;
+    let parent = container.getElementsByClassName(classnameToUse)[0] as HTMLElement;
+    let li = document.createElement("div");
+    li.innerText = `${record.lastPrice ?? 0} x ${record.lastSize ?? 0}`;
+    if (!parent.firstChild) {
+        parent.appendChild(li);
+    } else {
+        parent.insertBefore(li, parent.firstChild);
+    }
+    while (parent.children.length > 10) {
+        let lastChild = parent.lastChild;
         lastChild?.remove();
     }
 }
+
 export const addToListView = (widget: Models.ChartWidget, text: string) => {
     let target = widget.htmlContents.level1QuoteLargeOrders;
     let li = document.createElement("div");

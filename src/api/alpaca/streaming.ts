@@ -50,10 +50,8 @@ export const createWebSocketForMarketData = async () => {
                     subscribeTradesAndQuotesRequests(websocket);
                 }
             } else if (type == 't') {
-                // handle trades streaming data
-                if (GlobalSettings.marketDataSource == "alpaca") {
-                    StreamingHandler.handleTimeAndSalesData(element);
-                }
+                // handle trades streaming data                
+                StreamingHandler.handleTimeAndSalesData(element);
             } else if (type == 'q') {
                 handleQuoteUpdates(element);
             } else if (type == "subscription") {
@@ -182,10 +180,7 @@ export const createTimeSale = (c: any) => {
             }
         }
     }
-    if (has_non_update) {
-        //console.log(c)
-        return null;
-    }
+    
 
     let symbol = c["S"];
     let record: Models.TimeSale = {
@@ -200,7 +195,8 @@ export const createTimeSale = (c: any) => {
     if (c["s"] != null)
         record.lastSize = c["s"];
     //console.log(`${c["p"]}, ${c["s"] / 100}`);
-    return record;
+    let shouldFilter = has_non_update;
+    return {record, shouldFilter};
 }
 
 export const createLevelOneQuote = (c: any) => {

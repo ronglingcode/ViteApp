@@ -4,6 +4,7 @@ import * as Chart from '../ui/chart';
 import type * as Models from '../models/models';
 import * as Firestore from '../firestore';
 import * as Broker from '../api/broker';
+import * as GlobalSettings from '../config/globalSettings';
 // https://polygon.io/glossary/conditions-indicators
 export const conditionsNotUpdateHighLow = [
     "W", "C", "T", "U", "M", "Q", "N", "H", "I", "V", "7"
@@ -19,9 +20,16 @@ export const conditionsNotUpdateVolume = [
 ];
 
 export const handleTimeAndSalesData = (data: any) => {
-    let timeSale = AlpacaStreaming.createTimeSale(data);
-    if (timeSale) {
-        DB.updateFromTimeSale(timeSale);
+    let {record, shouldFilter} = AlpacaStreaming.createTimeSale(data);
+    let symbol = record.symbol;
+    Chart.addToTimeAndSales(symbol, 'alpacaFeed', false, record);
+    if (!shouldFilter) {
+        Chart.addToTimeAndSales(symbol, 'alpacaFeed', true, record);
+    }
+    if (GlobalSettings.marketDataSource == "alpaca") {
+        if (!shouldFilter) {
+            DB.updateFromTimeSale(record);
+        }
     }
 }
 export const handleMessageData = (data: any[]) => {
