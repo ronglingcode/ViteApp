@@ -546,14 +546,25 @@ export const addToQuoteBar = (symbol: string, classname: string, quotes: Models.
     }
 }
 export const addToTimeAndSales = (
-    symbol: string,classname: string,filtered: boolean, record: Models.TimeSale
+    symbol: string,classname: string,shouldFilter: boolean, record: Models.TimeSale
 ) => {
     let widget = Models.getChartWidget(symbol);
     if (!widget) {
         return;
     }
     let container = widget.htmlContents.container;
-    let classnameToUse = filtered ? `${classname}Filtered` : `${classname}Unfiltered`;
+    let classnameForUnfiltered = `${classname}Unfiltered`;
+    let classnameForFiltered = `${classname}Filtered`;
+    addToTimeAndSalesSection(classnameForUnfiltered, container, record);
+    if (!shouldFilter) {
+        addToTimeAndSalesSection(classnameForFiltered, container, record);
+    }
+    let classnameForSequence = `${classname}Sequence`;
+    let sequenceContainer = container.getElementsByClassName(classnameForSequence)[0] as HTMLElement;
+    if (sequenceContainer) 
+        sequenceContainer.innerText = `${record.rawTimestamp ?? ''}`;
+}
+const addToTimeAndSalesSection = (classnameToUse: string, container: HTMLElement, record: Models.TimeSale) => {
     let parent = container.getElementsByClassName(classnameToUse)[0] as HTMLElement;
     let li = document.createElement("div");
     li.innerText = `${record.lastPrice ?? 0} x ${record.lastSize ?? 0}`;

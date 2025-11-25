@@ -22,10 +22,7 @@ export const conditionsNotUpdateVolume = [
 export const handleTimeAndSalesData = (data: any) => {
     let {record, shouldFilter} = AlpacaStreaming.createTimeSale(data);
     let symbol = record.symbol;
-    Chart.addToTimeAndSales(symbol, 'alpacaFeed', false, record);
-    if (!shouldFilter) {
-        Chart.addToTimeAndSales(symbol, 'alpacaFeed', true, record);
-    }
+    Chart.addToTimeAndSales(symbol, 'alpacaFeed', shouldFilter, record);
     if (GlobalSettings.marketDataSource == "alpaca") {
         if (!shouldFilter) {
             DB.updateFromTimeSale(record);

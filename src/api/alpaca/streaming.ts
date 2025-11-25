@@ -194,7 +194,16 @@ export const createTimeSale = (c: any) => {
         record.lastPrice = c["p"];
     if (c["s"] != null)
         record.lastSize = c["s"];
-    //console.log(`${c["p"]}, ${c["s"] / 100}`);
+    if (c["i"] != null)
+        record.tradeID = c["i"];
+    record.rawTimestamp = '';
+    if (c["t"] != null) {
+        let nanoTime = new Date(c["t"]);
+        let timeStr = nanoTime.getHours() + ':' + nanoTime.getMinutes() + ':' + nanoTime.getSeconds() + '.' + nanoTime.getMilliseconds();
+        record.rawTimestamp = `${timeStr} ${nanoTime.getTime()}`;
+    }
+    console.log(`alpaca: ${c["t"]}`);
+    //console.log(c);
     let shouldFilter = has_non_update;
     return {record, shouldFilter};
 }

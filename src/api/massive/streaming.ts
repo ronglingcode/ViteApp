@@ -106,16 +106,29 @@ const createTimeSale = (c: any) => {
         record.lastPrice = c.p;
     if (c.s != null)
         record.lastSize = c.s;
+    if (c.q != null)
+        record.seq = c.q;
+    if (c.i != null)
+        record.tradeID = Number(c.i);
+    record.rawTimestamp = '';
+    if (c.t != null)
+        record.rawTimestamp += `${c.t}`;
+    // Convert c.t (assumed to be epoch milliseconds) to a time-only string like 'HH:MM:SS.mmm'
+    if (c.t != null) {
+        let nanoTime = new Date(c.t);
+        let timeStr = nanoTime.getHours() + ':' + nanoTime.getMinutes() + ':' + nanoTime.getSeconds() + '.' + nanoTime.getMilliseconds();
+        record.rawTimestamp = `${timeStr} ${c.t}`;
+    }
+    
+    console.log(`massive, t: ${c.t}`);
     //console.log(`${c["p"]}, ${c["s"] / 100}`);
     let shouldFilter = has_non_update;
     return {record, shouldFilter};
 }
 export const handleTimeAndSalesData = (data: any) => {
+    //console.log(data);
     let {record, shouldFilter} = createTimeSale(data);
-    Chart.addToTimeAndSales(record.symbol, 'massiveFeed', false, record);
-    if (!shouldFilter) {
-        Chart.addToTimeAndSales(record.symbol, 'massiveFeed', true, record);
-    }
+    Chart.addToTimeAndSales(record.symbol, 'massiveFeed', shouldFilter, record);
     if (GlobalSettings.marketDataSource == "massive") {
         if (!shouldFilter) {
             DB.updateFromTimeSale(record);

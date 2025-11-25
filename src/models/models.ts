@@ -471,6 +471,8 @@ export interface TimeSale {
     lastSequence?: number,
     seq?: number,
     receivedTime: Date,
+    tradeID?: number,
+    rawTimestamp?: string
 };
 
 export interface BrokerAccount {
