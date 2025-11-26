@@ -5,6 +5,20 @@ declare let window: Models.MyWindow;
 
 export let currentChartReviewIndex: number = -1;
 
+export const addToNetwork = (source: string) => {
+    let network = document.getElementById("network");
+    if (!network) {
+        return;
+    }
+    let currentText = network.textContent;
+    currentText += `_${source} `;
+
+    while (currentText.length > 35) {
+        currentText = currentText.slice(2);
+    }
+    network.innerHTML = currentText;
+}
+
 export const updateTotalTrades = () => {
     let totalTrades = 0;
     let nonBreakevenTradesCount = 0;

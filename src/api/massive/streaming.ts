@@ -9,6 +9,7 @@ import * as LevelOneQuote from '../../models/levelOneQuote';
 import * as Firestore from '../../firestore';
 import * as GlobalSettings from '../../config/globalSettings';
 import * as TimeHelper from '../../utils/timeHelper';
+import * as UI from '../../ui/ui';
 declare let window: Models.MyWindow;
 
 
@@ -118,10 +119,9 @@ const createTimeSale = (c: any) => {
         let nanoTime = new Date(c.t);
         let timeStr = nanoTime.getHours() + ':' + nanoTime.getMinutes() + ':' + nanoTime.getSeconds() + '.' + nanoTime.getMilliseconds();
         record.rawTimestamp = `${timeStr} ${c.t}`;
+        record.timestamp = c.t;
     }
     
-    console.log(`massive, t: ${c.t}`);
-    //console.log(`${c["p"]}, ${c["s"] / 100}`);
     let shouldFilter = has_non_update;
     return {record, shouldFilter};
 }
@@ -129,6 +129,14 @@ export const handleTimeAndSalesData = (data: any) => {
     //console.log(data);
     let {record, shouldFilter} = createTimeSale(data);
     Chart.addToTimeAndSales(record.symbol, 'massiveFeed', shouldFilter, record);
+    let symbolData = Models.getSymbolData(record.symbol);
+    if (record.timestamp && record.timestamp > symbolData.maxTimeSaleTimestamp) {
+        symbolData.maxTimeSaleTimestamp = record.timestamp;
+        console.log(`massive win`);
+        UI.addToNetwork('m');
+    } else {
+        console.log(`massive lose`);
+    }
     if (GlobalSettings.marketDataSource == "massive") {
         if (!shouldFilter) {
             DB.updateFromTimeSale(record);

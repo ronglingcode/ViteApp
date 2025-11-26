@@ -8,29 +8,6 @@ import * as LevelOneQuote from '../../models/levelOneQuote';
 import * as OrderFlowManager from '../../controllers/orderFlowManager';
 import * as GlobalSettings from '../../config/globalSettings';
 
-export const showStreamingData = (dataType: any) => {
-    let network = document.getElementById("network");
-    if (!network) {
-        return;
-    }
-    let currentText = network.textContent;
-    if (dataType == "success") {
-        currentText += `suc_`;
-    } else if (dataType == 't') {
-        currentText += `t`;
-    } else if (dataType == 'q') {
-        currentText += `q`;
-    } else if (dataType == "subscription") {
-        currentText += `sub_`;
-    } else {
-        currentText += `u`;
-    }
-
-    if (currentText.length > 35) {
-        currentText = currentText.slice(1);
-    }
-    network.innerHTML = currentText;
-}
 
 export const createWebSocketForMarketData = async () => {
     let socketUrl = "wss://stream.data.alpaca.markets/v2/sip";
@@ -41,7 +18,6 @@ export const createWebSocketForMarketData = async () => {
         //console.log(messageData);
         messageData.forEach((element: any) => {
             let type = element.T;
-            showStreamingData(type);
             let msg = element.msg;
             if (type == "success") {
                 if (msg == "connected") {
@@ -201,8 +177,8 @@ export const createTimeSale = (c: any) => {
         let nanoTime = new Date(c["t"]);
         let timeStr = nanoTime.getHours() + ':' + nanoTime.getMinutes() + ':' + nanoTime.getSeconds() + '.' + nanoTime.getMilliseconds();
         record.rawTimestamp = `${timeStr} ${nanoTime.getTime()}`;
+        record.timestamp = nanoTime.getTime();
     }
-    console.log(`alpaca: ${c["t"]}`);
     //console.log(c);
     let shouldFilter = has_non_update;
     return {record, shouldFilter};

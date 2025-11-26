@@ -326,6 +326,7 @@ export interface SymbolData {
     schwabLevelOneQuote: LevelOneQuote,
     alpacaLevelOneQuote: LevelOneQuote,
     timeAndSalesPerSecond: TimeAndSalesPerSecond[],
+    maxTimeSaleTimestamp: number,
 };
 
 export interface KeyAreaData {
@@ -473,6 +474,7 @@ export interface TimeSale {
     receivedTime: Date,
     tradeID?: number,
     rawTimestamp?: string
+    timestamp?: number,
 };
 
 export interface BrokerAccount {
@@ -1012,6 +1014,7 @@ export const getDefaultSymbolData = () => {
             askSize: 0,
         },
         timeAndSalesPerSecond: [],
+        maxTimeSaleTimestamp: 0,
     };
     return result;
 };

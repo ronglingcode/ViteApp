@@ -1,10 +1,11 @@
 import * as DB from '../data/db';
 import * as AlpacaStreaming from '../api/alpaca/streaming';
 import * as Chart from '../ui/chart';
-import type * as Models from '../models/models';
+import * as Models from '../models/models';
 import * as Firestore from '../firestore';
 import * as Broker from '../api/broker';
 import * as GlobalSettings from '../config/globalSettings';
+import * as UI from '../ui/ui';
 // https://polygon.io/glossary/conditions-indicators
 export const conditionsNotUpdateHighLow = [
     "W", "C", "T", "U", "M", "Q", "N", "H", "I", "V", "7"
@@ -22,6 +23,14 @@ export const conditionsNotUpdateVolume = [
 export const handleTimeAndSalesData = (data: any) => {
     let {record, shouldFilter} = AlpacaStreaming.createTimeSale(data);
     let symbol = record.symbol;
+    let symbolData = Models.getSymbolData(symbol);
+    if (record.timestamp && record.timestamp > symbolData.maxTimeSaleTimestamp) {
+        symbolData.maxTimeSaleTimestamp = record.timestamp;
+        console.log(`alpaca win`);
+        UI.addToNetwork('a');
+    } else {
+        console.log(`alpaca lose`);
+    }
     Chart.addToTimeAndSales(symbol, 'alpacaFeed', shouldFilter, record);
     if (GlobalSettings.marketDataSource == "alpaca") {
         if (!shouldFilter) {
