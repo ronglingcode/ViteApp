@@ -163,6 +163,7 @@ export const createTimeSale = (c: any) => {
         symbol: symbol,
         receivedTime: new Date(),
         conditions: [],
+        timestamp: 0,
     };
     if (c["t"] != null) {
         record.tradeTime = c["t"];

@@ -100,6 +100,7 @@ const createTimeSale = (c: any) => {
         symbol: symbol,
         receivedTime: new Date(),
         conditions: [],
+        timestamp: 0,
     };
     if (c.t != null) {
         record.tradeTime = c.t;
@@ -121,6 +122,8 @@ const createTimeSale = (c: any) => {
         let timeStr = nanoTime.getHours() + ':' + nanoTime.getMinutes() + ':' + nanoTime.getSeconds() + '.' + nanoTime.getMilliseconds();
         record.rawTimestamp = `${timeStr} ${c.t}`;
         record.timestamp = c.t;
+    } else {
+        Firestore.logError(`massive missing timestamp`, {symbol: symbol});
     }
     if (c.c != null) {
         for (let i = 0; i < c.c.length; i++) {
@@ -134,15 +137,8 @@ const createTimeSale = (c: any) => {
 export const handleTimeAndSalesData = (data: any) => {
     //console.log(data);
     let {record, shouldFilter} = createTimeSale(data);
+    let updated = DB.tryUpdateMaxTimeSaleTimestamp(record, 'm');
     Chart.addToTimeAndSales(record.symbol, 'massiveFeed', shouldFilter, record);
-    let symbolData = Models.getSymbolData(record.symbol);
-    if (record.timestamp && record.timestamp > symbolData.maxTimeSaleTimestamp) {
-        symbolData.maxTimeSaleTimestamp = record.timestamp;
-        console.log(`massive win`);
-        UI.addToNetwork('m');
-    } else {
-        console.log(`massive lose`);
-    }
     if (GlobalSettings.marketDataSource == "massive") {
         if (!shouldFilter) {
             DB.updateFromTimeSale(record);

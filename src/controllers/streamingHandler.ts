@@ -23,14 +23,8 @@ export const conditionsNotUpdateVolume = [
 export const handleTimeAndSalesData = (data: any) => {
     let {record, shouldFilter} = AlpacaStreaming.createTimeSale(data);
     let symbol = record.symbol;
-    let symbolData = Models.getSymbolData(symbol);
-    if (record.timestamp && record.timestamp > symbolData.maxTimeSaleTimestamp) {
-        symbolData.maxTimeSaleTimestamp = record.timestamp;
-        console.log(`alpaca win`);
-        UI.addToNetwork('a');
-    } else {
-        console.log(`alpaca lose`);
-    }
+    let updated = DB.tryUpdateMaxTimeSaleTimestamp(record, 'a');
+    
     Chart.addToTimeAndSales(symbol, 'alpacaFeed', shouldFilter, record);
     if (GlobalSettings.marketDataSource == "alpaca") {
         if (!shouldFilter) {

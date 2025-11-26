@@ -14,6 +14,7 @@ import * as ChartSettings from '../ui/chartSettings';
 import * as ProxyServer from '../api/proxyServer';
 import * as Broker from '../api/broker';
 import * as GlobalSettings from '../config/globalSettings';
+import * as UI from '../ui/ui';
 
 // Create a throttled version of cancelAllEntryOrders that executes once per second
 const throttledCancelAllEntryOrders = Helper.executeOncePerInterval(
@@ -789,4 +790,28 @@ export const getTimeAndSalesPerSecond = (symbol: string): Models.TimeAndSalesPer
 export const getTimeAndSalesLast3SecondsTotal = (symbol: string): number => {
     let symbolData = Models.getSymbolData(symbol);
     return symbolData.timeAndSalesPerSecond.reduce((total, entry) => total + entry.count, 0);
+}
+
+/**
+ * @returns true if the timestamp was updated, false otherwise
+ */
+export const tryUpdateMaxTimeSaleTimestamp = (record: Models.TimeSale, source: string) => {
+    let tradeId = record.tradeID?.toString() ?? '';
+    let symbolData = Models.getSymbolData(record.symbol);
+    if (record.timestamp > symbolData.maxTimeSaleTimestamp.timestamp) {
+        symbolData.maxTimeSaleTimestamp =  {
+            timestamp: record.timestamp,
+            tradeIds: [tradeId],
+        };
+        UI.addToNetwork(source);
+        return true;
+    } 
+    if (record.timestamp == symbolData.maxTimeSaleTimestamp.timestamp &&
+        !symbolData.maxTimeSaleTimestamp.tradeIds.includes(tradeId)
+    ) {
+        symbolData.maxTimeSaleTimestamp.tradeIds.push(tradeId);
+        UI.addToNetwork(source);
+        return true;
+    } 
+    return false;
 }

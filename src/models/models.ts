@@ -326,8 +326,12 @@ export interface SymbolData {
     schwabLevelOneQuote: LevelOneQuote,
     alpacaLevelOneQuote: LevelOneQuote,
     timeAndSalesPerSecond: TimeAndSalesPerSecond[],
-    maxTimeSaleTimestamp: number,
+    maxTimeSaleTimestamp: MaxTimeSaleTimestamp,
 };
+export interface MaxTimeSaleTimestamp {
+    timestamp: number,
+    tradeIds: string[],
+}
 
 export interface KeyAreaData {
     candles: SimpleCandle[],
@@ -474,7 +478,7 @@ export interface TimeSale {
     receivedTime: Date,
     tradeID?: number,
     rawTimestamp?: string
-    timestamp?: number,
+    timestamp: number,
     conditions: string[],
 };
 
@@ -1015,7 +1019,10 @@ export const getDefaultSymbolData = () => {
             askSize: 0,
         },
         timeAndSalesPerSecond: [],
-        maxTimeSaleTimestamp: 0,
+        maxTimeSaleTimestamp: {
+            timestamp: 0,
+            tradeIds: [],
+        }
     };
     return result;
 };
