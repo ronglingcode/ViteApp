@@ -26,12 +26,21 @@ export const handleTimeAndSalesData = (data: any) => {
     let updated = DB.tryUpdateMaxTimeSaleTimestamp(record, 'a');
     
     Chart.addToTimeAndSales(symbol, 'alpacaFeed', shouldFilter, record);
-    if (GlobalSettings.marketDataSource == "alpaca") {
-        if (!shouldFilter) {
+    if (shouldFilter) {
+        return;
+    }
+
+    if (GlobalSettings.competeForTimeAndSales) {
+        if (updated) {
+            DB.updateFromTimeSale(record);
+        }
+    } else {
+        if (GlobalSettings.marketDataSource == "alpaca") {
             DB.updateFromTimeSale(record);
         }
     }
 }
+
 export const handleMessageData = (data: any[]) => {
     data.forEach(element => {
         let service = element.service;

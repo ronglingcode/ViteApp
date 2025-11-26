@@ -90,8 +90,6 @@ const createTimeSale = (c: any) => {
                     break;
                 }
             }
-        } else {
-            console.log(c);
         }
     }
 
@@ -139,8 +137,16 @@ export const handleTimeAndSalesData = (data: any) => {
     let {record, shouldFilter} = createTimeSale(data);
     let updated = DB.tryUpdateMaxTimeSaleTimestamp(record, 'm');
     Chart.addToTimeAndSales(record.symbol, 'massiveFeed', shouldFilter, record);
-    if (GlobalSettings.marketDataSource == "massive") {
-        if (!shouldFilter) {
+    if (shouldFilter) {
+        return;
+    }
+
+    if (GlobalSettings.competeForTimeAndSales) {
+        if (updated) {
+            DB.updateFromTimeSale(record);
+        }
+    } else {
+        if (GlobalSettings.marketDataSource == "massive") {
             DB.updateFromTimeSale(record);
         }
     }
