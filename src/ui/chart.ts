@@ -545,6 +545,21 @@ export const addToQuoteBar = (symbol: string, classname: string, quotes: Models.
         quoteBar.appendChild(li);
     }
 }
+export const addToTimeAndSalesOld = (widget: Models.ChartWidget, lastPrice: number, lastSize: number) => {
+    let target = widget.htmlContents.timeAndSales;
+    let li = document.createElement("div");
+    li.innerText = `${lastPrice} ${lastSize}`;
+    if (!target.firstChild) {
+        target.appendChild(li);
+    } else {
+        target.insertBefore(li, target.firstChild);
+    }
+    target.insertBefore(li, target.firstChild);
+    while (target.children.length > 4) {
+        let lastChild = target.lastChild;
+        lastChild?.remove();
+    }
+}
 export const addToTimeAndSales = (
     symbol: string,classname: string,shouldFilter: boolean, record: Models.TimeSale
 ) => {

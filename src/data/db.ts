@@ -536,7 +536,7 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
     updateChartColor(symbol, widget);
     //console.log(timesale);
     if (timesale.lastPrice && timesale.lastSize) {
-        Chart.addToTimeAndSales(widget, timesale.lastPrice, timesale.lastSize);
+        Chart.addToTimeAndSalesOld(widget, timesale.lastPrice, timesale.lastSize);
     }
 
     AutoTrader.onNewTimeAndSalesData(symbol, lastPrice, isNewCandleData);
