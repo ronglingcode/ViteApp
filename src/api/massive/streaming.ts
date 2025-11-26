@@ -99,6 +99,7 @@ const createTimeSale = (c: any) => {
     let record: Models.TimeSale = {
         symbol: symbol,
         receivedTime: new Date(),
+        conditions: [],
     };
     if (c.t != null) {
         record.tradeTime = c.t;
@@ -121,7 +122,12 @@ const createTimeSale = (c: any) => {
         record.rawTimestamp = `${timeStr} ${c.t}`;
         record.timestamp = c.t;
     }
-    
+    if (c.c != null) {
+        for (let i = 0; i < c.c.length; i++) {
+            let condition = c.c[i];
+            record.conditions.push(`${condition}`);
+        }
+    }
     let shouldFilter = has_non_update;
     return {record, shouldFilter};
 }

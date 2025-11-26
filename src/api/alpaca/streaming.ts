@@ -162,6 +162,7 @@ export const createTimeSale = (c: any) => {
     let record: Models.TimeSale = {
         symbol: symbol,
         receivedTime: new Date(),
+        conditions: [],
     };
     if (c["t"] != null) {
         record.tradeTime = c["t"];
@@ -178,6 +179,9 @@ export const createTimeSale = (c: any) => {
         let timeStr = nanoTime.getHours() + ':' + nanoTime.getMinutes() + ':' + nanoTime.getSeconds() + '.' + nanoTime.getMilliseconds();
         record.rawTimestamp = `${timeStr} ${nanoTime.getTime()}`;
         record.timestamp = nanoTime.getTime();
+    }
+    if (c["c"] != null) {
+        record.conditions = c["c"];
     }
     //console.log(c);
     let shouldFilter = has_non_update;

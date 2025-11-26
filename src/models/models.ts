@@ -475,6 +475,7 @@ export interface TimeSale {
     tradeID?: number,
     rawTimestamp?: string
     timestamp?: number,
+    conditions: string[],
 };
 
 export interface BrokerAccount {

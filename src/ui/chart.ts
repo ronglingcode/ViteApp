@@ -570,19 +570,24 @@ export const addToTimeAndSales = (
     let container = widget.htmlContents.container;
     let classnameForUnfiltered = `${classname}Unfiltered`;
     let classnameForFiltered = `${classname}Filtered`;
-    addToTimeAndSalesSection(classnameForUnfiltered, container, record);
     if (!shouldFilter) {
-        addToTimeAndSalesSection(classnameForFiltered, container, record);
+        addToTimeAndSalesSection(true, classnameForFiltered, container, record);
+    } else {
+        addToTimeAndSalesSection(false, classnameForUnfiltered, container, record);
     }
     let classnameForSequence = `${classname}Sequence`;
     let sequenceContainer = container.getElementsByClassName(classnameForSequence)[0] as HTMLElement;
     if (sequenceContainer) 
         sequenceContainer.innerText = `${record.rawTimestamp ?? ''}`;
 }
-const addToTimeAndSalesSection = (classnameToUse: string, container: HTMLElement, record: Models.TimeSale) => {
+const addToTimeAndSalesSection = (filtered: boolean, classnameToUse: string, container: HTMLElement, record: Models.TimeSale) => {
     let parent = container.getElementsByClassName(classnameToUse)[0] as HTMLElement;
     let li = document.createElement("div");
-    li.innerText = `${record.lastPrice ?? 0} x ${record.lastSize ?? 0}`;
+    if (!filtered) {
+        li.innerText = `${record.lastPrice ?? 0}x${record.lastSize ?? 0},${record.conditions.join(',')}`;
+    } else {
+        li.innerText = `${record.lastPrice ?? 0}x${record.lastSize ?? 0}`;
+    }
     if (!parent.firstChild) {
         parent.appendChild(li);
     } else {
