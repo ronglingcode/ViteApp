@@ -61,6 +61,12 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
         return 0;
     }
     let openPrice = Models.getOpenPrice(symbol);
+    if (openPrice) {
+    if (!Rules.isDirectionAllowedBasedOnOpenPriceZone(symbol, isLong, openPrice, tradingPlans)) {
+            Firestore.logError(`checkRule: not allowed based on open zone`, logTags);
+            return 0;
+        }
+    }
     let isEntryPriceInTradableArea = Models.isPriceInTradableArea(symbol, isLong, entryPrice);
     let isOpenInTradableArea = openPrice ? Models.isPriceInTradableArea(symbol, isLong, openPrice) : false;
     let hasBeenInTradableArea = Models.hasPriceBeenInTradableArea(symbol, isLong);

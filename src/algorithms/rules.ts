@@ -526,3 +526,45 @@ export const isReverseOfMomentumCandle = (symbol: string, isLong: boolean, isMar
         return currentCandle.open < currentCandle.close;
     }
 }
+
+/**
+ * Zone is far: default to false, when set to true, this is not used
+ * When open near above zone, long only
+ * When open near below zone, short only
+ * When open inside zone and gap up, short only
+ * When open inside zone and gap down, long only
+ */
+export const isDirectionAllowedBasedOnOpenPriceZone = (
+    symbol: string, isLong: boolean, openPrice: number, plan: TradingPlansModels.TradingPlans) => {
+    if (plan.analysis.zoneNearEdge.zoneIsFar) {
+        return true;
+    }
+    if (openPrice >= plan.analysis.zoneNearEdge.high) {
+        if (isLong) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    if (openPrice <= plan.analysis.zoneNearEdge.low) {
+        if (isLong) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+    let isGapUp = openPrice > plan.analysis.gap.pdc;
+    if (isGapUp) {
+        if (isLong) {
+            return false;
+        } else {
+            return true;
+        }
+    } else {
+        if (isLong) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}

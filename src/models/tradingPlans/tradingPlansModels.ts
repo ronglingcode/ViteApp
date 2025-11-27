@@ -29,9 +29,15 @@ export interface Analysis {
      * 1: use premarket high, -1: use premarket low, 0: not use premarket levels
      */
     usePremarketKeyLevel: number,
+    zoneNearEdge: ZoneNearEdge,
     dualMomentumKeyLevels: number[],
     profitTargetsForLong: ProfitTargets,
     profitTargetsForShort: ProfitTargets,
+}
+export interface ZoneNearEdge {
+    zoneIsFar: boolean,
+    high: number,
+    low: number,
 }
 export interface Gap {
     pdc: number,
