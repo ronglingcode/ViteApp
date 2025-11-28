@@ -62,8 +62,9 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
     }
     let openPrice = Models.getOpenPrice(symbol);
     if (openPrice) {
-    if (!Rules.isDirectionAllowedBasedOnOpenPriceZone(symbol, isLong, openPrice, tradingPlans)) {
-            Firestore.logError(`checkRule: not allowed based on open zone`, logTags);
+        let disallowedReason = Rules.getDisallowedReasonBasedOnOpenPriceZone(symbol, isLong, openPrice, tradingPlans);
+        if (disallowedReason.length > 0) {
+            Firestore.logError(`blocked entry: ${disallowedReason}`, logTags);
             return 0;
         }
     }

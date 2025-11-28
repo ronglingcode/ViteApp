@@ -533,38 +533,39 @@ export const isReverseOfMomentumCandle = (symbol: string, isLong: boolean, isMar
  * When open near below zone, short only
  * When open inside zone and gap up, short only
  * When open inside zone and gap down, long only
+ * @returns reason why it's not allowed. empty string if it's allowed.
  */
-export const isDirectionAllowedBasedOnOpenPriceZone = (
+export const getDisallowedReasonBasedOnOpenPriceZone = (
     symbol: string, isLong: boolean, openPrice: number, plan: TradingPlansModels.TradingPlans) => {
     if (plan.analysis.zoneNearEdge.zoneIsFar) {
-        return true;
+        return "";
     }
     if (openPrice >= plan.analysis.zoneNearEdge.high) {
         if (isLong) {
-            return true;
+            return "";
         } else {
-            return false;
+            return "open near above zone";
         }
     }
     if (openPrice <= plan.analysis.zoneNearEdge.low) {
         if (isLong) {
-            return false;
+            return "open near below zone";
         } else {
-            return true;
+            return "";
         }
     }
     let isGapUp = openPrice > plan.analysis.gap.pdc;
     if (isGapUp) {
         if (isLong) {
-            return false;
+            return "gap up into zone";
         } else {
-            return true;
+            return "";
         }
     } else {
         if (isLong) {
-            return true;
+            return "";
         } else {
-            return false;
+            return "gap down into zone";
         }
     }
 }
