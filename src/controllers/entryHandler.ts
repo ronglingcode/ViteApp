@@ -50,7 +50,19 @@ export const entryAfterOpen = (symbol: string, isLong: boolean, shiftKey: boolea
     }
 };
 
-
+export const createEntryLogMessage = (orderType: string, isLong: boolean,
+    entryPrice: number, stopOutPrice: number, riskLevel: number,
+    allowedSizeMutiplier: number) => {
+    let action = isLong ? "buy" : "sell";
+    let logMessage = `${action} ${orderType} ${entryPrice},`;
+    if ((isLong && riskLevel < stopOutPrice) || (!isLong && riskLevel > stopOutPrice)) {
+        logMessage += ` stop: ${stopOutPrice}, risk: ${riskLevel}`;
+    } else {
+        logMessage += ` stop&risk: ${stopOutPrice},`;
+    }
+    logMessage += `size: ${allowedSizeMutiplier}`;
+    return logMessage;
+}
 
 export const breakoutEntryWithoutRules = (symbol: string, isLong: boolean,
     entryPrice: number, stopOutPrice: number, riskLevel: number, logTags: Models.LogTags,
@@ -58,11 +70,7 @@ export const breakoutEntryWithoutRules = (symbol: string, isLong: boolean,
     tradebookID: string,
     orderIdToReplace: string
 ) => {
-    let action = isLong ? "buy" : "sell";
-
-    let logMessage = `${action} stop ${entryPrice},`;
-    logMessage += `stop loss: ${stopOutPrice},`;
-    logMessage += `multiplier: ${allowedSizeMutiplier}`;
+    let logMessage = createEntryLogMessage('stop', isLong, entryPrice, stopOutPrice, riskLevel, allowedSizeMutiplier);
     Firestore.logInfo(logMessage, logTags);
     entryPrice = Calculator.updateStopPriceFromCurrentQuote(symbol, entryPrice, isLong);
 
@@ -89,10 +97,8 @@ export const marketEntryWithoutRules = (symbol: string, isLong: boolean,
     tradebookID: string
 ) => {
     let estimatedEntryPrice = Models.getCurrentPrice(symbol);
-    let action = isLong ? 'buy' : 'sell';
-    let logMessage = `market ${action} near ${estimatedEntryPrice},`;
-    logMessage += ` stop loss: ${stopOutPrice},`;
-    logMessage += ` multiplier: ${allowedSizeMutiplier}`;
+    let logMessage = createEntryLogMessage('market', isLong, estimatedEntryPrice, stopOutPrice, riskLevel, allowedSizeMutiplier);
+
     Firestore.logInfo(logMessage, logTags);
 
     // flatten if having opposite position
