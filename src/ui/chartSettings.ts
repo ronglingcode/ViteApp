@@ -184,6 +184,20 @@ export const vwapSettings: any = {
     autoscaleInfoProvider: () => null,
     priceLineVisible: false
 };
+export const ma5Settings: any = {
+    color: 'black',
+    lineWidth: 1,
+    crosshairMarkerVisible: false,
+    autoscaleInfoProvider: () => null,
+    priceLineVisible: false
+};
+export const ma9Settings: any = {
+    color: 'black',
+    lineWidth: 1,
+    crosshairMarkerVisible: false,
+    autoscaleInfoProvider: () => null,
+    priceLineVisible: false
+};
 export const openPriceSettings: any = {
     color: blueColor,
     lineWidth: 1,

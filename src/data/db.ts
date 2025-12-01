@@ -210,6 +210,26 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[]) => {
     allCharts[3].volumeSeries.setData(symbolData.m30Volumes);
     allCharts[3].candleSeries.setData(symbolData.m30Candles);
 
+    for (let lookBackStart = 0;lookBackStart < symbolData.m1Candles.length-1; lookBackStart++) {
+        let ma5 = Models.getMovingAverageCandle(symbol, 5, lookBackStart, symbolData.m1Candles);
+        let ma9 = Models.getMovingAverageCandle(symbol, 9, lookBackStart, symbolData.m1Candles);
+        if (ma5) {
+            symbolData.m1ma5.push({
+                time: ma5.time,
+                value: ma5.close,
+            });
+        }
+        if (ma9) {
+            symbolData.m1ma9.push({
+                time: ma9.time,
+                value: ma9.close,
+            });
+        }
+    }
+    allCharts[0].ma5Series?.setData(symbolData.m1ma5);
+    allCharts[0].ma9Series?.setData(symbolData.m1ma9);
+
+
     let tradingPlans = TradingPlans.getTradingPlans(symbol);
     let keyLevels = tradingPlans.keyLevels;
     let lastDefenseForLong = [TradingPlans.getLastDefenseForLongInRetracement(symbol)];
@@ -332,7 +352,7 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
         return;
 
     Chart.updateUI(symbol, "currentPrice", Helper.numberToStringWithPaddingToCents(timesale.lastPrice));
-
+    let allCharts = Models.getChartsInAllTimeframes(symbol);
     let timeframeBucket = Helper.numberToDate(timesale.tradeTime);
     timeframeBucket.setSeconds(0, 0);
     timeframeBucket = TimeHelper.roundToTimeFrameBucketTime(timeframeBucket, usedTimeframe);
@@ -459,7 +479,6 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
         for (let i = 0; i < keyAreasToDraw.length; i++) {
             const element = keyAreasToDraw[i];
             let kac = buildKeyAreaCloudCandleData(newTime, element.upperPrice, element.lowerPrice, element.direction);
-            let allCharts = Models.getChartsInAllTimeframes(symbol);
             for (let j = 0; j < allCharts.length; j++) {
                 addDataAndUpdateChart(newTime, symbolData.keyAreaData, kac, allCharts[j].keyAreaSeriesList[i]);
             }
@@ -468,6 +487,22 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
         Chart.drawIndicatorsForNewlyClosedCandle(
             symbolData.candles.length - 1, symbolData.candles, widget
         );
+        let ma5 = Models.getMovingAverageCandle(symbol, 5, symbolData.candles.length - 1, symbolData.m1Candles);
+        let ma9 = Models.getMovingAverageCandle(symbol, 9, symbolData.candles.length - 1, symbolData.m1Candles);
+        if (ma5) {
+            symbolData.m1ma5.push({
+                time: ma5.time,
+                value: ma5.close,
+            });
+            allCharts[0].ma5Series?.update(symbolData.m1ma5[symbolData.m1ma5.length - 1]);
+        }
+        if (ma9) {
+            symbolData.m1ma9.push({
+                time: ma9.time,
+                value: ma9.close,
+            });
+            allCharts[0].ma9Series?.update(symbolData.m1ma9[symbolData.m1ma9.length - 1]);
+        }
 
         // create a new candle
         let newDate = Helper.tvTimestampToLocalJsDate(newTime);
@@ -527,7 +562,6 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
     let volumeText = `${Helper.largeNumberToString(lastVolume.value)} $${Helper.roundToMillion(lastVolume.value * lastPrice)}M`
     Chart.updateUI(symbol, "currentVolume", volumeText);
     setColorForVolume(symbolData.candles, symbolData.volumes, symbolData.volumes.length - 1);
-    let allCharts = Models.getChartsInAllTimeframes(symbol);
     allCharts[0].volumeSeries.update(lastVolume);
     allCharts[0].vwapSeries.update(lastVwap);
     allCharts[0].candleSeries.update(lastCandle);
@@ -799,19 +833,19 @@ export const tryUpdateMaxTimeSaleTimestamp = (record: Models.TimeSale, source: s
     let tradeId = record.tradeID?.toString() ?? '';
     let symbolData = Models.getSymbolData(record.symbol);
     if (record.timestamp > symbolData.maxTimeSaleTimestamp.timestamp) {
-        symbolData.maxTimeSaleTimestamp =  {
+        symbolData.maxTimeSaleTimestamp = {
             timestamp: record.timestamp,
             tradeIds: [tradeId],
         };
         UI.addToNetwork(source);
         return true;
-    } 
+    }
     if (record.timestamp == symbolData.maxTimeSaleTimestamp.timestamp &&
         !symbolData.maxTimeSaleTimestamp.tradeIds.includes(tradeId)
     ) {
         symbolData.maxTimeSaleTimestamp.tradeIds.push(tradeId);
         UI.addToNetwork(source);
         return true;
-    } 
+    }
     return false;
 }

@@ -174,6 +174,8 @@ export interface TimeFrameChart {
     premktHigh?: LightweightCharts.ISeriesApi<"Line">,
     premktLow?: LightweightCharts.ISeriesApi<"Line">,
     vwapSeries: LightweightCharts.ISeriesApi<"Line">,
+    ma5Series?: LightweightCharts.ISeriesApi<"Line">,
+    ma9Series?: LightweightCharts.ISeriesApi<"Line">,
     markers: LightweightCharts.SeriesMarker<LightweightCharts.UTCTimestamp>[],
     tradeMarkers: LightweightCharts.SeriesMarker<LightweightCharts.UTCTimestamp>[],
     levelOneImbalanceMarkers: LightweightCharts.SeriesMarker<LightweightCharts.UTCTimestamp>[],
@@ -301,6 +303,8 @@ export interface SymbolData {
     m5Vwaps: LineSeriesData[],
     m15Vwaps: LineSeriesData[],
     m30Vwaps: LineSeriesData[],
+    m1ma5: LineSeriesData[],
+    m1ma9: LineSeriesData[],
     candles: CandlePlus[],
     premarketDollarTraded: number,
     previousDayPremarketDollarTraded: number,
@@ -987,6 +991,8 @@ export const getDefaultSymbolData = () => {
         m5Vwaps: [],
         m15Vwaps: [],
         m30Vwaps: [],
+        m1ma5: [],
+        m1ma9: [],
         keyAreaData: [],
         premarketDollarTraded: 0,
         previousDayPremarketDollarTraded: 0,
@@ -1848,4 +1854,26 @@ export interface CamarillaPivots {
     S4: number,
     S5: number,
     S6: number
+}
+
+export const getMovingAverageCandle = (symbol: string, timeframe: number, 
+lookBackStart: number, m1Candles: Candle[]) => {
+    let time  = m1Candles[lookBackStart].time;
+    let sum = 0;
+    let start = lookBackStart-timeframe+1;
+    if (start < 0) {
+        return null;
+    }
+    for(let i = start; i <= lookBackStart; i++) {
+        sum += m1Candles[i].close;
+    }
+    let ma =  Helper.roundPrice(symbol,sum / timeframe);
+    let result: SimpleCandle = {
+        time: time,
+        close: ma,
+        open: ma,
+        high: ma,
+        low: ma,
+    };
+    return result;
 }

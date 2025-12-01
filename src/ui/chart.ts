@@ -64,6 +64,10 @@ const createTimeFrameChart = (timeframe: number, htmlElement: HTMLElement, tabIn
         tradeManagementLevels: [],
         momentumLevels: [],
     };
+    if (timeframe == 1) {
+        timeframeChart.ma5Series = lwChart.addLineSeries(ChartSettings.ma5Settings);
+        timeframeChart.ma9Series = lwChart.addLineSeries(ChartSettings.ma9Settings);
+    }
     for (let i = 0; i < keyAreasToDraw.length; i++) {
         timeframeChart.keyAreaSeriesList.push(timeframeChart.chart.addCandlestickSeries(ChartSettings.keyAreaCandleSettings));
     }
@@ -561,7 +565,7 @@ export const addToTimeAndSalesOld = (widget: Models.ChartWidget, lastPrice: numb
     }
 }
 export const addToTimeAndSales = (
-    symbol: string,classname: string,shouldFilter: boolean, record: Models.TimeSale
+    symbol: string, classname: string, shouldFilter: boolean, record: Models.TimeSale
 ) => {
     let widget = Models.getChartWidget(symbol);
     if (!widget) {
@@ -577,7 +581,7 @@ export const addToTimeAndSales = (
     }
     let classnameForSequence = `${classname}Sequence`;
     let sequenceContainer = container.getElementsByClassName(classnameForSequence)[0] as HTMLElement;
-    if (sequenceContainer) 
+    if (sequenceContainer)
         sequenceContainer.innerText = `${record.rawTimestamp ?? ''}`;
 }
 const addToTimeAndSalesSection = (filtered: boolean, classnameToUse: string, container: HTMLElement, record: Models.TimeSale) => {
