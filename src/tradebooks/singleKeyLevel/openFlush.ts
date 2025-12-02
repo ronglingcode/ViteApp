@@ -9,6 +9,7 @@ import * as Patterns from '../../algorithms/patterns';
 import type { TradebookState } from '../tradebookStates';
 import * as TradebookUtil from '../tradebookUtil';
 import * as OrderFlow from '../../controllers/orderFlow';
+import * as GlobalSettings from '../../config/globalSettings';
 
 export class OpenFlush extends SingleKeyLevelTradebook {
     public static readonly openFlushLong: string = 'openFlushLong';
@@ -31,7 +32,7 @@ export class OpenFlush extends SingleKeyLevelTradebook {
     }
 
     refreshLiveStats(): void {
-        if (!this.isEnabled()) {
+        if (!this.isEnabled() || !GlobalSettings.allowLiveStats) {
             Helper.updateHtmlIfChanged(this.htmlStats, '');
             return;
         }

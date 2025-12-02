@@ -12,6 +12,7 @@ import * as Calculator from '../../utils/calculator';
 import * as ExitRulesCheckerNew from '../../controllers/exitRulesCheckerNew';
 import * as Rules from '../../algorithms/rules';
 import * as TradebookUtil from '../tradebookUtil';
+import * as GlobalSettings from '../../config/globalSettings';
 
 export class VwapContinuationFailed extends SingleKeyLevelTradebook {
     public static readonly longVwapPushDownFailed: string = 'LongVwapPushdownFailed';
@@ -36,7 +37,7 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
     }
 
     refreshLiveStats(): void {
-        if (!this.isEnabled()) {
+        if (!this.isEnabled() || !GlobalSettings.allowLiveStats) {
             Helper.updateHtmlIfChanged(this.htmlStats, '');
             return;
         }

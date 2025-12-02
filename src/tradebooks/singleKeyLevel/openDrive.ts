@@ -13,6 +13,7 @@ import type { TradebookState } from '../tradebookStates';
 import * as TradebookUtil from '../tradebookUtil';
 import * as ExitRulesCheckerNew from '../../controllers/exitRulesCheckerNew';
 import * as Patterns from '../../algorithms/patterns';
+import * as GlobalSettings from '../../config/globalSettings';
 
 export class OpenDrive extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
@@ -35,7 +36,7 @@ export class OpenDrive extends SingleKeyLevelTradebook {
     }
 
     refreshLiveStats(): void {
-        if (!this.isEnabled()) {
+        if (!this.isEnabled() || !GlobalSettings.allowLiveStats) {
             Helper.updateHtmlIfChanged(this.htmlStats, '');
             return;
         }

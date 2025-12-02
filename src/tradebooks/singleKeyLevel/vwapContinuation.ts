@@ -15,6 +15,7 @@ import { TradebookState } from '../tradebookStates';
 import * as TradebooksManager from '../tradebooksManager';
 import * as TradebookUtil from '../tradebookUtil';
 import * as ExitRulesCheckerNew from '../../controllers/exitRulesCheckerNew';
+import * as GlobalSettings from '../../config/globalSettings';
 
 export class VwapContinuation extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
@@ -40,7 +41,7 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
      * reversal near vwap, min distance to vwap
      */
     refreshLiveStats(): void {
-        if (!this.isEnabled()) {
+        if (!this.isEnabled() || !GlobalSettings.allowLiveStats) {
             Helper.updateHtmlIfChanged(this.htmlStats, '');
             return;
         }

@@ -11,6 +11,7 @@ import * as TradingPlans from '../../models/tradingPlans/tradingPlans';
 import * as ExitRulesCheckerNew from '../../controllers/exitRulesCheckerNew';
 import * as Calculator from '../../utils/calculator';
 import { TradebookState, TradebookStateHelper } from '../tradebookStates';
+import * as GlobalSettings from '../../config/globalSettings';
 
 export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
@@ -19,7 +20,7 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
         super(symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel);
     }
     refreshLiveStats(): void {
-        if (!this.isEnabled()) {
+        if (!this.isEnabled() || !GlobalSettings.allowLiveStats) {
             Helper.updateHtmlIfChanged(this.htmlStats, '');
             return;
         }
