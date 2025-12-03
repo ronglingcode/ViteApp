@@ -203,6 +203,9 @@ ${tradebookText}
 Here is my analysis and trading plans for ${symbol}:
 ${detailedPlan.notes}
 
+Here is my predefined profit targets: 
+${getProfitTargets(symbol, isLong)}
+
 Your role:
 1. Comment on whether the entry aligns with the tradebook rules
 2. Identify any concerns or risks
@@ -427,4 +430,16 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
 - Has the price tested the inflection level: ${hasTestedKeyLevel}.
 - Has the price tested the vwap since open: ${hasTestedVwap}.
 `;
+}
+
+export const getProfitTargets = (symbol: string, isLong: boolean) => {
+    let plan = TradingPlans.getTradingPlansForSingleDirection(symbol, isLong);
+    let targets = plan.finalTargets;
+    let targetText = "";
+    for (let i = 0; i < targets.length; i++) {
+        let target = targets[i];
+        targetText += `${target.text} for ${target.partialCount}0%. `;
+    }
+    targetText += "The rest using default from tradebook.";
+    return targetText;
 }
