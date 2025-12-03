@@ -348,7 +348,7 @@ export const onMinuteClosed = (
         }
         getBreakoutEntryClosePercentage(symbol, newlyClosedCandle);
         if (seconds > 0) {
-            Agent.testTradeAnalysis();
+            Agent.testTradeAnalysis(symbol);
         }
     }
     if (seconds > 10) {

@@ -350,29 +350,27 @@ export const clearTradeConversation = (symbol: string) => {
 /**
  * Test trade analysis flow
  */
-export const testTradeAnalysis = async () => {
+export const testTradeAnalysis = async (symbol: string) => {
     console.log('Testing Trade Analysis...');
 
     console.log('\n--- Entry Analysis ---');
     if (!window.HybridApp.AccountCache) {
         return;
     }
-    let positions = window.HybridApp.AccountCache.positions;
-    if (!positions || positions.size == 0) {
+
+    let position = Models.getPosition(symbol);
+    if (!position || !position.netQuantity || position.netQuantity === 0) {
         return;
     }
-
-    for (const [symbol, position] of positions) {
-        try {
-            // Determine direction from net quantity (positive => long)
-            const isLong = (position && position.netQuantity && position.netQuantity > 0) ? true : false;
-            // Skip zero-sized positions
-            if (!position || !position.netQuantity || position.netQuantity === 0) continue;
-            await analyzeTradeEntry(symbol, isLong, position.netQuantity);
-        } catch (err) {
-            console.error(`Error analyzing position ${symbol}:`, err);
-        }
+    
+    try {
+        // Determine direction from net quantity (positive => long)
+        const isLong = (position && position.netQuantity && position.netQuantity > 0) ? true : false;
+        await analyzeTradeEntry(symbol, isLong, position.netQuantity);
+    } catch (err) {
+        console.error(`Error analyzing position ${symbol}:`, err);
     }
+
     /*
     // Simulate candle close
     console.log('\n--- Candle Close Analysis ---');
