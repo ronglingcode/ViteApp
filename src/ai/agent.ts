@@ -391,6 +391,14 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
     let openPrice = Models.getOpenPrice(symbol);
     let openVwap = Models.getLastVwapBeforeOpen(symbol);
     let symbolData = Models.getSymbolData(symbol);
+    let candles = Models.getCandlesFromM1SinceOpen(symbol);
+    let vwaps = Models.getVwapsSinceOpen(symbol);
+    let candlesText = "";
+    for (let i = 0; i < candles.length && i < vwaps.length; i++) {
+        let candle = candles[i];
+        let vwap = vwaps[i];
+        candlesText += `{T: ${candle.time}, O: ${candle.open}, H: ${candle.high}, L: ${candle.low}, C: ${candle.close}, V: ${candle.volume}, vwap: ${vwap.value}},`;
+    }
     return `
 - Inflection level: ${inflection}.
 - ATR: ${plan.atr.average}.
@@ -398,5 +406,6 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
 - vwap at open: ${openVwap}.
 - Premarket high: ${symbolData.premktHigh}, premarket low: ${symbolData.premktLow}.
 - Intraday high: ${symbolData.highOfDay}, intraday low: ${symbolData.lowOfDay}.
+- 1-minute candles since open with time(T), volume(V) and vwap: [${candlesText}].
 `;
 }
