@@ -12,20 +12,12 @@ import * as GoogleDocsApi from '../api/googleDocs/googleDocsApi';
 import * as Models from '../models/models';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as Helper from '../utils/helper';
+
 declare let window: Models.MyWindow;
 
 export interface ChatMessage {
     role: 'system' | 'user' | 'assistant';
     content: string;
-}
-
-export interface TradeEntry {
-    symbol: string;
-    direction: 'long' | 'short';
-    entryPrice: number;
-    stopLoss: number;
-    quantity: number;
-    entryTime: string;
 }
 
 export interface CandleData {
@@ -42,17 +34,20 @@ export interface CandleData {
 export const tradeConversations: Map<string, ChatMessage[]> = new Map();
 
 // UI Elements
-let chatgptMessagesDiv: HTMLElement | null = null;
-let currentMessageDiv: HTMLElement | null = null;
+let currentMessageDivs: Map<string, HTMLElement> = new Map();
 
-/**
- * Get or cache the chatgptMessages div
- */
-const getChatgptMessagesDiv = (): HTMLElement | null => {
-    if (!chatgptMessagesDiv) {
-        chatgptMessagesDiv = document.getElementById('chatgptMessages');
+const getChatgptMessagesDiv = (symbol: string): HTMLElement | null => {
+    let index = Models.getWatchlistIndex(symbol);
+    if (index == -1) {
+        console.log(`[ChatGPT] No index for ${symbol}`);
+        return null;
     }
-    return chatgptMessagesDiv;
+    let div = document.getElementById('chat' + index);
+    if (!div) {
+        console.log(`[ChatGPT] No div for ${symbol}`);
+        return null;
+    }
+    return div;
 };
 
 /**
@@ -60,9 +55,12 @@ const getChatgptMessagesDiv = (): HTMLElement | null => {
  * @param title - Title/header for the message
  * @param isUser - Whether this is a user message
  */
-const startNewMessage = (title: string, isUser: boolean = false): HTMLElement | null => {
-    const container = getChatgptMessagesDiv();
-    if (!container) return null;
+const startNewMessage = (symbol: string, title: string, isUser: boolean = false): HTMLElement | null => {
+    const container = getChatgptMessagesDiv(symbol);
+    if (!container) {
+        console.log(`[ChatGPT] No container for ${symbol}`);
+        return null;
+    }
 
     // Create message wrapper
     const messageDiv = document.createElement('div');
@@ -90,57 +88,35 @@ const startNewMessage = (title: string, isUser: boolean = false): HTMLElement | 
     // Insert at top
     container.insertBefore(messageDiv, container.firstChild);
 
-    currentMessageDiv = contentDiv;
+    currentMessageDivs.set(symbol, contentDiv);
     return contentDiv;
 };
 
 /**
  * Append text chunk to current message (for streaming)
  */
-const appendToCurrentMessage = (chunk: string) => {
-    if (currentMessageDiv) {
-        currentMessageDiv.textContent += chunk;
-        // Auto-scroll to show latest
-        currentMessageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+const appendToCurrentMessage = (symbol: string, chunk: string) => {
+    let currentMessageDiv = currentMessageDivs.get(symbol);
+    if (!currentMessageDiv) {
+        console.log(`[ChatGPT] No current message div for ${symbol}`);
+        return;
     }
+    currentMessageDiv.textContent += chunk;
+    // Auto-scroll to show latest
+    currentMessageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
+
 
 /**
  * Clear all messages from the UI
  */
-export const clearMessages = () => {
-    const container = getChatgptMessagesDiv();
+export const clearMessages = (symbol: string) => {
+    const container = getChatgptMessagesDiv(symbol);
     if (container) {
         container.innerHTML = '';
     }
 };
 
-export interface ChatCompletionRequest {
-    model: string;
-    messages: ChatMessage[];
-    temperature?: number;
-    max_tokens?: number;
-    top_p?: number;
-    frequency_penalty?: number;
-    presence_penalty?: number;
-}
-
-export interface ChatCompletionResponse {
-    id: string;
-    object: string;
-    created: number;
-    model: string;
-    choices: {
-        index: number;
-        message: ChatMessage;
-        finish_reason: string;
-    }[];
-    usage: {
-        prompt_tokens: number;
-        completion_tokens: number;
-        total_tokens: number;
-    };
-}
 
 export interface ChatGPTConfig {
     model?: string;
@@ -232,7 +208,7 @@ should I:
 Please analyze this entry and provide brief and actionable management suggestions.`;
 
     // Show user message in UI
-    startNewMessage(`📈 ${symbol} Entry (${direction.toUpperCase()})`, true);
+    startNewMessage(symbol, `📈 ${symbol} Entry (${direction.toUpperCase()})`, true);
 
     // Initialize conversation for this trade
     const messages: ChatMessage[] = [
@@ -241,16 +217,16 @@ Please analyze this entry and provide brief and actionable management suggestion
     ];
 
     // Start streaming response in UI
-    startNewMessage(`🤖 Entry Analysis - ${symbol}`, false);
+    startNewMessage(symbol, `🤖 Entry Analysis - ${symbol}`, false);
 
     let fullResponse = '';
     try {
         await Chatgpt.streamChat(messages, (chunk) => {
-            appendToCurrentMessage(chunk);
+            appendToCurrentMessage(symbol, chunk);
             fullResponse += chunk;
         });
     } catch (error) {
-        appendToCurrentMessage(`Error: ${error}`);
+        appendToCurrentMessage(symbol, `Error: ${error}`);
         console.error('ChatGPT streaming error:', error);
     }
 
@@ -311,22 +287,22 @@ Please provide brief, actionable advice.`;
 
     // Show candle data in UI
     const pnlEmoji = unrealizedPnL >= 0 ? '🟢' : '🔴';
-    startNewMessage(`🕐 ${symbol} Candle Close @ ${candle.time}`, true);
-    appendToCurrentMessage(`Close: $${candle.close.toFixed(2)} | P&L: ${pnlEmoji} $${unrealizedPnL.toFixed(2)}`);
+    startNewMessage(symbol, `🕐 ${symbol} Candle Close @ ${candle.time}`, true);
+    appendToCurrentMessage(symbol, `Close: $${candle.close.toFixed(2)} | P&L: ${pnlEmoji} $${unrealizedPnL.toFixed(2)}`);
 
     messages.push({ role: 'user', content: candleAnalysis });
 
     // Start streaming response in UI
-    startNewMessage(`🤖 Management Advice - ${symbol}`, false);
+    startNewMessage(symbol, `🤖 Management Advice - ${symbol}`, false);
 
     let fullResponse = '';
     try {
         await Chatgpt.streamChat(messages, (chunk) => {
-            appendToCurrentMessage(chunk);
+            appendToCurrentMessage(symbol, chunk);
             fullResponse += chunk;
         });
     } catch (error) {
-        appendToCurrentMessage(`Error: ${error}`);
+        appendToCurrentMessage(symbol, `Error: ${error}`);
         console.error('ChatGPT streaming error:', error);
     }
 
@@ -364,7 +340,7 @@ export const testTradeAnalysis = async (symbol: string) => {
     if (!position || !position.netQuantity || position.netQuantity === 0) {
         return;
     }
-    
+
     try {
         // Determine direction from net quantity (positive => long)
         const isLong = (position && position.netQuantity && position.netQuantity > 0) ? true : false;
@@ -440,4 +416,21 @@ export const getProfitTargets = (symbol: string, isLong: boolean) => {
     }
     targetText += "The rest using default from tradebook.";
     return targetText;
+}
+export const testSimpleChat = async (symbol: string) => {
+    console.log('Testing Simple Chat...');
+    startNewMessage(symbol, '🤖 Simple Chat - ' + symbol, false);
+    let messages: ChatMessage[] = [
+        { role: 'system', content: 'You are a helpful assistant.' },
+        { role: 'user', content: 'How to use vwap in day trading? Keep it within 100 words.' }
+    ];
+    try {
+        await Chatgpt.streamChat(messages, (chunk) => {
+            appendToCurrentMessage(symbol, chunk);
+            console.log(`[ChatGPT] ${chunk}`);
+        });
+    } catch (error) {
+        appendToCurrentMessage(symbol, `Error: ${error}`);
+        console.error('ChatGPT streaming error:', error);
+    }
 }

@@ -16,25 +16,6 @@ export interface ChatMessage {
     content: string;
 }
 
-export interface TradeEntry {
-    symbol: string;
-    direction: 'long' | 'short';
-    entryPrice: number;
-    stopLoss: number;
-    quantity: number;
-    entryTime: string;
-}
-
-export interface CandleData {
-    time: string;
-    open: number;
-    high: number;
-    low: number;
-    close: number;
-    volume: number;
-    vwap?: number;
-}
-
 // Store conversation history for each active trade
 export const tradeConversations: Map<string, ChatMessage[]> = new Map();
 
@@ -99,16 +80,6 @@ const appendToCurrentMessage = (chunk: string) => {
         currentMessageDiv.textContent += chunk;
         // Auto-scroll to show latest
         currentMessageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-};
-
-/**
- * Clear all messages from the UI
- */
-export const clearMessages = () => {
-    const container = getChatgptMessagesDiv();
-    if (container) {
-        container.innerHTML = '';
     }
 };
 

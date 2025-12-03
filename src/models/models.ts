@@ -1585,6 +1585,16 @@ const logIf = (message: string, debug?: boolean) => {
         Firestore.logInfo(message);
     }
 }
+export const getWatchlistIndex = (symbol: string) => {
+    let watchlist = getWatchlist();
+    for (let i = 0; i < watchlist.length; i++) {
+        let item = watchlist[i];
+        if (item.symbol == symbol) {
+            return i;
+        }
+    }
+    return -1;
+}
 export const getLiquidityScale = (symbol: string, debug?: boolean) => {
     let candles = getVolumesSinceOpen(symbol);
     let price = getCurrentPrice(symbol);
