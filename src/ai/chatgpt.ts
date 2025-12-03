@@ -165,6 +165,47 @@ export const initialize = (options?: Partial<ChatGPTConfig>) => {
 };
 
 /**
+ * Send a chat completion request to OpenAI (non-streaming)
+ * @param messages - Array of chat messages
+ * @param options - Optional request parameters
+ * @returns ChatCompletionResponse
+ */
+export const chat = async (
+    messages: ChatMessage[],
+    options?: Partial<ChatCompletionRequest>
+): Promise<ChatCompletionResponse> => {
+    let apiKey = getApiKey();
+    if (!apiKey) {
+        throw new Error('ChatGPT API key not configured.');
+    }
+    initialize();
+
+    const requestBody: ChatCompletionRequest = {
+        model: options?.model ?? config.model ?? 'gpt-4o',
+        messages: messages,
+        temperature: options?.temperature ?? config.temperature,
+        max_tokens: options?.max_tokens ?? config.maxTokens,
+        ...options,
+    };
+
+    const response = await fetch(OPENAI_API_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`ChatGPT API error: ${response.status} - ${JSON.stringify(errorData)}`);
+    }
+
+    return await response.json();
+};
+
+/**
  * Stream chat completion (for real-time responses)
  * @param messages - Array of chat messages
  * @param onChunk - Callback for each streamed chunk
