@@ -11,7 +11,7 @@ import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import * as GoogleDocsApi from '../api/googleDocs/googleDocsApi';
 import * as Models from '../models/models';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
-
+import * as Helper from '../utils/helper';
 declare let window: Models.MyWindow;
 
 export interface ChatMessage {
@@ -163,7 +163,7 @@ let config: ChatGPTConfig = {
  * @param tradebook - Which tradebook strategy is being used
  * @returns Analysis and management suggestions
  */
-export const analyzeTradeEntry = async (symbol: string, isLong: boolean): Promise<string> => {
+export const analyzeTradeEntry = async (symbol: string, isLong: boolean, netQuantity: number): Promise<string> => {
     // Get tradebook text based on strategy
     let state = TradingState.getBreakoutTradeState(symbol, isLong);
     if (!state) {
@@ -194,6 +194,7 @@ export const analyzeTradeEntry = async (symbol: string, isLong: boolean): Promis
     let direction = isLong ? 'long' : 'short';
 
     const systemPrompt = `You are a professional day trading coach. You will analyze trades based on a specific trading strategy (tradebook) and provide actionable feedback.
+    You will be asked each time a new 1-minute candle closes while I have an open position.
 
 Here is the trading strategy being used:
 
@@ -202,23 +203,30 @@ ${tradebookText}
 Here is my analysis and trading plans for ${symbol}:
 ${detailedPlan.notes}
 
-Here is the current market data:
-${getMarketDataText(symbol, isLong)}
-
 Your role:
 1. Comment on whether the entry aligns with the tradebook rules
 2. Identify any concerns or risks
 3. Suggest how to manage the position (targets, trailing stops, etc.)
 4. Be concise and actionable. Keep the response in less than 4 bullet points. Just one sentence per point.`;
 
-    const userMessage = `I just entered a ${direction.toUpperCase()} position:
+    const userMessage = `I currently have a ${direction.toUpperCase()} position:
 - Symbol: ${symbol}
 - Entry Price: $${state.entryPrice}
 - Stop Loss: $${state.stopLossPrice}
-- Quantity: ${state.initialQuantity} shares
-- Risk: $${Math.abs((state.entryPrice - state.stopLossPrice) * state.initialQuantity).toFixed(2)}
+- Initial quantity: ${state.initialQuantity} shares
+- Remaining quantity: ${Math.abs(netQuantity)} shares. Lower means I have taken some partial exits.
+- Risk: $${Math.abs((state.entryPrice - state.stopLossPrice) * state.initialQuantity)}
 
-Please analyze this entry and provide management suggestions.`;
+Here is the current market data:
+${getMarketDataText(symbol, isLong)}
+
+should I:
+1. Hold the position?
+2. Take partial profits?
+3. Move stop loss?
+4. Exit completely?
+
+Please analyze this entry and provide brief and actionable management suggestions.`;
 
     // Show user message in UI
     startNewMessage(`📈 ${symbol} Entry (${direction.toUpperCase()})`, true);
@@ -359,7 +367,7 @@ export const testTradeAnalysis = async () => {
             const isLong = (position && position.netQuantity && position.netQuantity > 0) ? true : false;
             // Skip zero-sized positions
             if (!position || !position.netQuantity || position.netQuantity === 0) continue;
-            await analyzeTradeEntry(symbol, isLong);
+            await analyzeTradeEntry(symbol, isLong, position.netQuantity);
         } catch (err) {
             console.error(`Error analyzing position ${symbol}:`, err);
         }
@@ -393,6 +401,7 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
     let candles = Models.getCandlesFromM1SinceOpen(symbol);
     let vwaps = Models.getVwapsSinceOpen(symbol);
     let candlesText = "";
+    let minutes = Helper.getMinutesSinceMarketOpen(new Date());
     for (let i = 0; i < candles.length && i < vwaps.length; i++) {
         let candle = candles[i];
         let vwap = vwaps[i];
@@ -405,6 +414,7 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
 - vwap at open: ${openVwap}.
 - Premarket high: ${symbolData.premktHigh}, premarket low: ${symbolData.premktLow}.
 - Intraday high: ${symbolData.highOfDay}, intraday low: ${symbolData.lowOfDay}.
+- Current time: ${minutes} minutes since market open.
 - 1-minute candles since open with time(T), volume(V) and vwap: [${candlesText}].
 - Current price is the close price of the latest candle.
 `;

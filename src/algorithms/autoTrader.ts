@@ -20,6 +20,8 @@ import * as AutoLevelMomentum from './autoLevelMomentum';
 import * as OrderFlow from '../controllers/orderFlow';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
+import * as Agent from '../ai/agent';
+
 declare let window: Models.MyWindow;
 
 let refreshInprogress: Map<string, boolean> = new Map<string, boolean>();
@@ -345,6 +347,9 @@ export const onMinuteClosed = (
 
         }
         getBreakoutEntryClosePercentage(symbol, newlyClosedCandle);
+        if (seconds > 0) {
+            Agent.testTradeAnalysis();
+        }
     }
     if (seconds > 10) {
         AutoLevelMomentum.checkMomentumLevelOnClose(symbol, newlyClosedCandle, symbolData);
