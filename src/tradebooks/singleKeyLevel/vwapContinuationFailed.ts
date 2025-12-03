@@ -13,6 +13,8 @@ import * as ExitRulesCheckerNew from '../../controllers/exitRulesCheckerNew';
 import * as Rules from '../../algorithms/rules';
 import * as TradebookUtil from '../tradebookUtil';
 import * as GlobalSettings from '../../config/globalSettings';
+import * as LongDocs from '../tradebookDocs/vwapPushdownFail';
+import * as ShortDocs from '../tradebookDocs/vwapBounceFail';
 
 export class VwapContinuationFailed extends SingleKeyLevelTradebook {
     public static readonly longVwapPushDownFailed: string = 'LongVwapPushdownFailed';
@@ -414,6 +416,14 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
             useCurrentCandleHigh: true,
             useFirstNewHigh: true,
             useMarketOrderWithTightStop: false,
+        }
+    }
+
+    getTradebookDoc(): string {
+        if (this.isLong) {
+            return LongDocs.tradebookText;
+        } else {
+            return ShortDocs.tradebookText;
         }
     }
 }

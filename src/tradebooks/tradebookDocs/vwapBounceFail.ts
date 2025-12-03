@@ -1,11 +1,11 @@
 export const tradebookText = `
-Short VWAP Continuation
+Short VWAP Bounce Fail
 
 Intraday Setup:
-Open price is below vwap and vwap is below inflection level.
+Open price is above vwap but open price is below inflection level.
 
 Summary:
-We look for breakdowns to go short when the breakdown occurs below both vwap and inflection level.
+We expect any dips to vwap will get bounced back. If the bounce creats a lower high, we short it when it comes back down to lose vwap.
 
 
 Stop Loss:
@@ -18,8 +18,7 @@ Targets:
 - Targets depend on the actual trade plan. But there are some default targets like ATR, 1,2,3 RRR etc.
 
 Trade management:
-- If it has tested vwap, do not tighten stop, keep vwap as the stop.
-- If it has tested inflection level, do not tighten stop, keep inflection level as the stop.
+- If it has not reached our target but has made 3-leg move down, it's ok to exit during the 3rd leg down.
 
 Notes:
 - VWAP acts as dynamic support/resistance.

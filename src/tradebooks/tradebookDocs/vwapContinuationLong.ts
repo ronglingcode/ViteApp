@@ -18,7 +18,7 @@ Targets:
 
 Trade management:
 - If it has tested vwap, do not tighten stop, keep vwap as the stop.
-- If it haas tested inflection level, do not tighten stop, keep inflection level as the stop.
+- If it has tested inflection level, do not tighten stop, keep inflection level as the stop.
 
 
 Notes:
