@@ -168,6 +168,11 @@ export class OpenProfitTaking extends Tradebook {
         return instructions;
     }
 
+    /** Minimal doc method for now — returns empty string. */
+    getTradebookDoc(): string {
+        return "";
+    }
+
     onNewTimeSalesData(): void {
         // Monitor for optimal entry conditions
         let candles = Models.getCandlesFromM1SinceOpen(this.symbol);

@@ -145,4 +145,8 @@ export class BreakoutReversal extends Tradebook {
         ]);
         return instructions;
     }
+    /** Minimal doc method for now — returns empty string. */
+    getTradebookDoc(): string {
+        return "";
+    }
 }

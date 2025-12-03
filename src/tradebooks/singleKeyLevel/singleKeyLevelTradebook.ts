@@ -31,4 +31,11 @@ export abstract class SingleKeyLevelTradebook extends Tradebook {
         let riskLevelPrice = Models.getRiskLevelPrice(this.symbol, stopOutPrice);
         this.submitEntryOrdersBase(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskLevelPrice, allowedSize, planCopy, logTags);
     }
+
+    /**
+     * Minimal doc method for now — returns empty string.
+     */
+    getTradebookDoc(): string {
+        return "";
+    }
 } 

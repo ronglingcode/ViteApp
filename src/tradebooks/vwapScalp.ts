@@ -120,6 +120,11 @@ export class VwapScalp extends Tradebook {
         return tightStopLevels;
     }
 
+    /** Minimal doc method for now — returns empty string. */
+    getTradebookDoc(): string {
+        return "";
+    }
+
     getTradeManagementInstructions(): Models.TradeManagementInstructions {
         let instructions = new Map<string, string[]>();
         if (this.isLong) {

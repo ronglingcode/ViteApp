@@ -16,6 +16,8 @@ import * as TradebooksManager from '../tradebooksManager';
 import * as TradebookUtil from '../tradebookUtil';
 import * as ExitRulesCheckerNew from '../../controllers/exitRulesCheckerNew';
 import * as GlobalSettings from '../../config/globalSettings';
+import * as LongDocs from '../tradebookDocs/vwapContinuationLong';
+import * as ShortDocs from '../tradebookDocs/vwapContinuationShort';
 
 export class VwapContinuation extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
@@ -299,7 +301,7 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
             allowedReason.reason = "disabled";
             return allowedReason;
         }
-        
+
         let isMarketOrder = false;
         let newResult = ExitRulesCheckerNew.isAllowedForLimitOrderForAllTradebooks(
             symbol, this.isLong, isMarketOrder, newPrice, keyIndex, pair, logTags);
@@ -361,7 +363,7 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         if (newResult.allowed) {
             return newResult;
         }
-        
+
         if (Patterns.isPriceWorseThanVwap(symbol, this.isLong, currentPrice)) {
             result.reason = "new price is worse than vwap";
             result.allowed = false;
@@ -369,5 +371,13 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         }
 
         return result;
+    }
+
+    getTradebookDoc(): string {
+        if (this.isLong) {
+            return LongDocs.tradebookText;
+        } else {
+            return ShortDocs.tradebookText;
+        }
     }
 } 

@@ -28,6 +28,7 @@ export abstract class Tradebook {
     /** kick off whatever entry orders this strategy needs */
     abstract triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number;
     abstract getID(): string;
+    abstract getTradebookDoc(): string;
     abstract refreshLiveStats(): void;
     abstract refreshState(): void;
     abstract transitionToState(newState: TradebookState): void;
