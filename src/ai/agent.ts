@@ -402,9 +402,16 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
     let vwaps = Models.getVwapsSinceOpen(symbol);
     let candlesText = "";
     let minutes = Helper.getMinutesSinceMarketOpen(new Date());
+    let hasTestedKeyLevel = (isLong && symbolData.lowOfDay <= inflection) ||
+        (!isLong && symbolData.highOfDay >= inflection);
+    let hasTestedVwap = false;
     for (let i = 0; i < candles.length && i < vwaps.length; i++) {
         let candle = candles[i];
         let vwap = vwaps[i];
+        if ((isLong && candle.low <= vwap.value) || (!isLong && candle.high >= vwap.value)) {
+            hasTestedVwap = true;
+        }
+
         candlesText += `{T: ${candle.time}, O: ${candle.open}, H: ${candle.high}, L: ${candle.low}, C: ${candle.close}, V: ${candle.volume}, vwap: ${vwap.value}},`;
     }
     return `
@@ -417,5 +424,7 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
 - Current time: ${minutes} minutes since market open.
 - 1-minute candles since open with time(T), volume(V) and vwap: [${candlesText}].
 - Current price is the close price of the latest candle.
+- Has the price tested the inflection level: ${hasTestedKeyLevel}.
+- Has the price tested the vwap since open: ${hasTestedVwap}.
 `;
 }
