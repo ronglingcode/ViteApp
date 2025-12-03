@@ -2,31 +2,24 @@ export const tradebookText = `
 Short VWAP Continuation
 
 Intraday Setup:
-Open price is above vwap and vwap is above inflection level.
+Open price is below vwap and vwap is below inflection level.
 
 Summary:
-We look for breakouts to go long when it occurs above both vwap and inflection level.
+We look for breakdowns to go short when the breakdown occurs below both vwap and inflection level.
 
-Entry:
-- Enter long when price pulls back towards VWAP and resumes upward movement, with higher lows and volume holding.
-- Enter short when price pulls back towards VWAP from below, and resumes downward move after lower high.
 
 Stop Loss:
-- Place stop just below VWAP (for long) or just above (for short).
-- Alternatively, use recent swing low/high.
+- Default is high of the day
+
+Conditions to fail:
+- Price reclaims vwap
 
 Targets:
-- Next intraday resistance (for long) or support (for short)
-- Scalp partial at fixed risk/reward (e.g. 2R), trail remainder.
+- Targets depend on the actual trade plan. But there are some default targets like ATR, 1,2,3 RRR etc.
 
-Invalidation:
-- Price closes convincingly through VWAP in the opposite direction.
-- Heavy volume reversal candle.
-
-Considerations:
-- Avoid entry late in the trend or after a large extension.
-- Watch for high volume climactic moves away from VWAP.
-- Ideal in clean, liquid stocks with extended intraday moves.
+Trade management:
+- If it has tested vwap, do not tighten stop, keep vwap as the stop.
+- If it haas tested inflection level, do not tighten stop, keep inflection level as the stop.
 
 Notes:
 - VWAP acts as dynamic support/resistance.

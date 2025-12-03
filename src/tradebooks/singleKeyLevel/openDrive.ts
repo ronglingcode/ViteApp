@@ -14,6 +14,8 @@ import * as TradebookUtil from '../tradebookUtil';
 import * as ExitRulesCheckerNew from '../../controllers/exitRulesCheckerNew';
 import * as Patterns from '../../algorithms/patterns';
 import * as GlobalSettings from '../../config/globalSettings';
+import * as LongDocs from '../tradebookDocs/openDriveLong';
+import * as ShortDocs from '../tradebookDocs/openDriveShort';
 
 export class OpenDrive extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
@@ -183,7 +185,7 @@ export class OpenDrive extends SingleKeyLevelTradebook {
             allowedReason.allowed = true;
             return allowedReason;
         }
-        
+
         let isMarketOrder = false;
         let newResult = ExitRulesCheckerNew.isAllowedForLimitOrderForAllTradebooks(
             symbol, this.isLong, isMarketOrder, newPrice, keyIndex, pair, logTags);
@@ -331,5 +333,13 @@ export class OpenDrive extends SingleKeyLevelTradebook {
         }
 
         return result;
+    }
+
+    getTradebookDoc(): string {
+        if (this.isLong) {
+            return LongDocs.tradebookText;
+        } else {
+            return ShortDocs.tradebookText;
+        }
     }
 }

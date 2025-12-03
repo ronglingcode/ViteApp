@@ -1,8 +1,8 @@
 export const tradebookText = `
-Long VWAP Continuation
+Long Open Drive
 
 Intraday Setup:
-Open price is above vwap and vwap is above inflection level.
+Open price is above inflection level and inflection level is above vwap.
 
 Summary:
 We look for breakouts to go long when the breakouts occurs above both vwap and inflection level.
@@ -11,14 +11,15 @@ Stop Loss:
 - Default is low of the day
 
 Conditions to fail:
-- Price loses vwap
+- Price loses inflection level
 
 Targets:
 - Targets depend on the actual trade plan. But there are some default targets like ATR, 1,2,3 RRR etc.
 
+
 Trade management:
-- If it has tested vwap, do not tighten stop, keep vwap as the stop.
-- If it haas tested inflection level, do not tighten stop, keep inflection level as the stop.
+- If it has tested inflection level, do not tighten stop, keep inflection level as the stop.
+- If vwap goes above inflection level, we can consider using vwap as the stop.
 
 
 Notes:
