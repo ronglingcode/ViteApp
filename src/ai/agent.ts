@@ -199,8 +199,7 @@ Here is the trading strategy being used:
 
 ${tradebookText}
 
-Here is my trading plans for ${symbol}:
-
+Here is my analysis and trading plans for ${symbol}:
 ${detailedPlan.notes}
 
 Here is the current market data:
@@ -407,5 +406,6 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
 - Premarket high: ${symbolData.premktHigh}, premarket low: ${symbolData.premktLow}.
 - Intraday high: ${symbolData.highOfDay}, intraday low: ${symbolData.lowOfDay}.
 - 1-minute candles since open with time(T), volume(V) and vwap: [${candlesText}].
+- Current price is the close price of the latest candle.
 `;
 }
