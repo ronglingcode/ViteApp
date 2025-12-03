@@ -235,22 +235,23 @@ Please analyze this entry and provide brief and actionable management suggestion
     startNewMessage(`📈 ${symbol} Entry (${direction.toUpperCase()})`, true);
 
     // Initialize conversation for this trade
-    const messages: Chatgpt.ChatMessage[] = [
+    const messages: ChatMessage[] = [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userMessage }
     ];
 
-    // Start response in UI
+    // Start streaming response in UI
     startNewMessage(`🤖 Entry Analysis - ${symbol}`, false);
 
     let fullResponse = '';
     try {
-        const response = await Chatgpt.chat(messages);
-        fullResponse = response.choices[0]?.message?.content ?? '';
-        appendToCurrentMessage(fullResponse);
+        await Chatgpt.streamChat(messages, (chunk) => {
+            appendToCurrentMessage(chunk);
+            fullResponse += chunk;
+        });
     } catch (error) {
         appendToCurrentMessage(`Error: ${error}`);
-        console.error('ChatGPT error:', error);
+        console.error('ChatGPT streaming error:', error);
     }
 
     // Store conversation for ongoing management
@@ -315,17 +316,18 @@ Please provide brief, actionable advice.`;
 
     messages.push({ role: 'user', content: candleAnalysis });
 
-    // Start response in UI
+    // Start streaming response in UI
     startNewMessage(`🤖 Management Advice - ${symbol}`, false);
 
     let fullResponse = '';
     try {
-        const response = await Chatgpt.chat(messages);
-        fullResponse = response.choices[0]?.message?.content ?? '';
-        appendToCurrentMessage(fullResponse);
+        await Chatgpt.streamChat(messages, (chunk) => {
+            appendToCurrentMessage(chunk);
+            fullResponse += chunk;
+        });
     } catch (error) {
         appendToCurrentMessage(`Error: ${error}`);
-        console.error('ChatGPT error:', error);
+        console.error('ChatGPT streaming error:', error);
     }
 
     // Update conversation history
