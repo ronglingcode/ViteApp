@@ -3,10 +3,34 @@
  * OpenAI API documentation: https://platform.openai.com/docs/api-reference/chat
  */
 
+import { tradebookText as vwapContinuationText } from '../tradebooksText/vwapContinuation';
+
 export interface ChatMessage {
     role: 'system' | 'user' | 'assistant';
     content: string;
 }
+
+export interface TradeEntry {
+    symbol: string;
+    direction: 'long' | 'short';
+    entryPrice: number;
+    stopLoss: number;
+    quantity: number;
+    entryTime: string;
+}
+
+export interface CandleData {
+    time: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
+    vwap?: number;
+}
+
+// Store conversation history for each active trade
+const tradeConversations: Map<string, ChatMessage[]> = new Map();
 
 export interface ChatCompletionRequest {
     model: string;
@@ -219,9 +243,9 @@ export const MODELS = {
 } as const;
 
 export const apiKey = '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';
+
 /**
  * Simple test function to verify ChatGPT integration
- * @param apiKey - OpenAI API key
  */
 export const test = async () => {
     console.log('Testing ChatGPT API...');
@@ -235,5 +259,168 @@ export const test = async () => {
     } catch (error) {
         console.error('ChatGPT test failed:', error);
     }
+};
+
+/**
+ * Analyze trade entry based on tradebook strategy
+ * @param trade - Trade entry details
+ * @param tradebook - Which tradebook strategy is being used
+ * @returns Analysis and management suggestions
+ */
+export const analyzeTradeEntry = async (trade: TradeEntry, tradebook: string = 'vwapContinuation'): Promise<string> => {
+    initialize(apiKey);
+    
+    // Get tradebook text based on strategy
+    let tradebookText = '';
+    if (tradebook === 'vwapContinuation') {
+        tradebookText = vwapContinuationText;
+    }
+    
+    const systemPrompt = `You are a professional day trading coach. You will analyze trades based on a specific trading strategy (tradebook) and provide actionable feedback.
+
+Here is the trading strategy being used:
+
+${tradebookText}
+
+Your role:
+1. Comment on whether the entry aligns with the tradebook rules
+2. Identify any concerns or risks
+3. Suggest how to manage the position (targets, trailing stops, etc.)
+4. Be concise and actionable`;
+
+    const userMessage = `I just entered a ${trade.direction.toUpperCase()} position:
+- Symbol: ${trade.symbol}
+- Entry Price: $${trade.entryPrice}
+- Stop Loss: $${trade.stopLoss}
+- Quantity: ${trade.quantity} shares
+- Entry Time: ${trade.entryTime}
+- Risk: $${Math.abs((trade.entryPrice - trade.stopLoss) * trade.quantity).toFixed(2)}
+
+Please analyze this entry and provide management suggestions.`;
+
+    // Initialize conversation for this trade
+    const messages: ChatMessage[] = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+    ];
+    
+    const response = await chat(messages);
+    const assistantMessage = response.choices[0]?.message?.content ?? '';
+    
+    // Store conversation for ongoing management
+    messages.push({ role: 'assistant', content: assistantMessage });
+    tradeConversations.set(trade.symbol, messages);
+    
+    console.log(`[ChatGPT] Trade Entry Analysis for ${trade.symbol}:`);
+    console.log(assistantMessage);
+    
+    return assistantMessage;
+};
+
+/**
+ * Get trade management advice on candle close
+ * @param symbol - Stock symbol
+ * @param candle - Newly closed candle data
+ * @param currentPrice - Current price
+ * @param unrealizedPnL - Current unrealized P&L
+ * @returns Management advice
+ */
+export const analyzeOnCandleClose = async (
+    symbol: string,
+    candle: CandleData,
+    currentPrice: number,
+    unrealizedPnL: number
+): Promise<string> => {
+    initialize(apiKey);
+    
+    // Get existing conversation or create new one
+    let messages = tradeConversations.get(symbol);
+    
+    if (!messages) {
+        console.log(`[ChatGPT] No active trade conversation for ${symbol}`);
+        return '';
+    }
+    
+    const candleAnalysis = `
+1-Minute Candle Closed:
+- Time: ${candle.time}
+- Open: $${candle.open.toFixed(2)}
+- High: $${candle.high.toFixed(2)}
+- Low: $${candle.low.toFixed(2)}
+- Close: $${candle.close.toFixed(2)}
+- Volume: ${candle.volume.toLocaleString()}
+${candle.vwap ? `- VWAP: $${candle.vwap.toFixed(2)}` : ''}
+
+Current Status:
+- Current Price: $${currentPrice.toFixed(2)}
+- Unrealized P&L: $${unrealizedPnL.toFixed(2)}
+
+Based on this candle and the current position, should I:
+1. Hold the position?
+2. Take partial profits?
+3. Move stop loss?
+4. Exit completely?
+
+Please provide brief, actionable advice.`;
+
+    messages.push({ role: 'user', content: candleAnalysis });
+    
+    const response = await chat(messages);
+    const assistantMessage = response.choices[0]?.message?.content ?? '';
+    
+    // Update conversation history
+    messages.push({ role: 'assistant', content: assistantMessage });
+    tradeConversations.set(symbol, messages);
+    
+    console.log(`[ChatGPT] Candle Close Analysis for ${symbol}:`);
+    console.log(assistantMessage);
+    
+    return assistantMessage;
+};
+
+/**
+ * Clear trade conversation when position is closed
+ * @param symbol - Stock symbol
+ */
+export const clearTradeConversation = (symbol: string) => {
+    tradeConversations.delete(symbol);
+    console.log(`[ChatGPT] Cleared conversation for ${symbol}`);
+};
+
+/**
+ * Test trade analysis flow
+ */
+export const testTradeAnalysis = async () => {
+    console.log('Testing Trade Analysis...');
+    
+    // Simulate entering a long position
+    const trade: TradeEntry = {
+        symbol: 'AAPL',
+        direction: 'long',
+        entryPrice: 150.25,
+        stopLoss: 149.50,
+        quantity: 100,
+        entryTime: new Date().toLocaleTimeString(),
+    };
+    
+    console.log('\n--- Entry Analysis ---');
+    await analyzeTradeEntry(trade, 'vwapContinuation');
+    
+    // Simulate candle close
+    console.log('\n--- Candle Close Analysis ---');
+    const candle: CandleData = {
+        time: new Date().toLocaleTimeString(),
+        open: 150.30,
+        high: 150.75,
+        low: 150.20,
+        close: 150.60,
+        volume: 125000,
+        vwap: 150.15,
+    };
+    
+    await analyzeOnCandleClose('AAPL', candle, 150.60, 35.00);
+    
+    // Clean up
+    clearTradeConversation('AAPL');
 };
 
