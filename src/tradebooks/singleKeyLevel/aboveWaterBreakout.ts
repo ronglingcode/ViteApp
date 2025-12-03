@@ -7,8 +7,8 @@ import * as Patterns from '../../algorithms/patterns';
 import * as Firestore from '../../firestore';
 import * as TradebookUtil from '../tradebookUtil';
 import * as OrderFlow from '../../controllers/orderFlow';
-import * as TradingPlans from '../../models/tradingPlans/tradingPlans';
-import * as ExitRulesCheckerNew from '../../controllers/exitRulesCheckerNew';
+import * as LongDocs from '../tradebookDocs/aboveWaterBreakout';
+import * as ShortDocs from '../tradebookDocs/belowWaterBreakdown';
 
 export class AboveWaterBreakout extends BaseBreakoutTradebook {
     public static readonly aboveWaterBreakout: string = 'aboveWaterBreakout';
@@ -135,5 +135,13 @@ export class AboveWaterBreakout extends BaseBreakoutTradebook {
             ]]
         ]);
         return instructions;
+    }
+
+    getTradebookDoc(): string {
+        if (this.isLong) {
+            return LongDocs.tradebookText;
+        } else {
+            return ShortDocs.tradebookText;
+        }
     }
 }
