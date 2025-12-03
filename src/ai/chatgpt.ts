@@ -210,47 +210,20 @@ export const streamChat = async (
     }
 
     const decoder = new TextDecoder();
-    let buffer = '';  // Buffer for incomplete lines
 
     while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        // Append new chunk to buffer
-        buffer += decoder.decode(value, { stream: true });
-        
-        // Split by newlines, but keep the last incomplete line in buffer
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';  // Last element might be incomplete, keep it in buffer
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(line => line.trim() !== '');
 
         for (const line of lines) {
-            const trimmedLine = line.trim();
-            if (!trimmedLine) continue;
-            
-            if (trimmedLine.startsWith('data: ')) {
-                const data = trimmedLine.slice(6);
+            if (line.startsWith('data: ')) {
+                const data = line.slice(6);
                 if (data === '[DONE]') {
                     return;
                 }
-                try {
-                    const parsed = JSON.parse(data);
-                    const content = parsed.choices?.[0]?.delta?.content;
-                    if (content) {
-                        onChunk(content);
-                    }
-                } catch {
-                    // Skip invalid JSON (might be partial data)
-                }
-            }
-        }
-    }
-    
-    // Process any remaining data in buffer
-    if (buffer.trim()) {
-        const trimmedLine = buffer.trim();
-        if (trimmedLine.startsWith('data: ')) {
-            const data = trimmedLine.slice(6);
-            if (data !== '[DONE]') {
                 try {
                     const parsed = JSON.parse(data);
                     const content = parsed.choices?.[0]?.delta?.content;
