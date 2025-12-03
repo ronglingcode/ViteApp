@@ -38,7 +38,7 @@ import * as ScwabStreaming from './api/schwab/streaming';
 import * as MassiveStreaming from './api/massive/streaming';
 import * as MassiveApi from './api/massive/api';
 import * as DB from './data/db';
-import * as Chatgpt from './ai/chatgpt';
+import * as Agent from './ai/agent';
 import './tosClient';
 
 declare let window: Models.MyWindow;
@@ -171,7 +171,7 @@ if (showTargetsButton) {
 let testPopButton = document.getElementById("test_popup");
 if (testPopButton) {
     testPopButton.addEventListener("click", () => {
-        Chatgpt.testTradeAnalysis();
+        Agent.testTradeAnalysis();
     });
 }
 
