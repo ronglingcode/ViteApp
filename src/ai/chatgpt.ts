@@ -4,6 +4,12 @@
  */
 
 import { tradebookText as vwapContinuationText } from '../tradebooksText/vwapContinuation';
+import * as Secrets from '../config/secret';
+
+const getApiKey = (): string => {
+    const secrets = Secrets.openai();
+    return secrets.apiKey || '';
+}
 
 export interface ChatMessage {
     role: 'system' | 'user' | 'assistant';
@@ -54,7 +60,7 @@ const getChatgptMessagesDiv = (): HTMLElement | null => {
 const startNewMessage = (title: string, isUser: boolean = false): HTMLElement | null => {
     const container = getChatgptMessagesDiv();
     if (!container) return null;
-    
+
     // Create message wrapper
     const messageDiv = document.createElement('div');
     messageDiv.className = isUser ? 'chatgpt-message user-message' : 'chatgpt-message assistant-message';
@@ -65,22 +71,22 @@ const startNewMessage = (title: string, isUser: boolean = false): HTMLElement | 
         background: ${isUser ? '#e6f0ff' : '#f5faf7'};
         border-left: 3px solid ${isUser ? '#2563eb' : '#16a34a'};
     `;
-    
+
     // Add title
     const titleDiv = document.createElement('div');
     titleDiv.style.cssText = 'font-weight: bold; margin-bottom: 4px; color: #888; font-size: 11px;';
     titleDiv.textContent = title;
     messageDiv.appendChild(titleDiv);
-    
+
     // Add content area
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
     contentDiv.style.cssText = 'white-space: pre-wrap; font-size: 12px; line-height: 1.4;';
     messageDiv.appendChild(contentDiv);
-    
+
     // Insert at top
     container.insertBefore(messageDiv, container.firstChild);
-    
+
     currentMessageDiv = contentDiv;
     return contentDiv;
 };
@@ -134,7 +140,6 @@ export interface ChatCompletionResponse {
 }
 
 export interface ChatGPTConfig {
-    apiKey: string;
     model?: string;
     temperature?: number;
     maxTokens?: number;
@@ -144,7 +149,6 @@ const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
 // Default configuration
 let config: ChatGPTConfig = {
-    apiKey: '',
     model: 'gpt-4o',
     temperature: 0.7,
     maxTokens: 1000,
@@ -153,10 +157,9 @@ let config: ChatGPTConfig = {
 /**
  * Initialize ChatGPT with API key and optional settings
  */
-export const initialize = (apiKey: string, options?: Partial<ChatGPTConfig>) => {
+export const initialize = (options?: Partial<ChatGPTConfig>) => {
     config = {
         ...config,
-        apiKey,
         ...options,
     };
 };
@@ -171,7 +174,8 @@ export const chat = async (
     messages: ChatMessage[],
     options?: Partial<ChatCompletionRequest>
 ): Promise<ChatCompletionResponse> => {
-    if (!config.apiKey) {
+    let apiKey = getApiKey();
+    if (!apiKey) {
         throw new Error('ChatGPT API key not configured. Call initialize() first.');
     }
 
@@ -187,7 +191,7 @@ export const chat = async (
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${config.apiKey}`,
+            'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify(requestBody),
     });
@@ -208,7 +212,7 @@ export const chat = async (
  */
 export const ask = async (prompt: string, systemPrompt?: string): Promise<string> => {
     const messages: ChatMessage[] = [];
-    
+
     if (systemPrompt) {
         messages.push({ role: 'system', content: systemPrompt });
     }
@@ -245,7 +249,8 @@ export const streamChat = async (
     onChunk: (content: string) => void,
     options?: Partial<ChatCompletionRequest>
 ): Promise<void> => {
-    if (!config.apiKey) {
+    let apiKey = getApiKey();
+    if (!apiKey) {
         throw new Error('ChatGPT API key not configured. Call initialize() first.');
     }
 
@@ -262,7 +267,7 @@ export const streamChat = async (
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${config.apiKey}`,
+            'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify(requestBody),
     });
@@ -278,7 +283,7 @@ export const streamChat = async (
     }
 
     const decoder = new TextDecoder();
-    
+
     while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -323,27 +328,27 @@ export const apiKey = 'sk-proj-eHEXHVpDbXQRyuT1pLVRNALB__QBANWz7Zrt9oKicfiFPTb60
  */
 export const test = async () => {
     console.log('Testing ChatGPT API with streaming...');
-    
-    initialize(apiKey);
-    
+
+    initialize();
+
     try {
         // Show user question in UI
         startNewMessage('You', true);
         appendToCurrentMessage('What is VWAP in trading?');
-        
+
         // Start assistant response
         startNewMessage('ChatGPT', false);
-        
+
         const messages: ChatMessage[] = [
             { role: 'user', content: 'What is VWAP in trading?' }
         ];
-        
+
         let fullResponse = '';
         await streamChat(messages, (chunk) => {
             appendToCurrentMessage(chunk);
             fullResponse += chunk;
         });
-        
+
         console.log('Question: What is VWAP in trading?');
         console.log('Answer:', fullResponse);
     } catch (error) {
@@ -359,14 +364,14 @@ export const test = async () => {
  * @returns Analysis and management suggestions
  */
 export const analyzeTradeEntry = async (trade: TradeEntry, tradebook: string = 'vwapContinuation'): Promise<string> => {
-    initialize(apiKey);
-    
+    initialize();
+
     // Get tradebook text based on strategy
     let tradebookText = '';
     if (tradebook === 'vwapContinuation') {
         tradebookText = vwapContinuationText;
     }
-    
+
     const systemPrompt = `You are a professional day trading coach. You will analyze trades based on a specific trading strategy (tradebook) and provide actionable feedback.
 
 Here is the trading strategy being used:
@@ -398,10 +403,10 @@ Please analyze this entry and provide management suggestions.`;
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userMessage }
     ];
-    
+
     // Start streaming response in UI
     startNewMessage(`🤖 Entry Analysis - ${trade.symbol}`, false);
-    
+
     let fullResponse = '';
     try {
         await streamChat(messages, (chunk) => {
@@ -412,14 +417,14 @@ Please analyze this entry and provide management suggestions.`;
         appendToCurrentMessage(`Error: ${error}`);
         console.error('ChatGPT streaming error:', error);
     }
-    
+
     // Store conversation for ongoing management
     messages.push({ role: 'assistant', content: fullResponse });
     tradeConversations.set(trade.symbol, messages);
-    
+
     console.log(`[ChatGPT] Trade Entry Analysis for ${trade.symbol}:`);
     console.log(fullResponse);
-    
+
     return fullResponse;
 };
 
@@ -437,16 +442,16 @@ export const analyzeOnCandleClose = async (
     currentPrice: number,
     unrealizedPnL: number
 ): Promise<string> => {
-    initialize(apiKey);
-    
+    initialize();
+
     // Get existing conversation or create new one
     let messages = tradeConversations.get(symbol);
-    
+
     if (!messages) {
         console.log(`[ChatGPT] No active trade conversation for ${symbol}`);
         return '';
     }
-    
+
     const candleAnalysis = `
 1-Minute Candle Closed:
 - Time: ${candle.time}
@@ -475,10 +480,10 @@ Please provide brief, actionable advice.`;
     appendToCurrentMessage(`Close: $${candle.close.toFixed(2)} | P&L: ${pnlEmoji} $${unrealizedPnL.toFixed(2)}`);
 
     messages.push({ role: 'user', content: candleAnalysis });
-    
+
     // Start streaming response in UI
     startNewMessage(`🤖 Management Advice - ${symbol}`, false);
-    
+
     let fullResponse = '';
     try {
         await streamChat(messages, (chunk) => {
@@ -489,14 +494,14 @@ Please provide brief, actionable advice.`;
         appendToCurrentMessage(`Error: ${error}`);
         console.error('ChatGPT streaming error:', error);
     }
-    
+
     // Update conversation history
     messages.push({ role: 'assistant', content: fullResponse });
     tradeConversations.set(symbol, messages);
-    
+
     console.log(`[ChatGPT] Candle Close Analysis for ${symbol}:`);
     console.log(fullResponse);
-    
+
     return fullResponse;
 };
 
@@ -514,7 +519,7 @@ export const clearTradeConversation = (symbol: string) => {
  */
 export const testTradeAnalysis = async () => {
     console.log('Testing Trade Analysis...');
-    
+
     // Simulate entering a long position
     const trade: TradeEntry = {
         symbol: 'AAPL',
@@ -524,10 +529,10 @@ export const testTradeAnalysis = async () => {
         quantity: 100,
         entryTime: new Date().toLocaleTimeString(),
     };
-    
+
     console.log('\n--- Entry Analysis ---');
     await analyzeTradeEntry(trade, 'vwapContinuation');
-    
+
     // Simulate candle close
     console.log('\n--- Candle Close Analysis ---');
     const candle: CandleData = {
@@ -539,9 +544,9 @@ export const testTradeAnalysis = async () => {
         volume: 125000,
         vwap: 150.15,
     };
-    
+
     await analyzeOnCandleClose('AAPL', candle, 150.60, 35.00);
-    
+
     // Clean up
     clearTradeConversation('AAPL');
 };

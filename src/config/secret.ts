@@ -11,6 +11,18 @@ export const alpaca = () => {
         apiSecret: data.apiSecret,
     }
 };
+export const openai = () => {
+    let td = localStorage.getItem('tradingscripts.openai');
+    if (td == null) {
+        console.error(`no secrets in local storage`)
+        td = '{}';
+    }
+
+    let data = JSON.parse(td);
+    return {
+        apiKey: data.apiKey,
+    }
+}
 
 export const tradeStation = () => {
     let td = localStorage.getItem('tradingscripts.tradeStation');
