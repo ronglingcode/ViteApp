@@ -8,7 +8,11 @@ import * as Secrets from '../config/secret';
 import * as Chatgpt from './chatgpt';
 import * as TradingState from '../models/tradingState';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
+import * as GoogleDocsApi from '../api/googleDocs/googleDocsApi';
+import * as Models from '../models/models';
+import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 
+declare let window: Models.MyWindow;
 
 export interface ChatMessage {
     role: 'system' | 'user' | 'assistant';
@@ -179,6 +183,14 @@ export const analyzeTradeEntry = async (symbol: string, isLong: boolean): Promis
         return "no tradebook doc";
     }
 
+    let googleDocContent = window.HybridApp.TradingData.googleDocContent;
+    let { gradingList, detailedPlans, bestIdeas } = GoogleDocsApi.parseGoogleDoc(googleDocContent);
+    let detailedPlan = detailedPlans.find(plan => plan.symbol === symbol);
+    if (!detailedPlan) {
+        return "no detailed plan";
+    }
+    console.log(detailedPlan);
+
     let direction = isLong ? 'long' : 'short';
 
     const systemPrompt = `You are a professional day trading coach. You will analyze trades based on a specific trading strategy (tradebook) and provide actionable feedback.
@@ -187,11 +199,18 @@ Here is the trading strategy being used:
 
 ${tradebookText}
 
+Here is my trading plans for ${symbol}:
+
+${detailedPlan.notes}
+
+Here is the current market data:
+${getMarketDataText(symbol, isLong)}
+
 Your role:
 1. Comment on whether the entry aligns with the tradebook rules
 2. Identify any concerns or risks
 3. Suggest how to manage the position (targets, trailing stops, etc.)
-4. Be concise and actionable. Keep the response in 1-5 bullet points.`;
+4. Be concise and actionable. Keep the response in less than 4 bullet points. Just one sentence per point.`;
 
     const userMessage = `I just entered a ${direction.toUpperCase()} position:
 - Symbol: ${symbol}
@@ -327,7 +346,25 @@ export const testTradeAnalysis = async () => {
     console.log('Testing Trade Analysis...');
 
     console.log('\n--- Entry Analysis ---');
-    await analyzeTradeEntry('MDB', true);
+    if (!window.HybridApp.AccountCache) {
+        return;
+    }
+    let positions = window.HybridApp.AccountCache.positions;
+    if (!positions || positions.size == 0) {
+        return;
+    }
+
+    for (const [symbol, position] of positions) {
+        try {
+            // Determine direction from net quantity (positive => long)
+            const isLong = (position && position.netQuantity && position.netQuantity > 0) ? true : false;
+            // Skip zero-sized positions
+            if (!position || !position.netQuantity || position.netQuantity === 0) continue;
+            await analyzeTradeEntry(symbol, isLong);
+        } catch (err) {
+            console.error(`Error analyzing position ${symbol}:`, err);
+        }
+    }
     /*
     // Simulate candle close
     console.log('\n--- Candle Close Analysis ---');
@@ -348,3 +385,18 @@ export const testTradeAnalysis = async () => {
     */
 };
 
+export const getMarketDataText = (symbol: string, isLong: boolean) => {
+    let plan = TradingPlans.getTradingPlans(symbol);
+    let inflection = plan.analysis.singleMomentumKeyLevel[0].high;
+    let openPrice = Models.getOpenPrice(symbol);
+    let openVwap = Models.getLastVwapBeforeOpen(symbol);
+    let symbolData = Models.getSymbolData(symbol);
+    return `
+- Inflection level: ${inflection}.
+- ATR: ${plan.atr.average}.
+- Open Price: ${openPrice}.
+- vwap at open: ${openVwap}.
+- Premarket high: ${symbolData.premktHigh}, premarket low: ${symbolData.premktLow}.
+- Intraday high: ${symbolData.highOfDay}, intraday low: ${symbolData.lowOfDay}.
+`;
+}
