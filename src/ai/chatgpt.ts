@@ -30,7 +30,81 @@ export interface CandleData {
 }
 
 // Store conversation history for each active trade
-const tradeConversations: Map<string, ChatMessage[]> = new Map();
+export const tradeConversations: Map<string, ChatMessage[]> = new Map();
+
+// UI Elements
+let chatgptMessagesDiv: HTMLElement | null = null;
+let currentMessageDiv: HTMLElement | null = null;
+
+/**
+ * Get or cache the chatgptMessages div
+ */
+const getChatgptMessagesDiv = (): HTMLElement | null => {
+    if (!chatgptMessagesDiv) {
+        chatgptMessagesDiv = document.getElementById('chatgptMessages');
+    }
+    return chatgptMessagesDiv;
+};
+
+/**
+ * Add a new message block to the UI
+ * @param title - Title/header for the message
+ * @param isUser - Whether this is a user message
+ */
+const startNewMessage = (title: string, isUser: boolean = false): HTMLElement | null => {
+    const container = getChatgptMessagesDiv();
+    if (!container) return null;
+    
+    // Create message wrapper
+    const messageDiv = document.createElement('div');
+    messageDiv.className = isUser ? 'chatgpt-message user-message' : 'chatgpt-message assistant-message';
+    messageDiv.style.cssText = `
+        margin: 8px 0;
+        padding: 8px;
+        border-radius: 6px;
+        background: ${isUser ? '#e6f0ff' : '#f5faf7'};
+        border-left: 3px solid ${isUser ? '#2563eb' : '#16a34a'};
+    `;
+    
+    // Add title
+    const titleDiv = document.createElement('div');
+    titleDiv.style.cssText = 'font-weight: bold; margin-bottom: 4px; color: #888; font-size: 11px;';
+    titleDiv.textContent = title;
+    messageDiv.appendChild(titleDiv);
+    
+    // Add content area
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    contentDiv.style.cssText = 'white-space: pre-wrap; font-size: 12px; line-height: 1.4;';
+    messageDiv.appendChild(contentDiv);
+    
+    // Insert at top
+    container.insertBefore(messageDiv, container.firstChild);
+    
+    currentMessageDiv = contentDiv;
+    return contentDiv;
+};
+
+/**
+ * Append text chunk to current message (for streaming)
+ */
+const appendToCurrentMessage = (chunk: string) => {
+    if (currentMessageDiv) {
+        currentMessageDiv.textContent += chunk;
+        // Auto-scroll to show latest
+        currentMessageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+};
+
+/**
+ * Clear all messages from the UI
+ */
+export const clearMessages = () => {
+    const container = getChatgptMessagesDiv();
+    if (container) {
+        container.innerHTML = '';
+    }
+};
 
 export interface ChatCompletionRequest {
     model: string;
@@ -245,24 +319,41 @@ export const MODELS = {
 export const apiKey = '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';
 
 /**
- * Simple test function to verify ChatGPT integration
+ * Simple test function to verify ChatGPT integration (with streaming)
  */
 export const test = async () => {
-    console.log('Testing ChatGPT API...');
+    console.log('Testing ChatGPT API with streaming...');
     
     initialize(apiKey);
     
     try {
-        let answer = await ask('What is VWAP in trading?');
+        // Show user question in UI
+        startNewMessage('You', true);
+        appendToCurrentMessage('What is VWAP in trading?');
+        
+        // Start assistant response
+        startNewMessage('ChatGPT', false);
+        
+        const messages: ChatMessage[] = [
+            { role: 'user', content: 'What is VWAP in trading?' }
+        ];
+        
+        let fullResponse = '';
+        await streamChat(messages, (chunk) => {
+            appendToCurrentMessage(chunk);
+            fullResponse += chunk;
+        });
+        
         console.log('Question: What is VWAP in trading?');
-        console.log('Answer:', answer);
+        console.log('Answer:', fullResponse);
     } catch (error) {
         console.error('ChatGPT test failed:', error);
+        appendToCurrentMessage(`Error: ${error}`);
     }
 };
 
 /**
- * Analyze trade entry based on tradebook strategy
+ * Analyze trade entry based on tradebook strategy (with streaming)
  * @param trade - Trade entry details
  * @param tradebook - Which tradebook strategy is being used
  * @returns Analysis and management suggestions
@@ -298,27 +389,42 @@ Your role:
 
 Please analyze this entry and provide management suggestions.`;
 
+    // Show user message in UI
+    startNewMessage(`📈 ${trade.symbol} Entry (${trade.direction.toUpperCase()})`, true);
+    appendToCurrentMessage(`Entry: $${trade.entryPrice} | Stop: $${trade.stopLoss} | Qty: ${trade.quantity}`);
+
     // Initialize conversation for this trade
     const messages: ChatMessage[] = [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userMessage }
     ];
     
-    const response = await chat(messages);
-    const assistantMessage = response.choices[0]?.message?.content ?? '';
+    // Start streaming response in UI
+    startNewMessage(`🤖 Entry Analysis - ${trade.symbol}`, false);
+    
+    let fullResponse = '';
+    try {
+        await streamChat(messages, (chunk) => {
+            appendToCurrentMessage(chunk);
+            fullResponse += chunk;
+        });
+    } catch (error) {
+        appendToCurrentMessage(`Error: ${error}`);
+        console.error('ChatGPT streaming error:', error);
+    }
     
     // Store conversation for ongoing management
-    messages.push({ role: 'assistant', content: assistantMessage });
+    messages.push({ role: 'assistant', content: fullResponse });
     tradeConversations.set(trade.symbol, messages);
     
     console.log(`[ChatGPT] Trade Entry Analysis for ${trade.symbol}:`);
-    console.log(assistantMessage);
+    console.log(fullResponse);
     
-    return assistantMessage;
+    return fullResponse;
 };
 
 /**
- * Get trade management advice on candle close
+ * Get trade management advice on candle close (with streaming)
  * @param symbol - Stock symbol
  * @param candle - Newly closed candle data
  * @param currentPrice - Current price
@@ -363,19 +469,35 @@ Based on this candle and the current position, should I:
 
 Please provide brief, actionable advice.`;
 
+    // Show candle data in UI
+    const pnlEmoji = unrealizedPnL >= 0 ? '🟢' : '🔴';
+    startNewMessage(`🕐 ${symbol} Candle Close @ ${candle.time}`, true);
+    appendToCurrentMessage(`Close: $${candle.close.toFixed(2)} | P&L: ${pnlEmoji} $${unrealizedPnL.toFixed(2)}`);
+
     messages.push({ role: 'user', content: candleAnalysis });
     
-    const response = await chat(messages);
-    const assistantMessage = response.choices[0]?.message?.content ?? '';
+    // Start streaming response in UI
+    startNewMessage(`🤖 Management Advice - ${symbol}`, false);
+    
+    let fullResponse = '';
+    try {
+        await streamChat(messages, (chunk) => {
+            appendToCurrentMessage(chunk);
+            fullResponse += chunk;
+        });
+    } catch (error) {
+        appendToCurrentMessage(`Error: ${error}`);
+        console.error('ChatGPT streaming error:', error);
+    }
     
     // Update conversation history
-    messages.push({ role: 'assistant', content: assistantMessage });
+    messages.push({ role: 'assistant', content: fullResponse });
     tradeConversations.set(symbol, messages);
     
     console.log(`[ChatGPT] Candle Close Analysis for ${symbol}:`);
-    console.log(assistantMessage);
+    console.log(fullResponse);
     
-    return assistantMessage;
+    return fullResponse;
 };
 
 /**
