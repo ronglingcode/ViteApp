@@ -5,6 +5,7 @@ import * as Models from '../models/models';
 import * as Firestore from '../firestore';
 import * as TradebookUtil from './tradebookUtil';
 import * as Helper from '../utils/helper';
+import * as ShortDocs from './tradebookDocs/openProfitTakingShort';
 
 export class OpenProfitTaking extends Tradebook {
     public static readonly openProfitTakingLong: string = 'OpenProfitTakingLong';
@@ -168,11 +169,6 @@ export class OpenProfitTaking extends Tradebook {
         return instructions;
     }
 
-    /** Minimal doc method for now — returns empty string. */
-    getTradebookDoc(): string {
-        return "";
-    }
-
     onNewTimeSalesData(): void {
         // Monitor for optimal entry conditions
         let candles = Models.getCandlesFromM1SinceOpen(this.symbol);
@@ -187,6 +183,14 @@ export class OpenProfitTaking extends Tradebook {
                 this.disable();
             }
             return;
+        }
+    }
+
+    getTradebookDoc(): string {
+        if (this.isLong) {
+            return "";
+        } else {
+            return ShortDocs.tradebookText;
         }
     }
 }
