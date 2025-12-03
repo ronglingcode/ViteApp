@@ -6,11 +6,9 @@
 import { tradebookText as vwapContinuationText } from '../tradebooksText/vwapContinuation';
 import * as Secrets from '../config/secret';
 import * as Chatgpt from './chatgpt';
+import * as TradingState from '../models/tradingState';
+import * as TradebooksManager from '../tradebooks/tradebooksManager';
 
-const getApiKey = (): string => {
-    const secrets = Secrets.openai();
-    return secrets.apiKey || '';
-}
 
 export interface ChatMessage {
     role: 'system' | 'user' | 'assistant';
@@ -156,28 +154,32 @@ let config: ChatGPTConfig = {
 };
 
 /**
- * Initialize ChatGPT with API key and optional settings
- */
-export const initialize = (options?: Partial<ChatGPTConfig>) => {
-    config = {
-        ...config,
-        ...options,
-    };
-};
-
-
-/**
  * Analyze trade entry based on tradebook strategy (with streaming)
  * @param trade - Trade entry details
  * @param tradebook - Which tradebook strategy is being used
  * @returns Analysis and management suggestions
  */
-export const analyzeTradeEntry = async (trade: TradeEntry, tradebook: string = 'vwapContinuation'): Promise<string> => {
+export const analyzeTradeEntry = async (symbol: string, isLong: boolean): Promise<string> => {
     // Get tradebook text based on strategy
-    let tradebookText = '';
-    if (tradebook === 'vwapContinuation') {
-        tradebookText = vwapContinuationText;
+    let state = TradingState.getBreakoutTradeState(symbol, isLong);
+    if (!state) {
+        return "no trade state";
     }
+    let tradebookId = state.submitEntryResult.tradeBookID;
+    if (!tradebookId) {
+        return "no tradebook id";
+    }
+    let tradebook = TradebooksManager.getTradebookByID(symbol, tradebookId);
+    if (!tradebook) {
+        return "no tradebook";
+    }
+
+    let tradebookText = tradebook.getTradebookDoc();
+    if (!tradebookText) {
+        return "no tradebook doc";
+    }
+
+    let direction = isLong ? 'long' : 'short';
 
     const systemPrompt = `You are a professional day trading coach. You will analyze trades based on a specific trading strategy (tradebook) and provide actionable feedback.
 
@@ -189,21 +191,19 @@ Your role:
 1. Comment on whether the entry aligns with the tradebook rules
 2. Identify any concerns or risks
 3. Suggest how to manage the position (targets, trailing stops, etc.)
-4. Be concise and actionable`;
+4. Be concise and actionable. Keep the response in 1-5 bullet points.`;
 
-    const userMessage = `I just entered a ${trade.direction.toUpperCase()} position:
-- Symbol: ${trade.symbol}
-- Entry Price: $${trade.entryPrice}
-- Stop Loss: $${trade.stopLoss}
-- Quantity: ${trade.quantity} shares
-- Entry Time: ${trade.entryTime}
-- Risk: $${Math.abs((trade.entryPrice - trade.stopLoss) * trade.quantity).toFixed(2)}
+    const userMessage = `I just entered a ${direction.toUpperCase()} position:
+- Symbol: ${symbol}
+- Entry Price: $${state.entryPrice}
+- Stop Loss: $${state.stopLossPrice}
+- Quantity: ${state.initialQuantity} shares
+- Risk: $${Math.abs((state.entryPrice - state.stopLossPrice) * state.initialQuantity).toFixed(2)}
 
 Please analyze this entry and provide management suggestions.`;
 
     // Show user message in UI
-    startNewMessage(`📈 ${trade.symbol} Entry (${trade.direction.toUpperCase()})`, true);
-    appendToCurrentMessage(`Entry: $${trade.entryPrice} | Stop: $${trade.stopLoss} | Qty: ${trade.quantity}`);
+    startNewMessage(`📈 ${symbol} Entry (${direction.toUpperCase()})`, true);
 
     // Initialize conversation for this trade
     const messages: ChatMessage[] = [
@@ -212,7 +212,7 @@ Please analyze this entry and provide management suggestions.`;
     ];
 
     // Start streaming response in UI
-    startNewMessage(`🤖 Entry Analysis - ${trade.symbol}`, false);
+    startNewMessage(`🤖 Entry Analysis - ${symbol}`, false);
 
     let fullResponse = '';
     try {
@@ -227,9 +227,9 @@ Please analyze this entry and provide management suggestions.`;
 
     // Store conversation for ongoing management
     messages.push({ role: 'assistant', content: fullResponse });
-    tradeConversations.set(trade.symbol, messages);
+    tradeConversations.set(symbol, messages);
 
-    console.log(`[ChatGPT] Trade Entry Analysis for ${trade.symbol}:`);
+    console.log(`[ChatGPT] Trade Entry Analysis for ${symbol}:`);
     console.log(fullResponse);
 
     return fullResponse;
@@ -249,7 +249,6 @@ export const analyzeOnCandleClose = async (
     currentPrice: number,
     unrealizedPnL: number
 ): Promise<string> => {
-    initialize();
 
     // Get existing conversation or create new one
     let messages = tradeConversations.get(symbol);
@@ -327,19 +326,9 @@ export const clearTradeConversation = (symbol: string) => {
 export const testTradeAnalysis = async () => {
     console.log('Testing Trade Analysis...');
 
-    // Simulate entering a long position
-    const trade: TradeEntry = {
-        symbol: 'AAPL',
-        direction: 'long',
-        entryPrice: 150.25,
-        stopLoss: 149.50,
-        quantity: 100,
-        entryTime: new Date().toLocaleTimeString(),
-    };
-
     console.log('\n--- Entry Analysis ---');
-    await analyzeTradeEntry(trade, 'vwapContinuation');
-
+    await analyzeTradeEntry('MDB', true);
+    /*
     // Simulate candle close
     console.log('\n--- Candle Close Analysis ---');
     const candle: CandleData = {
@@ -356,5 +345,6 @@ export const testTradeAnalysis = async () => {
 
     // Clean up
     clearTradeConversation('AAPL');
+    */
 };
 
