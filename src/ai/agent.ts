@@ -178,7 +178,12 @@ Your role:
 2. Explain and provide insight to the current price action so far regarding to my tradebook. 
 3. Suggest how to manage the position (targets, trailing stops, etc.)
 
-Be concise and actionable. Just 1-2 sentences per bullet point.`;
+Be concise and actionable. Just 1-2 sentences per bullet point. Start each point with a few key phrases.
+
+Such as:
+- [retracement to vwap]: currently price is retracing to vwap, so it's a good opportunity to add back partials.
+
+`;
 
     const userMessage = `I currently have a ${direction.toUpperCase()} position:
 - Symbol: ${symbol}
