@@ -1,3 +1,5 @@
+import { vwapBasedTradeManagement } from './vwapLong';
+
 export const tradebookText = `
 Long VWAP Pushdown Fail
 
@@ -20,6 +22,8 @@ Targets:
 
 Trade management:
 - If it has not reached our target but has made 3-leg move up, it's ok to exit during the 3rd leg up.
+
+${vwapBasedTradeManagement}
 
 Notes:
 - VWAP acts as dynamic support/resistance.
