@@ -357,4 +357,44 @@ span.algo {
 .chatwindow {
     max-height: 200px;
     overflow-y: scroll;
+    transition: max-height 0.3s ease-out;
+    border: 1px solid #ccc;
+    border-top: none;
+}
+
+.chatContainer {
+    margin-bottom: 5px;
+}
+
+.chatHeader {
+    background-color: #ECEFF1;
+    padding: 5px 10px;
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid #ccc;
+    border-bottom: none;
+    font-size: 13px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chatHeader:hover {
+    background-color: #CFD8DC;
+}
+
+.collapseIcon {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.chatContainer.collapsed .chatwindow {
+    max-height: 0;
+    overflow: hidden;
+    border: none;
+}
+
+.chatContainer.collapsed .chatHeader {
+    border-bottom: 1px solid #ccc;
 }

@@ -230,3 +230,23 @@ htmlBody.addEventListener("keydown", async function (keyboardEvent) {
     let shiftKey = keyboardEvent.shiftKey;
     KeyboardHandler.handleKeyPressed(code, shiftKey);
 });
+
+// Setup chat window expand/collapse functionality
+document.addEventListener('DOMContentLoaded', () => {
+    const chatHeaders = document.querySelectorAll('.chatHeader');
+    chatHeaders.forEach(header => {
+        header.addEventListener('click', () => {
+            const chatId = header.getAttribute('data-chat');
+            if (chatId) {
+                const container = header.closest('.chatContainer');
+                if (container) {
+                    container.classList.toggle('collapsed');
+                    const icon = header.querySelector('.collapseIcon');
+                    if (icon) {
+                        icon.textContent = container.classList.contains('collapsed') ? '+' : '−';
+                    }
+                }
+            }
+        });
+    });
+});
