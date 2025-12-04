@@ -157,7 +157,6 @@ export const analyzeTradeEntry = async (symbol: string, isLong: boolean, netQuan
     if (!detailedPlan) {
         return "no detailed plan";
     }
-    console.log(detailedPlan);
 
     let direction = isLong ? 'long' : 'short';
 
@@ -428,7 +427,6 @@ export const testSimpleChat = async (symbol: string) => {
     try {
         await Chatgpt.streamChat(messages, (chunk) => {
             appendToDiv(div, chunk);
-            console.log(`[ChatGPT] ${chunk}`);
         });
     } catch (error) {
         appendToDiv(div, `Error: ${error}`);
