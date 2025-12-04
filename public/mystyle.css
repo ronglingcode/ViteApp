@@ -353,3 +353,8 @@ span.algo {
 .tradeInterval {
     display: none;
 }
+
+.chatwindow {
+    max-height: 200px;
+    overflow-y: scroll;
+}
