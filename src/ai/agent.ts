@@ -175,10 +175,10 @@ Here is my predefined profit targets:
 ${getProfitTargets(symbol, isLong)}
 
 Your role:
-1. Comment on whether the entry aligns with the tradebook rules
-2. Identify any concerns or risks
-3. Suggest how to manage the position (targets, trailing stops, etc.)
-4. Be concise and actionable. Keep the response in less than 4 bullet points. Just one sentence per point.`;
+1. Comment on entry and partial exits 
+2. Suggest how to manage the position (targets, trailing stops, etc.)
+
+Be concise and actionable. Keep the response in less than 4 bullet points. Just one sentence per point.`;
 
     const userMessage = `I currently have a ${direction.toUpperCase()} position:
 - Symbol: ${symbol}
@@ -187,6 +187,9 @@ Your role:
 - Initial quantity: ${state.initialQuantity} shares
 - Remaining quantity: ${Math.abs(netQuantity)} shares. Lower means I have taken some partial exits.
 - Risk: $${Math.abs((state.entryPrice - state.stopLossPrice) * state.initialQuantity)}
+
+Here is my trade executions so far:
+${getTradeExecutions(symbol)}
 
 Here is the current market data:
 ${getMarketDataText(symbol, isLong)}
@@ -197,7 +200,7 @@ should I:
 3. Move stop loss?
 4. Exit completely?
 
-Please analyze this entry and provide brief and actionable management suggestions.`;
+Please provide brief and actionable trade management suggestions.`;
 
     // Show user message in UI
     startNewMessage(symbol, `📈 ${symbol} Entry (${direction.toUpperCase()})`, true);
@@ -209,7 +212,7 @@ Please analyze this entry and provide brief and actionable management suggestion
     ];
 
     // Start streaming response in UI
-    let div =startNewMessage(symbol, `🤖 Entry Analysis - ${symbol}`, false);
+    let div = startNewMessage(symbol, `🤖 Entry Analysis - ${symbol}`, false);
 
     let fullResponse = '';
     try {
@@ -430,4 +433,28 @@ export const testSimpleChat = async (symbol: string) => {
         appendToDiv(div, `Error: ${error}`);
         console.error('ChatGPT streaming error:', error);
     }
+}
+
+export const getTradeExecutions = (symbol: string): string => {
+    let executions = Models.getTradeExecutions(symbol);
+    if (!executions || executions.length === 0) {
+        return "";
+    }
+    let lastTrade = executions[executions.length - 1];
+    let result = "";
+    result += "entries:";
+    for (let i = 0; i < lastTrade.entries.length; i++) {
+        let entry = lastTrade.entries[i];
+        let action = entry.isBuy ? "buy" : "sell";
+        let time = TimeHelper.formatDateToHHMMSS(entry.time);
+        result += ` {action: ${action}, price: ${entry.roundedPrice}, time: ${time} quantity: ${entry.quantity}},`;
+    }
+    result += "partial exits:";
+    for (let i = 0; i < lastTrade.exits.length; i++) {
+        let exit = lastTrade.exits[i];
+        let action = exit.isBuy ? "buy" : "sell";
+        let time = TimeHelper.formatDateToHHMMSS(exit.time);
+        result += ` {action: ${action}, price: ${exit.roundedPrice}, time: ${time} quantity: ${exit.quantity}},`;
+    }
+    return result;
 }
