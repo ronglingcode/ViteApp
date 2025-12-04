@@ -168,17 +168,18 @@ Here is the trading strategy being used:
 
 ${tradebookText}
 
-Here is my analysis and trading plans for ${symbol}:
+Here is my analysis and trading plans for the stock I am trading for ${symbol}:
 ${detailedPlan.notes}
 
 Here is my predefined profit targets: 
 ${getProfitTargets(symbol, isLong)}
 
 Your role:
-1. Comment on entry and partial exits 
-2. Suggest how to manage the position (targets, trailing stops, etc.)
+1. Comment on entry and partial exits
+2. Explain and provide insight to the current price action so far regarding to my tradebook. 
+3. Suggest how to manage the position (targets, trailing stops, etc.)
 
-Be concise and actionable. Keep the response in less than 4 bullet points. Just one sentence per point.`;
+Be concise and actionable. Just 1-2 sentences per bullet point.`;
 
     const userMessage = `I currently have a ${direction.toUpperCase()} position:
 - Symbol: ${symbol}
@@ -442,7 +443,7 @@ export const getTradeExecutions = (symbol: string): string => {
     }
     let lastTrade = executions[executions.length - 1];
     let result = "";
-    result += "entries:";
+    result += "entries (if more than one, the rest are adds or re-entry):";
     for (let i = 0; i < lastTrade.entries.length; i++) {
         let entry = lastTrade.entries[i];
         let action = entry.isBuy ? "buy" : "sell";
