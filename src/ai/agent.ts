@@ -160,7 +160,8 @@ export const analyzeTradeEntry = async (symbol: string, isLong: boolean, netQuan
 
     let direction = isLong ? 'long' : 'short';
 
-    const systemPrompt = `You are a professional day trading coach. You will analyze trades based on a specific trading strategy (tradebook) and provide actionable feedback.
+    const systemPrompt = `You are a professional day trading coach. 
+    You will analyze trades based on a specific trading strategy (tradebook) and provide actionable feedback.
     You will be asked each time a new 1-minute candle closes while I have an open position.
 
 Here is the trading strategy being used:
@@ -369,13 +370,19 @@ export const testTradeAnalysis = async (symbol: string) => {
     */
 };
 
+const candleToText = (candle: Models.CandlePlus, vwap: number) => {
+    let timeString = TimeHelper.formatDateToHHMMSS(new Date(candle.datetime));
+    return `{T: ${timeString}, O: ${candle.open}, H: ${candle.high}, L: ${candle.low}, C: ${candle.close}, V: ${candle.volume}, vwap: ${vwap}},`;
+}
 export const getMarketDataText = (symbol: string, isLong: boolean) => {
     let plan = TradingPlans.getTradingPlans(symbol);
     let inflection = plan.analysis.singleMomentumKeyLevel[0].high;
     let openPrice = Models.getOpenPrice(symbol);
     let openVwap = Models.getLastVwapBeforeOpen(symbol);
     let symbolData = Models.getSymbolData(symbol);
-    let candles = Models.getCandlesFromM1SinceOpen(symbol);
+    let candles = Models.getM1ClosedCandlesSinceOpen(symbol);
+    let currentCandle = Models.getCurrentCandle(symbol);
+    let currentCandleText = candleToText(currentCandle, Models.getCurrentVwap(symbol));
     let vwaps = Models.getVwapsSinceOpen(symbol);
     let candlesText = "";
     let minutes = Helper.getMinutesSinceMarketOpen(new Date());
@@ -388,9 +395,9 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
         if ((isLong && candle.low <= vwap.value) || (!isLong && candle.high >= vwap.value)) {
             hasTestedVwap = true;
         }
-        let timeString = TimeHelper.formatDateToHHMMSS(new Date(candle.datetime));
-        candlesText += `{T: ${timeString}, O: ${candle.open}, H: ${candle.high}, L: ${candle.low}, C: ${candle.close}, V: ${candle.volume}, vwap: ${vwap.value}},`;
+        candlesText += candleToText(candle, vwap.value);
     }
+    let currentPrice = Models.getCurrentPrice(symbol);
     return `
 - Inflection level: ${inflection}.
 - ATR: ${plan.atr.average}.
@@ -400,8 +407,9 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
 - Premarket high: ${symbolData.premktHigh}, premarket low: ${symbolData.premktLow}.
 - Intraday high: ${symbolData.highOfDay}, intraday low: ${symbolData.lowOfDay}.
 - Current time: ${minutes} minutes since market open.
-- 1-minute candles since open with time(T), volume(V) and vwap: [${candlesText}].
-- Current price is the close price of the latest candle.
+- 1-minute closed candles since open with time(T), volume(V) and vwap: [${candlesText}].
+- Current price: ${currentPrice}.
+- Current not closed candle: ${currentCandleText}.
 - Has the price tested the inflection level: ${hasTestedKeyLevel}.
 - Has the price tested the vwap since open: ${hasTestedVwap}.
 `;
