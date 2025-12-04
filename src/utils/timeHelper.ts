@@ -10,6 +10,13 @@ export const formatDateToYYYYMMDD = (date: Date): string => {
     return `${yyyy}-${mm}-${dd}`;
 };
 
+export const formatDateToHHMMSS = (date: Date): string => {
+    let hours = date.getHours().toString().padStart(2, '0');
+    let minutes = date.getMinutes().toString().padStart(2, '0');
+    let seconds = date.getSeconds().toString().padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
+}
+
 export const getPreciseTimeString = (date: Date) => {
     let hours = date.getHours().toString().padStart(2, '0');
     let minutes = date.getMinutes().toString().padStart(2, '0');

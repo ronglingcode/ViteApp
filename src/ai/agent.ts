@@ -3,8 +3,6 @@
  * OpenAI API documentation: https://platform.openai.com/docs/api-reference/chat
  */
 
-import { tradebookText as vwapContinuationText } from '../tradebooksText/vwapContinuation';
-import * as Secrets from '../config/secret';
 import * as Chatgpt from './chatgpt';
 import * as TradingState from '../models/tradingState';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
@@ -12,6 +10,7 @@ import * as GoogleDocsApi from '../api/googleDocs/googleDocsApi';
 import * as Models from '../models/models';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as Helper from '../utils/helper';
+import * as TimeHelper from '../utils/timeHelper';
 
 declare let window: Models.MyWindow;
 
@@ -381,13 +380,14 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
         if ((isLong && candle.low <= vwap.value) || (!isLong && candle.high >= vwap.value)) {
             hasTestedVwap = true;
         }
-
-        candlesText += `{T: ${candle.time}, O: ${candle.open}, H: ${candle.high}, L: ${candle.low}, C: ${candle.close}, V: ${candle.volume}, vwap: ${vwap.value}},`;
+        let timeString = TimeHelper.formatDateToHHMMSS(new Date(candle.datetime));
+        candlesText += `{T: ${timeString}, O: ${candle.open}, H: ${candle.high}, L: ${candle.low}, C: ${candle.close}, V: ${candle.volume}, vwap: ${vwap.value}},`;
     }
     return `
 - Inflection level: ${inflection}.
 - ATR: ${plan.atr.average}.
 - Open Price: ${openPrice}.
+- Market open time: ${TimeHelper.formatDateToHHMMSS(new Date(candles[0].datetime))}.
 - vwap at open: ${openVwap}.
 - Premarket high: ${symbolData.premktHigh}, premarket low: ${symbolData.premktLow}.
 - Intraday high: ${symbolData.highOfDay}, intraday low: ${symbolData.lowOfDay}.
