@@ -72,17 +72,6 @@ const startNewMessage = (title: string, isUser: boolean = false): HTMLElement | 
     return contentDiv;
 };
 
-/**
- * Append text chunk to current message (for streaming)
- */
-const appendToCurrentMessage = (chunk: string) => {
-    if (currentMessageDiv) {
-        currentMessageDiv.textContent += chunk;
-        // Auto-scroll to show latest
-        currentMessageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-};
-
 export interface ChatCompletionRequest {
     model: string;
     messages: ChatMessage[];

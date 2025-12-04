@@ -33,8 +33,6 @@ export interface CandleData {
 // Store conversation history for each active trade
 export const tradeConversations: Map<string, ChatMessage[]> = new Map();
 
-// UI Elements
-let currentMessageDivs: Map<string, HTMLElement> = new Map();
 
 const getChatgptMessagesDiv = (symbol: string): HTMLElement | null => {
     let index = Models.getWatchlistIndex(symbol);
@@ -88,22 +86,17 @@ const startNewMessage = (symbol: string, title: string, isUser: boolean = false)
     // Insert at top
     container.insertBefore(messageDiv, container.firstChild);
 
-    currentMessageDivs.set(symbol, contentDiv);
     return contentDiv;
 };
 
-/**
- * Append text chunk to current message (for streaming)
- */
-const appendToCurrentMessage = (symbol: string, chunk: string) => {
-    let currentMessageDiv = currentMessageDivs.get(symbol);
-    if (!currentMessageDiv) {
-        console.log(`[ChatGPT] No current message div for ${symbol}`);
+const appendToDiv = (div: HTMLElement | null, chunk: string) => {
+    if (!div) {
+        console.log(`[ChatGPT] No div to append to`);
         return;
     }
-    currentMessageDiv.textContent += chunk;
+    div.textContent += chunk;
     // Auto-scroll to show latest
-    currentMessageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
 
 
@@ -217,16 +210,16 @@ Please analyze this entry and provide brief and actionable management suggestion
     ];
 
     // Start streaming response in UI
-    startNewMessage(symbol, `🤖 Entry Analysis - ${symbol}`, false);
+    let div =startNewMessage(symbol, `🤖 Entry Analysis - ${symbol}`, false);
 
     let fullResponse = '';
     try {
         await Chatgpt.streamChat(messages, (chunk) => {
-            appendToCurrentMessage(symbol, chunk);
+            appendToDiv(div, chunk);
             fullResponse += chunk;
         });
     } catch (error) {
-        appendToCurrentMessage(symbol, `Error: ${error}`);
+        appendToDiv(div, `Error: ${error}`);
         console.error('ChatGPT streaming error:', error);
     }
 
@@ -287,22 +280,22 @@ Please provide brief, actionable advice.`;
 
     // Show candle data in UI
     const pnlEmoji = unrealizedPnL >= 0 ? '🟢' : '🔴';
-    startNewMessage(symbol, `🕐 ${symbol} Candle Close @ ${candle.time}`, true);
-    appendToCurrentMessage(symbol, `Close: $${candle.close.toFixed(2)} | P&L: ${pnlEmoji} $${unrealizedPnL.toFixed(2)}`);
+    let userDiv = startNewMessage(symbol, `🕐 ${symbol} Candle Close @ ${candle.time}`, true);
+    appendToDiv(userDiv, `Close: $${candle.close.toFixed(2)} | P&L: ${pnlEmoji} $${unrealizedPnL.toFixed(2)}`);
 
     messages.push({ role: 'user', content: candleAnalysis });
 
     // Start streaming response in UI
-    startNewMessage(symbol, `🤖 Management Advice - ${symbol}`, false);
+    let div = startNewMessage(symbol, `🤖 Management Advice - ${symbol}`, false);
 
     let fullResponse = '';
     try {
         await Chatgpt.streamChat(messages, (chunk) => {
-            appendToCurrentMessage(symbol, chunk);
+            appendToDiv(div, chunk);
             fullResponse += chunk;
         });
     } catch (error) {
-        appendToCurrentMessage(symbol, `Error: ${error}`);
+        appendToDiv(div, `Error: ${error}`);
         console.error('ChatGPT streaming error:', error);
     }
 
@@ -419,18 +412,22 @@ export const getProfitTargets = (symbol: string, isLong: boolean) => {
 }
 export const testSimpleChat = async (symbol: string) => {
     console.log('Testing Simple Chat...');
-    startNewMessage(symbol, '🤖 Simple Chat - ' + symbol, false);
+    let div = startNewMessage(symbol, '🤖 Simple Chat - ' + symbol, false);
+    if (!div) {
+        console.log(`[ChatGPT] No div for ${symbol}`);
+        return;
+    }
     let messages: ChatMessage[] = [
         { role: 'system', content: 'You are a helpful assistant.' },
         { role: 'user', content: 'How to use vwap in day trading? Keep it within 100 words.' }
     ];
     try {
         await Chatgpt.streamChat(messages, (chunk) => {
-            appendToCurrentMessage(symbol, chunk);
+            appendToDiv(div, chunk);
             console.log(`[ChatGPT] ${chunk}`);
         });
     } catch (error) {
-        appendToCurrentMessage(symbol, `Error: ${error}`);
+        appendToDiv(div, `Error: ${error}`);
         console.error('ChatGPT streaming error:', error);
     }
 }
