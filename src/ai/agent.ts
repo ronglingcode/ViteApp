@@ -429,6 +429,8 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
     if (m15CandlesText) {
         finalText += `- 15-minute closed candles since open: [${m15CandlesText}].`;
     }
+    console.log("m5CandlesText: ");
+    console.log(m15CandlesText);
     return finalText;
 }
 
