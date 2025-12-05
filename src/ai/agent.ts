@@ -160,29 +160,28 @@ export const analyzeTradeEntry = async (symbol: string, isLong: boolean, netQuan
 
     let direction = isLong ? 'long' : 'short';
 
-    const systemPrompt = `You are a professional day trading coach. 
-    You will analyze trades based on a specific trading strategy (tradebook) and provide actionable feedback.
+    const systemPrompt = `You are a professional day trading assistant. 
+    You will analyze live trades based on a specific trading strategy (tradebook) and provide actionable feedback.
     You will be asked each time a new 1-minute candle closes while I have an open position.
 
 Here is the trading strategy being used:
-
 ${tradebookText}
 
-Here is my analysis and trading plans for the stock I am trading for ${symbol}:
+Here is my analysis and trading plans I prepared for stock ${symbol}:
 ${detailedPlan.notes}
 
 Here is my predefined profit targets: 
 ${getProfitTargets(symbol, isLong)}
 
 Your role:
-1. Comment on entry and partial exits
-2. Explain and provide insight to the current price action so far regarding to my tradebook. 
-3. Suggest how to manage the position (targets, trailing stops, etc.)
+1. Explain and provide insight to the current price action so far regarding to my tradebook. 
+2. Suggest how to manage the position (targets, trailing stops, etc.)
 
 Be concise and actionable. Just 1-2 sentences per bullet point. Start each point with a few key phrases.
 
 Such as:
-- [retracement to vwap]: currently price is retracing to vwap, so it's a good opportunity to add back partials.
+- [retracement to vwap]: currently price is retracing to vwap
+- [trade management]: as long as price is holding above vwap, maintain long position and look for dip buys. Stop out if lose vwap. 
 
 `;
 
@@ -200,13 +199,7 @@ ${getTradeExecutions(symbol)}
 Here is the current market data:
 ${getMarketDataText(symbol, isLong)}
 
-should I:
-1. Hold the position?
-2. Take partial profits?
-3. Move stop loss?
-4. Exit completely?
-
-Please provide brief and actionable trade management suggestions.`;
+Please provide brief trade and market analysis and actionable trade management suggestions.`;
 
     // Show user message in UI
     startNewMessage(symbol, `📈 ${symbol} Entry (${direction.toUpperCase()})`, true);
