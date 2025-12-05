@@ -1,3 +1,5 @@
+import * as TrailingStop from './trailingStopShort';
+
 export const tradebookText = `
 Short Open Drive
 
@@ -21,6 +23,7 @@ Trade management:
 - If it has tested inflection level, do not tighten stop, keep inflection level as the stop.
 - If vwap goes above inflection level, we can consider using vwap as the stop.
 
+- ${TrailingStop.trailingStop}
 
 Notes:
 - VWAP acts as dynamic support/resistance.

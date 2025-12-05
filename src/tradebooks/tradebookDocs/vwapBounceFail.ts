@@ -1,5 +1,5 @@
 import { vwapBasedTradeManagement } from './vwapShort';
-
+import * as TrailingStop from './trailingStopShort';
 export const tradebookText = `
 Short VWAP Bounce Fail
 
@@ -23,6 +23,8 @@ Trade management:
 - If it has not reached our target but has made 3-leg move down, it's ok to exit during the 3rd leg down.
 
 ${vwapBasedTradeManagement}
+
+${TrailingStop.trailingStop}
 
 Notes:
 - VWAP acts as dynamic support/resistance.

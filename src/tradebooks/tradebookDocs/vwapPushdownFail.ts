@@ -1,5 +1,5 @@
 import { vwapBasedTradeManagement } from './vwapLong';
-
+import * as TrailingStop from './trailingStopLong';
 export const tradebookText = `
 Long VWAP Pushdown Fail
 
@@ -24,6 +24,8 @@ Trade management:
 - If it has not reached our target but has made 3-leg move up, it's ok to exit during the 3rd leg up.
 
 ${vwapBasedTradeManagement}
+
+${TrailingStop.trailingStop}
 
 Notes:
 - VWAP acts as dynamic support/resistance.

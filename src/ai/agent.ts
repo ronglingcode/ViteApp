@@ -366,9 +366,9 @@ export const testTradeAnalysis = async (symbol: string) => {
     */
 };
 
-const candleToText = (candle: Models.CandlePlus, vwap: number) => {
+const candleToText = (candle: Models.CandlePlus, vwap: number | undefined) => {
     let timeString = TimeHelper.formatDateToHHMMSS(new Date(candle.datetime));
-    return `{T: ${timeString}, O: ${candle.open}, H: ${candle.high}, L: ${candle.low}, C: ${candle.close}, V: ${candle.volume}, vwap: ${vwap}},`;
+    return `{T: ${timeString}, O: ${candle.open}, H: ${candle.high}, L: ${candle.low}, C: ${candle.close}, V: ${candle.volume}, vwap: ${vwap ? vwap : 'N/A'}},`;
 }
 export const getMarketDataText = (symbol: string, isLong: boolean) => {
     let plan = TradingPlans.getTradingPlans(symbol);
@@ -376,8 +376,11 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
     let openPrice = Models.getOpenPrice(symbol);
     let openVwap = Models.getLastVwapBeforeOpen(symbol);
     let symbolData = Models.getSymbolData(symbol);
-    let candles = Models.getM1ClosedCandlesSinceOpen(symbol);
+    let closedCandles = Models.getM1ClosedCandlesSinceOpen(symbol);
     let currentCandle = Models.getCurrentCandle(symbol);
+    let candles =Models.getCandlesFromM1SinceOpen(symbol);
+    let m5Candles = Models.aggregateCandles(candles, 5);
+    let m15Candles = Models.aggregateCandles(candles, 15);
     let currentCandleText = candleToText(currentCandle, Models.getCurrentVwap(symbol));
     let vwaps = Models.getVwapsSinceOpen(symbol);
     let candlesText = "";
@@ -385,8 +388,8 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
     let hasTestedKeyLevel = (isLong && symbolData.lowOfDay <= inflection) ||
         (!isLong && symbolData.highOfDay >= inflection);
     let hasTestedVwap = false;
-    for (let i = 0; i < candles.length && i < vwaps.length; i++) {
-        let candle = candles[i];
+    for (let i = 0; i < closedCandles.length && i < vwaps.length; i++) {
+        let candle = closedCandles[i];
         let vwap = vwaps[i];
         if ((isLong && candle.low <= vwap.value) || (!isLong && candle.high >= vwap.value)) {
             hasTestedVwap = true;
@@ -394,21 +397,42 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
         candlesText += candleToText(candle, vwap.value);
     }
     let currentPrice = Models.getCurrentPrice(symbol);
-    return `
+    let m5CandlesText = "";
+    let m15CandlesText = "";
+    if (minutes >= 5) {
+        for (let i = 0; i < m5Candles.length - 1; i++) {
+            let candle = m5Candles[i];
+            m5CandlesText += candleToText(candle, Models.getCurrentVwap(symbol));
+        }
+        if (minutes >= 15) {
+            for (let i = 0; i < m15Candles.length - 1; i++) {
+                let candle = m15Candles[i];
+                m15CandlesText += candleToText(candle, Models.getCurrentVwap(symbol));
+            }
+        }
+    }
+    let finalText = `
 - Inflection level: ${inflection}.
 - ATR: ${plan.atr.average}.
 - Open Price: ${openPrice}.
-- Market open time: ${TimeHelper.formatDateToHHMMSS(new Date(candles[0].datetime))}.
+- Market open time: ${TimeHelper.formatDateToHHMMSS(new Date(closedCandles[0].datetime))}.
+- Current time: ${TimeHelper.formatDateToHHMMSS(new Date())}, ${minutes} minutes since market open.
 - vwap at open: ${openVwap}.
 - Premarket high: ${symbolData.premktHigh}, premarket low: ${symbolData.premktLow}.
 - Intraday high: ${symbolData.highOfDay}, intraday low: ${symbolData.lowOfDay}.
-- Current time: ${minutes} minutes since market open.
 - 1-minute closed candles since open with time(T), volume(V) and vwap: [${candlesText}].
 - Current price: ${currentPrice}.
 - Current not closed candle: ${currentCandleText}.
 - Has the price tested the inflection level: ${hasTestedKeyLevel}.
 - Has the price tested the vwap since open: ${hasTestedVwap}.
 `;
+    if (m5CandlesText) {
+        finalText += `- 5-minute closed candles since open: [${m5CandlesText}].`;
+    }
+    if (m15CandlesText) {
+        finalText += `- 15-minute closed candles since open: [${m15CandlesText}].`;
+    }
+    return finalText;
 }
 
 export const getProfitTargets = (symbol: string, isLong: boolean) => {

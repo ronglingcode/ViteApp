@@ -1,4 +1,5 @@
 import { vwapBasedTradeManagement } from './vwapLong';
+import * as TrailingStop from './trailingStopLong';
 
 export const tradebookText = `
 Long VWAP Continuation
@@ -23,6 +24,8 @@ Trade management:
 - If it has tested inflection level, do not tighten stop, keep inflection level as the stop.
 
 ${vwapBasedTradeManagement}
+
+${TrailingStop.trailingStop}
 
 Notes:
 - VWAP acts as dynamic support/resistance.
