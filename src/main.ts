@@ -171,7 +171,7 @@ if (showTargetsButton) {
 let testPopButton = document.getElementById("test_popup");
 if (testPopButton) {
     testPopButton.addEventListener("click", () => {
-        Agent.testSimpleChat("MRVL");
+        Agent.testSimpleChat("META");
     });
 }
 

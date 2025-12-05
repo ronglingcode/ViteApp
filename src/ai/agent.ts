@@ -11,6 +11,7 @@ import * as Models from '../models/models';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as Helper from '../utils/helper';
 import * as TimeHelper from '../utils/timeHelper';
+import * as ProxyServer from '../api/proxyServer';
 
 declare let window: Models.MyWindow;
 
@@ -231,6 +232,8 @@ Please provide brief trade and market analysis and actionable trade management s
     console.log(`[ChatGPT] Trade Entry Analysis for ${symbol}:`);
     console.log(fullResponse);
 
+    ProxyServer.saveAgentResponse(symbol, fullResponse);
+
     return fullResponse;
 };
 
@@ -430,14 +433,17 @@ export const testSimpleChat = async (symbol: string) => {
         { role: 'system', content: 'You are a helpful assistant.' },
         { role: 'user', content: 'How to use vwap in day trading? Keep it within 100 words.' }
     ];
+    let fullResponse = '';
     try {
         await Chatgpt.streamChat(messages, (chunk) => {
             appendToDiv(div, chunk);
+            fullResponse += chunk;
         });
     } catch (error) {
         appendToDiv(div, `Error: ${error}`);
         console.error('ChatGPT streaming error:', error);
     }
+    ProxyServer.saveAgentResponse(symbol, fullResponse);
 }
 
 export const getTradeExecutions = (symbol: string): string => {
