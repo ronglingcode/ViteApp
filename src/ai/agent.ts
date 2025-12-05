@@ -202,9 +202,6 @@ ${getMarketDataText(symbol, isLong)}
 
 Please provide brief trade and market analysis and actionable trade management suggestions with reasoning.`;
 
-    // Show user message in UI
-    startNewMessage(symbol, `📈 ${symbol} Entry (${direction.toUpperCase()})`, true);
-
     // Initialize conversation for this trade
     const messages: ChatMessage[] = [
         { role: 'system', content: systemPrompt },
@@ -212,7 +209,7 @@ Please provide brief trade and market analysis and actionable trade management s
     ];
 
     // Start streaming response in UI
-    let div = startNewMessage(symbol, `🤖 Entry Analysis - ${symbol}`, false);
+    let div = startNewMessage(symbol, `🤖 ${symbol} - Trade Analysis`, false);
 
     let fullResponse = '';
     try {
