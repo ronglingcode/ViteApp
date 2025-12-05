@@ -178,7 +178,7 @@ Your role:
 1. Explain and provide insight to the current price action so far regarding to my tradebook. 
 2. Suggest how to manage the position (targets, trailing stops, etc.) with reasoning.
 
-Be concise and actionable. Just 1-2 sentences per bullet point. Start each point with a few key phrases.
+Be concise and actionable. Just 1-2 sentences per bullet point. Start each point with a few key phrases. Keep the response less than 300 characters.
 
 Such as:
 - [retracement to vwap]: currently price is retracing to vwap
