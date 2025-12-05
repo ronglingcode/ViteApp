@@ -171,7 +171,9 @@ if (showTargetsButton) {
 let testPopButton = document.getElementById("test_popup");
 if (testPopButton) {
     testPopButton.addEventListener("click", () => {
-        Agent.testSimpleChat("META");
+        let wl = Models.getWatchlist();
+        let symbol = wl[0].symbol;
+        Agent.testSimpleChat(symbol);
     });
 }
 
