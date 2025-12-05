@@ -397,11 +397,13 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
     let m5CandlesText = "";
     let m15CandlesText = "";
     if (minutes >= 5) {
+        m5Candles = symbolData.m5Candles;
         for (let i = 0; i < m5Candles.length - 1; i++) {
             let candle = m5Candles[i];
             m5CandlesText += candleToText(candle, Models.getCurrentVwap(symbol));
         }
         if (minutes >= 15) {
+            m15Candles = symbolData.m15Candles;
             for (let i = 0; i < m15Candles.length - 1; i++) {
                 let candle = m15Candles[i];
                 m15CandlesText += candleToText(candle, Models.getCurrentVwap(symbol));
