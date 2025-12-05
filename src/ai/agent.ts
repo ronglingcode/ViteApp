@@ -176,13 +176,13 @@ ${getProfitTargets(symbol, isLong)}
 
 Your role:
 1. Explain and provide insight to the current price action so far regarding to my tradebook. 
-2. Suggest how to manage the position (targets, trailing stops, etc.)
+2. Suggest how to manage the position (targets, trailing stops, etc.) with reasoning.
 
 Be concise and actionable. Just 1-2 sentences per bullet point. Start each point with a few key phrases.
 
 Such as:
 - [retracement to vwap]: currently price is retracing to vwap
-- [trade management]: as long as price is holding above vwap, maintain long position and look for dip buys. Stop out if lose vwap. 
+- [trade management]: Because this trade condition to fail is lost of vwap, so as long as price is holding above vwap, maintain long position and look for dip buys. Stop out if lose vwap. 
 
 `;
 
@@ -200,7 +200,7 @@ ${getTradeExecutions(symbol)}
 Here is the current market data:
 ${getMarketDataText(symbol, isLong)}
 
-Please provide brief trade and market analysis and actionable trade management suggestions.`;
+Please provide brief trade and market analysis and actionable trade management suggestions with reasoning.`;
 
     // Show user message in UI
     startNewMessage(symbol, `📈 ${symbol} Entry (${direction.toUpperCase()})`, true);
