@@ -442,6 +442,8 @@ export interface Candle extends SimpleCandle {
     volume: number,
     datetime: number, // like 1667386800000
     vwap: number,
+    ma5?: number,
+    ma9?: number,
 };
 export interface CandlePlus extends Candle {
     minutesSinceMarketOpen: number,

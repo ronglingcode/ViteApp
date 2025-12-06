@@ -1,3 +1,4 @@
+import * as TrendMovingAverage from './trendMovingAverage';
 export const tradebookText = `
 # Setup
 
@@ -65,5 +66,5 @@ The higher price of
 # Trade Management
 
 Partial 50% to vwap. Hold the rest for vwap bounce fail. If vwap bounce fail confirmed, add back some previous partials.
-
+- ${TrendMovingAverage.short}
 `.trim();

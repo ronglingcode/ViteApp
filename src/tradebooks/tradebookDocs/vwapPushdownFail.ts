@@ -1,5 +1,7 @@
 import { vwapBasedTradeManagement } from './vwapLong';
 import * as TrailingStop from './trailingStopLong';
+import * as TrendMovingAverage from './trendMovingAverage';
+
 export const tradebookText = `
 Long VWAP Pushdown Fail
 
@@ -26,6 +28,8 @@ Trade management:
 ${vwapBasedTradeManagement}
 
 ${TrailingStop.trailingStop}
+
+${TrendMovingAverage.long}
 
 Notes:
 - VWAP acts as dynamic support/resistance.

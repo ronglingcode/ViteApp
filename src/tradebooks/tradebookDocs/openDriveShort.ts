@@ -1,5 +1,5 @@
 import * as TrailingStop from './trailingStopShort';
-
+import * as TrendMovingAverage from './trendMovingAverage';
 export const tradebookText = `
 Short Open Drive
 
@@ -22,7 +22,7 @@ Targets:
 Trade management:
 - If it has tested inflection level, do not tighten stop, keep inflection level as the stop.
 - If vwap goes above inflection level, we can consider using vwap as the stop.
-
+- ${TrendMovingAverage.short}
 - ${TrailingStop.trailingStop}
 
 Notes:

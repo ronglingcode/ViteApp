@@ -218,12 +218,14 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[]) => {
                 time: ma5.time,
                 value: ma5.close,
             });
+            symbolData.m1Candles[lookBackStart].ma5 = ma5.close;
         }
         if (ma9) {
             symbolData.m1ma9.push({
                 time: ma9.time,
                 value: ma9.close,
             });
+            symbolData.m1Candles[lookBackStart].ma9 = ma9.close;
         }
     }
     allCharts[0].ma5Series?.setData(symbolData.m1ma5);

@@ -1,4 +1,6 @@
 import * as TrailingStop from './trailingStopShort';
+import * as TrendMovingAverage from './trendMovingAverage';
+
 export const tradebookText = `
 Short Below Water Breakdown
 
@@ -20,6 +22,7 @@ Targets:
 Trade management:
 - If vwap gets below inflection level, we can consider using vwap as the stop.
 - ${TrailingStop.trailingStop}
+- ${TrendMovingAverage.short}
 
 Notes:
 - VWAP acts as dynamic support/resistance.

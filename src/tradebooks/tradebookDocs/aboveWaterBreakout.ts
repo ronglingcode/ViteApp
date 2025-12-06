@@ -1,4 +1,6 @@
 import * as TrailingStop from './trailingStopLong';
+import * as TrendMovingAverage from './trendMovingAverage';
+
 export const tradebookText = `
 Long Above Water Breakout
 
@@ -20,6 +22,7 @@ Targets:
 Trade management:
 - If vwap gets above inflection level, we can consider using vwap as the stop.
 - ${TrailingStop.trailingStop}
+- ${TrendMovingAverage.long}
 
 Notes:
 - VWAP acts as dynamic support/resistance.

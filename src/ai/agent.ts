@@ -365,7 +365,18 @@ export const testTradeAnalysis = async (symbol: string) => {
 
 const candleToText = (candle: Models.CandlePlus, vwap: number | undefined) => {
     let timeString = TimeHelper.formatDateToHHMMSS(new Date(candle.datetime));
-    return `{T: ${timeString}, O: ${candle.open}, H: ${candle.high}, L: ${candle.low}, C: ${candle.close}, V: ${candle.volume}, vwap: ${vwap ? vwap : 'N/A'}},`;
+    let text = `T: ${timeString}, O: ${candle.open}, H: ${candle.high}, L: ${candle.low}, C: ${candle.close}, V: ${candle.volume}`;
+    if (vwap) {
+        text += `, vwap: ${vwap}`;
+    }
+    if (candle.ma5) {
+        text += `, ma5: ${candle.ma5}`;
+    }
+    if (candle.ma9) {
+        text += `, ma9: ${candle.ma9}`;
+    }
+
+    return `{${text}},`;
 }
 export const getMarketDataText = (symbol: string, isLong: boolean) => {
     let plan = TradingPlans.getTradingPlans(symbol);
@@ -419,7 +430,7 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
 - vwap at open: ${openVwap}.
 - Premarket high: ${symbolData.premktHigh}, premarket low: ${symbolData.premktLow}.
 - Intraday high: ${symbolData.highOfDay}, intraday low: ${symbolData.lowOfDay}.
-- 1-minute closed candles since open with time(T), volume(V) and vwap: [${candlesText}].
+- 1-minute closed candles since market open with time(T), volume(V), vwap, 5-period moving average (ma5), 9-period moving average (ma9): [${candlesText}].
 - Current price: ${currentPrice}.
 - Current not closed candle: ${currentCandleText}.
 - Has the price tested the inflection level: ${hasTestedKeyLevel}.

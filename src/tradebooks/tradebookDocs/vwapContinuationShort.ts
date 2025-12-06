@@ -1,6 +1,6 @@
 import { vwapBasedTradeManagement } from './vwapShort';
 import * as TrailingStop from './trailingStopShort';
-
+import * as TrendMovingAverage from './trendMovingAverage';
 export const tradebookText = `
 Short VWAP Continuation
 
@@ -27,6 +27,9 @@ Trade management:
 ${vwapBasedTradeManagement}
 
 ${TrailingStop.trailingStop}
+
+${TrendMovingAverage.short}
+
 Notes:
 - VWAP acts as dynamic support/resistance.
 - Volume confirmation increases probability.

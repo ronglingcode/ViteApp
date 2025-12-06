@@ -1,4 +1,5 @@
 import * as TrailingStop from './trailingStopLong';
+import * as TrendMovingAverage from './trendMovingAverage';
 
 export const tradebookText = `
 Long Open Drive
@@ -22,8 +23,9 @@ Targets:
 Trade management:
 - If it has tested inflection level, do not tighten stop, keep inflection level as the stop.
 - If vwap goes above inflection level, we can consider using vwap as the stop.
-
+- ${TrendMovingAverage.long}
 - ${TrailingStop.trailingStop}
+
 
 Notes:
 - VWAP acts as dynamic support/resistance.
