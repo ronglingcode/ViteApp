@@ -4,6 +4,8 @@ import * as Chart from '../ui/chart';
 import * as Models from '../models/models';
 import * as Firestore from '../firestore';
 import * as TradebookUtil from './tradebookUtil';
+import * as LongDocs from './tradebookDocs/breakdownReversalLong';
+import * as ShortDocs from './tradebookDocs/breakdownReversalLong';
 
 export class BreakoutReversal extends Tradebook {
     public static readonly reversalLong: string = 'ReversalLong';
@@ -147,6 +149,10 @@ export class BreakoutReversal extends Tradebook {
     }
     /** Minimal doc method for now — returns empty string. */
     getTradebookDoc(): string {
-        return "";
+        if (this.isLong) {
+            return LongDocs.tradebookText;
+        } else {
+            return ShortDocs.tradebookText;
+        }
     }
 }
