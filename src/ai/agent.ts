@@ -178,7 +178,7 @@ Your role:
 1. Explain and provide insight to the current price action so far regarding to my tradebook. 
 2. Suggest how to manage the position (targets, trailing stops, etc.) with reasoning.
 
-Be concise and actionable. Just 1-2 sentences per bullet point. Start each point with a few key phrases. Keep the response less than 300 characters.
+Be concise and actionable. Just 1-2 sentences per bullet point. Start each point with a few key phrases. Keep the response less than 200 characters.
 
 Such as:
 - [retracement to vwap]: currently price is retracing to vwap
@@ -225,6 +225,7 @@ Please provide brief trade and market analysis and actionable trade management s
     // Store conversation for ongoing management
     messages.push({ role: 'assistant', content: fullResponse });
     tradeConversations.set(symbol, messages);
+    appendToDiv(div, ` Total chars: ${fullResponse.length}`);
 
     console.log(`[ChatGPT] Trade Entry Analysis for ${symbol}:`);
     console.log(fullResponse);
@@ -344,20 +345,7 @@ export const testTradeAnalysis = async (symbol: string) => {
     }
 
     /*
-    // Simulate candle close
-    console.log('\n--- Candle Close Analysis ---');
-    const candle: CandleData = {
-        time: new Date().toLocaleTimeString(),
-        open: 150.30,
-        high: 150.75,
-        low: 150.20,
-        close: 150.60,
-        volume: 125000,
-        vwap: 150.15,
-    };
-
-    await analyzeOnCandleClose('AAPL', candle, 150.60, 35.00);
-
+    
     // Clean up
     clearTradeConversation('AAPL');
     */
