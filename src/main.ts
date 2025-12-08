@@ -265,4 +265,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // Setup section expand/collapse functionality for A+ Setups and Trade Management
+    const sectionHeaders = document.querySelectorAll('.clickableSectionTitle');
+    sectionHeaders.forEach(header => {
+        header.addEventListener('click', () => {
+            const sectionId = header.getAttribute('data-section');
+            if (sectionId) {
+                const container = header.closest('.collapsibleSection');
+                if (container) {
+                    container.classList.toggle('collapsed');
+                    const icon = header.querySelector('.collapseIcon');
+                    if (icon) {
+                        icon.textContent = container.classList.contains('collapsed') ? '+' : '−';
+                    }
+                }
+            }
+        });
+    });
 });

@@ -14,20 +14,19 @@ export const updateUI = async () => {
     updateTradeManagementUI();
 }
 export const populateBestIdeas = (bestIdeas: Map<string, string[]>) => {
-    let traderFocusPlans = document.getElementById("traderFocusPlans");
-    if (!traderFocusPlans) {
+    let traderFocusPlansContent = document.getElementById("traderFocusPlansContent");
+    if (!traderFocusPlansContent) {
         return;
     }
-    traderFocusPlans.innerHTML = "";
-    UI.addOneLineDiv(traderFocusPlans, "A+ Setups", "sectionTitle");
+    traderFocusPlansContent.innerHTML = "";
     bestIdeas.forEach((ideasList, symbol) => {
-        if (!traderFocusPlans) {
+        if (!traderFocusPlansContent) {
             return;
         }
         let container = document.createElement("div");
         container.className = "ticker";
         UI.addOneLineDiv(container, symbol, "symbolTitle");
-        traderFocusPlans.appendChild(container);
+        traderFocusPlansContent.appendChild(container);
         let ul = document.createElement("ul");
         for (let i = 0; i < ideasList.length; i++) {
             let li = document.createElement("li");
@@ -39,14 +38,13 @@ export const populateBestIdeas = (bestIdeas: Map<string, string[]>) => {
 }
 
 export const updateTradeManagementUI = () => {
-    let traderFocusInstructions = document.getElementById("traderFocusInstructions");
-    if (traderFocusInstructions) {
-        traderFocusInstructions.innerHTML = "";
-        UI.addOneLineDiv(traderFocusInstructions, "Trade Management", "sectionTitle");
+    let traderFocusInstructionsContent = document.getElementById("traderFocusInstructionsContent");
+    if (traderFocusInstructionsContent) {
+        traderFocusInstructionsContent.innerHTML = "";
         let positions = Models.getOpenPositions();
         positions.forEach(position => {
-            if (traderFocusInstructions) {
-                populateTradeManagementForPosition(position, traderFocusInstructions);
+            if (traderFocusInstructionsContent) {
+                populateTradeManagementForPosition(position, traderFocusInstructionsContent);
             }
         });
     }
@@ -123,10 +121,9 @@ export const populateTradeManagementForTradebook = (symbol: string, isLong: bool
     });
 }
 export const test = () => {
-    let traderFocusInstructions = document.getElementById("traderFocusInstructions");
-    if (traderFocusInstructions) {
-        traderFocusInstructions.innerHTML = "";
-        UI.addOneLineDiv(traderFocusInstructions, "Trade Management", "sectionTitle");
-        populateTradeManagementForTradebook("GOOGL", true, "aboveWaterBreakout", traderFocusInstructions);
+    let traderFocusInstructionsContent = document.getElementById("traderFocusInstructionsContent");
+    if (traderFocusInstructionsContent) {
+        traderFocusInstructionsContent.innerHTML = "";
+        populateTradeManagementForTradebook("GOOGL", true, "aboveWaterBreakout", traderFocusInstructionsContent);
     }
 }

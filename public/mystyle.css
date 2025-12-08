@@ -398,3 +398,38 @@ span.algo {
 .chatContainer.collapsed .chatHeader {
     border-bottom: 1px solid #ccc;
 }
+
+/* Collapsible sections for A+ Setups and Trade Management */
+.collapsibleSection {
+    margin-bottom: 10px;
+}
+
+.clickableSectionTitle {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+}
+
+.clickableSectionTitle:hover {
+    opacity: 0.8;
+}
+
+.sectionContent {
+    transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+    overflow: hidden;
+    max-height: 5000px;
+    opacity: 1;
+}
+
+.collapsibleSection.collapsed .sectionContent {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+}
+
+.clickableSectionTitle .collapseIcon {
+    margin-left: 10px;
+}
