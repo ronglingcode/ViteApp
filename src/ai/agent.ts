@@ -420,7 +420,7 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
 - Intraday high: ${symbolData.highOfDay}, intraday low: ${symbolData.lowOfDay}.
 - 1-minute closed candles since market open with time(T), volume(V), vwap, 5-period moving average (ma5), 9-period moving average (ma9): [${candlesText}].
 - Current price: ${currentPrice}.
-- Current not closed candle: ${currentCandleText}.
+- Current 1-minute live candle that's not closed yet: ${currentCandleText}.
 - Has the price tested the inflection level: ${hasTestedKeyLevel}.
 - Has the price tested the vwap since open: ${hasTestedVwap}.
 `;
