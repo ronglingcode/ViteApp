@@ -375,8 +375,8 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
     let closedCandles = Models.getM1ClosedCandlesSinceOpen(symbol);
     let currentCandle = Models.getCurrentCandle(symbol);
     let candles =Models.getCandlesFromM1SinceOpen(symbol);
-    let m5Candles = Models.aggregateCandles(candles, 5);
-    let m15Candles = Models.aggregateCandles(candles, 15);
+    let m5Candles = Models.getCandlesFromM5SinceOpen(symbol);
+    let m15Candles = Models.getCandlesFromM15SinceOpen(symbol);
     let currentCandleText = candleToText(currentCandle, Models.getCurrentVwap(symbol));
     let vwaps = Models.getVwapsSinceOpen(symbol);
     let candlesText = "";

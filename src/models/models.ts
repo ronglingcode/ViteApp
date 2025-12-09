@@ -1103,6 +1103,40 @@ export const getCandlesFromM1SinceTime = (symbol: string, time: LightweightChart
     }
     return results;
 }
+export const getCandlesFromM5SinceOpen = (symbol: string) => {
+    let time = Helper.getMarketOpenTime();
+    let tvTime = Helper.jsDateToTradingViewUTC(time);
+    return getCandlesFromM5SinceTime(symbol, tvTime);
+}
+export const getCandlesFromM5SinceTime = (symbol: string, time: LightweightCharts.UTCTimestamp) => {
+    let symbolData = getSymbolData(symbol);
+    let allCandles = symbolData.m5Candles;
+    let results: CandlePlus[] = [];
+    for (let i = 0; i < allCandles.length; i++) {
+        const candle = allCandles[i];
+        if (candle.time >= time) {
+            results.push(candle);
+        }
+    }
+    return results;
+}
+export const getCandlesFromM15SinceOpen = (symbol: string) => {
+    let time = Helper.getMarketOpenTime();
+    let tvTime = Helper.jsDateToTradingViewUTC(time);
+    return getCandlesFromM15SinceTime(symbol, tvTime);
+}
+export const getCandlesFromM15SinceTime = (symbol: string, time: LightweightCharts.UTCTimestamp) => {
+    let symbolData = getSymbolData(symbol);
+    let allCandles = symbolData.m15Candles;
+    let results: CandlePlus[] = [];
+    for (let i = 0; i < allCandles.length; i++) {
+        const candle = allCandles[i];
+        if (candle.time >= time) {
+            results.push(candle);
+        }
+    }
+    return results;
+}
 export const getUndefinedCandles = (symbol: string) => {
     let symbolData = getSymbolData(symbol);
     return symbolData.candles;
