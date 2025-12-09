@@ -88,7 +88,7 @@ const startNewMessage = (symbol: string, title: string, isUser: boolean = false)
 
     // Insert at top
     container.insertBefore(messageDiv, container.firstChild);
-    let div: MessageDiv = {contentDiv, titleDiv};
+    let div: MessageDiv = { contentDiv, titleDiv };
     return div;
 };
 const setTextToDiv = (div: HTMLElement | null, text: string) => {
@@ -252,8 +252,8 @@ Please provide brief trade and market analysis and actionable trade management s
                     setTextToDiv(div.titleDiv, shortAnswer);
                 }
                 console.log(chunk);
-            }, {response_format: { type: 'json_object' }}
-        );
+            }, { response_format: { type: 'json_object' } }
+            );
         } catch (error) {
             if (div) {
                 appendToDiv(div.contentDiv, `Error: ${error}`);
@@ -295,9 +295,6 @@ export const clearTradeConversation = (symbol: string) => {
  * Test trade analysis flow
  */
 export const testTradeAnalysis = async (symbol: string) => {
-    console.log('Testing Trade Analysis...');
-
-    console.log('\n--- Entry Analysis ---');
     if (!window.HybridApp.AccountCache) {
         return;
     }
@@ -345,7 +342,7 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
     let symbolData = Models.getSymbolData(symbol);
     let closedCandles = Models.getM1ClosedCandlesSinceOpen(symbol);
     let currentCandle = Models.getCurrentCandle(symbol);
-    let candles =Models.getCandlesFromM1SinceOpen(symbol);
+    let candles = Models.getCandlesFromM1SinceOpen(symbol);
     let m5Candles = Models.getCandlesFromM5SinceOpen(symbol);
     let m15Candles = Models.getCandlesFromM15SinceOpen(symbol);
     let currentCandleText = candleToText(currentCandle, Models.getCurrentVwap(symbol));

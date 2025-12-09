@@ -43,6 +43,10 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
     if (Rules.isDailyRangeTooSmall(symbol, atr, true, logTags)) {
         return 0;
     }
+    if (Rules.isPremarketVolumeTooLow(symbol)) {
+        Firestore.logError(`${symbol} premarket volume too low`);
+        return 0;
+    }
     if (liquidityScale < 0.9) {
         Firestore.logInfo(`liquidity scale is ${liquidityScale}`, logTags);
     }
@@ -87,7 +91,7 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
     if (volumes.length >= 3) {
         let maxVolumeIndex = 0;
         let maxVolume = volumes[0].value;
-        let lastClosedIndex = volumes.length-2;
+        let lastClosedIndex = volumes.length - 2;
         for (let i = 1; i <= lastClosedIndex; i++) {
             if (volumes[i].value > maxVolume) {
                 maxVolume = volumes[i].value;
@@ -95,8 +99,8 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
             }
         }
         let volumeToCheckStartIndex = maxVolumeIndex;
-        if ((maxVolumeIndex+1) <= lastClosedIndex) {
-            volumeToCheckStartIndex = maxVolumeIndex+1;
+        if ((maxVolumeIndex + 1) <= lastClosedIndex) {
+            volumeToCheckStartIndex = maxVolumeIndex + 1;
         }
 
         let metMinimumVolume = false;
@@ -105,7 +109,7 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
             if (volumes[i].value > maxVolume) {
                 maxVolume = volumes[i].value;
             }
-            if (maxVolume >= 150*1000) {
+            if (maxVolume >= 150 * 1000) {
                 metMinimumVolume = true;
                 break;
             }

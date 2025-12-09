@@ -198,11 +198,6 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[]) => {
         allCharts[0].keyAreaSeriesList[i].setData(symbolData.keyAreaData[i].candles);
     }
 
-
-
-    console.log(`symbolData.m5Volumes.length: ${symbolData.m5Volumes.length}`);
-    console.log(symbolData.m5Volumes);
-
     allCharts[1].volumeSeries.setData(symbolData.m5Volumes);
     allCharts[1].candleSeries.setData(symbolData.m5Candles);
     allCharts[2].volumeSeries.setData(symbolData.m15Volumes);
@@ -210,7 +205,7 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[]) => {
     allCharts[3].volumeSeries.setData(symbolData.m30Volumes);
     allCharts[3].candleSeries.setData(symbolData.m30Candles);
 
-    for (let lookBackStart = 0;lookBackStart < symbolData.m1Candles.length-1; lookBackStart++) {
+    for (let lookBackStart = 0; lookBackStart < symbolData.m1Candles.length - 1; lookBackStart++) {
         let ma5 = Models.getMovingAverageCandle(symbol, 5, lookBackStart, symbolData.m1Candles);
         let ma9 = Models.getMovingAverageCandle(symbol, 9, lookBackStart, symbolData.m1Candles);
         if (ma5) {

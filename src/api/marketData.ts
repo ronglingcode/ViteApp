@@ -68,6 +68,8 @@ export const setPreviousDayPremarketVolume = async (symbol: string, startDate: s
         }*/
         Firestore.logError(msg);
     }
+    console.log(`${symbol} today: ${symbolData.premarketDollarTraded}, yesterday: ${symbolData.previousDayPremarketDollarTraded}`);
+
 }
 export const getPriceHistory = async (symbol: string, isFutures: boolean, timeframe: number) => {
     let candles: Candle[] = [];

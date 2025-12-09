@@ -575,7 +575,7 @@ export const saveRedToGreenState = (symbol: string) => {
         let hasReversalMovementNow = EntryRulesChecker.conditionallyHasReversalBarSinceOpen(
             symbol, true, true, true);
         if (hasReversalMovementNow) {
-            Firestore.logInfo(`${symbol} has reversal movement for long`);
+            //Firestore.logInfo(`${symbol} has reversal movement for long`);
             redToGreenState.hasReversalForLong = true;
         }
     }
@@ -583,7 +583,7 @@ export const saveRedToGreenState = (symbol: string) => {
         let hasReversalMovementNow = EntryRulesChecker.conditionallyHasReversalBarSinceOpen(
             symbol, false, true, true);
         if (hasReversalMovementNow) {
-            Firestore.logInfo(`${symbol} has reversal movement for short`);
+            //Firestore.logInfo(`${symbol} has reversal movement for short`);
             redToGreenState.hasReversalForShort = true;
         }
     }
