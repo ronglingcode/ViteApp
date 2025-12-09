@@ -569,3 +569,20 @@ export const getDisallowedReasonBasedOnOpenPriceZone = (
         }
     }
 }
+
+export const isPremarketVolumeTooLow = (symbol: string) => {
+    let symbolData = Models.getSymbolData(symbol);
+    if (symbolData.premarketDollarTraded >= symbolData.previousDayPremarketDollarTraded) {
+        return false;
+    }
+
+    let today = Helper.roundToMillion(symbolData.premarketDollarTraded);
+    let previous = Helper.roundToMillion(symbolData.previousDayPremarketDollarTraded);
+    if (today <= 20) {
+        return true;
+    }
+    if (today < 80 && today < previous*0.5) {
+        return true;
+    }
+    return false;
+}

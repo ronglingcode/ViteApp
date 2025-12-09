@@ -47,13 +47,16 @@ const getChatgptMessagesDiv = (symbol: string): HTMLElement | null => {
     }
     return div;
 };
-
+interface MessageDiv {
+    contentDiv: HTMLElement;
+    titleDiv: HTMLElement;
+}
 /**
  * Add a new message block to the UI
  * @param title - Title/header for the message
  * @param isUser - Whether this is a user message
  */
-const startNewMessage = (symbol: string, title: string, isUser: boolean = false): HTMLElement | null => {
+const startNewMessage = (symbol: string, title: string, isUser: boolean = false) => {
     const container = getChatgptMessagesDiv(symbol);
     if (!container) {
         console.log(`[ChatGPT] No container for ${symbol}`);
@@ -85,10 +88,23 @@ const startNewMessage = (symbol: string, title: string, isUser: boolean = false)
 
     // Insert at top
     container.insertBefore(messageDiv, container.firstChild);
-
-    return contentDiv;
+    let div: MessageDiv = {contentDiv, titleDiv};
+    return div;
 };
-
+const setTextToDiv = (div: HTMLElement | null, text: string) => {
+    if (!div) {
+        console.log(`[ChatGPT] No div to set text to`);
+        return;
+    }
+    // Ensure white-space: pre-wrap is set to preserve newlines
+    div.style.whiteSpace = 'pre-wrap';
+    // Replace escaped newlines with actual newlines, then set as textContent
+    // This handles both literal \n in strings and actual newline characters
+    const unescapedText = text.replace(/\\n/g, '\n');
+    div.textContent = unescapedText;
+    // Auto-scroll to show latest
+    div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+};
 const appendToDiv = (div: HTMLElement | null, chunk: string) => {
     if (!div) {
         console.log(`[ChatGPT] No div to append to`);
@@ -186,9 +202,11 @@ IMPORTANT: You must respond with a valid JSON object containing exactly two fiel
 
 Example format:
 {
-  "full answer": "- [retracement to vwap]: currently price is retracing to vwap\n- [trade management]: Because this trade condition to fail is lost of vwap, so as long as price is holding above vwap, maintain long position and look for dip buys. Stop out if lose vwap.",
-  "short answer": "protect using vwap"
+  "short_answer": "protect using vwap",
+  "full_answer": "- [retracement to vwap]: currently price is retracing to vwap\n- [trade management]: Because this trade condition to fail is lost of vwap, so as long as price is holding above vwap, maintain long position and look for dip buys. Stop out if lose vwap."
+  
 }
+short_answer goes before full_answer.
 
 Return ONLY valid JSON, no other text before or after.
 
@@ -218,107 +236,50 @@ Please provide brief trade and market analysis and actionable trade management s
 
     // Start streaming response in UI
     let div = startNewMessage(symbol, `🤖 ${symbol} - Trade Analysis`, false);
+    if (div) {
+        let fullResponse = '';
+        try {
+            await Chatgpt.streamChat(messages, (chunk) => {
+                //appendToDiv(div, chunk);
+                fullResponse += chunk;
+                // Find substring after '"full answer": "' for fullResponse
+                const fullAnswerMatch = fullResponse.match(/"full_answer":\s*"([^"]*)/);
+                const fullAnswer = fullAnswerMatch ? fullAnswerMatch[1] : "";
+                const shortAnswerMatch = fullResponse.match(/"short_answer":\s*"([^"]*)/);
+                const shortAnswer = shortAnswerMatch ? shortAnswerMatch[1] : "";
+                if (div) {
+                    setTextToDiv(div.contentDiv, fullAnswer);
+                    setTextToDiv(div.titleDiv, shortAnswer);
+                }
+                console.log(chunk);
+            }, {response_format: { type: 'json_object' }}
+        );
+        } catch (error) {
+            if (div) {
+                appendToDiv(div.contentDiv, `Error: ${error}`);
+            }
+            console.error('ChatGPT streaming error:', error);
+        }
+        let fullAnswerObject = JSON.parse(fullResponse);
+        if (fullAnswerObject.short_answer) {
+            Helper.speak(fullAnswerObject.short_answer);
+        }
 
-    let fullResponse = '';
-    try {
-        await Chatgpt.streamChat(messages, (chunk) => {
-            appendToDiv(div, chunk);
-            fullResponse += chunk;
-        }, {
-            response_format: { type: 'json_object' }
-        });
-    } catch (error) {
-        appendToDiv(div, `Error: ${error}`);
-        console.error('ChatGPT streaming error:', error);
+        // Store conversation for ongoing management
+        messages.push({ role: 'assistant', content: fullResponse });
+        tradeConversations.set(symbol, messages);
+        if (div) {
+            appendToDiv(div.contentDiv, ` Total chars: ${fullResponse.length}`);
+        }
+
+        console.log(`[ChatGPT] Trade Entry Analysis for ${symbol}:`);
+        console.log(fullResponse);
+
+        ProxyServer.saveAgentResponse(symbol, fullResponse);
+
+        return fullResponse;
     }
-
-    // Store conversation for ongoing management
-    messages.push({ role: 'assistant', content: fullResponse });
-    tradeConversations.set(symbol, messages);
-    appendToDiv(div, ` Total chars: ${fullResponse.length}`);
-
-    console.log(`[ChatGPT] Trade Entry Analysis for ${symbol}:`);
-    console.log(fullResponse);
-
-    ProxyServer.saveAgentResponse(symbol, fullResponse);
-
-    return fullResponse;
-};
-
-/**
- * Get trade management advice on candle close (with streaming)
- * @param symbol - Stock symbol
- * @param candle - Newly closed candle data
- * @param currentPrice - Current price
- * @param unrealizedPnL - Current unrealized P&L
- * @returns Management advice
- */
-export const analyzeOnCandleClose = async (
-    symbol: string,
-    candle: CandleData,
-    currentPrice: number,
-    unrealizedPnL: number
-): Promise<string> => {
-
-    // Get existing conversation or create new one
-    let messages = tradeConversations.get(symbol);
-
-    if (!messages) {
-        console.log(`[ChatGPT] No active trade conversation for ${symbol}`);
-        return '';
-    }
-
-    const candleAnalysis = `
-1-Minute Candle Closed:
-- Time: ${candle.time}
-- Open: $${candle.open.toFixed(2)}
-- High: $${candle.high.toFixed(2)}
-- Low: $${candle.low.toFixed(2)}
-- Close: $${candle.close.toFixed(2)}
-- Volume: ${candle.volume.toLocaleString()}
-${candle.vwap ? `- VWAP: $${candle.vwap.toFixed(2)}` : ''}
-
-Current Status:
-- Current Price: $${currentPrice.toFixed(2)}
-- Unrealized P&L: $${unrealizedPnL.toFixed(2)}
-
-Based on this candle and the current position, should I:
-1. Hold the position?
-2. Take partial profits?
-3. Move stop loss?
-4. Exit completely?
-
-Please provide brief, actionable advice.`;
-
-    // Show candle data in UI
-    const pnlEmoji = unrealizedPnL >= 0 ? '🟢' : '🔴';
-    let userDiv = startNewMessage(symbol, `🕐 ${symbol} Candle Close @ ${candle.time}`, true);
-    appendToDiv(userDiv, `Close: $${candle.close.toFixed(2)} | P&L: ${pnlEmoji} $${unrealizedPnL.toFixed(2)}`);
-
-    messages.push({ role: 'user', content: candleAnalysis });
-
-    // Start streaming response in UI
-    let div = startNewMessage(symbol, `🤖 Management Advice - ${symbol}`, false);
-
-    let fullResponse = '';
-    try {
-        await Chatgpt.streamChat(messages, (chunk) => {
-            appendToDiv(div, chunk);
-            fullResponse += chunk;
-        });
-    } catch (error) {
-        appendToDiv(div, `Error: ${error}`);
-        console.error('ChatGPT streaming error:', error);
-    }
-
-    // Update conversation history
-    messages.push({ role: 'assistant', content: fullResponse });
-    tradeConversations.set(symbol, messages);
-
-    console.log(`[ChatGPT] Candle Close Analysis for ${symbol}:`);
-    console.log(fullResponse);
-
-    return fullResponse;
+    return "";
 };
 
 /**
@@ -470,11 +431,15 @@ export const testSimpleChat = async (symbol: string) => {
     let fullResponse = '';
     try {
         await Chatgpt.streamChat(messages, (chunk) => {
-            appendToDiv(div, chunk);
+            if (div) {
+                appendToDiv(div.contentDiv, chunk);
+            }
             fullResponse += chunk;
         });
     } catch (error) {
-        appendToDiv(div, `Error: ${error}`);
+        if (div) {
+            appendToDiv(div.contentDiv, `Error: ${error}`);
+        }
         console.error('ChatGPT streaming error:', error);
     }
     ProxyServer.saveAgentResponse(symbol, fullResponse);
