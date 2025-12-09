@@ -80,6 +80,7 @@ export interface ChatCompletionRequest {
     top_p?: number;
     frequency_penalty?: number;
     presence_penalty?: number;
+    response_format?: { type: 'json_object' | 'text' };
 }
 
 export interface ChatCompletionResponse {
@@ -141,7 +142,7 @@ export const streamChat = async (
     }
     initialize();
 
-    const requestBody = {
+    const requestBody: ChatCompletionRequest & { stream: boolean } = {
         model: options?.model ?? config.model ?? 'gpt-4o',
         messages: messages,
         temperature: options?.temperature ?? config.temperature,

@@ -178,11 +178,19 @@ Your role:
 1. Explain and provide insight to the current price action so far regarding to my tradebook. 
 2. Suggest how to manage the position (targets, trailing stops, etc.) with reasoning.
 
-Be concise and actionable. Just 1-2 sentences per bullet point. Start each point with a few key phrases. Keep the response less than 200 characters.
+Be concise and actionable. 
 
-Such as:
-- [retracement to vwap]: currently price is retracing to vwap
-- [trade management]: Because this trade condition to fail is lost of vwap, so as long as price is holding above vwap, maintain long position and look for dip buys. Stop out if lose vwap. 
+IMPORTANT: You must respond with a valid JSON object containing exactly two fields:
+- "full answer": Just 1-2 sentences per bullet point. Start each point with a few key phrases. Keep this field less than 200 characters.
+- "short answer": A very brief summary (4-5 words
+
+Example format:
+{
+  "full answer": "- [retracement to vwap]: currently price is retracing to vwap\n- [trade management]: Because this trade condition to fail is lost of vwap, so as long as price is holding above vwap, maintain long position and look for dip buys. Stop out if lose vwap.",
+  "short answer": "protect using vwap"
+}
+
+Return ONLY valid JSON, no other text before or after.
 
 `;
 
@@ -216,6 +224,8 @@ Please provide brief trade and market analysis and actionable trade management s
         await Chatgpt.streamChat(messages, (chunk) => {
             appendToDiv(div, chunk);
             fullResponse += chunk;
+        }, {
+            response_format: { type: 'json_object' }
         });
     } catch (error) {
         appendToDiv(div, `Error: ${error}`);
