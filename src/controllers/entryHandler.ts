@@ -87,7 +87,7 @@ export const breakoutEntryWithoutRules = (symbol: string, isLong: boolean,
     if (oldEntries.length > 0) {
         Broker.cancelOrders(oldEntries);
     }
-    TradingState.onPlaceBreakoutTrade(symbol, isLong, entryPrice, stopOutPrice, submitEntryResult, allowedSizeMutiplier, plan);
+    TradingState.onPlaceBreakoutTrade(symbol, isLong, entryPrice, stopOutPrice, riskLevel, submitEntryResult, allowedSizeMutiplier, plan);
 };
 
 export const marketEntryWithoutRules = (symbol: string, isLong: boolean,
@@ -116,7 +116,7 @@ export const marketEntryWithoutRules = (symbol: string, isLong: boolean,
     if (oldEntries.length > 0) {
         Broker.cancelOrders(oldEntries);
     }
-    TradingState.onPlaceMarketTrade(symbol, isLong, estimatedEntryPrice, stopOutPrice, submitEntryResult, allowedSizeMutiplier, plan);
+    TradingState.onPlaceMarketTrade(symbol, isLong, estimatedEntryPrice, stopOutPrice, riskLevel, submitEntryResult, allowedSizeMutiplier, plan);
 };
 
 export const runRedToGreen60Plan = (symbol: string, isLong: boolean,

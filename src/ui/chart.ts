@@ -872,6 +872,8 @@ const drawProfitRatio = (symbol: string, position: Models.Position | undefined,
     let symbolData = Models.getSymbolData(symbol);
     let hod = symbolData.highOfDay;
     let lod = symbolData.lowOfDay;
+    let breakoutTradeState = TradingState.getBreakoutTradeState(symbol, isLong);
+    let initialRiskLevel = breakoutTradeState.riskLevel;
     // quantity increased, redraw everything
     if (currentQuantity > widget.initialQuantity) {
         clearProfitRatio(widget);
@@ -881,7 +883,7 @@ const drawProfitRatio = (symbol: string, position: Models.Position | undefined,
         widget.initialStopPrice = Models.getFarthestStopOrderPrice(symbol);
 
         let direction = isLong ? 1 : -1;
-        let risk = Math.abs(widget.initialStopPrice - price);
+        let risk = Math.abs(initialRiskLevel- price);
         let targetRatios = [1, 2, 3];
         targetRatios.forEach(ratio => {
             let target = price + direction * risk * ratio;

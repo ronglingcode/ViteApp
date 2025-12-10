@@ -141,6 +141,7 @@ export interface BreakoutTradeState {
     hasValue: boolean,
     entryPrice: number,
     stopLossPrice: number,
+    riskLevel: number,
     initialQuantity: number,
     sizeMultipler: number,
     submitTime: Timestamp,

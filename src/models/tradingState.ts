@@ -23,6 +23,7 @@ const getDefaultBreakoutTradeState = (isLong: boolean) => {
         hasValue: false,
         entryPrice: 0,
         stopLossPrice: 0,
+        riskLevel: 0,
         initialQuantity: 0,
         submitTime: Timestamp.now(),
         isLong: isLong,
@@ -159,20 +160,20 @@ export const clearPendingOrder = (symbol: string) => {
 };
 
 export const onPlaceMarketTrade = async (symbol: string, isLong: boolean,
-    entryPrice: number, stopLossPrice: number, submitEntryResult: Models.SubmitEntryResult,
+    entryPrice: number, stopLossPrice: number, riskLevel: number, submitEntryResult: Models.SubmitEntryResult,
     sizeMultipler: number,
     plan: TradingPlansModels.BasePlan) => {
-    onPlaceTrade(symbol, isLong, true, entryPrice, stopLossPrice, submitEntryResult, sizeMultipler, plan);
+    onPlaceTrade(symbol, isLong, true, entryPrice, stopLossPrice, riskLevel, submitEntryResult, sizeMultipler, plan);
 };
 export const onPlaceBreakoutTrade = async (symbol: string, isLong: boolean,
-    entryPrice: number, stopLossPrice: number, submitEntryResult: Models.SubmitEntryResult,
+    entryPrice: number, stopLossPrice: number, riskLevel: number, submitEntryResult: Models.SubmitEntryResult,
     sizeMultipler: number,
     plan: TradingPlansModels.BasePlan) => {
-    onPlaceTrade(symbol, isLong, false, entryPrice, stopLossPrice, submitEntryResult, sizeMultipler, plan);
+    onPlaceTrade(symbol, isLong, false, entryPrice, stopLossPrice, riskLevel, submitEntryResult, sizeMultipler, plan);
 };
 
 const onPlaceTrade = async (symbol: string, isLong: boolean, isMarketOrder: boolean,
-    entryPrice: number, stopLossPrice: number, submitEntryResult: Models.SubmitEntryResult,
+    entryPrice: number, stopLossPrice: number, riskLevel: number, submitEntryResult: Models.SubmitEntryResult,
     sizeMultipler: number,
     plan: TradingPlansModels.BasePlan) => {
     let netQuantity = Models.getPositionNetQuantity(symbol);
@@ -190,6 +191,7 @@ const onPlaceTrade = async (symbol: string, isLong: boolean, isMarketOrder: bool
         isLong: isLong,
         entryPrice: entryPrice,
         stopLossPrice: stopLossPrice,
+        riskLevel: riskLevel,
         initialQuantity: submitEntryResult.totalQuantity,
         submitTime: Timestamp.now(),
         status: Models.BreakoutTradeStatus.Pending,
