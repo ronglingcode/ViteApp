@@ -12,6 +12,7 @@ import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as Helper from '../utils/helper';
 import * as TimeHelper from '../utils/timeHelper';
 import * as ProxyServer from '../api/proxyServer';
+import * as LevelToAdd from '../tradebooks/tradebookDocs/levelToAdd';
 
 declare let window: Models.MyWindow;
 
@@ -175,6 +176,8 @@ export const analyzeTradeEntry = async (symbol: string, isLong: boolean, netQuan
         return "no detailed plan";
     }
 
+    let plan = TradingPlans.getTradingPlansForSingleDirection(symbol, isLong);
+    let levelToAdd = plan.firstTargetToAdd;
     let direction = isLong ? 'long' : 'short';
 
     const systemPrompt = `You are a professional day trading assistant. 
@@ -183,6 +186,8 @@ export const analyzeTradeEntry = async (symbol: string, isLong: boolean, netQuan
 
 Here is the trading strategy being used:
 ${tradebookText}
+
+${LevelToAdd.getText(isLong, levelToAdd)}
 
 Here is my analysis and trading plans I prepared for stock ${symbol}:
 ${detailedPlan.notes}
