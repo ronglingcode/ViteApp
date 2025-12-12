@@ -179,7 +179,6 @@ export interface TimeFrameChart {
     ma9Series?: LightweightCharts.ISeriesApi<"Line">,
     markers: LightweightCharts.SeriesMarker<LightweightCharts.UTCTimestamp>[],
     tradeMarkers: LightweightCharts.SeriesMarker<LightweightCharts.UTCTimestamp>[],
-    levelOneImbalanceMarkers: LightweightCharts.SeriesMarker<LightweightCharts.UTCTimestamp>[],
     liveRMarker?: LightweightCharts.SeriesMarker<LightweightCharts.UTCTimestamp>,
     filledPriceLine?: LightweightCharts.IPriceLine,
     maxEntryLine?: LightweightCharts.IPriceLine,
@@ -1903,18 +1902,18 @@ export interface CamarillaPivots {
     S6: number
 }
 
-export const getMovingAverageCandle = (symbol: string, timeframe: number, 
-lookBackStart: number, m1Candles: Candle[]) => {
-    let time  = m1Candles[lookBackStart].time;
+export const getMovingAverageCandle = (symbol: string, timeframe: number,
+    lookBackStart: number, m1Candles: Candle[]) => {
+    let time = m1Candles[lookBackStart].time;
     let sum = 0;
-    let start = lookBackStart-timeframe+1;
+    let start = lookBackStart - timeframe + 1;
     if (start < 0) {
         return null;
     }
-    for(let i = start; i <= lookBackStart; i++) {
+    for (let i = start; i <= lookBackStart; i++) {
         sum += m1Candles[i].close;
     }
-    let ma =  Helper.roundPrice(symbol,sum / timeframe);
+    let ma = Helper.roundPrice(symbol, sum / timeframe);
     let result: SimpleCandle = {
         time: time,
         close: ma,

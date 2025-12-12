@@ -60,7 +60,6 @@ const createTimeFrameChart = (timeframe: number, htmlElement: HTMLElement, tabIn
         vwapSeries: lwChart.addLineSeries(ChartSettings.vwapSettings),
         markers: [],
         tradeMarkers: [],
-        levelOneImbalanceMarkers: [],
         tradeManagementLevels: [],
         momentumLevels: [],
     };
@@ -495,36 +494,8 @@ export const getMultiplier = (symbol: string) => {
     let multiplier = parseFloat(qty.substring(0, qty.length - 1));
     return multiplier / 100;*/
 };
-export const drawLevelOneImbalanceInSideBar = (widget: Models.ChartWidget, quote: Models.LevelOneQuote) => {
-    let dominantPrice = quote.bidSize > quote.askSize ? quote.bidPrice : quote.askPrice;
-    addToListView(widget, `${dominantPrice} | ${quote.bidSize} x ${quote.askSize}`);
-}
-export const drawLevelOneImbalanceInChart = (symbol: string, widget: Models.ChartWidget, quote: Models.LevelOneQuote, tradingViewTime: LightweightCharts.UTCTimestamp) => {
-    let largeOrderInput = widget.htmlContents.quantityElements.largeOrderInput;
-    let largeOrderThreshold = 0;
-    if (largeOrderInput.value && largeOrderInput.value.length > 0) {
-        largeOrderThreshold = parseInt(largeOrderInput.value);
-    }
-    if (largeOrderThreshold > 0 && (quote.bidSize >= largeOrderThreshold || quote.askSize >= largeOrderThreshold)) {
-        let allCharts = Models.getChartsInAllTimeframes(symbol);
-        allCharts.forEach(chart => {
-            drawLevelOneImbalanceInChartForTimeframe(chart, quote, tradingViewTime);
-        });
-    }
-}
-export const drawLevelOneImbalanceInChartForTimeframe = (timeframeChart: Models.TimeFrameChart, quote: Models.LevelOneQuote, tradingViewTime: LightweightCharts.UTCTimestamp) => {
-    let dominantPrice = quote.bidSize > quote.askSize ? quote.bidPrice : quote.askPrice;
-    let marker: LightweightCharts.SeriesMarker<LightweightCharts.UTCTimestamp> = {
-        time: tradingViewTime,
-        position: 'atPrice',
-        color: 'gray',
-        shape: 'circle',
-        text: `${dominantPrice}`,
-        size: 0.1,
-    };
-    timeframeChart.levelOneImbalanceMarkers.push(marker);
-    showMarkers(timeframeChart);
-}
+
+
 export const addToQuoteBar = (symbol: string, classname: string, quotes: Models.LevelOneQuote[]) => {
     let widget = Models.getChartWidget(symbol);
     if (!widget) {
@@ -653,9 +624,6 @@ const showMarkers = (timeframeChart: Models.TimeFrameChart) => {
     let allMarkers = timeframeChart.markers.concat(timeframeChart.tradeMarkers);
     if (timeframeChart.liveRMarker) {
         allMarkers.push(timeframeChart.liveRMarker);
-    }
-    if (timeframeChart.levelOneImbalanceMarkers.length > 0) {
-        allMarkers.push(...timeframeChart.levelOneImbalanceMarkers);
     }
     allMarkers.sort(function (a, b) {
         return a.time - b.time;
@@ -883,7 +851,7 @@ const drawProfitRatio = (symbol: string, position: Models.Position | undefined,
         widget.initialStopPrice = Models.getFarthestStopOrderPrice(symbol);
 
         let direction = isLong ? 1 : -1;
-        let risk = Math.abs(initialRiskLevel- price);
+        let risk = Math.abs(initialRiskLevel - price);
         let targetRatios = [1, 2, 3];
         targetRatios.forEach(ratio => {
             let target = price + direction * risk * ratio;

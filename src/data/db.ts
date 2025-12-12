@@ -743,13 +743,6 @@ export const updateFromLevelOneQuote = (quote: Models.Quote) => {
         askSize: symbolData.askSize,
     };
     let tradingViewTime = Helper.jsDateToTradingViewUTC(new Date());
-    let chartWidget = Models.getChartWidget(symbol);
-    if (chartWidget) {
-        if (OrderFlowManager.orderSizeIsLarge(symbol, symbolData.bidSize, symbolData.askSize)) {
-            Chart.drawLevelOneImbalanceInSideBar(chartWidget, fullQuote);
-        }
-        Chart.drawLevelOneImbalanceInChart(symbol, chartWidget, fullQuote, tradingViewTime);
-    }
 
     let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
     if (GlobalSettings.advancedLevelOneQuoteFeaturesEnabled) {
@@ -758,16 +751,6 @@ export const updateFromLevelOneQuote = (quote: Models.Quote) => {
         }
     }
 };
-
-export const calculateImbalance = (bidSize: number, askSize: number) => {
-    const denom = bidSize + askSize;
-    if (denom === 0) {
-        return 0; // Avoid division by zero
-    }
-    let imbalance = (bidSize - askSize) / denom;
-    imbalance = Math.round(imbalance * 100) / 100; // Round to two decimal places
-    return imbalance;
-}
 
 export const addOrbAreaCandle = (newTime: LightweightCharts.UTCTimestamp, orbArea: Models.SimpleCandle[], openingCandle: Models.Candle | undefined) => {
     if (!openingCandle || !orbArea) {

@@ -9,8 +9,6 @@ const MAX_POINTS_IN_WINDOW = 100;
 export const spreadMonitors = new Map<string, SimpleRollingWindow<number>>();
 export const schwabSpreadMonitors = new Map<string, SimpleRollingWindow<Models.LevelOneQuote>>();
 export const alpacaSpreadMonitors = new Map<string, SimpleRollingWindow<Models.LevelOneQuote>>();
-export const orderImbalanceMonitors = new Map<string, RollingWindow>();
-export const orderSizeMonitors = new Map<string, RollingWindow>();
 export const level1HistoryMonitors = new Map<string, string[]>();
 
 const alpacaWindowSize = 10;
@@ -20,12 +18,6 @@ export const getOrCreateLevel1History = (symbol: string) => {
         level1HistoryMonitors.set(symbol, []);
     }
     return level1HistoryMonitors.get(symbol)!;
-}
-export const getOrCreateOrderSizeMonitor = (symbol: string) => {
-    if (!orderSizeMonitors.has(symbol)) {
-        orderSizeMonitors.set(symbol, new RollingWindow(WINDOW_IN_SECONDS / 2, MAX_POINTS_IN_WINDOW));
-    }
-    return orderSizeMonitors.get(symbol)!;
 }
 
 export const getOrCreateSpreadMonitor = (symbol: string) => {
@@ -48,12 +40,6 @@ export const getOrCreateAlpacaSpreadMonitor = (symbol: string) => {
     return alpacaSpreadMonitors.get(symbol)!;
 }
 
-export const getOrCreateOrderImbalanceMonitor = (symbol: string) => {
-    if (!orderImbalanceMonitors.has(symbol)) {
-        orderImbalanceMonitors.set(symbol, new RollingWindow(WINDOW_IN_SECONDS, MAX_POINTS_IN_WINDOW));
-    }
-    return orderImbalanceMonitors.get(symbol)!;
-}
 const getSpreadInAtrPercent = (symbol: string, quoteData: Models.LevelOneQuote) => {
     let spread = quoteData.askPrice - quoteData.bidPrice;
     let atr = Models.getAtr(symbol).average;
@@ -81,17 +67,8 @@ export const getAlpacaLevelOneQuote = (symbol: string) => {
 }
 
 export const updateQuote = (symbol: string, bidSize: number, askSize: number, bidPrice: number, askPrice: number, spreadInAtr: number) => {
-    const orderImbalanceMonitor = getOrCreateOrderImbalanceMonitor(symbol);
     const spreadMonitor = getOrCreateSpreadMonitor(symbol);
-    const orderSizeMonitor = getOrCreateOrderSizeMonitor(symbol);
-
     spreadMonitor.push(spreadInAtr);
-    let orderImbalance = Math.abs(bidSize - askSize);
-    if (orderImbalance > 0) {
-        orderImbalanceMonitor.push(orderImbalance);
-    }
-    orderSizeMonitor.push(bidSize);
-    orderSizeMonitor.push(askSize);
     const level1History = getOrCreateLevel1History(symbol);
     level1History.push(`${bidPrice},${bidSize},${askPrice},${askSize}`);
 }
@@ -105,36 +82,6 @@ export const getSpreadDataPoints = (symbol: string) => {
     return spreadMonitor.getItems();
 }
 
-export const orderIsImbalanced = (symbol: string, bidSize: number, askSize: number) => {
-    const orderImbalanceMonitor = getOrCreateOrderImbalanceMonitor(symbol);
-    let orderImbalance = Math.abs(bidSize - askSize);
-    let zScore = (orderImbalance - orderImbalanceMonitor.avg()) / orderImbalanceMonitor.vol();
-    zScore = Math.abs(zScore);
-    let isImbalanced = zScore > 8;
-    if (isImbalanced) {
-        let msg = `${symbol}, ` +
-            `avg: ${Math.round(orderImbalanceMonitor.avg() * 100) / 100}, ` +
-            `vol: ${Math.round(orderImbalanceMonitor.vol() * 100) / 100}, ` +
-            `current: ${orderImbalance}, `;
-        Firestore.logInfo(msg);
-    }
-    return isImbalanced;
-}
-export const orderSizeIsLarge = (symbol: string, bidSize: number, askSize: number) => {
-    const orderSizeMonitor = getOrCreateOrderSizeMonitor(symbol);
-    let zScoreBid = (bidSize - orderSizeMonitor.avg()) / orderSizeMonitor.vol();
-    let zScoreAsk = (askSize - orderSizeMonitor.avg()) / orderSizeMonitor.vol();
-    let isLarge = Math.abs(zScoreBid) > 8 || Math.abs(zScoreAsk) > 8;
-    if (isLarge) {
-        let msg = `${symbol}, ` +
-            `avg: ${Math.round(orderSizeMonitor.avg() * 100) / 100}, ` +
-            `vol: ${Math.round(orderSizeMonitor.vol() * 100) / 100}, ` +
-            `bid: ${bidSize}, ` +
-            `ask: ${askSize}, `;
-        //Firestore.logInfo(msg);
-    }
-    return isLarge;
-}
 
 export const isSingleSpreadTooLarge = (spreadInPoints: number, atr: number) => {
     let spreadInAtrPercent = spreadInPoints * 100 / atr;
