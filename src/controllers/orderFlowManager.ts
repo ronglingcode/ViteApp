@@ -13,12 +13,6 @@ export const level1HistoryMonitors = new Map<string, string[]>();
 
 const alpacaWindowSize = 10;
 const schwabWindowSize = 6;
-export const getOrCreateLevel1History = (symbol: string) => {
-    if (!level1HistoryMonitors.has(symbol)) {
-        level1HistoryMonitors.set(symbol, []);
-    }
-    return level1HistoryMonitors.get(symbol)!;
-}
 
 export const getOrCreateSpreadMonitor = (symbol: string) => {
     let windowSize = DB.levelOneQuoteSource == DB.levelOneQuoteSourceAlpaca ? alpacaWindowSize : schwabWindowSize;
@@ -69,13 +63,6 @@ export const getAlpacaLevelOneQuote = (symbol: string) => {
 export const updateQuote = (symbol: string, bidSize: number, askSize: number, bidPrice: number, askPrice: number, spreadInAtr: number) => {
     const spreadMonitor = getOrCreateSpreadMonitor(symbol);
     spreadMonitor.push(spreadInAtr);
-    const level1History = getOrCreateLevel1History(symbol);
-    level1History.push(`${bidPrice},${bidSize},${askPrice},${askSize}`);
-}
-export const exportQuoteHistory = (symbol: string) => {
-    const level1History = getOrCreateLevel1History(symbol);
-    console.log(level1History);
-    return level1History;
 }
 export const getSpreadDataPoints = (symbol: string) => {
     const spreadMonitor = getOrCreateSpreadMonitor(symbol);
