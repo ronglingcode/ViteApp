@@ -40,7 +40,12 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
         liveStats += `state: ${stateDescription}, level to vwap: ${distanceFromKeyLevelToVwapInAtrPercentageString} atr, closed outside: ${hasClosedOutside}`;
         Helper.updateHtmlIfChanged(this.htmlStats, liveStats);
     }
-    validateEntry(entryPrice: number, stopOutPrice: number, logTags: Models.LogTags): number {
+    validateEntryWithoutClose(entryPrice: number, stopOutPrice: number, logTags: Models.LogTags): number {
+        let allowedSize = CommonRules.validateCommonEntryRules(
+            this.symbol, this.isLong, entryPrice, stopOutPrice, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
+        return allowedSize;
+    }
+    validateEntryWithClose(entryPrice: number, stopOutPrice: number, logTags: Models.LogTags): number {
         let hasClosedOutside = AutoLevelMomentum.hasClosedOutsideKeyLevel(this.symbol, this.isLong, this.keyLevel);
         if (!hasClosedOutside) {
             // not closed outside yet, try checking if there's a previous candle that tested key level

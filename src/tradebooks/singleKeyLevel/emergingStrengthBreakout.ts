@@ -42,7 +42,12 @@ export class EmergingStrengthBreakout extends BaseBreakoutTradebook {
         let logTags = Models.generateLogTags(this.symbol, `${this.symbol}_${logTagName}`);
         let entryPrice = Chart.getBreakoutEntryPrice(this.symbol, this.isLong, useMarketOrder, parameters);
         let stopOutPrice = Chart.getStopLossPrice(this.symbol, this.isLong, true, null);
-        let allowedSize = this.validateEntry(entryPrice, stopOutPrice, logTags);
+        let allowedSize = 0;
+        if (this.waitForClose) {
+            allowedSize = this.validateEntryWithClose(entryPrice, stopOutPrice, logTags);
+        } else {
+            allowedSize = this.validateEntryWithoutClose(entryPrice, stopOutPrice, logTags);
+        }
         if (allowedSize === 0) {
             Firestore.logError(`${this.symbol} not allowed entry`, logTags);
             return 0;

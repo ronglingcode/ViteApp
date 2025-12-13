@@ -68,7 +68,12 @@ export class AboveWaterBreakout extends BaseBreakoutTradebook {
                 }
             }
         }
-        let allowedSize = this.validateEntry(entryPrice, stopOutPrice, logTags);
+        let allowedSize = 0;
+        if (this.waitForClose) {
+            allowedSize = this.validateEntryWithClose(entryPrice, stopOutPrice, logTags);
+        } else {
+            allowedSize = this.validateEntryWithoutClose(entryPrice, stopOutPrice, logTags);
+        }
         if (allowedSize === 0) {
             Firestore.logError(`${this.symbol} not allowed entry`, logTags);
             return 0;
