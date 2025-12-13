@@ -12,6 +12,18 @@ export class EmergingStrengthBreakout extends BaseBreakoutTradebook {
     public getID(): string {
         return this.isLong ? EmergingStrengthBreakout.emergingStrengthBreakoutLong : EmergingStrengthBreakout.emergingWeaknessBreakdownShort;
     }
+    public updateConfig(config: TradingPlansModels.TradebooksConfig) {
+        if (this.isLong) {
+            if (!config.level_vwap_open.longEmergingStrengthBreakout.waitForClose) {
+                this.waitForClose = false;
+            }
+        } else {
+            if (!config.open_vwap_level.shortEmergingWeaknessBreakdown.waitForClose) {
+                this.waitForClose = false;
+            }
+        }
+
+    }
     constructor(symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan) {
         let tradebookName = isLong ? 'Long Emerging Strength Breakout' : 'Short Emerging Strength Breakdown';

@@ -61,9 +61,12 @@ export interface TradingPlans {
 export interface TradebookCommonConfig {
     enabled: number,
 }
+export interface BreakoutTradebookConfig extends TradebookCommonConfig {
+    waitForClose: boolean,
+}
 export interface LevelVwapOpenConfig {
     shortVwapContinuation: TradebookCommonConfig,
-    longEmergingStrengthBreakout: TradebookCommonConfig,
+    longEmergingStrengthBreakout: BreakoutTradebookConfig,
 }
 export interface TradebooksConfig {
     level_vwap_open: LevelVwapOpenConfig,
@@ -78,16 +81,16 @@ export interface VwapLevelOpenConfig {
     longVwapPushdownFail: TradebookCommonConfig,
 }
 export interface VwapOpenLevelConfig {
-    shortBelowWaterBreakout: TradebookCommonConfig,
+    shortBelowWaterBreakout: BreakoutTradebookConfig,
     longVwapPushdownFail: TradebookCommonConfig,
 }
 export interface OpenVwapLevelConfig {
     longVwapContinuation: TradebookCommonConfig,
-    shortEmergingWeaknessBreakdown: TradebookCommonConfig,
+    shortEmergingWeaknessBreakdown: BreakoutTradebookConfig,
 }
 export interface LevelOpenVwapConfig {
     shortVwapBounceFail: TradebookCommonConfig,
-    longAboveWaterBreakout: TradebookCommonConfig,
+    longAboveWaterBreakout: BreakoutTradebookConfig,
     shortOpenFlush: TradebookCommonConfig,
     longVwapScalp: TradebookCommonConfig,
 }

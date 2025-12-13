@@ -15,6 +15,7 @@ import * as GlobalSettings from '../../config/globalSettings';
 
 export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
+    public waitForClose: boolean = true;
     constructor(symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan, tradebookName: string, buttonLabel: string) {
         super(symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel);
@@ -46,19 +47,19 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
             Firestore.logError(`${this.symbol} has not closed outside key level`, logTags);
             let candles = Models.getM1ClosedCandlesSinceOpen(this.symbol);
             let candlesTestedkeyLevel: Models.CandlePlus[] = [];
-            for(let i = 0; i < candles.length; i++) {
+            for (let i = 0; i < candles.length; i++) {
                 let c = candles[i];
-                if ((this.isLong && c.high > this.keyLevel.high) || 
-                (!this.isLong && c.low < this.keyLevel.low)) {
-                     candlesTestedkeyLevel.push(c);                    
+                if ((this.isLong && c.high > this.keyLevel.high) ||
+                    (!this.isLong && c.low < this.keyLevel.low)) {
+                    candlesTestedkeyLevel.push(c);
                 }
             }
             if (candlesTestedkeyLevel.length == 0) {
                 Firestore.logError(`${this.symbol} has no candles tested key level`, logTags);
                 return 0;
             }
-            let entryPriceThreshold= this.isLong ? candlesTestedkeyLevel[0].high : candlesTestedkeyLevel[0].low;
-            for(let i = 1; i < candlesTestedkeyLevel.length; i++) {
+            let entryPriceThreshold = this.isLong ? candlesTestedkeyLevel[0].high : candlesTestedkeyLevel[0].low;
+            for (let i = 1; i < candlesTestedkeyLevel.length; i++) {
                 let c = candlesTestedkeyLevel[i];
                 if (this.isLong) {
                     entryPriceThreshold = Math.min(entryPriceThreshold, c.high);
@@ -66,12 +67,12 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
                     entryPriceThreshold = Math.max(entryPriceThreshold, c.low);
                 }
             }
-            if ((this.isLong && entryPrice < entryPriceThreshold) || 
-                 (!this.isLong && entryPrice > entryPriceThreshold)) {
+            if ((this.isLong && entryPrice < entryPriceThreshold) ||
+                (!this.isLong && entryPrice > entryPriceThreshold)) {
                 Firestore.logError(`${this.symbol} entry price ${entryPrice} is inside threshold ${entryPriceThreshold}`, logTags);
                 return 0;
             }
-            hasClosedOutside = true;  
+            hasClosedOutside = true;
         }
         let allowedSize = CommonRules.validateCommonEntryRules(
             this.symbol, this.isLong, entryPrice, stopOutPrice, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
@@ -90,7 +91,7 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
             allowedReason.reason = "disabled";
             return allowedReason;
         }
-        
+
         let isMarketOrder = false;
         let newResult = ExitRulesCheckerNew.isAllowedForLimitOrderForAllTradebooks(
             symbol, this.isLong, isMarketOrder, newPrice, keyIndex, pair, logTags);

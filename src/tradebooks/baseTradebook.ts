@@ -57,6 +57,9 @@ export abstract class Tradebook {
             this.htmlContainer.style.display = 'block';
         }
     }
+    public updateConfig(config: TradingPlansModels.TradebooksConfig) {
+
+    }
 
     disable() {
         this.enabled = false;

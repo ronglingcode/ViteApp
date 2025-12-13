@@ -1,5 +1,6 @@
 import * as Models from "../models/models";
 import * as TradingPlans from "../models/tradingPlans/tradingPlans";
+import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import type { Tradebook } from "./baseTradebook";
 import { OpenFlush } from "./singleKeyLevel/openFlush";
 import { OpenDrive } from "./singleKeyLevel/openDrive";
@@ -85,7 +86,21 @@ export const createAllTradebooks = (symbol: string) => {
 }
 
 export const enableTradebook = (isDirectionEnabled: boolean, tradebookMap: Map<string, Tradebook>, tradebookId: string,
-    specificTradebooksMaps: Map<string, boolean>
+    specificTradebooksMaps: Map<string, boolean>, tradebookConfigs: TradingPlansModels.TradebooksConfig
+) => {
+    if (!isDirectionEnabled) {
+        return;
+    }
+    if (specificTradebooksMaps.size == 0 || specificTradebooksMaps.has(tradebookId)) {
+        let tradebook = tradebookMap.get(tradebookId);
+        if (tradebook) {
+            tradebook.enable();
+            tradebook.updateConfig(tradebookConfigs);
+        }
+    }
+}
+export const enableBreakoutTradebook = (isDirectionEnabled: boolean, tradebookMap: Map<string, Tradebook>, tradebookId: string,
+    specificTradebooksMaps: Map<string, boolean>, waitForClose: boolean
 ) => {
     if (!isDirectionEnabled) {
         return;
@@ -122,6 +137,8 @@ export const updateTradebooksStatus = (symbol: string, tradebooksMap: Map<string
     if (!TradingPlans.hasSingleMomentumLevel(plan)) {
         return;
     }
+    let tradebookConfig = plan.tradebooksConfig;
+
 
     let keyLevelArea = TradingPlans.getSingleMomentumLevel(plan);
     let keyLevel = keyLevelArea.high;
@@ -145,59 +162,58 @@ export const updateTradebooksStatus = (symbol: string, tradebooksMap: Map<string
     /* #region Key level is equal to vwap */
     if (keyLevel == lastVwapBeforeOpen) {
         if (openPrice > keyLevel) {
-            enableTradebook(isLongEnabled, tradebooksMap, OpenDrive.openDriveLong, specificTradebooks);
-            enableTradebook(isShortEnabled, tradebooksMap, AboveWaterBreakout.belowWaterBreakdown, specificTradebooks);
+            enableTradebook(isLongEnabled, tradebooksMap, OpenDrive.openDriveLong, specificTradebooks, tradebookConfig);
+            enableTradebook(isShortEnabled, tradebooksMap, AboveWaterBreakout.belowWaterBreakdown, specificTradebooks, tradebookConfig);
         } else if (openPrice < keyLevel) {
-            enableTradebook(isLongEnabled, tradebooksMap, AboveWaterBreakout.aboveWaterBreakout, specificTradebooks);
-            enableTradebook(isShortEnabled, tradebooksMap, OpenDrive.openDriveShort, specificTradebooks);
+            enableTradebook(isLongEnabled, tradebooksMap, AboveWaterBreakout.aboveWaterBreakout, specificTradebooks, tradebookConfig);
+            enableTradebook(isShortEnabled, tradebooksMap, OpenDrive.openDriveShort, specificTradebooks, tradebookConfig);
         } else {
-            enableTradebook(isLongEnabled, tradebooksMap, OpenDrive.openDriveLong, specificTradebooks);
-            enableTradebook(isShortEnabled, tradebooksMap, OpenDrive.openDriveShort, specificTradebooks);
+            enableTradebook(isLongEnabled, tradebooksMap, OpenDrive.openDriveLong, specificTradebooks, tradebookConfig);
+            enableTradebook(isShortEnabled, tradebooksMap, OpenDrive.openDriveShort, specificTradebooks, tradebookConfig);
         }
         return;
     }
     /* #endregion */
 
-    let tradebookConfig = plan.tradebooksConfig;
     /* #region Key level is above vwap */
     if (openPrice >= keyLevel && keyLevel > lastVwapBeforeOpen) {
         let currentConfig = tradebookConfig.open_level_vwap;
         if (currentConfig.longOpenDrive.enabled == 1) {
-            enableTradebook(isLongEnabled, tradebooksMap, OpenDrive.openDriveLong, specificTradebooks);
+            enableTradebook(isLongEnabled, tradebooksMap, OpenDrive.openDriveLong, specificTradebooks, tradebookConfig);
         }
         if (currentConfig.shortVwapBounceFail.enabled == 1) {
-            enableTradebook(isShortEnabled, tradebooksMap, VwapContinuationFailed.shortVwapBounceFailed, specificTradebooks);
+            enableTradebook(isShortEnabled, tradebooksMap, VwapContinuationFailed.shortVwapBounceFailed, specificTradebooks, tradebookConfig);
         }
     }
     if (keyLevel > openPrice && openPrice > lastVwapBeforeOpen) {
         let currentConfig = tradebookConfig.level_open_vwap;
         // long
         if (currentConfig.longAboveWaterBreakout.enabled == 1) {
-            enableTradebook(isLongEnabled, tradebooksMap, AboveWaterBreakout.aboveWaterBreakout, specificTradebooks);
+            enableTradebook(isLongEnabled, tradebooksMap, AboveWaterBreakout.aboveWaterBreakout, specificTradebooks, tradebookConfig);
         }
         if (currentConfig.longVwapScalp.enabled == 1) {
-            enableTradebook(isLongEnabled, tradebooksMap, VwapScalp.vwapScalpLong, specificTradebooks);
+            enableTradebook(isLongEnabled, tradebooksMap, VwapScalp.vwapScalpLong, specificTradebooks, tradebookConfig);
         }
         // short
         if (currentConfig.shortVwapBounceFail.enabled == 1) {
-            enableTradebook(isShortEnabled, tradebooksMap, VwapContinuationFailed.shortVwapBounceFailed, specificTradebooks);
+            enableTradebook(isShortEnabled, tradebooksMap, VwapContinuationFailed.shortVwapBounceFailed, specificTradebooks, tradebookConfig);
         }
         if (currentConfig.shortOpenFlush.enabled == 1) {
-            enableTradebook(isShortEnabled, tradebooksMap, OpenFlush.openFlushShort, specificTradebooks);
+            enableTradebook(isShortEnabled, tradebooksMap, OpenFlush.openFlushShort, specificTradebooks, tradebookConfig);
         }
     }
     if (keyLevel > lastVwapBeforeOpen && lastVwapBeforeOpen >= openPrice) {
         let currentConfig = tradebookConfig.level_vwap_open;
         // long
         if (currentConfig.longEmergingStrengthBreakout.enabled == 1) {
-            enableTradebook(isLongEnabled, tradebooksMap, EmergingStrengthBreakout.emergingStrengthBreakoutLong, specificTradebooks);
+            enableTradebook(isLongEnabled, tradebooksMap, EmergingStrengthBreakout.emergingStrengthBreakoutLong, specificTradebooks, tradebookConfig);
         }
         // short
         if (currentConfig.shortVwapContinuation.enabled == 1) {
-            enableTradebook(isShortEnabled, tradebooksMap, VwapContinuation.vwapContinuationShort, specificTradebooks);
+            enableTradebook(isShortEnabled, tradebooksMap, VwapContinuation.vwapContinuationShort, specificTradebooks, tradebookConfig);
         }
         if (keyLevel < currentVwap) {
-            enableTradebook(isShortEnabled, tradebooksMap, AboveWaterBreakout.belowWaterBreakdown, specificTradebooks);
+            enableTradebook(isShortEnabled, tradebooksMap, AboveWaterBreakout.belowWaterBreakdown, specificTradebooks, tradebookConfig);
         }
     }
     /* #endregion */
@@ -206,36 +222,36 @@ export const updateTradebooksStatus = (symbol: string, tradebooksMap: Map<string
         let currentConfig = tradebookConfig.open_vwap_level;
         // long
         if (currentConfig.longVwapContinuation.enabled == 1) {
-            enableTradebook(isLongEnabled, tradebooksMap, VwapContinuation.vwapContinuationLong, specificTradebooks);
+            enableTradebook(isLongEnabled, tradebooksMap, VwapContinuation.vwapContinuationLong, specificTradebooks, tradebookConfig);
         }
         if (keyLevel > currentVwap) {
-            enableTradebook(isLongEnabled, tradebooksMap, AboveWaterBreakout.aboveWaterBreakout, specificTradebooks);
+            enableTradebook(isLongEnabled, tradebooksMap, AboveWaterBreakout.aboveWaterBreakout, specificTradebooks, tradebookConfig);
         }
         // short
         if (currentConfig.shortEmergingWeaknessBreakdown.enabled == 1) {
-            enableTradebook(isShortEnabled, tradebooksMap, EmergingStrengthBreakout.emergingWeaknessBreakdownShort, specificTradebooks);
+            enableTradebook(isShortEnabled, tradebooksMap, EmergingStrengthBreakout.emergingWeaknessBreakdownShort, specificTradebooks, tradebookConfig);
         }
     }
     if (lastVwapBeforeOpen > openPrice && openPrice > keyLevel) {
         let currentConfig = tradebookConfig.vwap_open_level;
         // long
         if (currentConfig.longVwapPushdownFail.enabled == 1) {
-            enableTradebook(isLongEnabled, tradebooksMap, VwapContinuationFailed.longVwapPushDownFailed, specificTradebooks);
+            enableTradebook(isLongEnabled, tradebooksMap, VwapContinuationFailed.longVwapPushDownFailed, specificTradebooks, tradebookConfig);
         }
         // short
         if (currentConfig.shortBelowWaterBreakout.enabled == 1) {
-            enableTradebook(isShortEnabled, tradebooksMap, AboveWaterBreakout.belowWaterBreakdown, specificTradebooks);
+            enableTradebook(isShortEnabled, tradebooksMap, AboveWaterBreakout.belowWaterBreakdown, specificTradebooks, tradebookConfig);
         }
     }
     if (lastVwapBeforeOpen > keyLevel && keyLevel >= openPrice) {
         let currentConfig = tradebookConfig.vwap_level_open;
         // long
         if (currentConfig.longVwapPushdownFail.enabled == 1) {
-            enableTradebook(isLongEnabled, tradebooksMap, VwapContinuationFailed.longVwapPushDownFailed, specificTradebooks);
+            enableTradebook(isLongEnabled, tradebooksMap, VwapContinuationFailed.longVwapPushDownFailed, specificTradebooks, tradebookConfig);
         }
         // short
         if (currentConfig.shortOpenDrive.enabled == 1) {
-            enableTradebook(isShortEnabled, tradebooksMap, OpenDrive.openDriveShort, specificTradebooks);
+            enableTradebook(isShortEnabled, tradebooksMap, OpenDrive.openDriveShort, specificTradebooks, tradebookConfig);
         }
     }
 }

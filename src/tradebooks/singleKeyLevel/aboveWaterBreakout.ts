@@ -17,6 +17,18 @@ export class AboveWaterBreakout extends BaseBreakoutTradebook {
         return this.isLong ? AboveWaterBreakout.aboveWaterBreakout : AboveWaterBreakout.belowWaterBreakdown;
     }
 
+    public updateConfig(config: TradingPlansModels.TradebooksConfig) {
+        if (this.isLong) {
+            if (!config.level_open_vwap.longAboveWaterBreakout.waitForClose) {
+                this.waitForClose = false;
+            }
+        } else {
+            if (!config.vwap_open_level.shortBelowWaterBreakout.waitForClose) {
+                this.waitForClose = false;
+            }
+        }
+
+    }
     constructor(symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan) {
         let tradebookName = isLong ? 'Long Above Water Breakout' : 'Short Below Water Breakdown';
