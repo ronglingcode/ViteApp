@@ -93,6 +93,7 @@ export const getFlowChartForLevelNearAboveRange = (symbol: string) => {
 export const createDefaultFlowchart = (symbol: string): FlowchartStateMachine => {
     let tradingPlan = TradingPlans.getTradingPlans(symbol);
     let analysis = tradingPlan.analysis;
+    console.log(`daily setup: ${analysis.dailySetup}`);
     if (analysis.dailySetup == TradingPlansModels.DailySetup.LevelNearAboveRange) {
         return getFlowChartForLevelNearAboveRange(symbol);
     }
