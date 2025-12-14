@@ -40,6 +40,19 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
         liveStats += `state: ${stateDescription}, level to vwap: ${distanceFromKeyLevelToVwapInAtrPercentageString} atr, closed outside: ${hasClosedOutside}`;
         Helper.updateHtmlIfChanged(this.htmlStats, liveStats);
     }
+    /**
+     * combine both breakout tradebook entry
+     * first check whether there's a candle closed above the level. if yes, go normal process
+     * if not, check whether there's candle tested key level.
+     *  if yes, allow breakout above or at the high of any test candle
+     *  if entry is not above any test candle yet, also above level, but need to use tight stop of current candle low
+     *  
+     * if no closed candles closed key level, only allow if wait for close is disabled
+     * @param entryPrice 
+     * @param stopOutPrice 
+     * @param logTags 
+     * @returns 
+     */
     validateEntryWithoutClose(entryPrice: number, stopOutPrice: number, logTags: Models.LogTags): number {
         let allowedSize = CommonRules.validateCommonEntryRules(
             this.symbol, this.isLong, entryPrice, stopOutPrice, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
