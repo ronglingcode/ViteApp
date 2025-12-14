@@ -14,7 +14,7 @@ export const setup = () => {
     // HTML structure is now in index.html, just verify elements exist
     const displayDiv = document.getElementById('flowchartDisplay');
     const controlsDiv = document.getElementById('flowchartControls');
-    
+
     if (!displayDiv || !controlsDiv) {
         console.error('Flowchart HTML elements not found in index.html');
         return;
@@ -32,13 +32,13 @@ export const setup = () => {
 export const updateFlowchartDisplay = (symbol: string) => {
     const displayDiv = document.getElementById('flowchartDisplay');
     const controlsDiv = document.getElementById('flowchartControls');
-    
+
     if (!displayDiv || !controlsDiv) {
         return;
     }
 
     const currentState = FlowchartManager.getCurrentState(symbol);
-    const nextStates = FlowchartManager.getAvailableNextStates(symbol);
+    const nextStates = currentState.nextStates;
 
     // Display current state with image and title
     if (currentState) {
@@ -93,7 +93,7 @@ export const updateFlowchartDisplay = (symbol: string) => {
                     stateCard.style.boxShadow = 'none';
                     stateCard.style.transform = 'translateY(0)';
                 };
-                
+
                 stateCard.innerHTML = `
                     <div style="font-weight: bold; margin-bottom: 8px; font-size: 14px;">${state.name}</div>
                     <img src="${state.imageUrl || '/flowchart/mock.png'}" 
@@ -101,11 +101,11 @@ export const updateFlowchartDisplay = (symbol: string) => {
                          style="width: 100%; max-width: 150px; height: 100px; object-fit: contain; border-radius: 4px; display: block; margin: 0 auto 8px;" 
                          onerror="this.style.display='none'">
                 `;
-                
+
                 stateCard.addEventListener('click', () => {
-                    transitionToState(symbol, state.id);
+                    transitionToState(symbol, state);
                 });
-                
+
                 statesContainer.appendChild(stateCard);
             });
         }
@@ -114,7 +114,9 @@ export const updateFlowchartDisplay = (symbol: string) => {
         const backBtn = document.getElementById('flowchartBackBtn');
         if (backBtn) {
             backBtn.addEventListener('click', () => {
-                goBack(symbol);
+                if (currentState.parent) {
+                    transitionToState(symbol, currentState.parent);
+                }
             });
         }
     } else {
@@ -129,28 +131,16 @@ export const updateFlowchartDisplay = (symbol: string) => {
         const backBtn = document.getElementById('flowchartBackBtn');
         if (backBtn) {
             backBtn.addEventListener('click', () => {
-                goBack(symbol);
+                if (currentState.parent) {
+                    transitionToState(symbol, currentState.parent);
+                }
             });
         }
     }
 };
 
-const transitionToState = (symbol: string, stateId: string) => {
-    const success = FlowchartManager.setCurrentState(symbol, stateId, 'User selected');
-    if (success) {
-        updateFlowchartDisplay(symbol);
-        Firestore.logInfo(`Transitioned ${symbol} to state ${stateId}`);
-    } else {
-        Firestore.logError(`Failed to transition ${symbol} to state ${stateId}`);
-    }
+const transitionToState = (symbol: string, nextState: FlowchartModels.FlowchartState) => {
+    FlowchartManager.setCurrentState(symbol, nextState);
+    updateFlowchartDisplay(symbol);
 };
 
-const goBack = (symbol: string) => {
-    const success = FlowchartManager.goBackToPreviousState(symbol);
-    if (success) {
-        updateFlowchartDisplay(symbol);
-        Firestore.logInfo(`Went back in flowchart for ${symbol}`);
-    } else {
-        Firestore.logError(`Failed to go back in flowchart for ${symbol}`);
-    }
-};
