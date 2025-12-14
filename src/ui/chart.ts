@@ -178,6 +178,10 @@ export const createChartWidget = (tabIndex: number, watchlistItem: Models.Watchl
                 window.HybridApp.UIState.activeSymbol = myWidget.stock.symbol;
                 window.HybridApp.UIState.activeTabIndex = myWidget.tabIndex;
                 myWidget.htmlContents.container.focus();
+                // Update flowchart display when symbol changes
+                if (window.HybridApp.UI && window.HybridApp.UI.Flowchart && window.HybridApp.UI.Flowchart.updateFlowchartDisplay) {
+                    window.HybridApp.UI.Flowchart.updateFlowchartDisplay(myWidget.stock.symbol);
+                }
             } else {
                 element.classList.remove("active");
             }

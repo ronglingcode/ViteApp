@@ -20,6 +20,7 @@ import * as Chart from './ui/chart';
 import * as UI from './ui/ui';
 import * as Popup from './ui/popup';
 import * as QuestionPopup from './ui/questionPopup';
+import * as Flowchart from './ui/flowchart';
 import * as Config from './config/config';
 import * as TakeProfit from './algorithms/takeProfit';
 import * as RiskManager from './algorithms/riskManager';
@@ -76,6 +77,7 @@ window.HybridApp.UI = {
     Chart: Chart,
     UI: UI,
     QuestionPopup: QuestionPopup,
+    Flowchart: Flowchart,
 };
 window.HybridApp.Utils = {
     'Helper': Helper,
@@ -201,6 +203,7 @@ window.TradingApp.TOS.initialize().then(async () => {
     setInterval(Broker.refreshAccessToken, 1150 * 1000);
     // create watchlist and setup chart
     Chart.setup();
+    Flowchart.setup();
     let timeframe = 1;
 
     Models.setTimeframe(timeframe);
