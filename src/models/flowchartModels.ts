@@ -1,3 +1,5 @@
+import * as TradingPlans from '../models/tradingPlans/tradingPlans';
+import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 /**
  * Flowchart State Machine Models
  * Manages state transitions for trading flowcharts per symbol
@@ -32,13 +34,68 @@ export interface FlowchartStateMachine {
     history: FlowchartStateHistory[]; // Stack for undo functionality
 }
 
+export const getFlowChartForLevelNearAboveRange = (symbol: string) => {
+
+    const states = new Map<string, FlowchartState>();
+    const transitions: FlowchartTransition[] = [];
+
+    const startState: FlowchartState = {
+        id: 'LevelNearAboveRange',
+        name: 'level near above range',
+        level: 0,
+        imageUrl: '/flowchart/mock.png'
+    };
+
+    // open below the range
+    const insideZoneTopEdge: FlowchartState = {
+        id: 'InsideZoneTopEdge',
+        name: 'inside zone top edge',
+        level: 1,
+        imageUrl: '/.png'
+    };
+
+
+    // Add all states
+    [startState, insideZoneTopEdge].forEach(state => {
+        states.set(state.id, state);
+    });
+
+    // Level 1 to Level 2 transitions
+    transitions.push({ fromStateId: 'A1', toStateId: 'B1' });
+    transitions.push({ fromStateId: 'A1', toStateId: 'B2' });
+    transitions.push({ fromStateId: 'A2', toStateId: 'B3' });
+    transitions.push({ fromStateId: 'A2', toStateId: 'B4' });
+
+    // Level 2 to Level 3 transitions
+    transitions.push({ fromStateId: 'B1', toStateId: 'C1' });
+    transitions.push({ fromStateId: 'B1', toStateId: 'C2' });
+    transitions.push({ fromStateId: 'B2', toStateId: 'C3' });
+    transitions.push({ fromStateId: 'B2', toStateId: 'C4' });
+    transitions.push({ fromStateId: 'B3', toStateId: 'C5' });
+    transitions.push({ fromStateId: 'B3', toStateId: 'C6' });
+    transitions.push({ fromStateId: 'B4', toStateId: 'C7' });
+    transitions.push({ fromStateId: 'B4', toStateId: 'C8' });
+
+    return {
+        states,
+        transitions,
+        currentStateId: 'LevelNearAboveRange',
+        history: []
+    };
+}
+
 /**
  * Creates a simple 3-level flowchart structure:
  * Level 1: 2 states
  * Level 2: Each goes to 2 states (4 total)
  * Level 3: Each goes to 2 states (8 total)
  */
-export const createDefaultFlowchart = (): FlowchartStateMachine => {
+export const createDefaultFlowchart = (symbol: string): FlowchartStateMachine => {
+    let tradingPlan = TradingPlans.getTradingPlans(symbol);
+    let analysis = tradingPlan.analysis;
+    if (analysis.dailySetup == TradingPlansModels.DailySetup.LevelNearAboveRange) {
+        return getFlowChartForLevelNearAboveRange(symbol);
+    }
     const states = new Map<string, FlowchartState>();
     const transitions: FlowchartTransition[] = [];
 
@@ -135,7 +192,7 @@ export const getNextStates = (flowchart: FlowchartStateMachine, currentStateId: 
     const nextStateIds = flowchart.transitions
         .filter(t => t.fromStateId === currentStateId)
         .map(t => t.toStateId);
-    
+
     return nextStateIds
         .map(id => flowchart.states.get(id))
         .filter((state): state is FlowchartState => state !== undefined);

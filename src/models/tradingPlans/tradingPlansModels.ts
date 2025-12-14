@@ -1,4 +1,9 @@
 
+export enum DailySetup {
+    'TwoWayOpen',
+    'LevelNearAboveRange',
+    'LevelNearBelowRange',
+}
 export interface TradingSettings {
     useSingleOrderForEntry: boolean,
     /**
@@ -15,6 +20,7 @@ export interface Analysis {
     premarketVolumeScore: PremarketVolumeScore,
     dailyChartStory: number,
     gap: Gap,
+    dailySetup: DailySetup,
     /**
      * 0: no defer, 1: defer 1 second after open, -1: invalid value.
      */

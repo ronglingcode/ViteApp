@@ -8,7 +8,7 @@ const flowchartStateMachines = new Map<string, FlowchartModels.FlowchartStateMac
 
 export const getFlowchartForSymbol = (symbol: string): FlowchartModels.FlowchartStateMachine => {
     if (!flowchartStateMachines.has(symbol)) {
-        const flowchart = FlowchartModels.createDefaultFlowchart();
+        const flowchart = FlowchartModels.createDefaultFlowchart(symbol);
         flowchartStateMachines.set(symbol, flowchart);
     }
     return flowchartStateMachines.get(symbol)!;
@@ -18,7 +18,7 @@ export const getFlowchartForSymbol = (symbol: string): FlowchartModels.Flowchart
 export const setCurrentState = (symbol: string, stateId: string, transitionReason?: string): boolean => {
     const flowchart = getFlowchartForSymbol(symbol);
     const targetState = flowchart.states.get(stateId);
-    
+
     if (!targetState) {
         Firestore.logError(`State ${stateId} not found for ${symbol}`);
         return false;
@@ -28,7 +28,7 @@ export const setCurrentState = (symbol: string, stateId: string, transitionReaso
     if (flowchart.currentStateId) {
         const validNextStates = FlowchartModels.getNextStates(flowchart, flowchart.currentStateId);
         const isValid = validNextStates.some(s => s.id === stateId);
-        
+
         if (!isValid) {
             Firestore.logError(`Invalid transition from ${flowchart.currentStateId} to ${stateId} for ${symbol}`);
             return false;
@@ -57,7 +57,7 @@ export const setCurrentState = (symbol: string, stateId: string, transitionReaso
 
 export const goBackToPreviousState = (symbol: string): boolean => {
     const flowchart = getFlowchartForSymbol(symbol);
-    
+
     if (flowchart.history.length === 0) {
         Firestore.logError(`No previous state to go back to for ${symbol}`);
         return false;
@@ -72,7 +72,7 @@ export const goBackToPreviousState = (symbol: string): boolean => {
 export const updateStateData = (symbol: string, stateId: string, data: Record<string, any>): boolean => {
     const flowchart = getFlowchartForSymbol(symbol);
     const state = flowchart.states.get(stateId);
-    
+
     if (!state) {
         Firestore.logError(`State ${stateId} not found for ${symbol}`);
         return false;
