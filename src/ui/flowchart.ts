@@ -46,12 +46,17 @@ export const updateFlowchartDisplay = (symbol: string) => {
             <div style="margin-bottom: 15px;">
                 <strong>Symbol: ${symbol}</strong>
             </div>
-            <div style="text-align: center; margin-bottom: 15px;">
-                <div style="font-weight: bold; margin-bottom: 8px; font-size: 16px;">${currentState.name}</div>
-                <img src="${currentState.imageUrl || '/flowchart/mock.png'}" 
-                     alt="${currentState.name}" 
-                     style="max-width: 200px; max-height: 150px; border: 2px solid #ddd; border-radius: 4px; display: block; margin: 0 auto;" 
-                     onerror="this.style.display='none'">
+            <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: center;">
+                <div style="flex: 1;">
+                    <div style="font-weight: bold; margin-bottom: 8px; font-size: 16px;">${currentState.name}</div>
+                    ${currentState.description ? `<div style="font-size: 14px; color: #666;">${currentState.description}</div>` : ''}
+                </div>
+                <div style="flex: 0 0 auto;">
+                    <img src="${currentState.imageUrl || '/flowchart/mock.png'}" 
+                         alt="${currentState.name}" 
+                         style="max-width: 200px; max-height: 150px; border: 2px solid #ddd; border-radius: 4px; display: block;" 
+                         onerror="this.style.display='none'">
+                </div>
             </div>
         `;
     } else {

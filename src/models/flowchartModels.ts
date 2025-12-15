@@ -32,6 +32,8 @@ export const getFlowChartForLevelNearAboveRange = (symbol: string): FlowchartSta
         nextStates: [],
         parent: startState
     };
+    buildLongEmergingStrengthBreakoutNodeForLevelNearAboveRange(insideZoneTopEdge);
+
     const openDriveLong: FlowchartState = {
         id: 'OpenDriveLong',
         name: 'open drive long',
@@ -52,7 +54,18 @@ export const getFlowChartForLevelNearAboveRange = (symbol: string): FlowchartSta
 
     return startState;
 }
-
+export const buildLongEmergingStrengthBreakoutNodeForLevelNearAboveRange = (root: FlowchartState) => {
+    let firstState: FlowchartState = {
+        id: 'LongEmergingStrengthBreakout',
+        name: "long emerging strength b/o",
+        imageUrl: '/flowchart/LevelNearAboveRange/InsideZoneTopEdge/LongEmergingStrengthBreakout/image.png',
+        description: "wait for a pullback after breakout due to extended move",
+        nextStates: [],
+        parent: root
+    }
+    root.nextStates.push(firstState);
+    return firstState;
+}
 /**
  * Creates a simple 3-level flowchart structure:
  * Level 1: 2 states
