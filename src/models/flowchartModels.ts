@@ -55,14 +55,26 @@ export const getFlowChartForLevelNearAboveRange = (symbol: string): FlowchartSta
     return startState;
 }
 export const buildLongEmergingStrengthBreakoutNodeForLevelNearAboveRange = (root: FlowchartState) => {
+    let imageUrlPrefix = '/flowchart/LevelNearAboveRange/InsideZoneTopEdge/LongEmergingStrengthBreakout/';
     let firstState: FlowchartState = {
         id: 'LongEmergingStrengthBreakout',
         name: "long emerging strength b/o",
-        imageUrl: '/flowchart/LevelNearAboveRange/InsideZoneTopEdge/LongEmergingStrengthBreakout/image.png',
-        description: "wait for a pullback after breakout due to extended move",
+        imageUrl: imageUrlPrefix + 'image.png',
+        description: "wait for a pullback after breakout due to extended move, stop loss is the low of pullback",
         nextStates: [],
         parent: root
     }
+    let stopLossState: FlowchartState = {
+        id: 'StopLoss',
+        name: "stop out below level",
+        imageUrl: imageUrlPrefix + 'stopout.png',
+        description: `after stop out, note the depth of the drop before reclaim the level. if the drop is deep, avoid re-entry. 
+        do not flip short due to near above a daily range`,
+        nextStates: [],
+        parent: firstState
+    }
+    firstState.nextStates.push(stopLossState);
+
     root.nextStates.push(firstState);
     return firstState;
 }
