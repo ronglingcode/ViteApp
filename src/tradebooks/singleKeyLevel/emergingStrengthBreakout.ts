@@ -44,7 +44,7 @@ export class EmergingStrengthBreakout extends BaseBreakoutTradebook {
         let stopOutPrice = Chart.getStopLossPrice(this.symbol, this.isLong, true, null);
         let allowedSize = 0;
         if (this.waitForClose) {
-            allowedSize = this.validateEntryWithClose(entryPrice, stopOutPrice, logTags);
+            allowedSize = this.validateEntryWithCloseNew(entryPrice, stopOutPrice, logTags);
         } else {
             allowedSize = this.validateEntryWithoutClose(entryPrice, stopOutPrice, logTags);
         }

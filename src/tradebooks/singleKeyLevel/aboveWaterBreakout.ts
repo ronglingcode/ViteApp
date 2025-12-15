@@ -70,7 +70,7 @@ export class AboveWaterBreakout extends BaseBreakoutTradebook {
         }
         let allowedSize = 0;
         if (this.waitForClose) {
-            allowedSize = this.validateEntryWithClose(entryPrice, stopOutPrice, logTags);
+            allowedSize = this.validateEntryWithCloseNew(entryPrice, stopOutPrice, logTags);
         } else {
             allowedSize = this.validateEntryWithoutClose(entryPrice, stopOutPrice, logTags);
         }

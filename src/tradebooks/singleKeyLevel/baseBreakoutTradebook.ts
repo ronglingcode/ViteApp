@@ -58,6 +58,25 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
             this.symbol, this.isLong, entryPrice, stopOutPrice, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
         return allowedSize;
     }
+    validateEntryWithCloseNew(entryPrice: number, stopOutPrice: number, logTags: Models.LogTags): number {
+        let candles = Models.getM1ClosedCandlesSinceOpen(this.symbol);
+        let hasTestedKeyLevel = false;
+        for (let i = 0; i < candles.length; i++) {
+            let c = candles[i];
+            if ((this.isLong && c.high >= this.keyLevel.high) ||
+                (!this.isLong && c.low <= this.keyLevel.low)) {
+                hasTestedKeyLevel = true;
+            }
+        }
+        if (!hasTestedKeyLevel) {
+            Firestore.logError(`${this.symbol} has no candles tested key level`, logTags);
+            return 0;
+        }
+        let allowedSize = CommonRules.validateCommonEntryRules(
+            this.symbol, this.isLong, entryPrice, stopOutPrice, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
+        return allowedSize;
+    }
+
     validateEntryWithClose(entryPrice: number, stopOutPrice: number, logTags: Models.LogTags): number {
         let hasClosedOutside = AutoLevelMomentum.hasClosedOutsideKeyLevel(this.symbol, this.isLong, this.keyLevel);
         if (!hasClosedOutside) {
