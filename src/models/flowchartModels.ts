@@ -32,9 +32,23 @@ export const getFlowChartForLevelNearAboveRange = (symbol: string): FlowchartSta
         nextStates: [],
         parent: startState
     };
+    const openDriveLong: FlowchartState = {
+        id: 'OpenDriveLong',
+        name: 'open drive long',
+        imageUrl: '/flowchart/LevelNearAboveRange/LongOpenDrive/image.png',
+        nextStates: [],
+        parent: startState
+    };
+    const aboveWaterBreakout: FlowchartState = {
+        id: 'AboveWaterBreakout',
+        name: 'above water breakout',
+        imageUrl: '/flowchart/LevelNearAboveRange/LongAboveWaterBreakout/image.png',
+        nextStates: [],
+        parent: startState
+    };
 
     // Set nextStates after creating the child state
-    startState.nextStates = [insideZoneTopEdge];
+    startState.nextStates = [insideZoneTopEdge, openDriveLong, aboveWaterBreakout];
 
     return startState;
 }
