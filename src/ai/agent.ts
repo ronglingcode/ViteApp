@@ -13,6 +13,8 @@ import * as Helper from '../utils/helper';
 import * as TimeHelper from '../utils/timeHelper';
 import * as ProxyServer from '../api/proxyServer';
 import * as LevelToAdd from '../tradebooks/tradebookDocs/levelToAdd';
+import * as MarketDataFeatures from './marketDataFeatures';
+import * as Chart from '../ui/chart';
 
 declare let window: Models.MyWindow;
 
@@ -269,6 +271,9 @@ Please provide brief trade and market analysis and actionable trade management s
         if (fullAnswerObject.short_answer) {
             Helper.speak(fullAnswerObject.short_answer);
         }
+        let toolTipText = fullAnswerObject.short_answer;
+        toolTipText += MarketDataFeatures.getFeatures(symbol);
+        Chart.showToolTips(symbol, toolTipText);
 
         // Store conversation for ongoing management
         messages.push({ role: 'assistant', content: fullResponse });

@@ -928,7 +928,27 @@ export const clearFilledPriceForTimeframe = (timeframeChart: Models.TimeFrameCha
         timeframeChart.filledPriceLine = undefined;
     }
 };
+export const showToolTips = (symbol: string, text: string) => {
+    let netQuantity = Models.getPositionNetQuantity(symbol);
+    let isLong = netQuantity >= 0;
+    let markerPosition: LightweightCharts.SeriesMarkerPosition = isLong ? 'aboveBar' : 'belowBar';
+    let allCharts = Models.getChartsInAllTimeframes(symbol);
+    let currentCandle = Models.getCurrentCandle(symbol);
+        allCharts.forEach(chart => {
+            chart.liveRMarker = {
+                time: currentCandle.time,
+                position: markerPosition,
+                color: 'black',
+                shape: 'circle',
+                text: text,
+                size: 0.1,
+            };
+        });
+
+}
 export const showLiveR = (symbol: string, position: Models.Position | undefined, widget: Models.ChartWidget) => {
+    return;
+    /*
     if (!position) {
         return;
     }
@@ -938,7 +958,7 @@ export const showLiveR = (symbol: string, position: Models.Position | undefined,
         allCharts.forEach(chart => {
             showLiveRForTimeframe(symbol, position, currentProfitRatio, chart);
         });
-    }
+    }*/
 }
 export const showLiveRForTimeframe = (symbol: string, position: Models.Position,
     currentProfitRatio: number, timeframeChart: Models.TimeFrameChart) => {

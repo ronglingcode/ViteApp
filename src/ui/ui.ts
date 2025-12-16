@@ -6,6 +6,8 @@ declare let window: Models.MyWindow;
 export let currentChartReviewIndex: number = -1;
 
 export const addToNetwork = (source: string) => {
+    return;
+    /*
     let network = document.getElementById("network");
     if (!network) {
         return;
@@ -17,6 +19,7 @@ export const addToNetwork = (source: string) => {
         currentText = currentText.slice(2);
     }
     network.innerHTML = currentText;
+    */
 }
 
 export const updateTotalTrades = () => {
