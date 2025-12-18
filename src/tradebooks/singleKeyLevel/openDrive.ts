@@ -61,7 +61,7 @@ export class OpenDrive extends SingleKeyLevelTradebook {
         let logTags = Models.generateLogTags(this.symbol, `${this.symbol}_${logTagName}`);
         let entryPrice = Chart.getBreakoutEntryPrice(this.symbol, this.isLong, useMarketOrder, parameters);
         let stopOutPrice = Chart.getStopLossPrice(this.symbol, this.isLong, true, null);
-        let allowedSize = this.validateEntry(entryPrice, stopOutPrice, logTags);
+        let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
         if (allowedSize === 0) {
             Firestore.logError(`${this.symbol} not allowed entry`, logTags);
             return 0;
@@ -71,7 +71,7 @@ export class OpenDrive extends SingleKeyLevelTradebook {
         return allowedSize;
     }
 
-    private validateEntry(entryPrice: number, stopOutPrice: number, logTags: Models.LogTags): number {
+    private validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
         let seconds = Helper.getSecondsSinceMarketOpen(new Date());
         let reduceRatio = 1;
         if (seconds < 60) {
@@ -97,7 +97,7 @@ export class OpenDrive extends SingleKeyLevelTradebook {
         }
 
         let allowedSize = CommonRules.validateCommonEntryRules(
-            this.symbol, this.isLong, entryPrice, stopOutPrice, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
+            this.symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
         return allowedSize * reduceRatio;
     }
     refreshState(): void {

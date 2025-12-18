@@ -53,12 +53,12 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
      * @param logTags 
      * @returns 
      */
-    validateEntryWithoutClose(entryPrice: number, stopOutPrice: number, logTags: Models.LogTags): number {
+    validateEntryWithoutClose(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
         let allowedSize = CommonRules.validateCommonEntryRules(
-            this.symbol, this.isLong, entryPrice, stopOutPrice, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
+            this.symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
         return allowedSize;
     }
-    validateEntryWithCloseNew(entryPrice: number, stopOutPrice: number, logTags: Models.LogTags): number {
+    validateEntryWithCloseNew(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
         let candles = Models.getM1ClosedCandlesSinceOpen(this.symbol);
         let hasTestedKeyLevel = false;
         for (let i = 0; i < candles.length; i++) {
@@ -73,11 +73,11 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
             return 0;
         }
         let allowedSize = CommonRules.validateCommonEntryRules(
-            this.symbol, this.isLong, entryPrice, stopOutPrice, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
+            this.symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
         return allowedSize;
     }
 
-    validateEntryWithClose(entryPrice: number, stopOutPrice: number, logTags: Models.LogTags): number {
+    validateEntryWithClose(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
         let hasClosedOutside = AutoLevelMomentum.hasClosedOutsideKeyLevel(this.symbol, this.isLong, this.keyLevel);
         if (!hasClosedOutside) {
             // not closed outside yet, try checking if there's a previous candle that tested key level
@@ -112,7 +112,7 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
             hasClosedOutside = true;
         }
         let allowedSize = CommonRules.validateCommonEntryRules(
-            this.symbol, this.isLong, entryPrice, stopOutPrice, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
+            this.symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
         return allowedSize;
     }
 

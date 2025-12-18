@@ -81,7 +81,7 @@ export class OpenFlush extends SingleKeyLevelTradebook {
         }
         let tightStopLoss = symbolData.highOfDay;
 
-        let allowedSize = this.validateEntry(entryPrice, wideStopLoss, logTags);
+        let allowedSize = this.validateEntry(entryPrice, wideStopLoss, useMarketOrder, logTags);
         if (allowedSize === 0) {
             Firestore.logError(`${this.symbol} not allowed entry`, logTags);
             return 0;
@@ -107,7 +107,7 @@ export class OpenFlush extends SingleKeyLevelTradebook {
         return newSize;
     }
 
-    private validateEntry(entryPrice: number, stopOutPrice: number, logTags: Models.LogTags): number {
+    private validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
         let seconds = Helper.getSecondsSinceMarketOpen(new Date());
         if (seconds > 300) {
             // extend to first 5 minutes due to some stocks has no volume in the first few minutes
@@ -115,7 +115,7 @@ export class OpenFlush extends SingleKeyLevelTradebook {
             return 0;
         }
         let allowedSize = CommonRules.validateCommonEntryRules(
-            this.symbol, this.isLong, entryPrice, stopOutPrice, this.keyLevel, this.levelMomentumPlan, true, false, logTags);
+            this.symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder, this.keyLevel, this.levelMomentumPlan, true, false, logTags);
         return allowedSize;
     }
     getTradeManagementInstructions(): Models.TradeManagementInstructions {

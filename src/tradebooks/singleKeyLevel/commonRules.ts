@@ -6,6 +6,7 @@ import * as EntryRulesChecker from '../../controllers/entryRulesChecker';
 
 export const validateCommonEntryRules = (symbol: string, isLong: boolean,
     entryPrice: number, stopOutPrice: number,
+    useMarketOrder: boolean,
     keyLevel: TradingPlansModels.LevelArea,
     basePlan: TradingPlansModels.BasePlan,
     shouldCheckEntryDistance: boolean,
@@ -17,7 +18,7 @@ export const validateCommonEntryRules = (symbol: string, isLong: boolean,
         return 0;
     };
     let initialSize = EntryRulesChecker.checkBasicGlobalEntryRules(
-        symbol, isLong, entryPrice, stopOutPrice, basePlan, shouldCheckEntryDistance, logTags);
+        symbol, isLong, entryPrice, stopOutPrice, useMarketOrder, basePlan, shouldCheckEntryDistance, logTags);
     let finalSize = initialSize;
 
     // VWAP check

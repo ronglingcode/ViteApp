@@ -101,7 +101,7 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
             return 0;
         }
         let allowedSize = CommonRules.validateCommonEntryRules(
-            this.symbol, this.isLong, entryPrice, stopOutPrice, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
+            this.symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
         return allowedSize;
     }
 

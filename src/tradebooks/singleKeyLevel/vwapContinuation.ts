@@ -96,7 +96,7 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
          * that way, our risk starts with less than 1R.
          */
         let stopOutPrice = Chart.getStopLossPrice(this.symbol, this.isLong, true, null);
-        let allowedSize = this.validateEntry(entryPrice, stopOutPrice, logTags);
+        let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
         if (allowedSize === 0) {
             Firestore.logError(`${this.symbol} not allowed entry`, logTags);
             return 0;
@@ -106,7 +106,7 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         return allowedSize;
     }
 
-    private validateEntry(entryPrice: number, stopOutPrice: number, logTags: Models.LogTags): number {
+    private validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
         // check whether vwap moved to the other side of the key level
         let currentVwap = Models.getCurrentVwap(this.symbol);
         let keyLevel = this.getKeyLevel();
@@ -137,7 +137,7 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         }
 
         let allowedSize = CommonRules.validateCommonEntryRules(
-            this.symbol, this.isLong, entryPrice, stopOutPrice, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
+            this.symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
         return allowedSize;
     }
 

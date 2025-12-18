@@ -19,7 +19,7 @@ declare let window: Models.MyWindow;
  * Not used by adding partials/reloads.
  */
 export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
-    entryPrice: number, stopOutPrice: number, basePlan: TradingPlansModels.BasePlan,
+    entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, basePlan: TradingPlansModels.BasePlan,
     shouldCheckEntryDistance: boolean,
     logTags: Models.LogTags,) => {
     if (Rules.isOverDailyMaxLoss()) {
@@ -49,6 +49,10 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
     }
     if (liquidityScale < 0.9) {
         Firestore.logInfo(`liquidity scale is ${liquidityScale}`, logTags);
+    }
+    if (!Rules.isAllowedByMovingAverage(symbol, isLong, useMarketOrder)) {
+        Firestore.logError(`not allowed by moving average`, logTags);
+        return 0;
     }
 
     if (Models.hasEntryOrdersInSameDirection(symbol, isLong)) {
