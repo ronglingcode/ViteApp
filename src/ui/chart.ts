@@ -298,6 +298,15 @@ const getHtmlContentsAndTradebooks = (symbol: string, tabIndex: number) => {
     let tradebooksMap = setupTradingPlans(symbol, htmlContents.tradingPlans, htmlContents.tradebookButtons);
     setupExitButtons(symbol, htmlContents.exitButtonsContainer);
     setupTimeframeButtons(htmlContents.timeframeButtonsContainer, symbol);
+    let refreshButton = htmlContents.container.getElementsByClassName("refresh")[0] as HTMLElement;
+    refreshButton.addEventListener("click", (pointerEvent) => {
+        Firestore.logInfo(`refresh for ${symbol}`);
+        let logTags: Models.LogTags = {
+            symbol: symbol,
+            logSessionName: 'refresh-entry-stop-loss'
+        };
+        AutoTrader.refreshEntryStopLossForSymbol(symbol, logTags);
+    });
     htmlContents.symbol.innerText = symbol;
     return { htmlContents, tradebooksMap };
 };
@@ -934,16 +943,16 @@ export const showToolTips = (symbol: string, text: string) => {
     let markerPosition: LightweightCharts.SeriesMarkerPosition = isLong ? 'aboveBar' : 'belowBar';
     let allCharts = Models.getChartsInAllTimeframes(symbol);
     let currentCandle = Models.getCurrentCandle(symbol);
-        allCharts.forEach(chart => {
-            chart.liveRMarker = {
-                time: currentCandle.time,
-                position: markerPosition,
-                color: 'black',
-                shape: 'circle',
-                text: text,
-                size: 0.1,
-            };
-        });
+    allCharts.forEach(chart => {
+        chart.liveRMarker = {
+            time: currentCandle.time,
+            position: markerPosition,
+            color: 'black',
+            shape: 'circle',
+            text: text,
+            size: 0.1,
+        };
+    });
 
 }
 export const showLiveR = (symbol: string, position: Models.Position | undefined, widget: Models.ChartWidget) => {
@@ -1045,6 +1054,8 @@ const drawWorkingOrders = async (
     clearDrawnOrders(widget, widget.entryOrdersPriceLines);
     widget.entryOrdersPriceLines = [];
     widget.entryOrders = [];
+
+    clearDrawnOrders(widget, [widget.stopLossOfPendingEntryPriceLine]);
 
     clearDrawnOrders(widget, widget.exitOrdersPriceLines);
     widget.htmlContents.exitOrders.innerText = "Exits:";
@@ -1217,6 +1228,10 @@ const drawWorkingOrders = async (
                 }
             }
         });
+        let stopLoss = Models.getEntryOrderStopLossPrice(symbol);
+        widget.stopLossOfPendingEntryPriceLine = createPriceLine(
+            widget.candleSeries, stopLoss, `pending stop`, 'black', null, false, "solid",
+        )
         widget.entryOrderLabelRiskMultiple = Math.max(totalRiskForLong, totalRiskForShort) / 100;
     }
 };
@@ -1224,7 +1239,8 @@ const drawWorkingOrders = async (
 const clearDrawnOrders = (widget: any, widgetPriceLines: any) => {
     if (widgetPriceLines && widgetPriceLines.length > 0) {
         widgetPriceLines.forEach((l: any) => {
-            widget.candleSeries.removePriceLine(l);
+            if (l)
+                widget.candleSeries.removePriceLine(l);
         });
         widgetPriceLines = [];
     }
@@ -1296,6 +1312,10 @@ export const clearPriceLines = (symbol: string) => {
     if (widget.entryPriceLine) {
         widget.candleSeries.removePriceLine(widget.entryPriceLine);
         widget.entryPriceLine = undefined;
+    }
+    if (widget.stopLossOfPendingEntryPriceLine) {
+        widget.candleSeries.removePriceLine(widget.stopLossOfPendingEntryPriceLine);
+        widget.stopLossOfPendingEntryPriceLine = undefined;
     }
     if (widget.stopLossPriceLine) {
         widget.candleSeries.removePriceLine(widget.stopLossPriceLine);

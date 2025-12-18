@@ -275,9 +275,11 @@ const scheduleSecondMinuteCloseEvent = (now: Date) => {
 }
 
 export const onMarketJustOpened = () => {
+    /*
     setInterval(() => {
         refreshEntryStopLoss();
-    }, 1000);
+    }, 1000);*/
+
     autoTriggerRedToGreen60();
 }
 export const onMarketAlreadyOpen = () => {

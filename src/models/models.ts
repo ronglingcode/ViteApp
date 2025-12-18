@@ -207,6 +207,7 @@ export interface ChartWidget {
     candleSeries: LightweightCharts.ISeriesApi<"Candlestick">,
     entryPriceLine?: LightweightCharts.IPriceLine,
     stopLossPriceLine?: LightweightCharts.IPriceLine,
+    stopLossOfPendingEntryPriceLine?: LightweightCharts.IPriceLine,
     riskLevelPriceLine?: LightweightCharts.IPriceLine,
     entryOrders: OrderModel[],
     entryOrdersPriceLines: LightweightCharts.IPriceLine[],
