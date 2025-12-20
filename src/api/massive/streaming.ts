@@ -121,7 +121,7 @@ const createTimeSale = (c: any) => {
         record.rawTimestamp = `${timeStr} ${c.t}`;
         record.timestamp = c.t;
     } else {
-        Firestore.logError(`massive missing timestamp`, {symbol: symbol});
+        Firestore.logError(`massive missing timestamp`, { symbol: symbol });
     }
     if (c.c != null) {
         for (let i = 0; i < c.c.length; i++) {
@@ -130,11 +130,11 @@ const createTimeSale = (c: any) => {
         }
     }
     let shouldFilter = has_non_update;
-    return {record, shouldFilter};
+    return { record, shouldFilter };
 }
 export const handleTimeAndSalesData = (data: any) => {
     //console.log(data);
-    let {record, shouldFilter} = createTimeSale(data);
+    let { record, shouldFilter } = createTimeSale(data);
     let updated = DB.tryUpdateMaxTimeSaleTimestamp(record, 'm');
     Chart.addToTimeAndSales(record.symbol, 'massiveFeed', shouldFilter, record);
     if (shouldFilter) {

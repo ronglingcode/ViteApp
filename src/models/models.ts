@@ -185,6 +185,7 @@ export interface TimeFrameChart {
     maxEntryLine?: LightweightCharts.IPriceLine,
     tradeManagementLevels: LightweightCharts.IPriceLine[],
     momentumLevels: LightweightCharts.IPriceLine[],
+    toolTipPriceLine?: LightweightCharts.IPriceLine,
 }
 export interface ChartState {
     crosshairPrice: number,

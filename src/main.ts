@@ -40,6 +40,7 @@ import * as MassiveStreaming from './api/massive/streaming';
 import * as MassiveApi from './api/massive/api';
 import * as DB from './data/db';
 import * as Agent from './ai/agent';
+import * as VwapPatterns from './algorithms/vwapPatterns';
 import './tosClient';
 
 declare let window: Models.MyWindow;
@@ -173,9 +174,7 @@ if (showTargetsButton) {
 let testPopButton = document.getElementById("test_popup");
 if (testPopButton) {
     testPopButton.addEventListener("click", () => {
-        let wl = Models.getWatchlist();
-        let symbol = wl[0].symbol;
-        Agent.testSimpleChat(symbol);
+        VwapPatterns.test();
     });
 }
 
@@ -185,7 +184,7 @@ let now = new Date();
 
 export const cleanUpChatWindows = () => {
     let watchlist = Models.getWatchlist();
-    for(let i = 0; i < watchlist.length; i++) {
+    for (let i = 0; i < watchlist.length; i++) {
         let symbol = watchlist[i].symbol;
         let chatWindowContainer = document.getElementById(`chatContainer${i}`) as HTMLElement;
         let chatHeaderText = document.getElementById(`chatHeaderText${i}`) as HTMLElement;

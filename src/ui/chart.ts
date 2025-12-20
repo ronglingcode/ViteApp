@@ -1731,3 +1731,17 @@ export const lightChart = (symbol: string) => {
 
     chart.isDark = false;
 }
+
+
+export const updateToolTipPriceLine = (symbol: string, text: string) => {
+    let chart = Models.getChartWidget(symbol);
+    if (!chart)
+        return;
+    let m1Chart = chart.timeframeChartM1;
+    if (m1Chart.toolTipPriceLine) {
+        m1Chart.candleSeries.removePriceLine(m1Chart.toolTipPriceLine);
+    }
+    let currentPrice = Models.getCurrentPrice(symbol);
+    m1Chart.toolTipPriceLine = createPriceLine(
+        m1Chart.candleSeries, currentPrice, text, "black", 1, false, "dashed");
+}

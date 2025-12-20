@@ -20,6 +20,7 @@ import * as AutoLevelMomentum from './autoLevelMomentum';
 import * as OrderFlow from '../controllers/orderFlow';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
+import * as VwapPatterns from './vwapPatterns';
 import * as Agent from '../ai/agent';
 
 declare let window: Models.MyWindow;
@@ -561,6 +562,10 @@ export const onNewTimeAndSalesData = (symbol: string, newPrice: number, isNewCan
     alertHigherVolume(symbol);
     saveRedToGreenState(symbol);
     TradebooksManager.onNewTimeAndSalesDataForSymbol(symbol);
+    let status = getChartAnalysis(symbol);
+    if (status) {
+        Chart.updateToolTipPriceLine(symbol, status);
+    }
 }
 export const saveRedToGreenState = (symbol: string) => {
     let seconds = Helper.getSecondsSinceMarketOpen(new Date());
@@ -633,4 +638,26 @@ export const detectOverRisk = (symbol: string) => {
         Helper.speak(`over risk for ${symbol}`);
         Firestore.logError(`over risk for ${symbol}`);
     }
+}
+
+export const getChartAnalysis = (symbol: string) => {
+    let netQ = Models.getPositionNetQuantity(symbol);
+    if (netQ == 0) {
+        return "";
+    }
+    let openPrice = Models.getOpenPrice(symbol);
+    if (!openPrice) {
+        return "";
+    }
+    let isLong = netQ > 0;
+    let plan = TradingPlans.getTradingPlans(symbol);
+    let inflectionLevel = plan.analysis.singleMomentumKeyLevel[0].high;
+    let openVwap = Models.getLastVwapBeforeOpen(symbol);
+    let symbolData = Models.getSymbolData(symbol);
+    if (symbolData.premktHigh >= openPrice && openPrice >= openVwap && openVwap >= inflectionLevel) {
+        if (isLong) {
+            return VwapPatterns.getStatusForVwapContinuationLongWithPremarketHigh(symbol, 0);
+        }
+    }
+    return "";
 }
