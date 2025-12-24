@@ -45,7 +45,7 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
     }
     if (Rules.isPremarketVolumeTooLow(symbol)) {
         Firestore.logError(`${symbol} premarket volume too low`);
-        return 0;
+        //return 0;
     }
     if (liquidityScale < 0.9) {
         Firestore.logInfo(`liquidity scale is ${liquidityScale}`, logTags);
