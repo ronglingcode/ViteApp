@@ -283,7 +283,40 @@ export const isConsecutiveBarsSameDirection = (symbol: string, isLong: boolean) 
             isBarSameDirection(candles[l - 3], isLong);
     }
 }
-
+export const analyzeBreakoutPatterns = (symbol: string, isLong: boolean, level: number) => {
+    let candles = Models.getCandlesFromM1SinceOpen(symbol);
+    let firstTestingCandle = null;
+    let firstTestingCandleIsClosed = false;
+    let firstCandleClosedBeyondLevel = null;
+    let firstCandleClosedBeyondLevelIndex = -1;
+    for(let i = 0; i < candles.length; i++) {
+        let c = candles[i];
+        let isClosed = i < candles.length - 1;
+        if(firstTestingCandle == null) {
+            if((isLong && c.high >= level) ||
+                (!isLong && c.low <= level)) {
+                firstTestingCandle = c;
+                firstTestingCandleIsClosed = isClosed;                     
+            }
+        }
+        if(firstCandleClosedBeyondLevel == null) {
+            if (isClosed) {
+                if (isLong && candles[i].close >= level) {
+                    firstCandleClosedBeyondLevel = candles[i];
+                } else if (!isLong && candles[i].close <= level) {
+                    firstCandleClosedBeyondLevel = candles[i];
+                    firstCandleClosedBeyondLevelIndex = i;
+                }
+            }
+        }
+    }
+    return {
+        firstTestingCandle: firstTestingCandle,
+        firstTestingCandleIsClosed: firstTestingCandleIsClosed,
+        firstCandleClosedBeyondLevel: firstCandleClosedBeyondLevel,
+        firstCandleClosedBeyondLevelIndex: firstCandleClosedBeyondLevelIndex,
+    }
+}
 export const hasClosedBeyondPrice = (symbol: string, isLong: boolean, price: number) => {
     let usedTimeframe = Models.getUsedTimeframe();
     // temporary fix for above water breakout tradebook

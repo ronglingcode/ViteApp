@@ -48,49 +48,44 @@ export class AboveWaterBreakout extends BaseBreakoutTradebook {
         let logTagName = this.isLong ? '_above-water-breakout' : '_below-water-breakdown';
         let logTags = Models.generateLogTags(this.symbol, `${this.symbol}_${logTagName}`);
         let keyLevel = this.getKeyLevel();
-        if (parameters.useMarketOrderWithTightStop) {
-            useMarketOrder = true;
-        }
+        let {firstTestingCandle, firstTestingCandleIsClosed, firstCandleClosedBeyondLevel, firstCandleClosedBeyondLevelIndex} = Patterns.analyzeBreakoutPatterns(this.symbol, this.isLong, keyLevel);
         let entryPrice = Chart.getBreakoutEntryPrice(this.symbol, this.isLong, useMarketOrder, parameters);
-        let stopOutPrice = Chart.getStopLossPrice(this.symbol, this.isLong, true, null);
-        let symbolData = Models.getSymbolData(this.symbol);
-        let firstBreakoutCandle = Patterns.getFirstBreakoutCandle(this.symbol, this.isLong, keyLevel);
-        if (firstBreakoutCandle && firstBreakoutCandle.minutesSinceMarketOpen < 5) {
-            if (this.isLong) {
-                if (firstBreakoutCandle.low > symbolData.lowOfDay) {
-                    //stopOutPrice = firstBreakoutCandle.low;
-                    Helper.speak(`breakout in first 5 minutes, use tight stop`);
+        if (firstCandleClosedBeyondLevel != null) {
+            // closed beyond level, check if there's a retest after this candle
+            let hasRetest = false;
+            let retestTouchedLevel = false;
+            let candles = Models.getCandlesFromM1SinceOpen(this.symbol);
+            for (let i = firstCandleClosedBeyondLevelIndex + 1; i < candles.length; i++) {
+                let c = candles[i];
+                if ((this.isLong && c.close < c.open) || (!this.isLong && c.close > c.open)) {
+                    hasRetest = true;
                 }
+                if ((this.isLong && c.low <= keyLevel) || (!this.isLong && c.high >= keyLevel)) {
+                    retestTouchedLevel = true;
+                }
+            }
+            if (!hasRetest) {
+                return this.triggerClosedBeyondLevelNoRetest(useMarketOrder, dryRun, parameters, logTags);
             } else {
-                if (firstBreakoutCandle.high < symbolData.highOfDay) {
-                    //stopOutPrice = firstBreakoutCandle.high;
-                    Helper.speak(`breakout in first 5 minutes, use tight stop`);
+                if (retestTouchedLevel) {
+                    return this.triggerClosedBeyondLevelRetestTouchedLevel(entryPrice, useMarketOrder, dryRun, parameters, logTags);
+                } else {
+                    return this.triggerClosedBeyondLevelRetestNoTouchedLevel(entryPrice, useMarketOrder, dryRun, parameters, logTags);
                 }
             }
-        }
-        let allowedSize = 0;
-        if (this.waitForClose) {
-            allowedSize = this.validateEntryWithCloseNew(entryPrice, stopOutPrice, useMarketOrder, logTags);
-        } else {
-            allowedSize = this.validateEntryWithoutClose(entryPrice, stopOutPrice, useMarketOrder, logTags);
-        }
-        if (allowedSize === 0) {
-            Firestore.logError(`${this.symbol} not allowed entry`, logTags);
-            return 0;
-        }
-        if (parameters.useMarketOrderWithTightStop) {
-            let currentCandle = Models.getCurrentCandle(this.symbol);
-            let tightStopPrice = currentCandle.low;
-            if (!this.isLong) {
-                tightStopPrice = currentCandle.high;
+        } 
+        if (firstTestingCandle != null && firstTestingCandleIsClosed) {
+            if ((this.isLong && entryPrice < firstTestingCandle.high) || (!this.isLong && entryPrice > firstTestingCandle.low)) {
+            return this.triggerClosedWithinLevelReclaimLevel(entryPrice, useMarketOrder, dryRun, parameters, logTags);
+            } else {
+                return this.triggerClosedWithinLevelNewHigh(entryPrice, firstTestingCandle, useMarketOrder, dryRun, parameters, logTags);
             }
-            let tighenStopResult = OrderFlow.tightenStop(entryPrice, stopOutPrice, tightStopPrice, allowedSize);
-            stopOutPrice = tighenStopResult.newStop;
-            allowedSize = tighenStopResult.newSize;
         }
-
-        this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, stopOutPrice, allowedSize, logTags);
-        return allowedSize;
+        if (firstTestingCandle != null) {
+            return this.triggerNoCloseBullFlagBeyondLevel(useMarketOrder, dryRun, parameters, logTags);
+        } else {
+            return this.triggerNoCloseBearFlagWithinLevel(useMarketOrder, dryRun, parameters, logTags);
+        }
     }
 
     getTradeManagementInstructions(): Models.TradeManagementInstructions {

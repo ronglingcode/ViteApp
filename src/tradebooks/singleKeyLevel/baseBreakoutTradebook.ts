@@ -116,6 +116,109 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
         return allowedSize;
     }
 
+    generalEntry(entryPrice: number, useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters, logTags: Models.LogTags): number {
+        let stopOutPrice = Chart.getStopLossPrice(this.symbol, this.isLong, true, null);
+        
+        let allowedSize = CommonRules.validateCommonEntryRules(
+            this.symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
+        if (allowedSize === 0) {
+            Firestore.logError(`${this.symbol} not allowed entry`, logTags);
+            return 0;
+        }
+        this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, stopOutPrice, allowedSize, logTags);
+        return allowedSize;
+    }
+    generalEntryWithCustomRiskLevel(entryPrice: number, riskLevelPrice: number, stopOutPrice: number, useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters, logTags: Models.LogTags): number {
+        let allowedSize = CommonRules.validateCommonEntryRules(
+            this.symbol, this.isLong, entryPrice, riskLevelPrice, useMarketOrder, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
+        if (allowedSize === 0) {
+            Firestore.logError(`${this.symbol} not allowed entry`, logTags);
+            return 0;
+        }
+        this.submitEntryOrdersWithCustomRiskLevelPrice(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskLevelPrice, allowedSize, logTags);
+        return allowedSize;
+    }
+
+    triggerClosedBeyondLevelNoRetest(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters, logTags: Models.LogTags): number {
+        if (this.isLong) {
+            Firestore.logError(`${this.symbol} trigger closed above level no retest`, logTags);
+        } else {
+            Firestore.logError(`${this.symbol} trigger closed below level no retest`, logTags);
+        }
+        // no retest yet, we need to use the current candle low as stop out price 
+        let currentCandle = Models.getCurrentCandle(this.symbol);
+        let stopOutPrice = currentCandle.low;
+        if (!this.isLong) {
+            stopOutPrice = currentCandle.high;
+        }
+        let entryPrice = Chart.getBreakoutEntryPrice(this.symbol, this.isLong, useMarketOrder, parameters);
+        let symbolData = Models.getSymbolData(this.symbol);
+        let riskLevelPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
+        return this.generalEntryWithCustomRiskLevel(entryPrice, riskLevelPrice, stopOutPrice, useMarketOrder, dryRun, parameters, logTags);
+    }
+
+    triggerClosedBeyondLevelRetestTouchedLevel(entryPrice: number, useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters, logTags: Models.LogTags): number {
+        if (this.isLong) {
+            Firestore.logError(`${this.symbol} trigger closed above level retest touched level`, logTags);
+        } else {
+            Firestore.logError(`${this.symbol} trigger closed below level retest touched level`, logTags);
+        }
+        return this.generalEntry(entryPrice, useMarketOrder, dryRun, parameters, logTags);
+    }
+
+    triggerClosedBeyondLevelRetestNoTouchedLevel(entryPrice: number, useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters, logTags: Models.LogTags): number {
+        if (this.isLong) {
+            Firestore.logError(`${this.symbol} trigger closed above level retest no touched level`, logTags);
+        } else {
+            Firestore.logError(`${this.symbol} trigger closed below level retest no touched level`, logTags);
+        }
+        return this.generalEntry(entryPrice, useMarketOrder, dryRun, parameters, logTags);        
+    }
+
+    triggerClosedWithinLevelNewHigh(entryPrice: number, firstTestingCandle: Models.CandlePlus, useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters, logTags: Models.LogTags): number {
+        if (this.isLong) {
+            Firestore.logError(`${this.symbol} trigger closed within level new high`, logTags);
+        } else {
+            Firestore.logError(`${this.symbol} trigger closed within level new low`, logTags);
+        }
+        let symbolData = Models.getSymbolData(this.symbol);
+        let riskLevelPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
+        let stopOutPrice = this.isLong ? firstTestingCandle.low : firstTestingCandle.high;
+        return this.generalEntryWithCustomRiskLevel(entryPrice, riskLevelPrice, stopOutPrice, useMarketOrder, dryRun, parameters, logTags);
+    }
+
+    triggerClosedWithinLevelReclaimLevel(entryPrice: number,useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters, logTags: Models.LogTags): number {
+        Firestore.logError(`${this.symbol} trigger closed within level reclaim level`, logTags);
+        let symbolData = Models.getSymbolData(this.symbol);
+        let currentCandle = Models.getCurrentCandle(this.symbol);
+        let riskLevelPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
+        let stopOutPrice = this.isLong ? currentCandle.low : currentCandle.high;
+        return this.generalEntryWithCustomRiskLevel(entryPrice, riskLevelPrice, stopOutPrice, useMarketOrder, dryRun, parameters, logTags);
+    }
+
+    triggerNoCloseBullFlagBeyondLevel(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters, logTags: Models.LogTags): number {
+        if (this.isLong) {
+            Firestore.logError(`${this.symbol} trigger no close bull flag above level`, logTags);
+        } else {
+            Firestore.logError(`${this.symbol} trigger no close bear flag below level`, logTags);
+        }
+        let symbolData = Models.getSymbolData(this.symbol);
+        let entryPrice = this.isLong ? symbolData.highOfDay : symbolData.lowOfDay;
+        // TODO: find the swing low / consolidation low to use as stop out price
+        // can start with require a manual stop level, later detect the swing low automatically
+        return this.generalEntry(entryPrice, useMarketOrder, dryRun, parameters, logTags);
+    }
+    triggerNoCloseBearFlagWithinLevel(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters, logTags: Models.LogTags): number {
+        if (this.isLong) {
+            Firestore.logError(`${this.symbol} trigger no close bull flag below level`, logTags);
+        } else {
+            Firestore.logError(`${this.symbol} trigger no close bear flag above level`, logTags);
+        }
+        let entryPrice =  this.getKeyLevel();
+        // TODO: find the swing low / consolidation low to use as stop out price
+        return this.generalEntry(entryPrice, useMarketOrder, dryRun, parameters, logTags);
+    }
+
     getDisallowedReasonToAdjustSingleLimitOrder(
         symbol: string, keyIndex: number, order: Models.OrderModel,
         pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {

@@ -26,9 +26,14 @@ export abstract class SingleKeyLevelTradebook extends Tradebook {
 
     protected submitEntryOrders(dryRun: boolean,
         useMarketOrder: boolean, entryPrice: number, stopOutPrice: number, allowedSize: number, logTags: Models.LogTags): void {
-
         let planCopy = JSON.parse(JSON.stringify(this.levelMomentumPlan)) as TradingPlansModels.LevelMomentumPlan;
         let riskLevelPrice = Models.getRiskLevelPrice(this.symbol, stopOutPrice);
+        this.submitEntryOrdersBase(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskLevelPrice, allowedSize, planCopy, logTags);
+    }
+
+    protected submitEntryOrdersWithCustomRiskLevelPrice(dryRun: boolean,
+        useMarketOrder: boolean, entryPrice: number, stopOutPrice: number, riskLevelPrice: number, allowedSize: number, logTags: Models.LogTags): void {
+        let planCopy = JSON.parse(JSON.stringify(this.levelMomentumPlan)) as TradingPlansModels.LevelMomentumPlan;
         this.submitEntryOrdersBase(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskLevelPrice, allowedSize, planCopy, logTags);
     }
 

@@ -4,6 +4,7 @@ import type * as TradingPlansModels from '../../models/tradingPlans/tradingPlans
 import * as Chart from '../../ui/chart';
 import * as Firestore from '../../firestore';
 import * as Models from '../../models/models';
+import * as Patterns from '../../algorithms/patterns';
 import * as TradebookUtil from '../tradebookUtil';
 
 export class EmergingStrengthBreakout extends BaseBreakoutTradebook {
@@ -40,21 +41,38 @@ export class EmergingStrengthBreakout extends BaseBreakoutTradebook {
     triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {
         let logTagName = this.isLong ? '_emerging-strength-breakout' : '_emerging-strength-breakdown';
         let logTags = Models.generateLogTags(this.symbol, `${this.symbol}_${logTagName}`);
+        let keyLevel = this.getKeyLevel();
+        let {firstTestingCandle, firstTestingCandleIsClosed, firstCandleClosedBeyondLevel, firstCandleClosedBeyondLevelIndex} = Patterns.analyzeBreakoutPatterns(this.symbol, this.isLong, keyLevel);
         let entryPrice = Chart.getBreakoutEntryPrice(this.symbol, this.isLong, useMarketOrder, parameters);
-        let stopOutPrice = Chart.getStopLossPrice(this.symbol, this.isLong, true, null);
-        let allowedSize = 0;
-        if (this.waitForClose) {
-            allowedSize = this.validateEntryWithCloseNew(entryPrice, stopOutPrice, useMarketOrder, logTags);
-        } else {
-            allowedSize = this.validateEntryWithoutClose(entryPrice, stopOutPrice, useMarketOrder, logTags);
-        }
-        if (allowedSize === 0) {
-            Firestore.logError(`${this.symbol} not allowed entry`, logTags);
+        if (firstCandleClosedBeyondLevel != null) {
+            // closed beyond level, check if there's a retest after this candle
+            let hasRetest = false;
+            let retestTouchedLevel = false;
+            let candles = Models.getCandlesFromM1SinceOpen(this.symbol);
+            for (let i = firstCandleClosedBeyondLevelIndex + 1; i < candles.length; i++) {
+                let c = candles[i];
+                if ((this.isLong && c.close < c.open) || (!this.isLong && c.close > c.open)) {
+                    hasRetest = true;
+                }
+                if ((this.isLong && c.low <= keyLevel) || (!this.isLong && c.high >= keyLevel)) {
+                    retestTouchedLevel = true;
+                }
+            }
+            if (!hasRetest) {
+                return this.triggerClosedBeyondLevelNoRetest(useMarketOrder, dryRun, parameters, logTags);
+            } else {
+                if (retestTouchedLevel) {
+                    return this.triggerClosedBeyondLevelRetestTouchedLevel(entryPrice, useMarketOrder, dryRun, parameters, logTags);
+                } else {
+                    return this.triggerClosedBeyondLevelRetestNoTouchedLevel(entryPrice, useMarketOrder, dryRun, parameters, logTags);
+                }
+            }
+        } 
+        else {
+            Firestore.logError(`${this.symbol} must wait for a candle closed beyond level`, logTags);
             return 0;
         }
-
-        this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, stopOutPrice, allowedSize, logTags);
-        return allowedSize;
+        
     }
 
     getTradeManagementInstructions(): Models.TradeManagementInstructions {
