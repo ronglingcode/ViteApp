@@ -22,6 +22,7 @@ import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import * as VwapPatterns from './vwapPatterns';
 import * as Agent from '../ai/agent';
+import { VwapContinuationFailed } from '../tradebooks/singleKeyLevel/vwapContinuationFailed';
 
 declare let window: Models.MyWindow;
 
@@ -373,6 +374,19 @@ export const onMinuteClosed = (
             TradebooksManager.updateTradebooksStatus(symbol, widget.tradebooks, openPriceToUse, vwapToUse);
         }
     }
+    let widget = Models.getChartWidget(symbol);
+    if (widget && widget.tradebooks && seconds > 50) {
+        // Check for vwap bounce fail tradebook and call status function
+        let tradebooks = widget.tradebooks;
+        for (let tradebookMapEntryPair of tradebooks) {
+            let tradebook = tradebookMapEntryPair[1];
+            if (tradebook.getID() === VwapContinuationFailed.shortVwapBounceFailed && tradebook.isEnabled()) {
+                let status = VwapPatterns.getStatusForVwapBounceFail(symbol);
+                Firestore.logInfo(`${symbol} vwap bounce fail status: ${status}`);
+                break;
+            }
+        }
+    }   
 }
 /**
  * If the newly closed candle is a breakout entry candle
