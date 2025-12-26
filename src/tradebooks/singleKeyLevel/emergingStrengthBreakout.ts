@@ -48,21 +48,41 @@ export class EmergingStrengthBreakout extends BaseBreakoutTradebook {
             // closed beyond level, check if there's a retest after this candle
             let hasRetest = false;
             let retestTouchedLevel = false;
+            let deepestRetest = 0;
             let candles = Models.getCandlesFromM1SinceOpen(this.symbol);
             for (let i = firstCandleClosedBeyondLevelIndex + 1; i < candles.length; i++) {
                 let c = candles[i];
-                if ((this.isLong && c.close < c.open) || (!this.isLong && c.close > c.open)) {
-                    hasRetest = true;
-                }
-                if ((this.isLong && c.low <= keyLevel) || (!this.isLong && c.high >= keyLevel)) {
-                    retestTouchedLevel = true;
-                }
+                if (this.isLong) {
+                    if (c.close < c.open) {
+                        hasRetest = true;
+                        if (c.low <= keyLevel) {
+                            retestTouchedLevel = true;
+                        }
+                        if (deepestRetest == 0) {
+                            deepestRetest = c.low;
+                        } else {
+                            deepestRetest = Math.min(deepestRetest, c.low); 
+                        }
+                    }
+                } else {
+                    if (c.close > c.open) {
+                        hasRetest = true;
+                        if (c.high >= keyLevel) {
+                            retestTouchedLevel = true;
+                        }
+                        if (deepestRetest == 0) {
+                            deepestRetest = c.high;
+                        } else {
+                            deepestRetest = Math.max(deepestRetest, c.high); 
+                        }
+                    }
+                }                
             }
             if (!hasRetest) {
                 return this.triggerClosedBeyondLevelNoRetest(useMarketOrder, dryRun, parameters, logTags);
             } else {
                 if (retestTouchedLevel) {
-                    return this.triggerClosedBeyondLevelRetestTouchedLevel(entryPrice, useMarketOrder, dryRun, parameters, logTags);
+                    return this.triggerClosedBeyondLevelRetestTouchedLevel(entryPrice, deepestRetest, useMarketOrder, dryRun, parameters, logTags);
                 } else {
                     return this.triggerClosedBeyondLevelRetestNoTouchedLevel(entryPrice, useMarketOrder, dryRun, parameters, logTags);
                 }

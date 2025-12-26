@@ -157,13 +157,16 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
         return this.generalEntryWithCustomRiskLevel(entryPrice, riskLevelPrice, stopOutPrice, useMarketOrder, dryRun, parameters, logTags);
     }
 
-    triggerClosedBeyondLevelRetestTouchedLevel(entryPrice: number, useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters, logTags: Models.LogTags): number {
+    triggerClosedBeyondLevelRetestTouchedLevel(entryPrice: number, deepestRetest: number, useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters, logTags: Models.LogTags): number {
         if (this.isLong) {
             Firestore.logError(`${this.symbol} trigger closed above level retest touched level`, logTags);
         } else {
             Firestore.logError(`${this.symbol} trigger closed below level retest touched level`, logTags);
         }
-        return this.generalEntry(entryPrice, useMarketOrder, dryRun, parameters, logTags);
+        let symbolData = Models.getSymbolData(this.symbol);
+        let riskLevelPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
+        let stopOutPrice =  deepestRetest;
+        return this.generalEntryWithCustomRiskLevel(entryPrice, riskLevelPrice, stopOutPrice, useMarketOrder, dryRun, parameters, logTags);
     }
 
     triggerClosedBeyondLevelRetestNoTouchedLevel(entryPrice: number, useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters, logTags: Models.LogTags): number {
