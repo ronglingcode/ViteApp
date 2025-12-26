@@ -200,6 +200,10 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
     }
 
     triggerNoCloseBullFlagBeyondLevel(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters, logTags: Models.LogTags): number {
+        if (this.waitForClose) {
+            Firestore.logError(`${this.symbol} triggerNoCloseBullFlagBeyondLevel, waiting for close`, logTags);
+            return 0;
+        }
         if (this.isLong) {
             Firestore.logError(`${this.symbol} trigger no close bull flag above level`, logTags);
         } else {
@@ -212,6 +216,10 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
         return this.generalEntry(entryPrice, useMarketOrder, dryRun, parameters, logTags);
     }
     triggerNoCloseBearFlagWithinLevel(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters, logTags: Models.LogTags): number {
+        if (this.waitForClose) {
+            Firestore.logError(`${this.symbol} triggerNoCloseBearFlagWithinLevel, waiting for close`, logTags);
+            return 0;
+        }
         if (this.isLong) {
             Firestore.logError(`${this.symbol} trigger no close bull flag below level`, logTags);
         } else {
