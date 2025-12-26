@@ -696,7 +696,7 @@ export const getExtremePrice = (symbol: string, up: boolean, secondsSinceMarketO
 };
 
 export const getTypicalPrice = (candle: Models.Candle) => {
-    if (candle.vwap > 0) {
+    if (candle.vwap > 0 && candle.vwap >= candle.low && candle.vwap <= candle.high) {
         return candle.vwap;
     }
 
