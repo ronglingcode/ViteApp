@@ -131,6 +131,7 @@ export const getPreviousTradingDate = async () => {
 }
 
 export const getPremarketDollarFromDate = async (symbol: string, startDate: string) => {
+    /*
     let candles = await alpacaApi.get15MinuteChart(symbol, startDate);
     let dollarTraded = 0;
     for (let i = 0; i < candles.length; i++) {
@@ -142,5 +143,21 @@ export const getPremarketDollarFromDate = async (symbol: string, startDate: stri
         dollarTraded += amount;
         //console.log(`${c.datetime.toLocaleTimeString()}: ${c.volume}`);
     }
-    return dollarTraded;
+    return dollarTraded;*/
+    let candles = await get30MinuteChartFromLastNDays(symbol, 1);
+    console.log(candles);
+    return 100000000;
+}
+export const get30MinuteChartFromLastNDays = async (symbol: string, nDays: number) => {
+    let date = new Date();
+    date.setDate(date.getDate() - nDays);
+    let startDate = TimeHelper.getDateString(date);
+    if (GlobalSettings.marketDataSource == "alpaca") {
+        let candles = await alpacaApi.getPriceHistoryFromOldDateForHigherTimeframe(symbol, 30, startDate);
+        return candles;
+    } else if (GlobalSettings.marketDataSource == "massive") {
+        let candles = await massiveApi.getPriceHistoryFromOldDateForHigherTimeframe(symbol, 30, nDays);
+        return candles;
+    }
+    return [];
 }

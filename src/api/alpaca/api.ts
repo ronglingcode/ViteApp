@@ -239,6 +239,10 @@ export const getPriceHistory = async (symbol: string, timeframe: number) => {
     }
     return getBars(symbol, url);
 };
+export const getPriceHistoryFromOldDateForHigherTimeframe = async (symbol: string, timeframe: number, startDate: string) => {
+    let url = `${DATA_API_HOST}/v2/stocks/bars?symbols=${symbol}&timeframe=${timeframe}Min&start=${startDate}`;
+    return getBars(symbol, url);
+};
 
 export const get15MinuteChart = async (symbol: string, startDate: string) => {
     let url = `${DATA_API_HOST}/v2/stocks/bars?symbols=${symbol}&timeframe=15Min&start=${startDate}`;
