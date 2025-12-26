@@ -98,3 +98,50 @@ export const getStatusForAboveWaterBreakout = (symbol: string,
         return "consolidation between vwap and pm high"
     }
 }
+
+/**
+ * 
+ * @returns a string representing the status of the VWAP bounce fail pattern 
+ */
+export const getStatusForVwapBounceFail = (symbol: string) => {
+    let candles = Models.getCandlesFromM1SinceOpen(symbol);
+    // get the highest candle to start with
+    let highestCandleIndex = 0;
+    for (let i = 1; i < candles.length; i++) {
+        if (candles[i].high > candles[highestCandleIndex].high) {
+            highestCandleIndex = i;
+        }
+    }
+    // assume highest candle is above vwap
+    let current = highestCandleIndex;
+    let vwaps = Models.getVwapsSinceOpen(symbol);
+    let status = "above vwap";
+    while (current < candles.length) {
+        let candle = candles[current];
+        if (candle.low < vwaps[current].value) {
+            status = "testing vwap";
+            break;
+        }
+        current++;
+    }
+
+    if (current >= candles.length - 1) {
+        return status;
+    }
+    current++;
+
+    // once it stops making new low or makes a new high, we are in the vwap bounce phase
+    while (current < candles.length) {
+        let prev = current - 1;
+        let currentCandle = candles[current];
+        if (prev >= 0) {
+            let prevCandle = candles[prev];
+            if ((currentCandle.high > prevCandle.high) || (currentCandle.low > prevCandle.low)) {
+                status = "bouncing off vwap";
+                break;
+            }
+        }
+        current++;
+    }
+    return status;
+}
