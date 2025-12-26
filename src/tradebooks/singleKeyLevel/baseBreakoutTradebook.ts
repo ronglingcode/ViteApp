@@ -141,9 +141,9 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
 
     triggerClosedBeyondLevelNoRetest(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters, logTags: Models.LogTags): number {
         if (this.isLong) {
-            Firestore.logError(`${this.symbol} trigger closed above level no retest`, logTags);
+            Firestore.logInfo(`${this.symbol} trigger closed above level no retest`, logTags);
         } else {
-            Firestore.logError(`${this.symbol} trigger closed below level no retest`, logTags);
+            Firestore.logInfo(`${this.symbol} trigger closed below level no retest`, logTags);
         }
         // no retest yet, we need to use the current candle low as stop out price 
         let currentCandle = Models.getCurrentCandle(this.symbol);
@@ -159,9 +159,9 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
 
     triggerClosedBeyondLevelRetestTouchedLevel(entryPrice: number, deepestRetest: number, useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters, logTags: Models.LogTags): number {
         if (this.isLong) {
-            Firestore.logError(`${this.symbol} trigger closed above level retest touched level`, logTags);
+            Firestore.logInfo(`${this.symbol} trigger closed above level retest touched level`, logTags);
         } else {
-            Firestore.logError(`${this.symbol} trigger closed below level retest touched level`, logTags);
+            Firestore.logInfo(`${this.symbol} trigger closed below level retest touched level`, logTags);
         }
         let symbolData = Models.getSymbolData(this.symbol);
         let riskLevelPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
@@ -171,18 +171,18 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
 
     triggerClosedBeyondLevelRetestNoTouchedLevel(entryPrice: number, useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters, logTags: Models.LogTags): number {
         if (this.isLong) {
-            Firestore.logError(`${this.symbol} trigger closed above level retest no touched level`, logTags);
+            Firestore.logInfo(`${this.symbol} trigger closed above level retest no touched level`, logTags);
         } else {
-            Firestore.logError(`${this.symbol} trigger closed below level retest no touched level`, logTags);
+            Firestore.logInfo(`${this.symbol} trigger closed below level retest no touched level`, logTags);
         }
         return this.generalEntry(entryPrice, useMarketOrder, dryRun, parameters, logTags);        
     }
 
     triggerClosedWithinLevelNewHigh(entryPrice: number, firstTestingCandle: Models.CandlePlus, useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters, logTags: Models.LogTags): number {
         if (this.isLong) {
-            Firestore.logError(`${this.symbol} trigger closed within level new high`, logTags);
+            Firestore.logInfo(`${this.symbol} trigger closed within level new high`, logTags);
         } else {
-            Firestore.logError(`${this.symbol} trigger closed within level new low`, logTags);
+            Firestore.logInfo(`${this.symbol} trigger closed within level new low`, logTags);
         }
         let symbolData = Models.getSymbolData(this.symbol);
         let riskLevelPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
