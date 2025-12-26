@@ -39,7 +39,7 @@ export class OpenProfitTaking extends Tradebook {
         let symbolData = Models.getSymbolData(symbol);
         let stopOutPrice = isLong ? symbolData.lowOfDay : symbolData.highOfDay;
         let riskLevel = Models.getRiskLevelPrice(symbol, this.openProfitTakingPlan.defaultRiskLevel);
-        let allowedSize = this.validateEntry(entryPrice, stopOutPrice, logTags);
+        let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
 
         if (allowedSize === 0) {
             Firestore.logError(`${this.symbol} not allowed entry`, logTags);
@@ -50,7 +50,7 @@ export class OpenProfitTaking extends Tradebook {
         return allowedSize;
     }
 
-    validateEntry(entryPrice: number, stopOutPrice: number, logTags: Models.LogTags): number {
+    validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
         // TODO: Add more validation rules as needed
         let openPrice = Models.getCurrentPrice(this.symbol);
         if (this.isLong) {
@@ -64,6 +64,16 @@ export class OpenProfitTaking extends Tradebook {
                 return 0;
             }
         }
+
+        if (useMarketOrder) {
+            let currentCandle = Models.getCurrentCandle(this.symbol);
+            if ((!this.isLong && currentCandle.close > currentCandle.open) ||
+            (this.isLong && currentCandle.close < currentCandle.open)) {
+                Firestore.logError(`current candle is against momentum, use stop order instead`, logTags);
+                return 0;
+            }
+        }
+
         return 0.21;
     }
 

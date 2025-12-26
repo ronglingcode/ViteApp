@@ -53,3 +53,48 @@ export const getStatusForVwapContinuationLongWithPremarketHigh = (symbol: string
         return "consolidation between vwap and pm high"
     }
 }
+
+export const getStatusForAboveWaterBreakout = (symbol: string,
+    inflectionLevel: number,
+    maxCount: number) => {
+    let candles = structuredClone(Models.getCandlesFromM1SinceOpen(symbol));
+    let vwaps = structuredClone(Models.getVwapsSinceOpen(symbol));
+    if (maxCount > 0) {
+        candles = candles.slice(0, maxCount);
+        vwaps = vwaps.slice(0, maxCount);
+    }
+    let symbolData = Models.getSymbolData(symbol);
+    let premktHigh = symbolData.premktHigh;
+    let currentPrice = candles[candles.length - 1].close;
+    let currentVwap = vwaps[vwaps.length - 1].value;
+    console.log(`${maxCount}: ${currentPrice} ${premktHigh}`);
+    // assume last candle is not closed yet
+    if (currentPrice > inflectionLevel) {
+        if (candles.length >= 3) {
+            let lastClosedCandle = candles[candles.length - 2];
+            let secondLastClosedCandle = candles[candles.length - 3];
+            if (lastClosedCandle.close >= inflectionLevel && secondLastClosedCandle.close >= inflectionLevel) {
+                return "confirmed above breakout level";
+            }
+        }
+        return "testing breakout level";
+    } else if (currentPrice < currentVwap) {
+        // get the last closed candle that is below vwap
+        let threashold = -1;
+        for (let i = candles.length - 2; i >= 0; i--) {
+            if (candles[i].close < vwaps[i].value) {
+                if (threashold == -1) {
+                    threashold = candles[i].low;
+                } else {
+                    threashold = Math.max(threashold, candles[i].low);
+                }
+            }
+        }
+        if (currentPrice < threashold) {
+            return "confirmed below vwap";
+        }
+        return "testing vwap";
+    } else {
+        return "consolidation between vwap and pm high"
+    }
+}
