@@ -1926,3 +1926,11 @@ export const getMovingAverageCandle = (symbol: string, timeframe: number,
     };
     return result;
 }
+
+export const getTypicalPrice = (candle: Candle) => {
+    if (candle.vwap > 0 && candle.vwap >= candle.low && candle.vwap <= candle.high) {
+        return candle.vwap;
+    }
+
+    return (candle.high + candle.low + candle.close) / 3;
+};

@@ -57,7 +57,7 @@ const buildDataMultipleTimeFrame = (symbol: string, inputCandlesM1: Models.Candl
         };
         //symbolData.m1Volumes.push(newVolume);
 
-        let newTradingAmount = element.volume * getTypicalPrice(element);
+        let newTradingAmount = element.volume * Models.getTypicalPrice(element);
 
         /*if (newCandle.minutesSinceMarketOpen < 0) {
             if (!vwapCorrected && vwapCorrectionTradingAmount > 0 && vwapCorrectionVolumeSum > 0) {
@@ -130,7 +130,7 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[]) => {
             symbolData.keyAreaData[i].candles.push(kac);
         }
 
-        let newTradingAmount = element.volume * getTypicalPrice(element);
+        let newTradingAmount = element.volume * Models.getTypicalPrice(element);
 
         if (newCandle.minutesSinceMarketOpen < 0) {
             // update pre-market indicators
@@ -171,7 +171,7 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[]) => {
         pushNewOpenRangeData(symbolData, newD);
 
         symbolData.totalVolume += element.volume;
-        symbolData.totalTradingAmount += (element.volume * getTypicalPrice(element));
+        symbolData.totalTradingAmount += (element.volume * Models.getTypicalPrice(element));
 
         symbolData.vwap.push({
             time: newD,
@@ -695,13 +695,7 @@ export const getExtremePrice = (symbol: string, up: boolean, secondsSinceMarketO
     return p;
 };
 
-export const getTypicalPrice = (candle: Models.Candle) => {
-    if (candle.vwap > 0 && candle.vwap >= candle.low && candle.vwap <= candle.high) {
-        return candle.vwap;
-    }
 
-    return (candle.high + candle.low + candle.close) / 3;
-};
 
 export const updateFromLevelOneQuote = (quote: Models.Quote) => {
     if (!quote)
