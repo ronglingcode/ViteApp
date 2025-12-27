@@ -433,3 +433,6 @@ span.algo {
 .clickableSectionTitle .collapseIcon {
     margin-left: 10px;
 }
+#flowchartContainer {
+    display: none;
+}
