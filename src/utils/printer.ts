@@ -7,8 +7,6 @@ export const printStockPlan = (root: HTMLElement, plan: TradingPlansModels.Tradi
     let analysis = plan.analysis;
     addTable(root, plan);
     addText(root, `Default setup quality: ${plan.defaultConfigs.setupQuality}`);
-    addTargets(root, "Profit targets for long", plan.analysis.profitTargetsForLong);
-    addTargets(root, "Profit targets for short", plan.analysis.profitTargetsForShort);
     addText(root, " ");
 }
 const addListItem = (list: HTMLElement, text: string) => {

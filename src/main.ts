@@ -157,20 +157,6 @@ if (tosScriptsButton) {
     });
 }
 
-let showTargetsButton = document.getElementById("show_targets");
-if (showTargetsButton) {
-    showTargetsButton.addEventListener("click", () => {
-        let positions = Models.getOpenPositions();
-        positions.forEach(position => {
-            let isLong = position.netQuantity > 0;
-            let tp = TradingPlans.getTradingPlans(position.symbol);
-            let msg = `${position.symbol}: `;
-            let pt = isLong ? tp.analysis.profitTargetsForLong : tp.analysis.profitTargetsForShort;
-            msg += `${pt.targets}, will blow past levels: ${pt.willBlowPastThoseLevels}. ${pt.summary}`;
-            Firestore.logInfo(msg);
-        });
-    });
-}
 let testPopButton = document.getElementById("test_popup");
 if (testPopButton) {
     testPopButton.addEventListener("click", () => {

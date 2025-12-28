@@ -282,14 +282,6 @@ export const validateTradingPlans = (symbol: string, tradingPlans: TradingPlansM
     if (shortPlanInvalidReason.length > 0) {
         return shortPlanInvalidReason;
     }
-    let longTargetsInvalidReason = validateProfitTargets(tradingPlans.analysis.profitTargetsForLong);
-    if (longTargetsInvalidReason.length > 0) {
-        //return longTargetsInvalidReason;
-    }
-    let shortTargetsInvalidReason = validateProfitTargets(tradingPlans.analysis.profitTargetsForShort);
-    if (shortTargetsInvalidReason.length > 0) {
-        //return shortTargetsInvalidReason;
-    }
 
     return "";
 };
@@ -520,7 +512,7 @@ export const populateTargets = (targets: TradingPlansModels.SingleExitTarget[], 
             results[index] = price;
             index--;
             count--;
-        }   
+        }
     }
     return results;
 }
@@ -532,9 +524,9 @@ export const populateTargetsLabels = (symbol: string, targets: TradingPlansModel
     }
     let usedCount = 0;
 
-    for (let i = targets.length-1; i >=0; i--) {
+    for (let i = targets.length - 1; i >= 0; i--) {
         let target = targets[i];
-        let end = totalPartialCount-usedCount;
+        let end = totalPartialCount - usedCount;
         let start = end - target.partialCount + 1;
         usedCount += target.partialCount;
         let label = `${target.text}:${target.partialCount}0%(${start}-${end})`;
