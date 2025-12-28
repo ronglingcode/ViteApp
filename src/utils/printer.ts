@@ -51,7 +51,6 @@ const addTable = (root: HTMLElement, plan: TradingPlansModels.TradingPlans) => {
     let table = document.createElement("table");
     table.style.width = "100%";
     let keyLevelText = levelAreaToString(TradingPlan.getSingleMomentumLevel(plan));
-    addTableRow(table, `is fresh news ${analysis.isFreshNews}`, ``);
     root.appendChild(table);
 }
 const levelAreaToString = (level: TradingPlansModels.LevelArea) => {

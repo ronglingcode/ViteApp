@@ -27,12 +27,7 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
         return 0;
     }
     let { tradingPlans, atr, secondsSinceMarketOpen, premarketVwapTrend, currentVwap, momentumStartPrice } = getCommonInfo(symbol, isLong);
-    if (tradingPlans.analysis.premarketVolumeScore == TradingPlansModels.PremarketVolumeScore.Zero_Low_Or_Normal) {
-        if (secondsSinceMarketOpen < 15 * 60) {
-            Firestore.logError(`checkRule: premarket volume score is low or normal, wait at least 15 minutes`, logTags);
-            return 0;
-        }
-    }
+
 
     let liquidityScale = Models.getLiquidityScale(symbol);
 
@@ -148,12 +143,7 @@ export const checkGlobalEntryRules = (symbol: string, isLong: boolean,
     }*/
 
     let { tradingPlans, atr, secondsSinceMarketOpen, premarketVwapTrend, currentVwap, momentumStartPrice } = getCommonInfo(symbol, isLong);
-    if (tradingPlans.analysis.premarketVolumeScore == TradingPlansModels.PremarketVolumeScore.Zero_Low_Or_Normal) {
-        if (secondsSinceMarketOpen < 15 * 60) {
-            Firestore.logError(`checkRule: premarket volume score is low or normal, wait at least 15 minutes`, logTags);
-            return 0;
-        }
-    }
+
     if ((isLong && entryPrice < momentumStartPrice) || (!isLong && entryPrice > momentumStartPrice)) {
         Firestore.logError(`checkRule: entry price ${entryPrice} is against momentum start price ${momentumStartPrice}`, logTags);
         return 0;

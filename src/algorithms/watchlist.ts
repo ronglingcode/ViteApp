@@ -146,10 +146,6 @@ export const finishedStockAnalysis = (symbol: string, plan: TradingPlansModels.T
         Firestore.logError(`${errorMsg} dailyChartStory`);
         return false;
     }
-    if (analysis.premarketVolumeScore == TradingPlansModels.PremarketVolumeScore.Unknown) {
-        Firestore.logError(`${errorMsg} premarketVolumeScore`);
-        return false;
-    }
     if (analysis.gap.pdc == 0) {
         Firestore.logError(`${errorMsg} gap pdc`);
         return false;
