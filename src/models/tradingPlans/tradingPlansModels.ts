@@ -13,11 +13,6 @@ export interface TradingSettings {
 }
 
 export interface Analysis {
-    isFreshNews: boolean,
-    /**
-     * 0: low or normal, 1: higher than normal, 2: extremely high
-     */
-    premarketVolumeScore: PremarketVolumeScore,
     dailyChartStory: number,
     gap: Gap,
     dailySetup: DailySetup,
