@@ -9,6 +9,28 @@ import * as Calculator from '../utils/calculator';
 import type { Tradebook } from '../tradebooks/baseTradebook';
 import * as googleDocsApi from '../api/googleDocs/googleDocsApi';
 let usedTimeframe = 1;
+
+export interface PremarketPerDayData {
+    day: string;
+    data: number;
+}
+
+export interface PremarketDollarCollection {
+    previousDaysDollar: PremarketPerDayData[];
+    previousDaysDollarAverage: number;
+    lastDayDollar: number;
+    previousDaysShares: PremarketPerDayData[];
+    lastDayShares: number;
+    previousDaysSharesAverage: number;
+    rvol: number;
+}
+
+export enum PremarketVolumeQuality {
+    TooLow = 'Too Low',
+    Ok = 'Okay',
+    Elevated = 'Elevated',
+}
+
 export const getUsedTimeframe = () => {
     return usedTimeframe;
 }
