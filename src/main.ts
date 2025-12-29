@@ -220,8 +220,8 @@ window.TradingApp.TOS.initialize().then(async () => {
             if (now > Helper.getMarketOpenTime()) {
                 AutoTrader.onMarketOpen(symbol);
             }
-            MarketData.setPreviousDayPremarketVolume(symbol, previousDate);
         });
+        MarketData.setPreviousDayPremarketVolume(symbol, previousDate);
     }
     UI.setupAutoSync();
     AutoTrader.scheduleEvents();

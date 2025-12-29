@@ -131,19 +131,16 @@ export const getPreviousTradingDate = async () => {
     return nyOpenString;
 }
 
-export const get30MinuteChartFromLastNDays = async (symbol: string, nDays: number) => {
-    let date = new Date();
-    date.setDate(date.getDate() - nDays);
-    let startDate = TimeHelper.getDateString(date);
-    if (GlobalSettings.marketDataSource == "alpaca") {
-        let candles = await alpacaApi.getPriceHistoryFromOldDateForHigherTimeframe(symbol, 30, startDate);
-        return candles;
-    } else if (GlobalSettings.marketDataSource == "massive") {
-        let candles = await massiveApi.getPriceHistoryFromOldDateForHigherTimeframe(symbol, 30, nDays);
-        return candles;
-    }
-    return [];
+export const get30MinuteChartFromLastNDays = async (symbol: string, nDays: number, todayString: string) => {
+  let today = new Date(todayString);
+  let date = new Date(today);
+  date.setDate(date.getDate() - nDays);
+  let startDate = TimeHelper.getDateString(date);
+
+  let candles = await massiveApi.getPriceHistoryFromOldDateForHigherTimeframe(symbol, 30, startDate, todayString);
+  return candles;
 }
+
 interface VolumePair {
     dollar: number,
     shares: number,

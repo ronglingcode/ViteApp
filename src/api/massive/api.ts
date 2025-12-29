@@ -19,21 +19,15 @@ export const getPriceHistory = async (symbol: string, timeframe: number) => {
     return getBars(symbol, url);
 };
 
-export const getPriceHistoryFromOldDateForHigherTimeframe = async (symbol: string, timeframe: number, daysAgo: number) => {
+export const getPriceHistoryFromOldDateForHigherTimeframe = async (symbol: string, timeframe: number, 
+    startDate: string, endDate: string) => {
     let apiKey = Secret.massive().apiKey;
     let host = 'https://api.massive.com';
-    let today = new Date();
-    today.setDate(today.getDate() - daysAgo);
-    let todayString = TimeHelper.formatDateToYYYYMMDD(today);
-
-    let tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-    let tomorrowString = TimeHelper.formatDateToYYYYMMDD(tomorrow);
-
-    let url = `${host}/v2/aggs/ticker/${symbol}/range/${timeframe}/minute/${todayString}/${tomorrowString}?adjusted=true&sort=asc&limit=1000&apiKey=${apiKey}`;
-
+    
+    let url = `${host}/v2/aggs/ticker/${symbol}/range/${timeframe}/minute/${startDate}/${endDate}?adjusted=true&extendedHours=true&sort=asc&limit=50000&apiKey=${apiKey}`;
+  
     return getBars(symbol, url);
-};
+  };
 
 export const getBars = async (symbol: string, url: string) => {
     const config = {
