@@ -45,6 +45,12 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
         Firestore.logError(`${symbol} premarket volume quality too low: ${volumeQuality}`);
         return 0;
     }
+    if (volumeQuality == Models.PremarketVolumeQuality.Ok) {
+        if (secondsSinceMarketOpen < 60) {
+            Firestore.logError(`${symbol} premarket volume quality is ok, but still too early to trade`, logTags);
+            return 0;
+        }
+    }
     if (liquidityScale < 0.9) {
         Firestore.logInfo(`liquidity scale is ${liquidityScale}`, logTags);
     }
