@@ -15,11 +15,12 @@ import * as TradebookUtil from '../tradebookUtil';
 import * as GlobalSettings from '../../config/globalSettings';
 import * as LongDocs from '../tradebookDocs/vwapPushdownFail';
 import * as ShortDocs from '../tradebookDocs/vwapBounceFail';
+import * as VwapPatterns from '../../algorithms/vwapPatterns';
 
 export class VwapContinuationFailed extends SingleKeyLevelTradebook {
     public static readonly longVwapPushDownFailed: string = 'LongVwapPushdownFailed';
     public static readonly shortVwapBounceFailed: string = 'ShortVwapBounceFailed';
-
+    public waitForClose: boolean = true;
     public legCounter: number = 0;
     public lowOfDayToBreak: number = 0;
     public disableExitRules: boolean = false;
@@ -32,6 +33,17 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
         let buttonLabel = isLong ? 'Vwap Fail' : 'Vwap Fail';
         super(symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel);
         this.init();
+    }
+
+    public updateConfig(config: TradingPlansModels.TradebooksConfig): void {
+        if (!this.isLong) {
+            if (!config.level_open_vwap.shortVwapBounceFail.waitForClose) {
+                this.waitForClose = false;
+            }
+            if (!config.open_level_vwap.shortVwapBounceFail.waitForClose) {
+                this.waitForClose = false;
+            }
+        }
     }
 
     private init(): void {
@@ -85,12 +97,10 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
         if (isLong && entryPrice < vwap) {
             Firestore.logError(`checkRule: entry price ${entryPrice} is below vwap for long`, logTags);
             Helper.speak(`not above vwap yet`);
-
         }
         if (!isLong && entryPrice > vwap) {
             Firestore.logError(`checkRule: entry price ${entryPrice} is above vwap for short`, logTags);
             Helper.speak(`not below vwap yet`);
-
         }
         if (Rules.isReverseOfMomentumCandle(this.symbol, this.isLong, useMarketOrder)) {
             let errorMessage = "cannot market long when current candle is red";
@@ -100,6 +110,14 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
             Firestore.logError(`checkRule: ${errorMessage}`, logTags);
             return 0;
         }
+        if (!this.isLong) {
+            let vwapPatternSatus = VwapPatterns.getStatusForVwapBounceFail(this.symbol);
+            Firestore.logInfo(`vwap pattern status: ${JSON.stringify(vwapPatternSatus)}`, logTags);
+            if (vwapPatternSatus != "bouncing off vwap" && this.waitForClose) {
+                Helper.speak(`not bouncing off vwap yet`);
+            }
+        }
+
         let allowedSize = CommonRules.validateCommonEntryRules(
             this.symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
         return allowedSize;
