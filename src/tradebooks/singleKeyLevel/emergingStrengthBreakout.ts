@@ -18,9 +18,15 @@ export class EmergingStrengthBreakout extends BaseBreakoutTradebook {
             if (!config.level_vwap_open.longEmergingStrengthBreakout.waitForClose) {
                 this.waitForClose = false;
             }
+            if (config.level_vwap_open.longEmergingStrengthBreakout.allowCloseWithin) {
+                this.allowCloseWithin = true;
+            }
         } else {
             if (!config.open_vwap_level.shortEmergingWeaknessBreakdown.waitForClose) {
                 this.waitForClose = false;
+            }
+            if (config.open_vwap_level.shortEmergingWeaknessBreakdown.allowCloseWithin) {
+                this.allowCloseWithin = true;
             }
         }
 
@@ -42,7 +48,7 @@ export class EmergingStrengthBreakout extends BaseBreakoutTradebook {
         let logTagName = this.isLong ? '_emerging-strength-breakout' : '_emerging-strength-breakdown';
         let logTags = Models.generateLogTags(this.symbol, `${this.symbol}_${logTagName}`);
         let keyLevel = this.getKeyLevel();
-        let {firstTestingCandle, firstTestingCandleIsClosed, firstCandleClosedBeyondLevel, firstCandleClosedBeyondLevelIndex} = Patterns.analyzeBreakoutPatterns(this.symbol, this.isLong, keyLevel);
+        let { firstTestingCandle, firstTestingCandleIsClosed, firstCandleClosedBeyondLevel, firstCandleClosedBeyondLevelIndex } = Patterns.analyzeBreakoutPatterns(this.symbol, this.isLong, keyLevel);
         let entryPrice = Chart.getBreakoutEntryPrice(this.symbol, this.isLong, useMarketOrder, parameters);
         if (firstCandleClosedBeyondLevel != null) {
             // closed beyond level, check if there's a retest after this candle
@@ -61,7 +67,7 @@ export class EmergingStrengthBreakout extends BaseBreakoutTradebook {
                         if (deepestRetest == 0) {
                             deepestRetest = c.low;
                         } else {
-                            deepestRetest = Math.min(deepestRetest, c.low); 
+                            deepestRetest = Math.min(deepestRetest, c.low);
                         }
                     }
                 } else {
@@ -73,10 +79,10 @@ export class EmergingStrengthBreakout extends BaseBreakoutTradebook {
                         if (deepestRetest == 0) {
                             deepestRetest = c.high;
                         } else {
-                            deepestRetest = Math.max(deepestRetest, c.high); 
+                            deepestRetest = Math.max(deepestRetest, c.high);
                         }
                     }
-                }                
+                }
             }
             if (!hasRetest) {
                 return this.triggerClosedBeyondLevelNoRetest(useMarketOrder, dryRun, parameters, logTags);
@@ -87,12 +93,12 @@ export class EmergingStrengthBreakout extends BaseBreakoutTradebook {
                     return this.triggerClosedBeyondLevelRetestNoTouchedLevel(entryPrice, useMarketOrder, dryRun, parameters, logTags);
                 }
             }
-        } 
+        }
         else {
             Firestore.logError(`${this.symbol} must wait for a candle closed beyond level`, logTags);
             return 0;
         }
-        
+
     }
 
     getTradeManagementInstructions(): Models.TradeManagementInstructions {

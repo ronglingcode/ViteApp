@@ -22,9 +22,15 @@ export class AboveWaterBreakout extends BaseBreakoutTradebook {
             if (!config.level_open_vwap.longAboveWaterBreakout.waitForClose) {
                 this.waitForClose = false;
             }
+            if (config.level_open_vwap.longAboveWaterBreakout.allowCloseWithin) {
+                this.allowCloseWithin = true;
+            }
         } else {
             if (!config.vwap_open_level.shortBelowWaterBreakout.waitForClose) {
                 this.waitForClose = false;
+            }
+            if (config.vwap_open_level.shortBelowWaterBreakout.allowCloseWithin) {
+                this.allowCloseWithin = true;
             }
         }
 
@@ -48,7 +54,7 @@ export class AboveWaterBreakout extends BaseBreakoutTradebook {
         let logTagName = this.isLong ? '_above-water-breakout' : '_below-water-breakdown';
         let logTags = Models.generateLogTags(this.symbol, `${this.symbol}_${logTagName}`);
         let keyLevel = this.getKeyLevel();
-        let {firstTestingCandle, firstTestingCandleIsClosed, firstCandleClosedBeyondLevel, firstCandleClosedBeyondLevelIndex} = Patterns.analyzeBreakoutPatterns(this.symbol, this.isLong, keyLevel);
+        let { firstTestingCandle, firstTestingCandleIsClosed, firstCandleClosedBeyondLevel, firstCandleClosedBeyondLevelIndex } = Patterns.analyzeBreakoutPatterns(this.symbol, this.isLong, keyLevel);
         let entryPrice = Chart.getBreakoutEntryPrice(this.symbol, this.isLong, useMarketOrder, parameters);
         if (firstCandleClosedBeyondLevel != null) {
             // closed beyond level, check if there's a retest after this candle
@@ -67,7 +73,7 @@ export class AboveWaterBreakout extends BaseBreakoutTradebook {
                         if (deepestRetest == 0) {
                             deepestRetest = c.low;
                         } else {
-                            deepestRetest = Math.min(deepestRetest, c.low); 
+                            deepestRetest = Math.min(deepestRetest, c.low);
                         }
                     }
                 } else {
@@ -79,10 +85,10 @@ export class AboveWaterBreakout extends BaseBreakoutTradebook {
                         if (deepestRetest == 0) {
                             deepestRetest = c.high;
                         } else {
-                            deepestRetest = Math.max(deepestRetest, c.high); 
+                            deepestRetest = Math.max(deepestRetest, c.high);
                         }
                     }
-                }                
+                }
             }
             if (!hasRetest) {
                 return this.triggerClosedBeyondLevelNoRetest(useMarketOrder, dryRun, parameters, logTags);
@@ -93,10 +99,10 @@ export class AboveWaterBreakout extends BaseBreakoutTradebook {
                     return this.triggerClosedBeyondLevelRetestNoTouchedLevel(entryPrice, useMarketOrder, dryRun, parameters, logTags);
                 }
             }
-        } 
+        }
         if (firstTestingCandle != null && firstTestingCandleIsClosed) {
             if ((this.isLong && entryPrice < firstTestingCandle.high) || (!this.isLong && entryPrice > firstTestingCandle.low)) {
-            return this.triggerClosedWithinLevelReclaimLevel(entryPrice, useMarketOrder, dryRun, parameters, logTags);
+                return this.triggerClosedWithinLevelReclaimLevel(entryPrice, useMarketOrder, dryRun, parameters, logTags);
             } else {
                 return this.triggerClosedWithinLevelNewHigh(entryPrice, firstTestingCandle, useMarketOrder, dryRun, parameters, logTags);
             }
