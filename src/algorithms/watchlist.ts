@@ -93,11 +93,6 @@ export const createWatchlist = async () => {
             Firestore.logError(`${skipMessage}${invalidReason}`);
             continue;
         }
-        /*
-        if (Rules.isPremarketVolumeTooLow(symbol)) {
-            Firestore.logError(`${symbol} premarket volume too low`);
-            continue;
-        }*/
 
         // only pick the best stocks, stocks with biggest news to trade
         // be selective

@@ -332,7 +332,7 @@ export interface SymbolData {
     m1ma9: LineSeriesData[],
     candles: CandlePlus[],
     premarketDollarTraded: number,
-    previousDayPremarketDollarTraded: number,
+    premarketDollarCollection: PremarketDollarCollection,
     openRange?: OpenRange,
     OpenRangeLineSeriesData: OpenRangeLineSeriesData,
     keyAreaData: KeyAreaData[]
@@ -1022,7 +1022,6 @@ export const getDefaultSymbolData = () => {
         m1ma9: [],
         keyAreaData: [],
         premarketDollarTraded: 0,
-        previousDayPremarketDollarTraded: 0,
         highOfDay: 0,
         lowOfDay: 99999999,
         premktHigh: 0,
@@ -1055,6 +1054,15 @@ export const getDefaultSymbolData = () => {
         maxTimeSaleTimestamp: {
             timestamp: 0,
             tradeIds: [],
+        },
+        premarketDollarCollection: {
+            previousDaysDollar: [],
+            previousDaysDollarAverage: 0,
+            lastDayDollar: 0,
+            previousDaysShares: [],
+            lastDayShares: 0,
+            previousDaysSharesAverage: 0,
+            rvol: 0
         }
     };
     return result;

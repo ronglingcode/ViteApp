@@ -199,7 +199,8 @@ window.TradingApp.TOS.initialize().then(async () => {
     AlpacaStreaming.createWebSocket();
     ScwabStreaming.createWebSocket();
     MassiveStreaming.createWebSocket();
-    let previousDate = await MarketData.getPreviousTradingDate();
+    let today = new Date();
+    let todayString = TimeHelper.formatDateToYYYYMMDD(today);
 
 
     // get price history
@@ -221,7 +222,7 @@ window.TradingApp.TOS.initialize().then(async () => {
                 AutoTrader.onMarketOpen(symbol);
             }
         });
-        MarketData.setPreviousDayPremarketVolume(symbol, previousDate);
+        MarketData.setPreviousDayPremarketVolume(symbol, todayString);
     }
     UI.setupAutoSync();
     AutoTrader.scheduleEvents();

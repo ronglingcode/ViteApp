@@ -9,7 +9,8 @@ import * as Helper from '../utils/helper';
 import * as Models from '../models/models';
 import * as TradingState from '../models/tradingState';
 import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
-import * as TradingPlans from '../models/tradingPlans/tradingPlans'
+import * as TradingPlans from '../models/tradingPlans/tradingPlans';
+import * as SetupQuality from '../algorithms/setupQuality';
 declare let window: Models.MyWindow;
 
 /**
@@ -38,9 +39,11 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
     if (Rules.isDailyRangeTooSmall(symbol, atr, true, logTags)) {
         return 0;
     }
-    if (Rules.isPremarketVolumeTooLow(symbol)) {
-        Firestore.logError(`${symbol} premarket volume too low`);
-        //return 0;
+    let symbolData = Models.getSymbolData(symbol);
+    let volumeQuality = SetupQuality.getPremarketVolumeQuality(symbol, symbolData.premarketDollarCollection);
+    if (volumeQuality == Models.PremarketVolumeQuality.TooLow) {
+        Firestore.logError(`${symbol} premarket volume quality too low: ${volumeQuality}`);
+        return 0;
     }
     if (liquidityScale < 0.9) {
         Firestore.logInfo(`liquidity scale is ${liquidityScale}`, logTags);
@@ -130,12 +133,7 @@ export const checkGlobalEntryRules = (symbol: string, isLong: boolean,
 
 
     let symbolData = Models.getSymbolData(symbol);
-    if (symbolData.premarketDollarTraded < symbolData.previousDayPremarketDollarTraded) {
-        let today = Helper.roundToMillion(symbolData.premarketDollarTraded);
-        let previous = Helper.roundToMillion(symbolData.previousDayPremarketDollarTraded);
-        Firestore.logError(`checkRule: premarket volume lower than previous day ${today} vs ${previous}`, logTags);
-        //return 0;
-    }
+
     /*
     if (RiskManager.isRealizedProfitLossOverThreshold(symbol)) {
         Firestore.logError(`realized loss exceeded 20%, do not trade this stock any more.`, logTags);

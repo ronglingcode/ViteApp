@@ -10,6 +10,8 @@ import * as Models from '../models/models';
 import * as Firestore from '../firestore';
 import * as GlobalSettings from '../config/globalSettings';
 import * as Calculator from '../utils/calculator';
+import * as SetupQuality from '../algorithms/setupQuality';
+
 declare let window: Models.MyWindow;
 
 export const getQuote = async (symbol: string) => {
@@ -56,21 +58,11 @@ export const testTradeStationStreamBar = async () => {
     }
 }
 export const setPreviousDayPremarketVolume = async (symbol: string, startDate: string) => {
-    let previousDay = await getPremarketDollarFromDate(symbol, startDate);
+    let premarketDollarCollection = await getPremarketDollarFromDate(symbol, startDate);
     let symbolData = Models.getSymbolData(symbol);
-    symbolData.previousDayPremarketDollarTraded = previousDay;
-    if (symbolData.premarketDollarTraded < symbolData.previousDayPremarketDollarTraded) {
-        let todayVolume = Helper.roundToMillion(symbolData.premarketDollarTraded);
-        let yesterday = Helper.roundToMillion(symbolData.previousDayPremarketDollarTraded);
-        let msg = `${symbol}: dollar traded in premarket is less than previous day: ${todayVolume} vs ${yesterday}`;
-        let seconds = Helper.getSecondsSinceMarketOpen(new Date());
-        /*if (seconds < 60 * 60) {
-            alert(msg);
-        }*/
-        Firestore.logError(msg);
-    }
-    console.log(`${symbol} today: ${symbolData.premarketDollarTraded}, yesterday: ${symbolData.previousDayPremarketDollarTraded}`);
-
+    symbolData.premarketDollarCollection = premarketDollarCollection;
+    let volumeQuality = SetupQuality.getPremarketVolumeQuality(symbol, premarketDollarCollection);
+    Firestore.logInfo(`${symbol} premarket volume quality: ${volumeQuality}`);
 }
 export const getPriceHistory = async (symbol: string, isFutures: boolean, timeframe: number) => {
     let candles: Candle[] = [];
