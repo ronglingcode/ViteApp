@@ -18,6 +18,7 @@ import * as ExitRulesCheckerNew from '../../controllers/exitRulesCheckerNew';
 import * as GlobalSettings from '../../config/globalSettings';
 import * as LongDocs from '../tradebookDocs/vwapContinuationLong';
 import * as ShortDocs from '../tradebookDocs/vwapContinuationShort';
+import * as VwapPatterns from '../../algorithms/vwapPatterns';
 
 export class VwapContinuation extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
@@ -85,16 +86,15 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
     triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {
         let logTagName = this.isLong ? '_vwap-continuation' : '_vwap-continuation';
         let logTags = Models.generateLogTags(this.symbol, `${this.symbol}_${logTagName}`);
+        let hasTwoCandlesAgainstVwap = VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(this.symbol, this.isLong);
+        if (!hasTwoCandlesAgainstVwap) {
+            Firestore.logInfo(`normal vwap continuation entry`);
+        } else {
+            Firestore.logInfo(`slower vwap continuation entry`);
+            Helper.speak(`slower vwap continuation entry`);
+            // consider use 3 buttons, one for high/low of the day, one for higher timeframe, one for vwap bounce fail
+        }
         let entryPrice = Chart.getBreakoutEntryPrice(this.symbol, this.isLong, useMarketOrder, parameters);
-        // TODO: Use a more appropriate stop loss for VWAP continuation
-        /**
-         * Option 1:  using low of the day. 
-         * Option 2: using key level
-         * If we feel that level is still far from key level, 
-         * we can use key level as stop loss to calculate size, 
-         * and then use low of the day as tighter stop, 
-         * that way, our risk starts with less than 1R.
-         */
         let stopOutPrice = Chart.getStopLossPrice(this.symbol, this.isLong, true, null);
         let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
         if (allowedSize === 0) {
@@ -102,6 +102,7 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
             return 0;
         }
 
+        // TODO: allow higher risk level
         this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, stopOutPrice, allowedSize, logTags);
         return allowedSize;
     }

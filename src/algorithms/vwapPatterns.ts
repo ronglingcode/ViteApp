@@ -145,3 +145,20 @@ export const getStatusForVwapBounceFail = (symbol: string) => {
     }
     return status;
 }
+
+export const hasTwoConsecutiveCandlesAgainstVwap = (symbol: string, isLong: boolean): boolean => {
+    let candles = Models.getCandlesFromM15SinceOpen(symbol);
+    let vwaps = Models.getVwapsSinceOpen(symbol);
+    let has = false;
+    for (let i = 1; i < candles.length; i++) {
+        let currentClose = candles[i].close;
+        let prevClose = candles[i - 1].close;
+        if (isLong && currentClose < vwaps[i].value && prevClose < vwaps[i - 1].value) {
+            has = true;
+        }
+        if (!isLong && currentClose > vwaps[i].value && prevClose > vwaps[i - 1].value) {
+            has = true;
+        }
+    }
+    return has;
+}
