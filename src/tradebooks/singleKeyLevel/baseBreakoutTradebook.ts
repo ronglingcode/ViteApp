@@ -447,4 +447,8 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
         }
     }
 
+    getEntryMethods(): string[] {
+        return [];
+    }
+
 }

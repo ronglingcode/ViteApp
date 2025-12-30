@@ -1860,6 +1860,7 @@ export interface TradebookEntryParameters {
     useFirstNewHigh: boolean,
     useCurrentCandleHigh: boolean,
     useMarketOrderWithTightStop: boolean,
+    entryMethod?: string,
 }
 export const getDefaultEntryParameters = () => {
     let ret: TradebookEntryParameters = {

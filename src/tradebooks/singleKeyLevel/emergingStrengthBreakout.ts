@@ -160,4 +160,8 @@ export class EmergingStrengthBreakout extends BaseBreakoutTradebook {
         ]);
         return instructions;
     }
+
+    getEntryMethods(): string[] {
+        return [];
+    }
 } 

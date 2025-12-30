@@ -168,4 +168,8 @@ export class OpenFlush extends SingleKeyLevelTradebook {
         ]);
         return instructions;
     }
+
+    getEntryMethods(): string[] {
+        return [];
+    }
 } 

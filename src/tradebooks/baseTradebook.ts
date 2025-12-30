@@ -33,6 +33,7 @@ export abstract class Tradebook {
     abstract refreshState(): void;
     abstract transitionToState(newState: TradebookState): void;
     abstract getTradeManagementInstructions(): Models.TradeManagementInstructions;
+    abstract getEntryMethods(): string[];
 
     getCommonLiveStats(): string {
         return `size: ${this.sizingCount}, `;
@@ -49,6 +50,15 @@ export abstract class Tradebook {
         this.htmlContainer = container;
         this.htmlStats = stats;
         this.buttonLinked = true;
+    }
+
+    getButtonForLabel(label: string): HTMLElement | null {
+        for (let button of this.htmlButtons) {
+            if (button.textContent === label) {
+                return button;
+            }
+        }
+        return null;
     }
 
     enable() {
@@ -148,6 +158,9 @@ export abstract class Tradebook {
         return [];
     }
     onNewTimeSalesData(): void {
+        // do nothing
+    }
+    onNewCandleClose(): void {
         // do nothing
     }
 }

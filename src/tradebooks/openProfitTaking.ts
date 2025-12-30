@@ -203,5 +203,9 @@ export class OpenProfitTaking extends Tradebook {
             return ShortDocs.tradebookText;
         }
     }
+
+    getEntryMethods(): string[] {
+        return [];
+    }
 }
 

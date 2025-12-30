@@ -381,4 +381,8 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
             return ShortDocs.tradebookText;
         }
     }
+
+    getEntryMethods(): string[] {
+        return [];
+    }
 } 

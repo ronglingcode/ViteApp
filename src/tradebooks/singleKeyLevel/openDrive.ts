@@ -61,6 +61,9 @@ export class OpenDrive extends SingleKeyLevelTradebook {
         let logTags = Models.generateLogTags(this.symbol, `${this.symbol}_${logTagName}`);
         let entryPrice = Chart.getBreakoutEntryPrice(this.symbol, this.isLong, useMarketOrder, parameters);
         let stopOutPrice = Chart.getStopLossPrice(this.symbol, this.isLong, true, null);
+        if (parameters.entryMethod) {
+            // TODO: check timeframe
+        }
         let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
         if (allowedSize === 0) {
             Firestore.logError(`${this.symbol} not allowed entry`, logTags);
@@ -340,6 +343,25 @@ export class OpenDrive extends SingleKeyLevelTradebook {
             return LongDocs.tradebookText;
         } else {
             return ShortDocs.tradebookText;
+        }
+    }
+
+    getEntryMethods(): string[] {
+        return ["M1", "M5", "M15", "M30"];
+    }
+    onNewCandleClose(): void {
+        // TODO: check timeframe
+        this.updateEntryMethodButtonStatus("M1", true);
+    }
+    updateEntryMethodButtonStatus(buttonLabel: string, status: boolean): void {
+        let button = this.getButtonForLabel(buttonLabel);
+        if (!button) {
+            return;
+        }
+        if (status) {
+            button.classList.add("active");
+        } else {
+            button.classList.remove("active");
         }
     }
 }

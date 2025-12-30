@@ -444,4 +444,8 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
             return ShortDocs.tradebookText;
         }
     }
+
+    getEntryMethods(): string[] {
+        return [];
+    }
 }

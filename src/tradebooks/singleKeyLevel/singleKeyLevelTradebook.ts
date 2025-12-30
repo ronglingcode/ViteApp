@@ -43,4 +43,8 @@ export abstract class SingleKeyLevelTradebook extends Tradebook {
     getTradebookDoc(): string {
         return "";
     }
+
+    getEntryMethods(): string[] {
+        return [];
+    }
 } 

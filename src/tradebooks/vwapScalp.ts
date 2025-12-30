@@ -230,4 +230,8 @@ export class VwapScalp extends Tradebook {
         }
 
     }
+
+    getEntryMethods(): string[] {
+        return [];
+    }
 }

@@ -394,3 +394,13 @@ export const onNewTimeAndSalesDataForSymbol = (symbol: string) => {
         tradebook.onNewTimeSalesData();
     });
 }
+export const onNewCandleCloseForSymbol = (symbol: string) => {
+    let widget = Models.getChartWidget(symbol);
+    if (!widget) {
+        return;
+    }
+    let tradebooksMap = widget.tradebooks;
+    tradebooksMap.forEach(tradebook => {
+        tradebook.onNewCandleClose();
+    });
+}

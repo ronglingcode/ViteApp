@@ -182,4 +182,8 @@ export class AboveWaterBreakout extends BaseBreakoutTradebook {
             return ShortDocs.tradebookText;
         }
     }
+
+    getEntryMethods(): string[] {
+        return [];
+    }
 }

@@ -155,4 +155,8 @@ export class BreakoutReversal extends Tradebook {
             return ShortDocs.tradebookText;
         }
     }
+
+    getEntryMethods(): string[] {
+        return [];
+    }
 }

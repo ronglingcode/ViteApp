@@ -1652,6 +1652,23 @@ const createTradebookUI = (tradebook: Tradebook, sideBar: HTMLElement, className
             tradebook.startEntry(pointerEvent.shiftKey, false, entryParametersList[i]);
         });
     }
+    let entryMethods = tradebook.getEntryMethods();
+    entryMethods.forEach(entryMethod => {
+        let entryMethodButton = createButton(entryMethod, "div", container);
+        entryMethodButton.classList.add(className);
+        container.appendChild(entryMethodButton);
+        buttons.push(entryMethodButton);
+        let entryParameter: Models.TradebookEntryParameters = {
+            useCurrentCandleHigh: false,
+            useFirstNewHigh: false,
+            useMarketOrderWithTightStop: false,
+            entryMethod: entryMethod,
+        };
+        entryMethodButton.addEventListener("click", (pointerEvent) => {
+            Firestore.logInfo(`tradebook ${tradebook.buttonLabel} ${entryMethod} clicked`);
+            tradebook.startEntry(pointerEvent.shiftKey, false, entryParameter);
+        });
+    });
 
     let stats = document.createElement("div");
     container.appendChild(stats);
