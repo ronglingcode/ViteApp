@@ -33,8 +33,6 @@ export interface Analysis {
     usePremarketKeyLevel: number,
     zoneNearEdge: ZoneNearEdge,
     dualMomentumKeyLevels: number[],
-    profitTargetsForLong: ProfitTargets,
-    profitTargetsForShort: ProfitTargets,
 }
 export interface ZoneNearEdge {
     zoneIsFar: boolean,
