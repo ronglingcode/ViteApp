@@ -96,17 +96,22 @@ export class OpenDrive extends SingleKeyLevelTradebook {
         console.log(`${this.symbol} open drive ${parameters.entryMethod} status: ${patternStatus}`);
         let candles = Models.getCandlesSinceOpenForTimeframe(this.symbol, timeframe);
 
-        let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
+        let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, candles, timeframe, logTags);
         if (allowedSize === 0) {
             Firestore.logError(`${this.symbol} not allowed entry`, logTags);
             return 0;
+        }
+
+        if (sizeMultipler < 1) {
+            allowedSize = allowedSize * sizeMultipler;
+            Firestore.logInfo(`${this.symbol} size multiplier: ${sizeMultipler}, allowed size: ${allowedSize}`);
         }
 
         this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, stopOutPrice, allowedSize, parameters.entryMethod, logTags);
         return allowedSize;
     }
 
-    private validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
+    private validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, candles: Models.CandlePlus[], timeframe: number, logTags: Models.LogTags): number {
         let seconds = Helper.getSecondsSinceMarketOpen(new Date());
         let reduceRatio = 1;
         if (seconds < 60) {
@@ -119,15 +124,19 @@ export class OpenDrive extends SingleKeyLevelTradebook {
                 reduceRatio = 0.5;
             }
         }
-
-        const isValidThreshold = EntryThresholdValidator.validateEntryThreshold({
-            symbol: this.symbol,
-            isLong: this.isLong,
-            entryPrice,
-            keyLevel: this.keyLevel
-        }, logTags);
-
-        if (!isValidThreshold) {
+        // make sure entry price is above at least 1 candle that's above key level,
+        // including not closed candles
+        let meetThreshold = false;
+        for (let i = 0; i < candles.length; i++) {
+            let c = candles[i];
+            if ((this.isLong && entryPrice >= c.high) ||
+                (!this.isLong && entryPrice <= c.low)) {
+                meetThreshold = true;
+                break;
+            }
+        }
+        if (!meetThreshold) {
+            Firestore.logError(`${this.symbol} entry price is not above at least 1 candle that's above key level`, logTags);
             return 0;
         }
 

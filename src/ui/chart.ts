@@ -1601,6 +1601,11 @@ const createTradebookUINew = (tradebook: Tradebook, sideBar: HTMLElement, classN
     let container = document.createElement("div");
     let title = document.createElement("div");
     title.textContent = tradebook.buttonLabel;
+    if (tradebook.isLong) {
+        title.classList.add("longButtonTitle");
+    } else {
+        title.classList.add("shortButtonTitle");
+    }
     container.appendChild(title);
     let stats = document.createElement("div");
     container.appendChild(stats);
@@ -1684,7 +1689,7 @@ const createTradebookUI = (tradebook: Tradebook, sideBar: HTMLElement, className
             tradebook.startEntry(pointerEvent.shiftKey, false, entryParametersList[i]);
         });
     }
-    
+
 
     let stats = document.createElement("div");
     container.appendChild(stats);

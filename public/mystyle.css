@@ -206,6 +206,7 @@ span.algo {
     padding: 0 2px 0 4px;
     text-align: center;
 }
+
 .feedTitle {
     border-bottom: solid 1px black;
     border-top: solid 1px black;
@@ -221,12 +222,28 @@ span.algo {
     border-radius: 2px;
 }
 
+.sideBar .longButtonTitle {
+    color: #2E7D32;
+    /* dark green */
+    font-weight: bold;
+    border-bottom: 1px solid #2E7D32;
+}
+
+.sideBar .shortButtonTitle {
+    color: #f44336;
+    /* red */
+    font-weight: bold;
+    border-bottom: 1px solid #f44336;
+}
+
 .sideBar .longButton,
 .sideBar .longButton.active {
     background-color: #2E7D32;
 }
+
 .sideBar .longButton.degraded {
-    background-color: #A5D6A7; /* light green */
+    background-color: #A5D6A7;
+    /* light green */
 }
 
 .sideBar .longButton.inactive,
@@ -238,8 +255,10 @@ span.algo {
 .sideBar .shortButton.active {
     background-color: #f44336;
 }
+
 .sideBar .shortButton.degraded {
-    background-color: #FFCDD2; /* light red */
+    background-color: #FFCDD2;
+    /* light red */
 }
 
 .sideBar .tradebookButtons,
@@ -446,6 +465,7 @@ span.algo {
 .clickableSectionTitle .collapseIcon {
     margin-left: 10px;
 }
+
 #flowchartContainer {
     display: none;
 }
