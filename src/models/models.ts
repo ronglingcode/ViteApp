@@ -348,7 +348,7 @@ export interface SymbolData {
     askSize: number,
     lastTradeTime?: Date,
     tradeTimeIntervalInMilliseconds: number,
-    vwap: LineSeriesData[],
+    m1Vwaps: LineSeriesData[],
     volumes: LineSeriesData[],
     totalVolume: number,
     totalTradingAmount: number,
@@ -1027,7 +1027,7 @@ export const getDefaultSymbolData = () => {
         premktLow: 99999999,
         premktAboveVwapCount: 0,
         premktBelowVwapCount: 0,
-        vwap: [],
+        m1Vwaps: [],
         volumes: m1Volumes,
         bidPrice: 0,
         askPrice: 0,
@@ -1221,7 +1221,7 @@ export const getHighLowBreakoutEntryStopPrice = (symbol: string, isLong: boolean
 
 export const getCurrentVwap = (symbol: string) => {
     let symbolData = getSymbolData(symbol);
-    let vwap = symbolData.vwap;
+    let vwap = symbolData.m1Vwaps;
     let currentVwap = vwap[vwap.length - 1].value;
     return currentVwap;
 };
@@ -1415,8 +1415,8 @@ export const getVwapsSinceOpen = (symbol: string) => {
     let tvTime = Helper.jsDateToTradingViewUTC(time);
     let symbolData = getSymbolData(symbol);
     let results: LineSeriesData[] = [];
-    for (let i = 0; i < symbolData.vwap.length; i++) {
-        const candle = symbolData.vwap[i];
+    for (let i = 0; i < symbolData.m1Vwaps.length; i++) {
+        const candle = symbolData.m1Vwaps[i];
         if (candle.time >= tvTime) {
             results.push(candle);
         }
@@ -1432,14 +1432,14 @@ export const getVwapsForHigherTimeframe = (symbol: string, timeframe: number) =>
     } else if (timeframe == 30) {
         return symbolData.m30Vwaps;
     } else {
-        return symbolData.vwap;
+        return symbolData.m1Vwaps;
     }
 }
 export const getVwapsSinceOpenForTimeframe = (symbol: string, timeframe: number) => {
     let time = Helper.getMarketOpenTime();
     let tvTime = Helper.jsDateToTradingViewUTC(time);
     let symbolData = getSymbolData(symbol);
-    let vwaps = symbolData.vwap;
+    let vwaps = symbolData.m1Vwaps;
     let results: LineSeriesData[] = [];
     for (let i = 0; i < vwaps.length; i++) {
         const candle = vwaps[i];
@@ -1489,7 +1489,7 @@ export const getLastVwapBeforeOpen = (symbol: string) => {
     let time = Helper.getMarketOpenTime();
     let tvTime = Helper.jsDateToTradingViewUTC(time);
     let symbolData = getSymbolData(symbol);
-    let vwaps = symbolData.vwap;
+    let vwaps = symbolData.m1Vwaps;
     let i = 0;
     while (i < vwaps.length) {
         const candle = vwaps[i];

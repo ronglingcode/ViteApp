@@ -173,7 +173,7 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[]) => {
         symbolData.totalVolume += element.volume;
         symbolData.totalTradingAmount += (element.volume * Models.getTypicalPrice(element));
 
-        symbolData.vwap.push({
+        symbolData.m1Vwaps.push({
             time: newD,
             value: symbolData.totalTradingAmount / symbolData.totalVolume,
         });
@@ -192,7 +192,7 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[]) => {
 
     let allCharts = Models.getChartsInAllTimeframes(symbol);
     allCharts[0].volumeSeries.setData(symbolData.volumes);
-    allCharts[0].vwapSeries.setData(symbolData.vwap);
+    allCharts[0].vwapSeries.setData(symbolData.m1Vwaps);
     allCharts[0].candleSeries.setData(symbolData.candles);
     for (let i = 0; i < keyAreasToDraw.length; i++) {
         allCharts[0].keyAreaSeriesList[i].setData(symbolData.keyAreaData[i].candles);
@@ -405,7 +405,7 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
         return;
     }
     let lastVolume = symbolData.volumes[symbolData.volumes.length - 1];
-    let lastVwap = symbolData.vwap[symbolData.vwap.length - 1];
+    let lastVwap = symbolData.m1Vwaps[symbolData.m1Vwaps.length - 1];
     if (timeframeBucket < Config.Settings.marketOpenTime) {
         // update pre-market indicators
         let haspremarketChange = false;
@@ -529,7 +529,7 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
             time: newTime,
             value: newVwapValue
         };
-        symbolData.vwap.push(lastVwap);
+        symbolData.m1Vwaps.push(lastVwap);
         addOrbAreaCandle(newTime, symbolData.OpenRangeLineSeriesData.orbArea, symbolData.openRange);
 
         if (-30 < lastCandle.minutesSinceMarketOpen && lastCandle.minutesSinceMarketOpen < 0) {

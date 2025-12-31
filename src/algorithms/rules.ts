@@ -248,9 +248,9 @@ const getPremarketVwapDirection = (symbol: string) => {
     for (let i = 0; i < candles.length; i++) {
         if (timeWindow.includes(candles[i].minutesSinceMarketOpen)) {
             twoMinutesBeforeOpenCandles.push(candles[i]);
-            vwap.push(symbolData.vwap[i].value);
+            vwap.push(symbolData.m1Vwaps[i].value);
             twoMinutesBeforeOpenCandles.push(candles[i + 1]);
-            vwap.push(symbolData.vwap[i + 1].value);
+            vwap.push(symbolData.m1Vwaps[i + 1].value);
             break;
         }
     }
@@ -605,5 +605,5 @@ export const isAllowedByMovingAverage = (symbol: string, isLong: boolean, useMar
             return true;
         }
     }
-    return false;   
+    return false;
 }

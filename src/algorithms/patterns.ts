@@ -194,7 +194,7 @@ export const isPriceInUpperRange = (symbol: string, price: number) => {
 export const hasLostVwapMomentum = (symbol: string, isLong: boolean, entryTime: Date) => {
     let symbolData = Models.getSymbolData(symbol);
     let candles = Models.getUndefinedCandles(symbol);
-    let vwap = symbolData.vwap;
+    let vwap = symbolData.m1Vwaps;
     let consecutiveMinutesAgainstVwap = 0;
     let startMinute = Helper.getSecondsSinceMarketOpen(entryTime) / 60;
     for (let i = 0; i < candles.length; i++) {
@@ -834,7 +834,7 @@ export const hasPullbackToVwapBeforeOpen = (symbol: string, lookBackBarsCount: n
     let tvTime = Helper.jsDateToTradingViewUTC(time);
     let symbolData = Models.getSymbolData(symbol);
     let candles = Models.getUndefinedCandles(symbol);
-    let vwap = symbolData.vwap;
+    let vwap = symbolData.m1Vwaps;
     let candlesBeforeOpen: Models.CandlePlus[] = [];
     let vwapBeforeOpen: Models.LineSeriesData[] = [];
     for (let i = 0; i < candles.length; i++) {
