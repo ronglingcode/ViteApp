@@ -1610,6 +1610,15 @@ const createTradebookUINew = (tradebook: Tradebook, sideBar: HTMLElement, classN
         entryMethodButton.classList.add(className);
         container.appendChild(entryMethodButton);
         buttons.push(entryMethodButton);
+        entryMethodButton.addEventListener("click", (pointerEvent) => {
+            Firestore.logInfo(`tradebook ${tradebook.buttonLabel} ${entryMethod} clicked`);
+            tradebook.startEntry(pointerEvent.shiftKey, false, {
+                entryMethod: entryMethod,
+                useFirstNewHigh: false,
+                useCurrentCandleHigh: false,
+                useMarketOrderWithTightStop: false,
+            });
+        });
     });
     sideBar.appendChild(container);
     return { buttons, stats, container };

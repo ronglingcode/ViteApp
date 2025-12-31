@@ -325,7 +325,6 @@ export interface SymbolData {
     m5Volumes: LineSeriesData[],
     m15Volumes: LineSeriesData[],
     m30Volumes: LineSeriesData[],
-    m1Vwaps: LineSeriesData[],
     m5Vwaps: LineSeriesData[],
     m15Vwaps: LineSeriesData[],
     m30Vwaps: LineSeriesData[],
@@ -1015,7 +1014,6 @@ export const getDefaultSymbolData = () => {
         m5Volumes: [],
         m15Volumes: [],
         m30Volumes: [],
-        m1Vwaps: [],
         m5Vwaps: [],
         m15Vwaps: [],
         m30Vwaps: [],
@@ -1434,7 +1432,7 @@ export const getVwapsForHigherTimeframe = (symbol: string, timeframe: number) =>
     } else if (timeframe == 30) {
         return symbolData.m30Vwaps;
     } else {
-        return symbolData.m1Vwaps;
+        return symbolData.vwap;
     }
 }
 export const getVwapsSinceOpenForTimeframe = (symbol: string, timeframe: number) => {
