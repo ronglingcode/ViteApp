@@ -71,93 +71,111 @@ export class BreakoutReversal extends Tradebook {
             Firestore.logError(`entry price ${entryPrice} must be above vwap ${currentVwap} to avoid vwap shakeout`, logTags);
             return 0;
         }
-        // TODO: check more global rules
-        // TODO: if closed multiple candles above level, disable this tradebook for the day
-        return 0.21 / 2;
-    }
-
-    refreshLiveStats(): void {
-        // TODO: Implement live stats refresh
-    }
-
-    refreshState(): void {
-        // TODO: Implement state refresh
-    }
-
-    isEnabled(): boolean {
-        return true; // TODO: Implement enable/disable logic
-    }
-
-    getCommonLiveStats(): string {
-        return ''; // TODO: Implement common live stats
-    }
-
-    transitionToState(newState: any): void {
-        // TODO: Implement state transition logic
-    }
-
-    getTradeManagementInstructions(): Models.TradeManagementInstructions {
-        let instructions = new Map<string, string[]>();
-        if (this.isLong) {
-            instructions = this.getTradeManagementInstructionsForLong();
-        } else {
-            instructions = this.getTradeManagementInstructionsForShort();
+        // if closed 1 candle above the level, it needs to trigger in the next 2 minutes
+        let candles = Models.getCandlesSinceOpenForTimeframe(this.symbol, 1);
+        let found = -1;
+        for (let i = 0; i < candles.length - 1; i++) {
+            let candle = candles[i];
+            if ((this.isLong && candle.close >= keyLevel) ||
+                (!this.isLong && candle.close <= keyLevel)) {
+                found = i;
+                break;
+            }
         }
-        TradebookUtil.setlevelToAddInstructions(this.symbol, this.isLong, instructions);
-        TradebookUtil.setFinalTargetInstructions(this.symbol, this.isLong, instructions);
-        let conditionsToFail = this.isLong ? ["lose level"] : ["reclaim level"];
-        let result: Models.TradeManagementInstructions = {
-            mapData: instructions,
-            conditionsToFail: conditionsToFail,
+        if (found != 1) {
+            if (found + 2 < candles.length) {
+                Firestore.logError(`passed time window for reversal setup, ${found}th candle above key level`, logTags);
+                return 0;
+            }
         }
-        return result;
-    }
 
-    getTradeManagementInstructionsForLong(): Map<string, string[]> {
-        const instructions = new Map<string, string[]>([[
-            'conditions to fail', [
-                "low of day",
-            ]], [
-            'conditions to trim', [
-                "decide how much and whether to trim on first new low below vwap",
-            ]], [
-            'add or re-entry', [
-                "vwap pushdown fail, add back previous partials",
-            ]], [
-            'partial targets', [
-                "about 50%: push to vwap",
-            ]]
-        ]);
-        return instructions;
-    }
+            // TODO: check more global rules
+            // TODO: if closed multiple candles above level, disable this tradebook for the day
+            return 0.21 / 2;
+        }
 
-    getTradeManagementInstructionsForShort(): Map<string, string[]> {
-        const instructions = new Map<string, string[]>([[
-            'conditions to fail', [
-                "high of day",
-            ]], [
-            'conditions to trim', [
-                "decide how much and whether to trim on first new high above vwap",
-            ]], [
-            'add or re-entry', [
-                "vwap bounce fail, add back previous partials",
-            ]], [
-            'partial targets', [
-                "about 50%: dip to vwap",
-            ]]
-        ]);
-        return instructions;
-    }
-    /** Minimal doc method for now — returns empty string. */
-    getTradebookDoc(): string {
-        if (this.isLong) {
-            return LongDocs.tradebookText;
-        } else {
-            return ShortDocs.tradebookText;
+        refreshLiveStats(): void {
+            // TODO: Implement live stats refresh
+        }
+
+        refreshState(): void {
+            // TODO: Implement state refresh
+        }
+
+        isEnabled(): boolean {
+            return true; // TODO: Implement enable/disable logic
+        }
+
+        getCommonLiveStats(): string {
+            return ''; // TODO: Implement common live stats
+        }
+
+        transitionToState(newState: any): void {
+            // TODO: Implement state transition logic
+        }
+
+        getTradeManagementInstructions(): Models.TradeManagementInstructions {
+            let instructions = new Map<string, string[]>();
+            if (this.isLong) {
+                instructions = this.getTradeManagementInstructionsForLong();
+            } else {
+                instructions = this.getTradeManagementInstructionsForShort();
+            }
+            TradebookUtil.setlevelToAddInstructions(this.symbol, this.isLong, instructions);
+            TradebookUtil.setFinalTargetInstructions(this.symbol, this.isLong, instructions);
+            let conditionsToFail = this.isLong ? ["lose level"] : ["reclaim level"];
+            let result: Models.TradeManagementInstructions = {
+                mapData: instructions,
+                conditionsToFail: conditionsToFail,
+            }
+            return result;
+        }
+
+        getTradeManagementInstructionsForLong(): Map < string, string[] > {
+            const instructions = new Map<string, string[]>([[
+                'conditions to fail', [
+                    "low of day",
+                ]], [
+                'conditions to trim', [
+                    "decide how much and whether to trim on first new low below vwap",
+                ]], [
+                'add or re-entry', [
+                    "vwap pushdown fail, add back previous partials",
+                ]], [
+                'partial targets', [
+                    "about 50%: push to vwap",
+                ]]
+            ]);
+            return instructions;
+        }
+
+        getTradeManagementInstructionsForShort(): Map < string, string[] > {
+            const instructions = new Map<string, string[]>([[
+                'conditions to fail', [
+                    "high of day",
+                ]], [
+                'conditions to trim', [
+                    "decide how much and whether to trim on first new high above vwap",
+                ]], [
+                'add or re-entry', [
+                    "vwap bounce fail, add back previous partials",
+                ]], [
+                'partial targets', [
+                    "about 50%: dip to vwap",
+                ]]
+            ]);
+            return instructions;
+        }
+        /** Minimal doc method for now — returns empty string. */
+        getTradebookDoc(): string {
+            if (this.isLong) {
+                return LongDocs.tradebookText;
+            } else {
+                return ShortDocs.tradebookText;
+            }
+        }
+
+        getEntryMethods(): string[] {
+            return [];
         }
     }
-
-    getEntryMethods(): string[] {
-        return [];
-    }
-}
