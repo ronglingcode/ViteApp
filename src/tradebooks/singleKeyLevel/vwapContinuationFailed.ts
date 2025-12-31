@@ -16,7 +16,13 @@ import * as GlobalSettings from '../../config/globalSettings';
 import * as LongDocs from '../tradebookDocs/vwapPushdownFail';
 import * as ShortDocs from '../tradebookDocs/vwapBounceFail';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
-
+enum EntryMethod {
+    ClosedCandle = 'Closed Candle',
+    LiveCandle = 'Live Candle',
+    M5NewHighLow = 'M5 NewHighLow',
+    M15NewHighLow = 'M15 NewHighLow',
+    M30NewHighLow = 'M30 NewHighLow',
+}
 export class VwapContinuationFailed extends SingleKeyLevelTradebook {
     public static readonly longVwapPushDownFailed: string = 'LongVwapPushdownFailed';
     public static readonly shortVwapBounceFailed: string = 'ShortVwapBounceFailed';
@@ -73,22 +79,62 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
         let logTags = Models.generateLogTags(this.symbol, `${this.symbol}_${logTagName}`);
         let entryPrice = Chart.getBreakoutEntryPrice(this.symbol, this.isLong, useMarketOrder, parameters);
         let stopOutPrice = Chart.getStopLossPrice(this.symbol, this.isLong, true, null);
-        let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
+        let entryMethod = parameters.entryMethod;
+        if (!entryMethod) {
+            Firestore.logError(`${this.symbol} entry method is missing`, logTags);
+            return 0;
+        }
+        let allowedSize = 0;
+        if (entryMethod == EntryMethod.ClosedCandle) {
+            allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
+        } else if (entryMethod == EntryMethod.LiveCandle) {
+            allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
+        } else if (entryMethod == EntryMethod.M5NewHighLow) {
+            allowedSize = this.validateEntryForHigherTimeframe(entryPrice, stopOutPrice, useMarketOrder, 5, logTags);
+        } else if (entryMethod == EntryMethod.M15NewHighLow) {
+            allowedSize = this.validateEntryForHigherTimeframe(entryPrice, stopOutPrice, useMarketOrder, 15, logTags);
+        } else if (entryMethod == EntryMethod.M30NewHighLow) {
+            allowedSize = this.validateEntryForHigherTimeframe(entryPrice, stopOutPrice, useMarketOrder, 30, logTags);
+        } 
         if (allowedSize === 0) {
             Firestore.logError(`${this.symbol} not allowed entry`, logTags);
             return 0;
         }
 
-        let doubleCheckMessage = `make sure vwap bounced with a lower high, all 3 parts triggered`;
-        if (!this.isLong) {
-            doubleCheckMessage = "make sure vwap pushed down with a higher low, all 3 parts triggered";
-        }
-        Helper.speak(doubleCheckMessage);
-
         this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, stopOutPrice, allowedSize, "", logTags);
         return allowedSize;
     }
-
+    private validateEntryForHigherTimeframe(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, 
+        timeframe: number, logTags: Models.LogTags): number {
+        let symbol = this.symbol;
+        let isLong = this.isLong;
+        let candles = Models.getCandlesSinceOpenForTimeframe(symbol, timeframe);
+        let vwaps = Models.getVwapsSinceOpenForTimeframe(symbol, timeframe);
+        let entryPriceBreaksCandleAndVwap = false;
+        for (let i = 0; i < candles.length; i++) {
+            let candle = candles[i];
+            let vwap = vwaps[i];
+            // candle must has one side favor vwap
+            if (isLong) {
+                if (entryPrice >= candle.high && candle.high >= vwap.value) {
+                    entryPriceBreaksCandleAndVwap = true;
+                    break;
+                }
+            } else {
+                if (entryPrice <= candle.low && candle.low <=vwap.value) {
+                    entryPriceBreaksCandleAndVwap = true;
+                    break;
+                }
+            }
+        }
+        if (!entryPriceBreaksCandleAndVwap) {
+            Firestore.logError(`${this.symbol} entry price ${entryPrice} does not break candle and vwap for M${timeframe}`, logTags);
+            return 0;
+        }
+        let allowedSize = CommonRules.validateCommonEntryRules(
+            this.symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
+        return allowedSize;
+    }
     private validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
         // must be on the momentum side of vwap
         let symbol = this.symbol;
@@ -446,6 +492,21 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
     }
 
     getEntryMethods(): string[] {
-        return [];
+        let methods1: string[] = [
+            EntryMethod.ClosedCandle,
+            EntryMethod.M5NewHighLow,
+            EntryMethod.M15NewHighLow,
+            EntryMethod.M30NewHighLow
+        ];
+        let methods2 = [
+            EntryMethod.LiveCandle,
+            ...methods1
+        ];
+        if (this.waitForClose) {
+            return methods1;
+        } else {
+            return methods2;
+        }
+
     }
 }
