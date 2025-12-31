@@ -397,13 +397,6 @@ export class OpenDrive extends SingleKeyLevelTradebook {
         this.updateEntryMethodButtonStatus(OpenDriveEntryMethod.M15);
         this.updateEntryMethodButtonStatus(OpenDriveEntryMethod.M30);
     }
-    onNewTimeframe(): void {
-        // enable for testing
-        this.updateEntryMethodButtonStatus(OpenDriveEntryMethod.M1);
-        this.updateEntryMethodButtonStatus(OpenDriveEntryMethod.M5);
-        this.updateEntryMethodButtonStatus(OpenDriveEntryMethod.M15);
-        this.updateEntryMethodButtonStatus(OpenDriveEntryMethod.M30);
-    }
     setButtonStatus(button: HTMLElement, status: string): void {
         button.classList.remove("active");
         button.classList.remove("inactive");
