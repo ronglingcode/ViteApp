@@ -103,7 +103,7 @@ export class OpenFlush extends SingleKeyLevelTradebook {
         newPlan.targets.initialTargets.rrr = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
         newPlan.targets.initialTargets.dailyRanges = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
-        this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, tightStopLoss, newSize, logTags);
+        this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, tightStopLoss, newSize, "", logTags);
         return newSize;
     }
 

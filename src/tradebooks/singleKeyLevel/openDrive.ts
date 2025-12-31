@@ -69,27 +69,40 @@ export class OpenDrive extends SingleKeyLevelTradebook {
         let logTags = Models.generateLogTags(this.symbol, `${this.symbol}_${logTagName}`);
         let entryPrice = Chart.getBreakoutEntryPrice(this.symbol, this.isLong, useMarketOrder, parameters);
         let stopOutPrice = Chart.getStopLossPrice(this.symbol, this.isLong, true, null);
-        if (parameters.entryMethod) {
-            let status = "";
-            if (parameters.entryMethod == OpenDriveEntryMethod.M1) {
-                status = VwapPatterns.getStatusForOpenDrive(this.symbol, 1, this.isLong, this.getKeyLevel());
-            } else if (parameters.entryMethod == OpenDriveEntryMethod.M5) {
-                status = VwapPatterns.getStatusForOpenDrive(this.symbol, 5, this.isLong, this.getKeyLevel());
-            } else if (parameters.entryMethod == OpenDriveEntryMethod.M15) {
-                status = VwapPatterns.getStatusForOpenDrive(this.symbol, 15, this.isLong, this.getKeyLevel());
-            } else if (parameters.entryMethod == OpenDriveEntryMethod.M30) {
-                status = VwapPatterns.getStatusForOpenDrive(this.symbol, 30, this.isLong, this.getKeyLevel());
-            }
-            console.log(`${this.symbol} open drive ${parameters.entryMethod} status: ${status}`);
+        if (!parameters.entryMethod) {
+            Firestore.logError(`${this.symbol} missing entry method for open drive`, logTags);
             return 0;
         }
+        let timeframe = 1;
+        if (parameters.entryMethod == OpenDriveEntryMethod.M5) {
+            timeframe = 5;
+        } else if (parameters.entryMethod == OpenDriveEntryMethod.M15) {
+            timeframe = 15;
+        } else if (parameters.entryMethod == OpenDriveEntryMethod.M30) {
+            timeframe = 30;
+        }
+
+        let patternStatus = VwapPatterns.getStatusForOpenDrive(this.symbol, timeframe, this.isLong, this.getKeyLevel());
+        let sizeMultipler = 0;
+        if (patternStatus.startsWith("good")) {
+            sizeMultipler = 1;
+        } else if (patternStatus.startsWith("2 consecutive weak momentum candles")) {
+            sizeMultipler = 0.5;
+        } else {
+            Firestore.logError(`${this.symbol} open drive ${parameters.entryMethod} not good status: ${patternStatus}`, logTags);
+            return 0;
+        }
+
+        console.log(`${this.symbol} open drive ${parameters.entryMethod} status: ${patternStatus}`);
+        let candles = Models.getCandlesSinceOpenForTimeframe(this.symbol, timeframe);
+
         let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
         if (allowedSize === 0) {
             Firestore.logError(`${this.symbol} not allowed entry`, logTags);
             return 0;
         }
 
-        this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, stopOutPrice, allowedSize, logTags);
+        this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, stopOutPrice, allowedSize, parameters.entryMethod, logTags);
         return allowedSize;
     }
 

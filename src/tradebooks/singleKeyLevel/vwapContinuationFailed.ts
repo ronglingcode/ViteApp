@@ -85,7 +85,7 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
         }
         Helper.speak(doubleCheckMessage);
 
-        this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, stopOutPrice, allowedSize, logTags);
+        this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, stopOutPrice, allowedSize, "", logTags);
         return allowedSize;
     }
 

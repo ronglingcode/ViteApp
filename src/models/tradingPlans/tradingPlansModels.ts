@@ -172,6 +172,7 @@ export interface BasePlan {
     planConfigs: PlanConfigs,
     planType?: PlanType,
     timeframe?: number,
+    entryMethod?: string,
 };
 export interface PlanConfigs {
     size: number,

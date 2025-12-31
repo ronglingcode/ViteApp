@@ -38,6 +38,7 @@ export class BreakoutReversal extends Tradebook {
             return 0;
         }
 
+        let planCopy = JSON.parse(JSON.stringify(this.reversalPlan)) as TradingPlansModels.ReversalPlan;
         this.submitEntryOrdersBase(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskLevelPrice, allowedSize, this.reversalPlan, logTags);
         return allowedSize;
     }

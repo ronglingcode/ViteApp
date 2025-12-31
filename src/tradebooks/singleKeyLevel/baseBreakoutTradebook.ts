@@ -126,7 +126,7 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
             Firestore.logError(`${this.symbol} not allowed entry`, logTags);
             return 0;
         }
-        this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, stopOutPrice, allowedSize, logTags);
+        this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, stopOutPrice, allowedSize, "", logTags);
         return allowedSize;
     }
     generalEntryWithCustomRiskLevel(entryPrice: number, riskLevelPrice: number, stopOutPrice: number, useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters, logTags: Models.LogTags): number {

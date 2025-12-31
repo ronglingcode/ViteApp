@@ -103,7 +103,7 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         }
 
         // TODO: allow higher risk level
-        this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, stopOutPrice, allowedSize, logTags);
+        this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, stopOutPrice, allowedSize, "", logTags);
         return allowedSize;
     }
 
