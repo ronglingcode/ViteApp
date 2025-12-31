@@ -32,3 +32,27 @@ export const numberToString = (number: number) => {
         return (number / oneMillion).toFixed(0) + 'M';
     }
 }
+
+export const median = (numbers: number[]): number => {
+    if (numbers.length === 0) {
+        return 0;
+    }
+    const sorted = numbers.sort((a, b) => a - b);
+    const n = sorted.length;
+    
+    if (n === 1) {
+        return sorted[0];
+    }
+    
+    if (n % 2 === 0) {
+        // Even number: get middle 2 items
+        const middle1 = n / 2 - 1;
+        const middle2 = n / 2;
+        return (sorted[middle1] + sorted[middle2]) / 2;
+    } else {
+        // Odd number: get middle 3 items
+        const middle = Math.floor(n / 2);
+        const sum = sorted[middle - 1] + sorted[middle] + sorted[middle + 1];
+        return sum / 3;
+    }
+}

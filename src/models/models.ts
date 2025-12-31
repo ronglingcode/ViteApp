@@ -18,6 +18,7 @@ export interface PremarketPerDayData {
 export interface PremarketDollarCollection {
     previousDaysDollar: PremarketPerDayData[];
     previousDaysDollarAverage: number;
+    previousDaysDollarMedian: number;
     lastDayDollar: number;
     previousDaysShares: PremarketPerDayData[];
     lastDayShares: number;
@@ -1058,6 +1059,7 @@ export const getDefaultSymbolData = () => {
         premarketDollarCollection: {
             previousDaysDollar: [],
             previousDaysDollarAverage: 0,
+            previousDaysDollarMedian: 0,
             lastDayDollar: 0,
             previousDaysShares: [],
             lastDayShares: 0,

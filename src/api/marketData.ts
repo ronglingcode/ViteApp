@@ -15,112 +15,112 @@ import * as SetupQuality from '../algorithms/setupQuality';
 declare let window: Models.MyWindow;
 
 export const getQuote = async (symbol: string) => {
-    if (Helper.isFutures(symbol)) {
-        return tradeStationApi.getQuote(symbol);
-    } else {
-        let quote = await tdAmeritradeApi.getQuote(symbol);
-        console.log(quote);
-        let q: Quote = {
-            symbol: quote.symbol,
-            bidPrice: quote.bidPrice,
-            askPrice: quote.askPrice,
-        };
-        return q;
-    }
+  if (Helper.isFutures(symbol)) {
+    return tradeStationApi.getQuote(symbol);
+  } else {
+    let quote = await tdAmeritradeApi.getQuote(symbol);
+    console.log(quote);
+    let q: Quote = {
+      symbol: quote.symbol,
+      bidPrice: quote.bidPrice,
+      askPrice: quote.askPrice,
+    };
+    return q;
+  }
 };
 export const getFundamentals = async (symbol: string) => {
-    return schwabApi.getFundamentals(symbol);
+  return schwabApi.getFundamentals(symbol);
 }
 export const testGetQuote = async (symbol: string) => {
-    return tradeStationApi.getQuote(symbol);
+  return tradeStationApi.getQuote(symbol);
 };
 
 export const testTradeStationStreamBar = async () => {
-    let url = 'https://api.tradestation.com/v3/marketdata/stream/barcharts/MESM23?unit=Minute';
-    const options = {
-        method: 'GET',
-        url: url,
-        headers: { Authorization: 'Bearer ' + window.HybridApp.Secrets.tradeStation.accessToken }
-    };
+  let url = 'https://api.tradestation.com/v3/marketdata/stream/barcharts/MESM23?unit=Minute';
+  const options = {
+    method: 'GET',
+    url: url,
+    headers: { Authorization: 'Bearer ' + window.HybridApp.Secrets.tradeStation.accessToken }
+  };
 
-    const response = await fetch(url, options);
-    if (response.body) {
-        const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
-        while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            console.log(value);
-            let j = JSON.parse(value);
-            //console.log(j);
-        }
-
-        console.log('Response fully received');
+  const response = await fetch(url, options);
+  if (response.body) {
+    const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      console.log(value);
+      let j = JSON.parse(value);
+      //console.log(j);
     }
+
+    console.log('Response fully received');
+  }
 }
 export const setPreviousDayPremarketVolume = async (symbol: string, startDate: string) => {
-    let premarketDollarCollection = await getPremarketDollarFromDate(symbol, startDate);
-    let symbolData = Models.getSymbolData(symbol);
-    symbolData.premarketDollarCollection = premarketDollarCollection;
-    let volumeQuality = SetupQuality.getPremarketVolumeQuality(symbol, premarketDollarCollection);
-    Firestore.logInfo(`${symbol} premarket volume quality: ${volumeQuality}`);
+  let premarketDollarCollection = await getPremarketDollarFromDate(symbol, startDate);
+  let symbolData = Models.getSymbolData(symbol);
+  symbolData.premarketDollarCollection = premarketDollarCollection;
+  let volumeQuality = SetupQuality.getPremarketVolumeQuality(symbol, premarketDollarCollection);
+  Firestore.logInfo(`${symbol} premarket volume quality: ${volumeQuality}`);
 }
 export const getPriceHistory = async (symbol: string, isFutures: boolean, timeframe: number) => {
-    let candles: Candle[] = [];
-    if (isFutures) {
-        let response = await tradeStationApi.getPriceHistory(symbol);
-        // for tradestation 1 minute bar, they use end time instead of begin time for a candle bar, 
-        // so I need to decrease the time by one minute
-        response.Bars.forEach((bar: any) => {
-            let candleEnd = bar.Epoch;
-            let candleBegin = candleEnd - 60 * 1000;
-            let newD = new Date(candleBegin);
-            //console.log(newD.toLocaleTimeString());
-            candles.push({
-                symbol: symbol,
-                time: Helper.jsDateToUTC(newD),
-                datetime: candleBegin,
-                open: Number(bar.Open),
-                close: Number(bar.Close),
-                high: Number(bar.High),
-                low: Number(bar.Low),
-                volume: Number(bar.TotalVolume),
-                vwap: 0,
-            });
-            // console.log(`${symbol}: ${bar.IsEndOfHistory}, ${bar.IsRealtime}`);
-        });
-    } else {
-        if (GlobalSettings.marketDataSource == "alpaca") {
-            let bars = await alpacaApi.getPriceHistory(symbol, timeframe);
-            candles = bars;
-        } else if (GlobalSettings.marketDataSource == "massive") {
-            let bars = await massiveApi.getPriceHistory(symbol, timeframe);
-            candles = bars;
-        }
+  let candles: Candle[] = [];
+  if (isFutures) {
+    let response = await tradeStationApi.getPriceHistory(symbol);
+    // for tradestation 1 minute bar, they use end time instead of begin time for a candle bar, 
+    // so I need to decrease the time by one minute
+    response.Bars.forEach((bar: any) => {
+      let candleEnd = bar.Epoch;
+      let candleBegin = candleEnd - 60 * 1000;
+      let newD = new Date(candleBegin);
+      //console.log(newD.toLocaleTimeString());
+      candles.push({
+        symbol: symbol,
+        time: Helper.jsDateToUTC(newD),
+        datetime: candleBegin,
+        open: Number(bar.Open),
+        close: Number(bar.Close),
+        high: Number(bar.High),
+        low: Number(bar.Low),
+        volume: Number(bar.TotalVolume),
+        vwap: 0,
+      });
+      // console.log(`${symbol}: ${bar.IsEndOfHistory}, ${bar.IsRealtime}`);
+    });
+  } else {
+    if (GlobalSettings.marketDataSource == "alpaca") {
+      let bars = await alpacaApi.getPriceHistory(symbol, timeframe);
+      candles = bars;
+    } else if (GlobalSettings.marketDataSource == "massive") {
+      let bars = await massiveApi.getPriceHistory(symbol, timeframe);
+      candles = bars;
     }
-    return candles;
+  }
+  return candles;
 };
 
 export const hasWeeklyOptions = async (symbol: string) => {
-    if (symbol == 'ARM') {
-        return true;
-    }
-    if (Helper.isFutures(symbol)) {
-        return true;
-    } else {
-        let result = await tdAmeritradeApi.hasWeeklyOptions(symbol);
-        return result;
-    }
+  if (symbol == 'ARM') {
+    return true;
+  }
+  if (Helper.isFutures(symbol)) {
+    return true;
+  } else {
+    let result = await tdAmeritradeApi.hasWeeklyOptions(symbol);
+    return result;
+  }
 }
 
 export const getPreviousTradingDate = async () => {
-    let date = new Date();
-    date.setDate(date.getDate() - 6);
-    let startDate = TimeHelper.getDateString(date);
-    let candles = await alpacaApi.getDailyChart('SPY', startDate);
-    let previousDayCandle = candles[candles.length - 2];
-    let nyOpen = TimeHelper.localTimeToNewYorkTime(previousDayCandle.datetime);
-    let nyOpenString = TimeHelper.getDateString(nyOpen);
-    return nyOpenString;
+  let date = new Date();
+  date.setDate(date.getDate() - 6);
+  let startDate = TimeHelper.getDateString(date);
+  let candles = await alpacaApi.getDailyChart('SPY', startDate);
+  let previousDayCandle = candles[candles.length - 2];
+  let nyOpen = TimeHelper.localTimeToNewYorkTime(previousDayCandle.datetime);
+  let nyOpenString = TimeHelper.getDateString(nyOpen);
+  return nyOpenString;
 }
 
 export const get30MinuteChartFromLastNDays = async (symbol: string, nDays: number, todayString: string) => {
@@ -134,104 +134,108 @@ export const get30MinuteChartFromLastNDays = async (symbol: string, nDays: numbe
 }
 
 interface VolumePair {
-    dollar: number,
-    shares: number,
-  }
+  dollar: number,
+  shares: number,
+}
 
 export const getPremarketDollarFromDate = async (symbol: string, startDate: string) => {
-    let candles = await get30MinuteChartFromLastNDays(symbol, 20, startDate);
-    let dollarTradeByDay: Map<string, VolumePair> = new Map();
-    let volumeBarsByDay: Map<string, number[]> = new Map();
-    for (let i = 0; i < candles.length; i++) {
-      let c = candles[i];
-      let candleDatetime = new Date(c.datetime);
-      console.log(candleDatetime.toLocaleTimeString());
-      if (!TimeHelper.isBeforeMarketOpenHours(candleDatetime)) {
-        continue;
-      }
-      let day = TimeHelper.getDateString(candleDatetime);
-      let typicalPrice = Models.getTypicalPrice(c);
-      let dollarTrade = Math.round(typicalPrice * c.volume);
-      let existingDollarTrade = dollarTradeByDay.get(day);
-      let existingVolumeBars = volumeBarsByDay.get(day);
-      if (existingVolumeBars) {
-        existingVolumeBars.push(Math.round(c.volume));
-      } else {
-        existingVolumeBars = [Math.round(c.volume)];
-      }
-      volumeBarsByDay.set(day, existingVolumeBars);
-      if (existingDollarTrade) {
-        existingDollarTrade.dollar += dollarTrade;
-        existingDollarTrade.shares += c.volume;
-      } else {
-        existingDollarTrade = {
-          dollar: dollarTrade,
-          shares: c.volume
-        };
-      }
-      dollarTradeByDay.set(day, existingDollarTrade);
+  let candles = await get30MinuteChartFromLastNDays(symbol, 20, startDate);
+  let dollarTradeByDay: Map<string, VolumePair> = new Map();
+  let volumeBarsByDay: Map<string, number[]> = new Map();
+  for (let i = 0; i < candles.length; i++) {
+    let c = candles[i];
+    let candleDatetime = new Date(c.datetime);
+    console.log(candleDatetime.toLocaleTimeString());
+    if (!TimeHelper.isBeforeMarketOpenHours(candleDatetime)) {
+      continue;
     }
-  
-    let premarketDollarCollection: Models.PremarketDollarCollection = {
-      previousDaysDollar: [],
-      previousDaysDollarAverage: 0,
-      lastDayDollar: 0,
-      previousDaysShares: [],
-      lastDayShares: 0,
-      previousDaysSharesAverage: 0,
-      rvol: 0
+    let day = TimeHelper.getDateString(candleDatetime);
+    let typicalPrice = Models.getTypicalPrice(c);
+    let dollarTrade = Math.round(typicalPrice * c.volume);
+    let existingDollarTrade = dollarTradeByDay.get(day);
+    let existingVolumeBars = volumeBarsByDay.get(day);
+    if (existingVolumeBars) {
+      existingVolumeBars.push(Math.round(c.volume));
+    } else {
+      existingVolumeBars = [Math.round(c.volume)];
     }
-    
-    // Convert Map to array of entries and sort by day to ensure correct order
-    const entries = Array.from(dollarTradeByDay.entries()).sort(([dayA], [dayB]) => dayA.localeCompare(dayB));
-    
-    if (entries.length > 0) {
-      // Get the last day's dollar value
-      const lastEntry = entries[entries.length - 1];
-      premarketDollarCollection.lastDayDollar = lastEntry[1].dollar;
-      premarketDollarCollection.lastDayShares = lastEntry[1].shares;
-      
-      // Add all except the last day to previousDays
-      for (let i = 0; i < entries.length - 1; i++) {
-        const [day, dollar] = entries[i];
-        premarketDollarCollection.previousDaysDollar.push({
-          day: day,
-          data: dollar.dollar
-        });
-        premarketDollarCollection.previousDaysShares.push({
-          day: day,
-          data: dollar.shares
-        });
-      }
-      
-      // Calculate average of previous days
-      if (premarketDollarCollection.previousDaysDollar.length > 0) {
-        const sumDollar = premarketDollarCollection.previousDaysDollar.reduce((acc, item) => acc + item.data, 0);
-        premarketDollarCollection.previousDaysDollarAverage = sumDollar / premarketDollarCollection.previousDaysDollar.length;
-        const sumShares = premarketDollarCollection.previousDaysShares.reduce((acc, item) => acc + item.data, 0);
-        premarketDollarCollection.previousDaysSharesAverage = sumShares / premarketDollarCollection.previousDaysShares.length;
-        
-        // Calculate rvol (relative volume) as lastDay / previousDaysAverage
-      
-        if (premarketDollarCollection.previousDaysDollarAverage > 0) {
-          premarketDollarCollection.rvol = premarketDollarCollection.lastDayDollar / premarketDollarCollection.previousDaysDollarAverage;
-        }
-      }
+    volumeBarsByDay.set(day, existingVolumeBars);
+    if (existingDollarTrade) {
+      existingDollarTrade.dollar += dollarTrade;
+      existingDollarTrade.shares += c.volume;
+    } else {
+      existingDollarTrade = {
+        dollar: dollarTrade,
+        shares: c.volume
+      };
     }
-    
-    return premarketDollarCollection;
+    dollarTradeByDay.set(day, existingDollarTrade);
   }
-  
-  export const getPremarketDollarStats = (symbol: string, premarketDollar: Models.PremarketDollarCollection) => {
-    // Build string from previousDays and lastDay
-    const previousDaysStr = premarketDollar.previousDaysDollar
-      .map(({ day, data: dollar }) => `${day}: ${Calculator.numberToString(dollar)}`)
-      .join(', ');
-    
-    let premarketDollarStr = `$${Calculator.numberToString(premarketDollar.lastDayDollar)} / ${Calculator.numberToString(premarketDollar.lastDayShares)} shares`
-    premarketDollarStr += `, rvol: ${(premarketDollar.rvol * 100).toFixed(1)}%`;
-    premarketDollarStr += `, avg: ${premarketDollar.previousDaysDollarAverage.toFixed(0)}`;
-    premarketDollarStr += `, previous: ${previousDaysStr}`;
-    
-    return premarketDollarStr;
+
+  let premarketDollarCollection: Models.PremarketDollarCollection = {
+    previousDaysDollar: [],
+    previousDaysDollarAverage: 0,
+    previousDaysDollarMedian: 0,
+    lastDayDollar: 0,
+    previousDaysShares: [],
+    lastDayShares: 0,
+    previousDaysSharesAverage: 0,
+    rvol: 0
   }
+
+  // Convert Map to array of entries and sort by day to ensure correct order
+  const entries = Array.from(dollarTradeByDay.entries()).sort(([dayA], [dayB]) => dayA.localeCompare(dayB));
+
+  if (entries.length > 0) {
+    // Get the last day's dollar value
+    const lastEntry = entries[entries.length - 1];
+    premarketDollarCollection.lastDayDollar = lastEntry[1].dollar;
+    premarketDollarCollection.lastDayShares = lastEntry[1].shares;
+
+    // Add all except the last day to previousDays
+    for (let i = 0; i < entries.length - 1; i++) {
+      const [day, dollar] = entries[i];
+      premarketDollarCollection.previousDaysDollar.push({
+        day: day,
+        data: dollar.dollar
+      });
+      premarketDollarCollection.previousDaysShares.push({
+        day: day,
+        data: dollar.shares
+      });
+    }
+
+    // Calculate average of previous days
+    if (premarketDollarCollection.previousDaysDollar.length > 0) {
+      const sumDollar = premarketDollarCollection.previousDaysDollar.reduce((acc, item) => acc + item.data, 0);
+      premarketDollarCollection.previousDaysDollarAverage = sumDollar / premarketDollarCollection.previousDaysDollar.length;
+      const sumShares = premarketDollarCollection.previousDaysShares.reduce((acc, item) => acc + item.data, 0);
+      premarketDollarCollection.previousDaysSharesAverage = sumShares / premarketDollarCollection.previousDaysShares.length;
+      premarketDollarCollection.previousDaysDollarMedian = Calculator.median(
+        premarketDollarCollection.previousDaysDollar.map(item => item.data)
+      );
+
+      // Calculate rvol (relative volume) as lastDay / previousDaysAverage
+
+      if (premarketDollarCollection.previousDaysDollarMedian > 0) {
+        premarketDollarCollection.rvol = premarketDollarCollection.lastDayDollar / premarketDollarCollection.previousDaysDollarMedian;
+      }
+    }
+  }
+
+  return premarketDollarCollection;
+}
+
+export const getPremarketDollarStats = (symbol: string, premarketDollar: Models.PremarketDollarCollection) => {
+  // Build string from previousDays and lastDay
+  const previousDaysStr = premarketDollar.previousDaysDollar
+    .map(({ day, data: dollar }) => `${day}: ${Calculator.numberToString(dollar)}`)
+    .join(', ');
+
+  let premarketDollarStr = `$${Calculator.numberToString(premarketDollar.lastDayDollar)} / ${Calculator.numberToString(premarketDollar.lastDayShares)} shares`
+  premarketDollarStr += `, rvol: ${(premarketDollar.rvol * 100).toFixed(1)}%`;
+  premarketDollarStr += `, avg: ${premarketDollar.previousDaysDollarAverage.toFixed(0)}`;
+  premarketDollarStr += `, previous: ${previousDaysStr}`;
+
+  return premarketDollarStr;
+}
