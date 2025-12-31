@@ -1611,6 +1611,7 @@ const createTradebookUINew = (tradebook: Tradebook, sideBar: HTMLElement, classN
         container.appendChild(entryMethodButton);
         buttons.push(entryMethodButton);
     });
+    sideBar.appendChild(container);
     return { buttons, stats, container };
 }
 

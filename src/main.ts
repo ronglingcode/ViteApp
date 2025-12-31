@@ -42,6 +42,7 @@ import * as DB from './data/db';
 import * as Agent from './ai/agent';
 import * as VwapPatterns from './algorithms/vwapPatterns';
 import './tosClient';
+import * as TradebooksManager from './tradebooks/tradebooksManager';
 
 declare let window: Models.MyWindow;
 
@@ -160,7 +161,7 @@ if (tosScriptsButton) {
 let testPopButton = document.getElementById("test_popup");
 if (testPopButton) {
     testPopButton.addEventListener("click", () => {
-        VwapPatterns.test();
+        TradebooksManager.onNewCandleCloseForSymbol("SLV");
     });
 }
 

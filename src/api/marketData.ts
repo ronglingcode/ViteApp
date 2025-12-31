@@ -148,7 +148,7 @@ export const getPremarketDollarFromDate = async (symbol: string, startDate: stri
   for (let i = 0; i < candles.length; i++) {
     let c = candles[i];
     let candleDatetime = new Date(c.datetime);
-    console.log(candleDatetime.toLocaleTimeString());
+    //console.log(candleDatetime.toLocaleTimeString());
     if (!TimeHelper.isBeforeMarketOpenHours(candleDatetime)) {
       continue;
     }

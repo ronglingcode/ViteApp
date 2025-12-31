@@ -221,12 +221,25 @@ span.algo {
     border-radius: 2px;
 }
 
-.sideBar .longButton {
+.sideBar .longButton,
+.sideBar .longButton.active {
     background-color: #2E7D32;
 }
+.sideBar .longButton.degraded {
+    background-color: #A5D6A7; /* light green */
+}
 
-.sideBar .shortButton {
+.sideBar .longButton.inactive,
+.sideBar .shortButton.inactive {
+    background-color: #607D8B;
+}
+
+.sideBar .shortButton,
+.sideBar .shortButton.active {
     background-color: #f44336;
+}
+.sideBar .shortButton.degraded {
+    background-color: #FFCDD2; /* light red */
 }
 
 .sideBar .tradebookButtons,
