@@ -71,15 +71,21 @@ export class BreakoutReversal extends Tradebook {
             Firestore.logError(`entry price ${entryPrice} must be above vwap ${currentVwap} to avoid vwap shakeout`, logTags);
             return 0;
         }
-        // if closed 1 candle above the level, it needs to trigger in the next 2 minutes
+        // if 1 candle touched the key level, it needs to trigger in the next 2 candles
         let candles = Models.getCandlesSinceOpenForTimeframe(this.symbol, 1);
         let found = -1;
         for (let i = 0; i < candles.length - 1; i++) {
             let candle = candles[i];
-            if ((this.isLong && candle.close >= keyLevel) ||
-                (!this.isLong && candle.close <= keyLevel)) {
-                found = i;
-                break;
+            if (this.isLong) {
+                if (candle.high >= keyLevel && candle.low <= keyLevel) {
+                    found = i;
+                    break;
+                }
+            } else {
+                if (candle.low <= keyLevel && candle.high >= keyLevel) {
+                    found = i;
+                    break;
+                }
             }
         }
         if (found != 1) {
