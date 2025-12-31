@@ -62,7 +62,10 @@ export const setPreviousDayPremarketVolume = async (symbol: string, startDate: s
   let symbolData = Models.getSymbolData(symbol);
   symbolData.premarketDollarCollection = premarketDollarCollection;
   let volumeQuality = SetupQuality.getPremarketVolumeQuality(symbol, premarketDollarCollection);
-  Firestore.logInfo(`${symbol} premarket volume quality: ${volumeQuality}`);
+  let lastDayDollar = Calculator.numberToString(premarketDollarCollection.lastDayDollar);
+  let previousDaysDollarMedian = Calculator.numberToString(premarketDollarCollection.previousDaysDollarMedian);
+  let rvol = Calculator.ratioToPercentageString(premarketDollarCollection.rvol);
+  Firestore.logInfo(`${symbol} premarket volume quality: ${volumeQuality}, $${lastDayDollar}, rvol: ${rvol}, median: $${previousDaysDollarMedian}`);
 }
 export const getPriceHistory = async (symbol: string, isFutures: boolean, timeframe: number) => {
   let candles: Candle[] = [];

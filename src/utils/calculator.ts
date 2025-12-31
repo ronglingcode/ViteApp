@@ -56,3 +56,10 @@ export const median = (numbers: number[]): number => {
         return sum / 3;
     }
 }
+export const ratioToPercentageString = (ratio: number) => {
+    if (ratio < 1) {
+        return (ratio * 100).toFixed(1) + '%';
+    } else {
+        return (ratio * 100).toFixed(0) + '%';
+    }
+}

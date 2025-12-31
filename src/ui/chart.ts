@@ -1614,11 +1614,10 @@ const createTradebookUINew = (tradebook: Tradebook, sideBar: HTMLElement, classN
     return { buttons, stats, container };
 }
 
-const createTradebookUI = (tradebook: Tradebook, sideBar: HTMLElement, className: string) => {\
+const createTradebookUI = (tradebook: Tradebook, sideBar: HTMLElement, className: string) => {
     let entryMethods = tradebook.getEntryMethods();
     if (entryMethods.length > 0) {
-        createTradebookUINew(tradebook, sideBar, className);
-        return;
+        return createTradebookUINew(tradebook, sideBar, className);
     }
     let buttonText = tradebook.buttonLabel;
     let container = document.createElement("div");
