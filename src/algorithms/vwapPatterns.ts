@@ -190,10 +190,14 @@ export const getStatusForOpenDrive = (symbol: string, timeframe: number, isLong:
     let candles = Models.getCandlesSinceOpenForTimeframe(symbol, timeframe);
     let vwaps = Models.getVwapsForHigherTimeframe(symbol, timeframe);
     if (candles.length != vwaps.length) {
+        console.log(`candles ${candles.length} vwaps ${vwaps.length}`);
+        console.log(candles);
+        console.log(vwaps);
         return "error: candles and vwaps lengths do not match";
     }
     if (candles.length == 0) {
-        return "error: no candles";
+        // not open yet
+        return "good";
     }
     if (candles.length <= 2) {
         let price = candles[candles.length - 1].open;

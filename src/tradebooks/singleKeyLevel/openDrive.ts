@@ -80,6 +80,7 @@ export class OpenDrive extends SingleKeyLevelTradebook {
             } else if (parameters.entryMethod == OpenDriveEntryMethod.M30) {
                 status = VwapPatterns.getStatusForOpenDrive(this.symbol, 30, this.isLong, this.getKeyLevel());
             }
+            console.log(`${this.symbol} open drive ${parameters.entryMethod} status: ${status}`);
         }
         let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
         if (allowedSize === 0) {
