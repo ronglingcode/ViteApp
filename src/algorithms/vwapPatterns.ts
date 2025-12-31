@@ -188,11 +188,9 @@ export const getAboveWaterMomentumForPrice = (isLong: boolean, price: number, ke
 
 export const getStatusForOpenDrive = (symbol: string, timeframe: number, isLong: boolean, keyLevel: number) => {
     let candles = Models.getCandlesSinceOpenForTimeframe(symbol, timeframe);
-    let vwaps = Models.getVwapsForHigherTimeframe(symbol, timeframe);
+    let vwaps = Models.getVwapsSinceOpenForTimeframe(symbol, timeframe);
     if (candles.length != vwaps.length) {
         console.log(`candles ${candles.length} vwaps ${vwaps.length}`);
-        console.log(candles);
-        console.log(vwaps);
         return "error: candles and vwaps lengths do not match";
     }
     if (candles.length == 0) {
@@ -220,10 +218,10 @@ export const getStatusForOpenDrive = (symbol: string, timeframe: number, isLong:
         let prevMomentum = getAboveWaterMomentumForPrice(isLong, prevCandle.close, keyLevel, prevVwap);
         let currentMomentum = getAboveWaterMomentumForPrice(isLong, currentCandle.close, keyLevel, currentVwap);
         if (prevMomentum == -1 && currentMomentum == -1) {
-            return "2 consecutive reversal candles";
+            return `2 consecutive reversal candles, ${i}`;
         }
         if (prevMomentum <= 0 && currentMomentum <= 0) {
-            lastStatus = "2 consecutive weak momentum candles";
+            lastStatus = `2 consecutive weak momentum candles, ${i}`;
         } else {
             lastStatus = "good";
         }

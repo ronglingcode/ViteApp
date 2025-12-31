@@ -76,10 +76,13 @@ const buildDataMultipleTimeFrame = (symbol: string, inputCandlesM1: Models.Candl
     }
     symbolData.m5Candles = Models.aggregateCandles(symbolData.m1Candles, 5);
     symbolData.m15Candles = Models.aggregateCandles(symbolData.m1Candles, 15);
+    symbolData.m30Candles = Models.aggregateCandles(symbolData.m1Candles, 30);
     symbolData.m5Volumes = Models.aggregateVolumes(symbolData.m1Volumes, 5);
     symbolData.m15Volumes = Models.aggregateVolumes(symbolData.m1Volumes, 15);
-    symbolData.m30Candles = Models.aggregateCandles(symbolData.m1Candles, 30);
     symbolData.m30Volumes = Models.aggregateVolumes(symbolData.m1Volumes, 30);
+    symbolData.m5Vwaps = Models.aggregateVwaps(symbolData.m1Vwaps, 5);
+    symbolData.m15Vwaps = Models.aggregateVwaps(symbolData.m1Vwaps, 15);
+    symbolData.m30Vwaps = Models.aggregateVwaps(symbolData.m1Vwaps, 30);
 }
 export const initialize = (symbol: string, inputCandles: Models.Candle[]) => {
     let usedTimeframe = Models.getUsedTimeframe();
@@ -200,10 +203,13 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[]) => {
 
     allCharts[1].volumeSeries.setData(symbolData.m5Volumes);
     allCharts[1].candleSeries.setData(symbolData.m5Candles);
+    allCharts[1].vwapSeries.setData(symbolData.m5Vwaps);
     allCharts[2].volumeSeries.setData(symbolData.m15Volumes);
     allCharts[2].candleSeries.setData(symbolData.m15Candles);
+    allCharts[2].vwapSeries.setData(symbolData.m15Vwaps);
     allCharts[3].volumeSeries.setData(symbolData.m30Volumes);
     allCharts[3].candleSeries.setData(symbolData.m30Candles);
+    allCharts[3].vwapSeries.setData(symbolData.m30Vwaps);
 
     for (let lookBackStart = 0; lookBackStart < symbolData.m1Candles.length - 1; lookBackStart++) {
         let ma5 = Models.getMovingAverageCandle(symbol, 5, lookBackStart, symbolData.m1Candles);

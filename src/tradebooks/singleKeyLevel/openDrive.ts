@@ -81,6 +81,7 @@ export class OpenDrive extends SingleKeyLevelTradebook {
                 status = VwapPatterns.getStatusForOpenDrive(this.symbol, 30, this.isLong, this.getKeyLevel());
             }
             console.log(`${this.symbol} open drive ${parameters.entryMethod} status: ${status}`);
+            return 0;
         }
         let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
         if (allowedSize === 0) {
@@ -396,9 +397,9 @@ export class OpenDrive extends SingleKeyLevelTradebook {
         let timeframe = buttonLabel.replace("M", "");
         let status = VwapPatterns.getStatusForOpenDrive(this.symbol, parseInt(timeframe), this.isLong, this.getKeyLevel());
         console.log(`${this.symbol} ${timeframe} status: ${status}`);
-        if (status == "good") {
+        if (status.startsWith("good")) {
             this.setButtonStatus(button, "active");
-        } else if (status == "2 consecutive weak momentum candles") {
+        } else if (status.startsWith("2 consecutive weak momentum candles")) {
             this.setButtonStatus(button, "degraded");
         } else {
             this.setButtonStatus(button, "inactive");

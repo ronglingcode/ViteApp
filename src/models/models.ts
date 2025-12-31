@@ -1438,8 +1438,7 @@ export const getVwapsForHigherTimeframe = (symbol: string, timeframe: number) =>
 export const getVwapsSinceOpenForTimeframe = (symbol: string, timeframe: number) => {
     let time = Helper.getMarketOpenTime();
     let tvTime = Helper.jsDateToTradingViewUTC(time);
-    let symbolData = getSymbolData(symbol);
-    let vwaps = symbolData.m1Vwaps;
+    let vwaps = getVwapsForHigherTimeframe(symbol, timeframe);
     let results: LineSeriesData[] = [];
     for (let i = 0; i < vwaps.length; i++) {
         const candle = vwaps[i];
