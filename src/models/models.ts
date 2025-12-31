@@ -1170,6 +1170,24 @@ export const getCandlesFromM15SinceTime = (symbol: string, time: LightweightChar
     }
     return results;
 }
+export const getCandlesFromM30SinceOpen = (symbol: string) => {
+    let time = Helper.getMarketOpenTime();
+    let tvTime = Helper.jsDateToTradingViewUTC(time);
+    return getCandlesFromM30SinceTime(symbol, tvTime);
+}
+
+export const getCandlesFromM30SinceTime = (symbol: string, time: LightweightCharts.UTCTimestamp) => {
+    let symbolData = getSymbolData(symbol);
+    let allCandles = symbolData.m30Candles;
+    let results: CandlePlus[] = [];
+    for (let i = 0; i < allCandles.length; i++) {
+        const candle = allCandles[i];
+        if (candle.time >= time) {
+            results.push(candle);
+        }
+    }
+    return results;
+}
 export const getUndefinedCandles = (symbol: string) => {
     let symbolData = getSymbolData(symbol);
     return symbolData.candles;
@@ -1399,6 +1417,32 @@ export const getVwapsSinceOpen = (symbol: string) => {
     let results: LineSeriesData[] = [];
     for (let i = 0; i < symbolData.vwap.length; i++) {
         const candle = symbolData.vwap[i];
+        if (candle.time >= tvTime) {
+            results.push(candle);
+        }
+    }
+    return results;
+}
+export const getVwapsForHigherTimeframe = (symbol: string, timeframe: number) => {
+    let symbolData = getSymbolData(symbol);
+    if (timeframe == 5) {
+        return symbolData.m5Vwaps;
+    } else if (timeframe == 15) {
+        return symbolData.m15Vwaps;
+    } else if (timeframe == 30) {
+        return symbolData.m30Vwaps;
+    } else {
+        return symbolData.m1Vwaps;
+    }
+}
+export const getVwapsSinceOpenForTimeframe = (symbol: string, timeframe: number) => {
+    let time = Helper.getMarketOpenTime();
+    let tvTime = Helper.jsDateToTradingViewUTC(time);
+    let symbolData = getSymbolData(symbol);
+    let vwaps = symbolData.vwap;
+    let results: LineSeriesData[] = [];
+    for (let i = 0; i < vwaps.length; i++) {
+        const candle = vwaps[i];
         if (candle.time >= tvTime) {
             results.push(candle);
         }
@@ -1965,3 +2009,15 @@ export const getTypicalPrice = (candle: Candle) => {
 
     return (candle.high + candle.low + candle.close) / 3;
 };
+
+export const getCandlesSinceOpenForTimeframe = (symbol: string, timeframe: number) => {
+    if (timeframe == 5) {
+        return getCandlesFromM5SinceOpen(symbol);
+    } else if (timeframe == 15) {
+        return getCandlesFromM15SinceOpen(symbol);
+    } else if (timeframe == 30) {
+        return getCandlesFromM30SinceOpen(symbol);
+    } else {
+        return getCandlesFromM1SinceOpen(symbol);
+    }
+}

@@ -162,3 +162,67 @@ export const hasTwoConsecutiveCandlesAgainstVwap = (symbol: string, isLong: bool
     }
     return has;
 }
+export const getAboveWaterMomentumForPrice = (isLong: boolean, price: number, keyLevel: number, vwap: number) => {
+    if (isLong) {
+        if (price >= keyLevel) {
+            return 1;
+        } else {
+            if (price >= vwap) {
+                return 0;
+            } else {
+                return -1;
+            }
+        }
+    } else {
+        if (price <= keyLevel) {
+            return 1;
+        } else {
+            if (price <= vwap) {
+                return 0;
+            } else {
+                return -1;
+            }
+        }
+    }
+}
+
+export const getStatusForOpenDrive = (symbol: string, timeframe: number, isLong: boolean, keyLevel: number) => {
+    let candles = Models.getCandlesSinceOpenForTimeframe(symbol, timeframe);
+    let vwaps = Models.getVwapsForHigherTimeframe(symbol, timeframe);
+    if (candles.length != vwaps.length) {
+        return "error: candles and vwaps lengths do not match";
+    }
+    if (candles.length == 0) {
+        return "error: no candles";
+    }
+    if (candles.length <= 2) {
+        let price = candles[candles.length - 1].open;
+        let vwap = vwaps[vwaps.length - 1].value;
+        let momentum = getAboveWaterMomentumForPrice(isLong, price, keyLevel, vwap);
+        if (momentum == 1) {
+            return "good";
+        } else if (momentum == 0) {
+            return "weak momentum";
+        } else {
+            return "reversal";
+        }
+    }
+    let lastStatus = "";
+    for (let i = 1; i < candles.length - 1; i++) {
+        let prevCandle = candles[i - 1];
+        let currentCandle = candles[i];
+        let prevVwap = vwaps[i - 1].value;
+        let currentVwap = vwaps[i].value;
+        let prevMomentum = getAboveWaterMomentumForPrice(isLong, prevCandle.close, keyLevel, prevVwap);
+        let currentMomentum = getAboveWaterMomentumForPrice(isLong, currentCandle.close, keyLevel, currentVwap);
+        if (prevMomentum == -1 && currentMomentum == -1) {
+            return "2 consecutive reversal candles";
+        }
+        if (prevMomentum <= 0 && currentMomentum <= 0) {
+            lastStatus = "2 consecutive weak momentum candles";
+        } else {
+            lastStatus = "good";
+        }
+    }
+    return lastStatus;
+}

@@ -1596,7 +1596,30 @@ const setupTradebookButtons = (symbol: string, longContainer: HTMLElement, short
     });
     return tradebooksMap;
 }
-const createTradebookUI = (tradebook: Tradebook, sideBar: HTMLElement, className: string) => {
+const createTradebookUINew = (tradebook: Tradebook, sideBar: HTMLElement, className: string) => {
+    let entryMethods = tradebook.getEntryMethods();
+    let container = document.createElement("div");
+    let title = document.createElement("div");
+    title.textContent = tradebook.buttonLabel;
+    container.appendChild(title);
+    let stats = document.createElement("div");
+    container.appendChild(stats);
+    let buttons: HTMLElement[] = [];
+    entryMethods.forEach(entryMethod => {
+        let entryMethodButton = createButton(entryMethod, "div", container);
+        entryMethodButton.classList.add(className);
+        container.appendChild(entryMethodButton);
+        buttons.push(entryMethodButton);
+    });
+    return { buttons, stats, container };
+}
+
+const createTradebookUI = (tradebook: Tradebook, sideBar: HTMLElement, className: string) => {\
+    let entryMethods = tradebook.getEntryMethods();
+    if (entryMethods.length > 0) {
+        createTradebookUINew(tradebook, sideBar, className);
+        return;
+    }
     let buttonText = tradebook.buttonLabel;
     let container = document.createElement("div");
     let mainButton = createButton(buttonText, "div", container);
@@ -1652,23 +1675,7 @@ const createTradebookUI = (tradebook: Tradebook, sideBar: HTMLElement, className
             tradebook.startEntry(pointerEvent.shiftKey, false, entryParametersList[i]);
         });
     }
-    let entryMethods = tradebook.getEntryMethods();
-    entryMethods.forEach(entryMethod => {
-        let entryMethodButton = createButton(entryMethod, "div", container);
-        entryMethodButton.classList.add(className);
-        container.appendChild(entryMethodButton);
-        buttons.push(entryMethodButton);
-        let entryParameter: Models.TradebookEntryParameters = {
-            useCurrentCandleHigh: false,
-            useFirstNewHigh: false,
-            useMarketOrderWithTightStop: false,
-            entryMethod: entryMethod,
-        };
-        entryMethodButton.addEventListener("click", (pointerEvent) => {
-            Firestore.logInfo(`tradebook ${tradebook.buttonLabel} ${entryMethod} clicked`);
-            tradebook.startEntry(pointerEvent.shiftKey, false, entryParameter);
-        });
-    });
+    
 
     let stats = document.createElement("div");
     container.appendChild(stats);

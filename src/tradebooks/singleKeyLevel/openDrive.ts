@@ -16,6 +16,14 @@ import * as Patterns from '../../algorithms/patterns';
 import * as GlobalSettings from '../../config/globalSettings';
 import * as LongDocs from '../tradebookDocs/openDriveLong';
 import * as ShortDocs from '../tradebookDocs/openDriveShort';
+import * as VwapPatterns from '../../algorithms/vwapPatterns';
+
+enum OpenDriveEntryMethod {
+    M1 = "M1",
+    M5 = "M5",
+    M15 = "M15",
+    M30 = "M30",
+}
 
 export class OpenDrive extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
@@ -62,7 +70,16 @@ export class OpenDrive extends SingleKeyLevelTradebook {
         let entryPrice = Chart.getBreakoutEntryPrice(this.symbol, this.isLong, useMarketOrder, parameters);
         let stopOutPrice = Chart.getStopLossPrice(this.symbol, this.isLong, true, null);
         if (parameters.entryMethod) {
-            // TODO: check timeframe
+            let status = "";
+            if (parameters.entryMethod == OpenDriveEntryMethod.M1) {
+                status = VwapPatterns.getStatusForOpenDrive(this.symbol, 1, this.isLong, this.getKeyLevel());
+            } else if (parameters.entryMethod == OpenDriveEntryMethod.M5) {
+                status = VwapPatterns.getStatusForOpenDrive(this.symbol, 5, this.isLong, this.getKeyLevel());
+            } else if (parameters.entryMethod == OpenDriveEntryMethod.M15) {
+                status = VwapPatterns.getStatusForOpenDrive(this.symbol, 15, this.isLong, this.getKeyLevel());
+            } else if (parameters.entryMethod == OpenDriveEntryMethod.M30) {
+                status = VwapPatterns.getStatusForOpenDrive(this.symbol, 30, this.isLong, this.getKeyLevel());
+            }
         }
         let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
         if (allowedSize === 0) {
@@ -347,21 +364,43 @@ export class OpenDrive extends SingleKeyLevelTradebook {
     }
 
     getEntryMethods(): string[] {
-        return ["M1", "M5", "M15", "M30"];
+        return [OpenDriveEntryMethod.M1, OpenDriveEntryMethod.M5, OpenDriveEntryMethod.M15, OpenDriveEntryMethod.M30];
     }
     onNewCandleClose(): void {
         // TODO: check timeframe
-        this.updateEntryMethodButtonStatus("M1", true);
+        this.updateEntryMethodButtonStatus(OpenDriveEntryMethod.M1);
+        this.updateEntryMethodButtonStatus(OpenDriveEntryMethod.M5);
+        this.updateEntryMethodButtonStatus(OpenDriveEntryMethod.M15);
+        this.updateEntryMethodButtonStatus(OpenDriveEntryMethod.M30);
     }
-    updateEntryMethodButtonStatus(buttonLabel: string, status: boolean): void {
+    onNewTimeframe(): void {
+        // enable for testing
+        this.updateEntryMethodButtonStatus(OpenDriveEntryMethod.M1);
+        this.updateEntryMethodButtonStatus(OpenDriveEntryMethod.M5);
+        this.updateEntryMethodButtonStatus(OpenDriveEntryMethod.M15);
+        this.updateEntryMethodButtonStatus(OpenDriveEntryMethod.M30);
+    }
+    setButtonStatus(button: HTMLElement, status: string): void {
+        button.classList.remove("active");
+        button.classList.remove("inactive");
+        button.classList.remove("degraded");
+        button.classList.add(status);
+    }
+
+    updateEntryMethodButtonStatus(buttonLabel: string): void {
         let button = this.getButtonForLabel(buttonLabel);
         if (!button) {
             return;
         }
-        if (status) {
-            button.classList.add("active");
+        let timeframe = buttonLabel.replace("M", "");
+        let status = VwapPatterns.getStatusForOpenDrive(this.symbol, parseInt(timeframe), this.isLong, this.getKeyLevel());
+        console.log(`${this.symbol} ${timeframe} status: ${status}`);
+        if (status == "good") {
+            this.setButtonStatus(button, "active");
+        } else if (status == "2 consecutive weak momentum candles") {
+            this.setButtonStatus(button, "degraded");
         } else {
-            button.classList.remove("active");
+            this.setButtonStatus(button, "inactive");
         }
     }
 }
