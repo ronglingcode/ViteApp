@@ -19,6 +19,12 @@ import * as GlobalSettings from '../../config/globalSettings';
 import * as LongDocs from '../tradebookDocs/vwapContinuationLong';
 import * as ShortDocs from '../tradebookDocs/vwapContinuationShort';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
+enum EntryMethod {
+    M1='M1',
+    M5='M5',
+    M15='M15',
+    M30='M30',
+}
 
 export class VwapContinuation extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
@@ -86,13 +92,23 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
     triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {
         let logTagName = this.isLong ? '_vwap-continuation' : '_vwap-continuation';
         let logTags = Models.generateLogTags(this.symbol, `${this.symbol}_${logTagName}`);
-        let hasTwoCandlesAgainstVwap = VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(this.symbol, this.isLong);
-        if (!hasTwoCandlesAgainstVwap) {
-            Firestore.logInfo(`normal vwap continuation entry`);
-        } else {
-            Firestore.logInfo(`slower vwap continuation entry`);
-            Helper.speak(`slower vwap continuation entry`);
-            // consider use 3 buttons, one for high/low of the day, one for higher timeframe, one for vwap bounce fail
+        let entryMethod = parameters.entryMethod;
+        if (!entryMethod) {
+            Firestore.logError(`${this.symbol} entry method is missing`, logTags);
+            return 0;
+        }
+        let timeframe = 1;
+        if (entryMethod == EntryMethod.M5) {
+            timeframe = 5;
+        } else if (entryMethod == EntryMethod.M15) {
+            timeframe = 15;
+        } else if (entryMethod == EntryMethod.M30) {
+            timeframe = 30;
+        }
+        let hasTwoCandlesAgainstVwap = VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(this.symbol, this.isLong, timeframe);
+        if (hasTwoCandlesAgainstVwap) {
+            Firestore.logError(`${this.symbol} has two candles against vwap for M${timeframe}, giving up`, logTags);
+            return 0;
         }
         let entryPrice = Chart.getBreakoutEntryPrice(this.symbol, this.isLong, useMarketOrder, parameters);
         let stopOutPrice = Chart.getStopLossPrice(this.symbol, this.isLong, true, null);
@@ -383,6 +399,44 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
     }
 
     getEntryMethods(): string[] {
-        return [];
+        return [
+            EntryMethod.M1,
+            EntryMethod.M5,
+            EntryMethod.M15,
+            EntryMethod.M30,
+        ];
+    }
+    onNewCandleClose(): void {
+        this.updateEntryMethodButtonStatus(EntryMethod.M1);
+        this.updateEntryMethodButtonStatus(EntryMethod.M5);
+        this.updateEntryMethodButtonStatus(EntryMethod.M15);
+        this.updateEntryMethodButtonStatus(EntryMethod.M30);
+    }
+    setButtonStatus(button: HTMLElement, status: string): void {
+        button.classList.remove("active");
+        button.classList.remove("inactive");
+        button.classList.remove("degraded");
+        button.classList.add(status);
+    }
+
+    updateEntryMethodButtonStatus(buttonLabel: string): void {
+        let button = this.getButtonForLabel(buttonLabel);
+        if (!button) {
+            return;
+        }
+        let timeframe = 1;
+        if (buttonLabel == EntryMethod.M5) {
+            timeframe = 5;
+        } else if (buttonLabel == EntryMethod.M15) {
+            timeframe = 15;
+        } else if (buttonLabel == EntryMethod.M30) {
+            timeframe = 30;
+        }
+        let lostMomentum = VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(this.symbol, this.isLong, timeframe);
+        if (lostMomentum) {
+            this.setButtonStatus(button, "inactive");
+        } else {
+            this.setButtonStatus(button, "active");
+        }
     }
 } 

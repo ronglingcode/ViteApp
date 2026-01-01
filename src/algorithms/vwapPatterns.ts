@@ -1,4 +1,5 @@
 import * as Models from '../models/models';
+import * as Firestore from '../firestore';
 
 export const test = () => {
     let symbol = 'NKE';
@@ -146,22 +147,6 @@ export const getStatusForVwapBounceFail = (symbol: string) => {
     return status;
 }
 
-export const hasTwoConsecutiveCandlesAgainstVwap = (symbol: string, isLong: boolean): boolean => {
-    let candles = Models.getCandlesFromM15SinceOpen(symbol);
-    let vwaps = Models.getVwapsSinceOpen(symbol);
-    let has = false;
-    for (let i = 1; i < candles.length; i++) {
-        let currentClose = candles[i].close;
-        let prevClose = candles[i - 1].close;
-        if (isLong && currentClose < vwaps[i].value && prevClose < vwaps[i - 1].value) {
-            has = true;
-        }
-        if (!isLong && currentClose > vwaps[i].value && prevClose > vwaps[i - 1].value) {
-            has = true;
-        }
-    }
-    return has;
-}
 export const getAboveWaterMomentumForPrice = (isLong: boolean, price: number, keyLevel: number, vwap: number) => {
     if (isLong) {
         if (price >= keyLevel) {
@@ -227,4 +212,33 @@ export const getStatusForOpenDrive = (symbol: string, timeframe: number, isLong:
         }
     }
     return lastStatus;
+}
+
+/**
+ * If we have 2 candles closed below vwap,
+ * then the momentum is losing and we give up for this timeframe
+ */
+export const hasTwoConsecutiveCandlesAgainstVwap = (symbol: string, isLong: boolean, timeframe: number) => {
+    let candles = Models.getCandlesSinceOpenForTimeframe(symbol, timeframe);
+    let vwaps = Models.getVwapsSinceOpenForTimeframe(symbol, timeframe);
+    if (candles.length != vwaps.length) {
+        Firestore.logError(`candles ${candles.length} vwaps ${vwaps.length}`);
+        return false;
+    }
+    if (candles.length < 2) {
+        // not 2 closed candles yet
+        return false;
+    }
+    for (let i = 1; i < candles.length-1; i++) {
+        let prevCandle = candles[i - 1];
+        let currentCandle = candles[i];
+        let prevVwap = vwaps[i - 1].value;
+        let currentVwap = vwaps[i].value;
+        let currentCloseBelowVwap = isLong ? currentCandle.close < currentVwap : currentCandle.close > currentVwap;
+        let prevCloseBelowVwap = isLong ? prevCandle.close < prevVwap : prevCandle.close > prevVwap;
+        if (currentCloseBelowVwap && prevCloseBelowVwap) {
+            return true;
+        }
+    }
+    return false;
 }
