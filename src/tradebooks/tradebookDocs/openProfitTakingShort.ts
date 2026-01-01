@@ -65,6 +65,7 @@ Bonus points for entry 1 and 2, double original risk if:
 1. make fresh premarket high in the last 5 minutes before open
 
 ## Stop Loss
+Use bookmap to find the nearest large volume dot from entry, stop out once price is above that volume dot. Can just put live stop orders near above it. After entry, price should be trading below the entry level.
 
 The higher price of 
 
