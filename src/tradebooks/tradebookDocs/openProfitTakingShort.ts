@@ -19,6 +19,14 @@ The idea behind this setup is profit taking. We expect big players will take pro
     - a new premarket high in the last 5 minutes before open
     - opened extended above vwap. 1 ATR for small cap and 0.5 ATR for large cap
 
+# Reasons to consider this setup due to too much profit taking at the open
+1. profit accumulated from previous days
+Stock had a rally from previous days and extended to a gap this morning.
+2. profit accumulated from a sudden large gap
+Stock had a large gap up of more than 1 ATR
+3. profit accumulated from premarket
+Stock opened 1 ATR above vwap, signaling too much profit from premarket traders
+
 # Entry Patterns
 
 Entry needs to happen in the first 5 minutes. Usually in the first 1-2 minutes.
