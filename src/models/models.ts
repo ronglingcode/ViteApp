@@ -357,6 +357,7 @@ export interface SymbolData {
     timeAndSalesPerSecond: TimeAndSalesPerSecond[],
     maxTimeSaleTimestamp: MaxTimeSaleTimestamp,
     camPivots: CamarillaPivots,
+    allTimeHigh: number,
 };
 export const getDefaultCamPivots = (): CamarillaPivots => {
     let pivots: CamarillaPivots = {
@@ -1082,7 +1083,8 @@ export const getDefaultSymbolData = () => {
             previousDaysSharesAverage: 0,
             rvol: 0
         },
-        camPivots: getDefaultCamPivots()
+        camPivots: getDefaultCamPivots(),
+        allTimeHigh: 0
     };
     return result;
 };
