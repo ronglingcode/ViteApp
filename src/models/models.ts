@@ -358,6 +358,7 @@ export interface SymbolData {
     maxTimeSaleTimestamp: MaxTimeSaleTimestamp,
     camPivots: CamarillaPivots,
     allTimeHigh: number,
+    previousDayCandle: CandlePlus,
 };
 export const getDefaultCamPivots = (): CamarillaPivots => {
     let pivots: CamarillaPivots = {
@@ -1084,7 +1085,20 @@ export const getDefaultSymbolData = () => {
             rvol: 0
         },
         camPivots: getDefaultCamPivots(),
-        allTimeHigh: 0
+        allTimeHigh: 0,
+        previousDayCandle: {
+            symbol: '',
+            time: 0 as LightweightCharts.UTCTimestamp,
+            open: 0,
+            high: 0,
+            low: 0,
+            close: 0,
+            volume: 0,
+            datetime: 0,
+            vwap: 0,
+            minutesSinceMarketOpen: 0,
+            firstTradeTime: 0
+        }
     };
     return result;
 };
