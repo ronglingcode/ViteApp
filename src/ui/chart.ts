@@ -1472,7 +1472,17 @@ export const drawMomentumLevels = (widget: Models.ChartWidget) => {
         }
         chart.momentumLevels = [];
         if (momentumStartForShort != 0) {
-            let text = sameLevel ? "inflection" : "downtrend start";
+            let text = "drowntrend start";
+            if (sameLevel) {
+                let topPlan = TradingPlans.getTradingPlans(widget.symbol);
+                let hasReversalForLong = topPlan.long.reversalPlan && topPlan.long.reversalPlan.keyLevel == momentumStartForShort;
+                let hasReversalForShort = topPlan.short.reversalPlan && topPlan.short.reversalPlan.keyLevel == momentumStartForShort;
+                if (hasReversalForLong || hasReversalForShort) {
+                    text = "b/o or reversal";
+                } else {
+                    text = "inflection";
+                }
+            }
             let l =
                 createPriceLine(
                     chart.candleSeries, momentumStartForShort,
