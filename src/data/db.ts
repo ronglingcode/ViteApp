@@ -15,6 +15,7 @@ import * as ProxyServer from '../api/proxyServer';
 import * as Broker from '../api/broker';
 import * as GlobalSettings from '../config/globalSettings';
 import * as UI from '../ui/ui';
+import * as CamPivots from '../indicators/camPivots';
 
 // Create a throttled version of cancelAllEntryOrders that executes once per second
 const throttledCancelAllEntryOrders = Helper.executeOncePerInterval(
@@ -257,6 +258,7 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyC
         symbolData.m1Candles = symbolData.candles;
         symbolData.m1Volumes = symbolData.volumes;
     }
+    CamPivots.updateCamPivots(symbol, symbolData, dailyCandles);
     Chart.onPriceHistoryLoaded(symbol);
 };
 export const updateFromTimeSaleForHigherTimeFrame = (

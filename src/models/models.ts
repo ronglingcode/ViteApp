@@ -356,7 +356,25 @@ export interface SymbolData {
     alpacaLevelOneQuote: LevelOneQuote,
     timeAndSalesPerSecond: TimeAndSalesPerSecond[],
     maxTimeSaleTimestamp: MaxTimeSaleTimestamp,
+    camPivots: CamarillaPivots,
 };
+export const getDefaultCamPivots = (): CamarillaPivots => {
+    let pivots: CamarillaPivots = {
+        R1: 0,
+        R2: 0,
+        R3: 0,
+        R4: 0,
+        R5: 0,
+        R6: 0,
+        S1: 0,
+        S2: 0,
+        S3: 0,
+        S4: 0,
+        S5: 0,
+        S6: 0,
+    };
+    return pivots;
+}
 export interface MaxTimeSaleTimestamp {
     timestamp: number,
     tradeIds: string[],
@@ -1063,7 +1081,8 @@ export const getDefaultSymbolData = () => {
             lastDayShares: 0,
             previousDaysSharesAverage: 0,
             rvol: 0
-        }
+        },
+        camPivots: getDefaultCamPivots()
     };
     return result;
 };
