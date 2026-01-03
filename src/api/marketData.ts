@@ -67,6 +67,54 @@ export const setPreviousDayPremarketVolume = async (symbol: string, startDate: s
   let rvol = Calculator.ratioToPercentageString(premarketDollarCollection.rvol);
   Firestore.logInfo(`${symbol} premarket volume quality: ${volumeQuality}, $${lastDayDollar}, rvol: ${rvol}, median: $${previousDaysDollarMedian}`);
 }
+export const getFullPriceHistory = async (symbol: string, isFutures: boolean) => {
+  // For futures, return empty data for now
+  if (isFutures) {
+    return {
+      today1MinuteBars: [],
+      dailyBars: []
+    };
+  }
+
+  // 1. Get 1-minute bars for today
+  let today1MinuteBars: Candle[] = [];
+  // For stocks, use current market data source
+  if (GlobalSettings.marketDataSource == "alpaca") {
+    let bars = await alpacaApi.getPriceHistory(symbol, 1);
+    // Filter to only today's bars
+    let today = new Date();
+    today1MinuteBars = bars.filter(candle => {
+      let candleDate = new Date(candle.datetime);
+      return candleDate.toDateString() === today.toDateString();
+    });
+  } else if (GlobalSettings.marketDataSource == "massive") {
+    // massiveApi.getPriceHistory() already returns only today's bars (today to tomorrow)
+    today1MinuteBars = await massiveApi.getPriceHistory(symbol, 1);
+  }
+
+  // 2. Get daily bars excluding today, starting from 3 years ago
+  let dailyBars: Candle[] = [];
+  // Calculate number of days (approximately 3 years = ~1095 days)
+  let nDays = 3 * 365; // 3 years
+  
+  // Calculate today's date (to exclude today, we pass today as endDateExcluded)
+  let today = new Date();
+  let todayString = TimeHelper.formatDateToYYYYMMDD(today);
+  
+  // Use Massive API's daily candles method (always use Massive API for daily bars)
+  dailyBars = await massiveApi.getDailyCandlesForLastNDays(symbol, nDays, todayString);
+  
+  // Filter out today's bars if any (as a safety measure)
+  dailyBars = dailyBars.filter(candle => {
+    let candleDate = new Date(candle.datetime);
+    return candleDate.toDateString() !== today.toDateString();
+  });
+
+  return {
+    today1MinuteBars: today1MinuteBars,
+    dailyBars: dailyBars
+  };
+}
 export const getPriceHistory = async (symbol: string, isFutures: boolean, timeframe: number) => {
   let candles: Candle[] = [];
   if (isFutures) {

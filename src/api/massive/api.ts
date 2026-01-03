@@ -57,3 +57,33 @@ export const getBars = async (symbol: string, url: string) => {
     });
     return candles;
 };
+
+/**
+ * Get daily candles for the last N days
+ * @param symbol - Stock symbol
+ * @param nDays - Number of days to fetch
+ * @param endDateExcluded - End date in YYYY-MM-DD format
+ * @returns Array of daily candles
+ */
+export const getDailyCandlesForLastNDays = async (
+    symbol: string,
+    nDays: number,
+    endDateExcluded: string
+  ): Promise<Models.CandlePlus[]> => {
+    const apiKey = Secret.massive().apiKey;
+    const host = 'https://api.massive.com';
+    
+    // Calculate start date
+    const end = new Date(endDateExcluded);
+    end.setDate(end.getDate() - 1);
+    const start = new Date(end);
+    start.setDate(start.getDate() - nDays - 1);
+    
+    const startDateStr = TimeHelper.formatDateToYYYYMMDD(start);
+    const endDateStr = TimeHelper.formatDateToYYYYMMDD(end);
+    
+    // Use daily aggregation endpoint
+    const url = `${host}/v2/aggs/ticker/${symbol}/range/1/day/${startDateStr}/${endDateStr}?adjusted=true&sort=asc&limit=50000&apiKey=${apiKey}`;
+    
+    return getBars(symbol, url);
+  };

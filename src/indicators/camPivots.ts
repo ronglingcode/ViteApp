@@ -1,6 +1,6 @@
 import * as Helper from '../utils/helper';
 import * as Models from '../models/models';
-export const calculateCamPivots = (symbol: string, isLong: boolean, prevHigh: number, prevLow: number, prevClose: number) => {
+export const calculateCamPivots = (symbol: string, prevHigh: number, prevLow: number, prevClose: number) => {
     const multiplier = 1.1;
     const range = (prevHigh - prevLow) * multiplier;
   

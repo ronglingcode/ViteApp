@@ -215,9 +215,9 @@ window.TradingApp.TOS.initialize().then(async () => {
             alert(`${symbol} market cap too low, only $ ${marketCap} M`);
             return;
         }
-        MarketData.getPriceHistory(symbol, Helper.isFutures(symbol), timeframe).then((candles) => {
-            // populate current chart
-            DB.initialize(symbol, candles);
+        MarketData.getFullPriceHistory(symbol, Helper.isFutures(symbol)).then((priceHistory) => {
+            // populate current chart with today's 1-minute bars
+            DB.initialize(symbol, priceHistory.today1MinuteBars, priceHistory.dailyBars);
             Chart.updateAccountUIStatusForSymbol(symbol);
             if (now > Helper.getMarketOpenTime()) {
                 AutoTrader.onMarketOpen(symbol);
