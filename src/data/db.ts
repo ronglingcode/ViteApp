@@ -85,7 +85,7 @@ const buildDataMultipleTimeFrame = (symbol: string, inputCandlesM1: Models.Candl
     symbolData.m15Vwaps = Models.aggregateVwaps(symbolData.m1Vwaps, 15);
     symbolData.m30Vwaps = Models.aggregateVwaps(symbolData.m1Vwaps, 30);
 }
-export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyCandles: Models.Candle[]) => {
+export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyCandles: Models.CandlePlus[]) => {
     let usedTimeframe = Models.getUsedTimeframe();
     let widget = Models.getChartWidget(symbol);
     let data = inputCandles;
@@ -233,13 +233,7 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyC
     allCharts[0].ma5Series?.setData(symbolData.m1ma5);
     allCharts[0].ma9Series?.setData(symbolData.m1ma9);
 
-
-    let tradingPlans = TradingPlans.getTradingPlans(symbol);
-    let keyLevels = tradingPlans.keyLevels;
-    let lastDefenseForLong = [TradingPlans.getLastDefenseForLongInRetracement(symbol)];
-    let lastDefenseForShort = [TradingPlans.getLastDefenseForShortInRetracement(symbol)];
-    Chart.drawKeyLevels(widget, keyLevels, lastDefenseForLong, lastDefenseForShort);
-
+    Chart.drawLevelsAfterChartInitialize(widget);
 
     if (symbolData.openRange) {
         setDataForOpenPrice(widget, symbolData.OpenRangeLineSeriesData);

@@ -62,6 +62,8 @@ const createTimeFrameChart = (timeframe: number, htmlElement: HTMLElement, tabIn
         tradeMarkers: [],
         tradeManagementLevels: [],
         momentumLevels: [],
+        camPivotLevels: [],
+        previousDayLevels: [],
     };
     if (timeframe == 1) {
         timeframeChart.ma5Series = lwChart.addLineSeries(ChartSettings.ma5Settings);
@@ -1502,6 +1504,65 @@ export const drawMomentumLevels = (widget: Models.ChartWidget) => {
         }
     });
 }
+
+export const drawCamPivots = (symbolData: Models.SymbolData, allCharts: Models.TimeFrameChart[], widget: Models.ChartWidget) => {
+    let pivots = symbolData.camPivots;
+    allCharts.forEach(chart => {
+        // Clear previous cam pivot lines
+        for (let i = 0; chart.camPivotLevels.length > i; i++) {
+            let l = chart.camPivotLevels[i];
+            chart.candleSeries.removePriceLine(l);
+        }
+        chart.camPivotLevels = [];
+        
+        // Draw resistance and support levels - matching Backtest colors exactly
+        for (const level of ChartSettings.camPivotLevels) {
+            const pivotKey = level.key as keyof typeof pivots;
+            const pivotValue = pivots[pivotKey];
+            if (pivotValue > 0) {
+                let l = createPriceLine(chart.candleSeries, pivotValue, level.key, level.color, level.lineWidth as LightweightCharts.LineWidth, false, "solid");
+                chart.camPivotLevels.push(l);
+            }
+        }
+    });
+}
+
+export const drawPreviousDayHighLow = (symbolData: Models.SymbolData, allCharts: Models.TimeFrameChart[]) => {
+    let prevDayCandle = symbolData.previousDayCandle;
+    let prevHigh = prevDayCandle.high;
+    let prevLow = prevDayCandle.low;
+    
+    allCharts.forEach(chart => {
+        // Clear previous day high/low lines
+        for (let i = 0; chart.previousDayLevels.length > i; i++) {
+            let l = chart.previousDayLevels[i];
+            chart.candleSeries.removePriceLine(l);
+        }
+        chart.previousDayLevels = [];
+        
+        // Draw previous day high and low in red
+        const prevDayLevels = [
+            { price: prevHigh, label: "y-high" },
+            { price: prevLow, label: "y-low" }
+        ];
+        
+        for (const level of prevDayLevels) {
+            if (level.price > 0) {
+                let l = createPriceLine(chart.candleSeries, level.price, level.label, "red", 2, false, "dashed");
+                chart.previousDayLevels.push(l);
+            }
+        }
+    });
+}
+
+export const drawLevelsAfterChartInitialize = (widget: Models.ChartWidget) => {
+    let tradingPlans = TradingPlans.getTradingPlans(widget.symbol);
+    let keyLevels = tradingPlans.keyLevels;
+    let lastDefenseForLong = [TradingPlans.getLastDefenseForLongInRetracement(widget.symbol)];
+    let lastDefenseForShort = [TradingPlans.getLastDefenseForShortInRetracement(widget.symbol)];
+    drawKeyLevels(widget, keyLevels, lastDefenseForLong, lastDefenseForShort);
+}
+
 export const drawKeyLevels = (widget: Models.ChartWidget, keyLevels: TradingPlansModels.keyLevels,
     lastSupport: number[], lastResistance: number[]) => {
     if (keyLevels.otherLevels) {
@@ -1517,6 +1578,10 @@ export const drawKeyLevels = (widget: Models.ChartWidget, keyLevels: TradingPlan
         createPriceLine(widget.candleSeries, price, "last resistance", "red", 2, false, "solid");
     });
     drawMomentumLevels(widget);
+    let symbolData = Models.getSymbolData(widget.symbol);
+    let allCharts = Models.getChartsInAllTimeframes(widget.symbol);
+    drawCamPivots(symbolData, allCharts, widget);
+    drawPreviousDayHighLow(symbolData, allCharts);
 };
 export const drawIndicatorsForNewlyClosedCandle = (end: number, candles: Models.CandlePlus[], widget: Models.ChartWidget) => {
     // only check within first hour after market open

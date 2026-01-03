@@ -253,3 +253,18 @@ export const openRangeLineSettings: any = {
     lastValueVisible: false,
     autoscaleInfoProvider: () => null
 };
+
+export const camPivotLevels = [
+    { key: "R4", color: "#90EE90", lineWidth: 2 }, // Light Green
+    { key: "R3", color: "#00FF00", lineWidth: 2 }, // Green
+    { key: "R2", color: "#006400", lineWidth: 1 }, // Dark Green
+    { key: "R1", color: "#006400", lineWidth: 1 }, // Dark Green
+    { key: "R5", color: "#00FFFF", lineWidth: 1 }, // Cyan
+    { key: "R6", color: "#00FFFF", lineWidth: 1 }, // Cyan
+    { key: "S4", color: "#FFC0CB", lineWidth: 2 }, // Pink
+    { key: "S3", color: "#FF0000", lineWidth: 2 }, // Red
+    { key: "S2", color: "#8B0000", lineWidth: 1 }, // Dark Red
+    { key: "S1", color: "#8B0000", lineWidth: 1 }, // Dark Red
+    { key: "S5", color: "#FF00FF", lineWidth: 1 }, // Magenta
+    { key: "S6", color: "#FF00FF", lineWidth: 1 }, // Magenta
+];

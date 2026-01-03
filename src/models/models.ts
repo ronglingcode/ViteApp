@@ -208,6 +208,8 @@ export interface TimeFrameChart {
     maxEntryLine?: LightweightCharts.IPriceLine,
     tradeManagementLevels: LightweightCharts.IPriceLine[],
     momentumLevels: LightweightCharts.IPriceLine[],
+    camPivotLevels: LightweightCharts.IPriceLine[],
+    previousDayLevels: LightweightCharts.IPriceLine[],
     toolTipPriceLine?: LightweightCharts.IPriceLine,
 }
 export interface ChartState {
