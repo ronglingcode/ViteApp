@@ -6,6 +6,7 @@ import * as Firestore from '../firestore';
 import * as TradebookUtil from './tradebookUtil';
 import * as LongDocs from './tradebookDocs/breakdownReversalLong';
 import * as ShortDocs from './tradebookDocs/breakdownReversalLong';
+import * as FalseBreakout from '../patterns/falseBreakout';
 
 export class BreakoutReversal extends Tradebook {
     public static readonly reversalLong: string = 'ReversalLong';
@@ -183,5 +184,54 @@ export class BreakoutReversal extends Tradebook {
 
         getEntryMethods(): string[] {
             return [];
+        }
+
+        getNumberOfMinutesSinceBreakout(): number {
+            let candles = Models.getM1ClosedCandlesSinceOpen(this.symbol);
+            let breakoutDirection = !this.isLong;
+            let breakoutCandleIndex = -1;
+            for (let i = 0; i < candles.length; i++) {
+                let candle = candles[i];
+                if (breakoutDirection && candle.close > this.keyLevel) {
+                    breakoutCandleIndex = i;
+                    break;
+                }
+                if (!breakoutDirection && candle.close < this.keyLevel) {
+                    breakoutCandleIndex = i;
+                    break;
+                }
+            }
+            if (breakoutCandleIndex == -1) {
+                return 0;
+            }
+            return candles.length - breakoutCandleIndex;
+        }
+        checkEarlyExits() : Models.CheckRulesResult {
+            if (FalseBreakout.isConfirmedFalseBreakout(this.symbol, this.isLong, this.keyLevel)) {
+                let numberOfMinutesSinceBreakout = this.getNumberOfMinutesSinceBreakout();
+                if (numberOfMinutesSinceBreakout < 5) {
+                    return {
+                        allowed: false,
+                        reason: "confirmed false breakout within 5 minutes",
+                    };
+                }
+            }
+            let result: Models.CheckRulesResult = {
+                allowed: true,
+                reason: "reversal tradebook",
+            };
+            return result;
+        }
+        
+        getDisallowedReasonToAdjustSingleLimitOrder(symbol: string, keyIndex: number, order: Models.OrderModel, pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
+            return this.checkEarlyExits();
+        }
+
+        getDisallowedReasonToAdjustSingleStopOrder(symbol: string, keyIndex: number, order: Models.OrderModel, pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
+            return this.checkEarlyExits();
+        }
+
+        getDisallowedReasonToMarketOutSingleOrder(symbol: string, keyIndex: number, logTags: Models.LogTags): Models.CheckRulesResult {
+            return this.checkEarlyExits();
         }
     }
