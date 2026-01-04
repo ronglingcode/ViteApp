@@ -39,3 +39,57 @@ export const isConfirmedFalseBreakout = (symbol: string, breakoutDirection: bool
     }
     return true;
 }
+
+export const oneClosedAboveNextClosedBelowJustHappened = (closedCandles: Models.Candle[], keyLevel: number, breakoutDirectionIsLong: boolean) => {
+    if (closedCandles.length < 2) {
+        return false;
+    }
+    let firstBreakoutCandleIndex = -1;
+    for (let i = 0; i < closedCandles.length - 1; i++) {
+        let candle = closedCandles[i];
+        if (breakoutDirectionIsLong && candle.close > keyLevel) {
+            firstBreakoutCandleIndex = i;
+            break;
+        } else if (!breakoutDirectionIsLong && candle.close < keyLevel) {
+            firstBreakoutCandleIndex = i;
+            break;
+        }
+    }
+    if (firstBreakoutCandleIndex === -1) {
+        return false;
+    }
+    let nextCandleIndex = firstBreakoutCandleIndex + 1;
+    // must be the last closed candle for the timing
+    if (nextCandleIndex != closedCandles.length - 1) {
+        return false;
+    }
+    if (breakoutDirectionIsLong) {
+        return closedCandles[nextCandleIndex].close < keyLevel;
+    } else {
+        return closedCandles[nextCandleIndex].close > keyLevel;
+    }
+}
+/**
+ * @returns true if making higher lows from open to close 1st candle above key level
+ */
+export const isBreakoutOnFirstRally = (closedCandles: Models.Candle[], keyLevel: number, breakoutDirectionIsLong: boolean) => {
+    if (closedCandles.length < 2) {
+        return false;
+    }
+
+    for(let i = 0; i < closedCandles.length; i++) {
+        let previousCandle = closedCandles[i - 1];
+        let currentCandle = closedCandles[i];
+        if (breakoutDirectionIsLong && currentCandle.low < previousCandle.low) {
+            return false;          
+        } else if (!breakoutDirectionIsLong && currentCandle.high > previousCandle.high) {
+            return false;
+        } 
+        if (breakoutDirectionIsLong && currentCandle.close >= keyLevel) {
+            return true;
+        } else if (!breakoutDirectionIsLong && currentCandle.close <= keyLevel) {
+            return true;
+        }
+    }
+    return false;
+}

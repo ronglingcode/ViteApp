@@ -234,4 +234,27 @@ export class BreakoutReversal extends Tradebook {
         getDisallowedReasonToMarketOutSingleOrder(symbol: string, keyIndex: number, logTags: Models.LogTags): Models.CheckRulesResult {
             return this.checkEarlyExits();
         }
+        onNewCandleClose(): void {
+            let breakoutDirection = !this.isLong;
+            let closedCandles = Models.getM1ClosedCandlesSinceOpen(this.symbol);
+            if (FalseBreakout.isBreakoutOnFirstRally(closedCandles, this.keyLevel, breakoutDirection)) {
+                FalseBreakout.oneClosedAboveNextClosedBelowJustHappened(closedCandles, this.keyLevel, breakoutDirection);
+                // trigger auto entry
+                let logTagName = this.isLong ? '_long_reversal' : '_short_reversal';
+                let logTags = Models.generateLogTags(this.symbol, `${this.symbol}_${logTagName}`);
+
+                let lastClosedCandle = closedCandles[closedCandles.length - 1];
+                let entryPrice = this.isLong ? lastClosedCandle.high : lastClosedCandle.low;
+                let symbolData = Models.getSymbolData(this.symbol);
+                let stopOutPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
+                let riskLevelPrice = Models.getRiskLevelPrice(this.symbol, stopOutPrice);
+                let allowedSize = this.validateEntry(entryPrice, stopOutPrice, logTags);
+                if (allowedSize === 0) {
+                    Firestore.logError(`${this.symbol} not allowed entry`, logTags);
+                    return;
+                }
+                let planCopy = JSON.parse(JSON.stringify(this.reversalPlan)) as TradingPlansModels.ReversalPlan;
+                this.submitEntryOrdersBase(false, false, entryPrice, stopOutPrice, riskLevelPrice, allowedSize, this.reversalPlan, logTags);
+            }
+        }
     }
