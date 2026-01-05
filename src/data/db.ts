@@ -85,7 +85,7 @@ const buildDataMultipleTimeFrame = (symbol: string, inputCandlesM1: Models.Candl
     symbolData.m15Vwaps = Models.aggregateVwaps(symbolData.m1Vwaps, 15);
     symbolData.m30Vwaps = Models.aggregateVwaps(symbolData.m1Vwaps, 30);
 }
-export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyCandles: Models.CandlePlus[]) => {
+export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyCandles: Models.Candle[]) => {
     let usedTimeframe = Models.getUsedTimeframe();
     let widget = Models.getChartWidget(symbol);
     let data = inputCandles;

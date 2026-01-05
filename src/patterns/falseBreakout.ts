@@ -77,7 +77,7 @@ export const isBreakoutOnFirstRally = (closedCandles: Models.Candle[], keyLevel:
         return false;
     }
 
-    for(let i = 0; i < closedCandles.length; i++) {
+    for(let i = 1; i < closedCandles.length; i++) {
         let previousCandle = closedCandles[i - 1];
         let currentCandle = closedCandles[i];
         if (breakoutDirectionIsLong && currentCandle.low < previousCandle.low) {

@@ -357,6 +357,7 @@ export const onMinuteClosed = (
     }
     if (seconds > 10) {
         AutoLevelMomentum.checkMomentumLevelOnClose(symbol, newlyClosedCandle, symbolData);
+        TradebooksManager.onNewCandleCloseForSymbol(symbol);
     }
     if (seconds < -10 || seconds > 10) {
         // each minute close except for the last minute close before open, it will be handle by on market open

@@ -1,7 +1,7 @@
 import * as Models from '../models/models';
 import * as CamPivots from '../indicators/camPivots';
 
-export const updateIndicators = (symbol: string, symbolData: Models.SymbolData, dailyCandles: Models.CandlePlus[]) => {
+export const updateIndicators = (symbol: string, symbolData: Models.SymbolData, dailyCandles: Models.Candle[]) => {
     if (!dailyCandles || dailyCandles.length === 0) {
         return;
     }
@@ -10,7 +10,7 @@ export const updateIndicators = (symbol: string, symbolData: Models.SymbolData, 
     CamPivots.updateCamPivots(symbol, symbolData, dailyCandles);
 }
 
-export const updateAllTimeHigh = (symbolData: Models.SymbolData, dailyCandles: Models.CandlePlus[]) => {
+export const updateAllTimeHigh = (symbolData: Models.SymbolData, dailyCandles: Models.Candle[]) => {
     // Find the highest high across all daily candles
     let allTimeHigh = 0;
     for (let i = 0; i < dailyCandles.length; i++) {

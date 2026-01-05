@@ -360,7 +360,7 @@ export interface SymbolData {
     maxTimeSaleTimestamp: MaxTimeSaleTimestamp,
     camPivots: CamarillaPivots,
     allTimeHigh: number,
-    previousDayCandle: CandlePlus,
+    previousDayCandle: Candle,
 };
 export const getDefaultCamPivots = (): CamarillaPivots => {
     let pivots: CamarillaPivots = {
@@ -1098,8 +1098,7 @@ export const getDefaultSymbolData = () => {
             volume: 0,
             datetime: 0,
             vwap: 0,
-            minutesSinceMarketOpen: 0,
-            firstTradeTime: 0
+
         }
     };
     return result;

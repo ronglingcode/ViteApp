@@ -422,6 +422,7 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
     updateEntryMethodButtonStatus(buttonLabel: string): void {
         let button = this.getButtonForLabel(buttonLabel);
         if (!button) {
+            Firestore.logError(`${this.symbol} button not found for ${buttonLabel}`);
             return;
         }
         let timeframe = 1;
