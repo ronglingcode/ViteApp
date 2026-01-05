@@ -43,6 +43,7 @@ import * as Agent from './ai/agent';
 import * as VwapPatterns from './algorithms/vwapPatterns';
 import './tosClient';
 import * as TradebooksManager from './tradebooks/tradebooksManager';
+import * as GlobalSettings from './config/globalSettings';
 
 declare let window: Models.MyWindow;
 
@@ -274,3 +275,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+let feed1 = document.getElementsByClassName('alpacaFeed')[0] as HTMLElement;
+let feed2 = document.getElementsByClassName('massiveFeed')[0] as HTMLElement;
+if (feed1) {
+    if (!GlobalSettings.showDataFeedsBar) {
+        feed1.style.display = 'none';
+    }
+}
+if (feed2) {
+    if (!GlobalSettings.showDataFeedsBar) {
+        feed2.style.display = 'none';
+    }
+}

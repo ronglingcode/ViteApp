@@ -23,6 +23,7 @@ import * as DB from '../data/db';
 import * as TimeHelper from '../utils/timeHelper';
 import * as TraderFocus from '../controllers/traderFocus';
 import * as QuestionPopup from './questionPopup';
+import * as GlobalSettings from '../config/globalSettings';
 declare let window: Models.MyWindow;
 
 export const setup = () => {
@@ -553,10 +554,15 @@ export const addToTimeAndSalesOld = (widget: Models.ChartWidget, lastPrice: numb
 export const addToTimeAndSales = (
     symbol: string, classname: string, shouldFilter: boolean, record: Models.TimeSale
 ) => {
+    if (!GlobalSettings.showDataFeedsBar) {
+        return;
+    }
+
     let widget = Models.getChartWidget(symbol);
     if (!widget) {
         return;
     }
+    
     let container = widget.htmlContents.container;
     let classnameForUnfiltered = `${classname}Unfiltered`;
     let classnameForFiltered = `${classname}Filtered`;

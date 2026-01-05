@@ -4,3 +4,4 @@ export const batchCount: number = 10;
 export const marketDataSource: string = "massive"; // alpaca, massive
 export const competeForTimeAndSales: boolean = true;
 export const allowLiveStats: boolean = false;
+export const showDataFeedsBar: boolean = false;
