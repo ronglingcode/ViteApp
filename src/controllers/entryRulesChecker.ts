@@ -42,13 +42,15 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
     let symbolData = Models.getSymbolData(symbol);
     let volumeQuality = SetupQuality.getPremarketVolumeQuality(symbol, symbolData.premarketDollarCollection);
     if (volumeQuality == Models.PremarketVolumeQuality.TooLow) {
-        Firestore.logError(`${symbol} premarket volume quality too low: ${volumeQuality}`);
-       // return 0;
+        if (secondsSinceMarketOpen < 60 * 15) {
+            Firestore.logError(`${symbol} premarket volume quality too low: ${volumeQuality}, wait 15 minutes`);
+            return 0;
+        }
     }
     if (volumeQuality == Models.PremarketVolumeQuality.Ok) {
         if (secondsSinceMarketOpen < 60) {
             Firestore.logError(`${symbol} premarket volume quality is ok, but still too early to trade`, logTags);
-            //return 0;
+            return 0;
         }
     }
     if (liquidityScale < 0.9) {
