@@ -275,15 +275,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
-let feed1 = document.getElementsByClassName('alpacaFeed')[0] as HTMLElement;
-let feed2 = document.getElementsByClassName('massiveFeed')[0] as HTMLElement;
-if (feed1) {
-    if (!GlobalSettings.showDataFeedsBar) {
-        feed1.style.display = 'none';
+
+if (!GlobalSettings.showDataFeedsBar) {
+    let feed1 = document.getElementsByClassName('alpacaFeed');
+    let feed2 = document.getElementsByClassName('massiveFeed');
+    for (let i = 0; i < feed1.length; i++) {
+        (feed1[i] as HTMLElement).style.display = 'none';
     }
-}
-if (feed2) {
-    if (!GlobalSettings.showDataFeedsBar) {
-        feed2.style.display = 'none';
+    for (let i = 0; i < feed2.length; i++) {
+        (feed2[i] as HTMLElement).style.display = 'none';
     }
 }
