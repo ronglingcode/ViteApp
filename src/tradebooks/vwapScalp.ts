@@ -5,6 +5,7 @@ import * as Models from '../models/models';
 import * as Chart from '../ui/chart';
 import * as TradebookUtil from './tradebookUtil';
 import * as Helper from '../utils/helper';
+import * as GlobalSettings from '../config/globalSettings';
 
 export class VwapScalp extends Tradebook {
     public static readonly vwapScalpLong: string = 'VwapScalpLong';
@@ -67,6 +68,7 @@ export class VwapScalp extends Tradebook {
             }
         }
 
+        if (GlobalSettings.checkMaxEntryThreshold) {
         if (this.maxEntry > 0) {
             if (this.isLong) {
                 if (entryPrice > this.maxEntry) {
@@ -79,7 +81,7 @@ export class VwapScalp extends Tradebook {
                     return 0;
                 }
             }
-        }
+        }}
 
         // TODO: check global rules
         return 0.21;
@@ -216,6 +218,9 @@ export class VwapScalp extends Tradebook {
         }
     }
     updateMaxEntryThreshold(newValue: number): void {
+        if (!GlobalSettings.checkMaxEntryThreshold) {
+            return;
+        }
         if (this.maxEntry == 0) {
             this.maxEntry = newValue;
             Chart.drawMaxEntry(this.symbol, this.maxEntry);
