@@ -12,6 +12,7 @@ import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as TradingState from '../models/tradingState';
 import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as OrderFlowManager from '../controllers/orderFlowManager';
+import * as VwapPatterns from './vwapPatterns';
 declare let window: Models.MyWindow;
 
 export const checkVwap = (symbol: string,
@@ -569,7 +570,38 @@ export const getDisallowedReasonBasedOnOpenPriceZone = (
         }
     }
 }
-
+export const isAllowedByVwapContinuation = (symbol: string, isLong: boolean, entryPrice: number) => {
+    if (!VwapPatterns.isVwapContinuationEntry(symbol, isLong, entryPrice)) {
+        return true;
+    }
+    if (!VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(symbol, isLong, 1)) {
+        return true;
+    };
+    // if already closed 2 candles against vwap, must wait for 10 minutes
+    let minutesSinceMarketOpen = Helper.getMinutesSinceMarketOpen(new Date());
+    if (minutesSinceMarketOpen < 10) {
+        return false;
+    }
+    // after 10 minutes, need to make sure 5 minute candle is still following vwap
+    if (!VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(symbol, isLong, 5)) {
+        return true;
+    }
+    // if 5 minute candle is not following vwap, need to wait for 30 minutes to check 15-minute candle
+    if (minutesSinceMarketOpen < 30) {
+        return false;
+    }
+    if (!VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(symbol, isLong, 15)) {
+        return true;
+    }
+    // if 15 minute candle is not following vwap, need to wait for 60 minutes to check 30-minute candle
+    if (minutesSinceMarketOpen < 60) {
+        return false;
+    }
+    if (!VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(symbol, isLong, 30)) {
+        return true;
+    }
+    return false;
+}
 
 export const isAllowedByMovingAverage = (symbol: string, isLong: boolean, useMarketOrder: boolean) => {
     console.log(`check ma ${useMarketOrder}`);

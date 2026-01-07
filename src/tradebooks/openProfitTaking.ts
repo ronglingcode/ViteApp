@@ -6,6 +6,7 @@ import * as Firestore from '../firestore';
 import * as TradebookUtil from './tradebookUtil';
 import * as Helper from '../utils/helper';
 import * as ShortDocs from './tradebookDocs/openProfitTakingShort';
+import * as Rules from '../algorithms/rules';
 
 export class OpenProfitTaking extends Tradebook {
     public static readonly openProfitTakingLong: string = 'OpenProfitTakingLong';
@@ -72,6 +73,11 @@ export class OpenProfitTaking extends Tradebook {
                 Firestore.logError(`current candle is against momentum, use stop order instead`, logTags);
                 return 0;
             }
+        }
+
+        if (!Rules.isAllowedByVwapContinuation(this.symbol, this.isLong, entryPrice)) {
+            Firestore.logError(`entry price is not allowed by vwap continuation`, logTags);
+            return 0;
         }
 
         return 0.21;

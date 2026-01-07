@@ -1,5 +1,6 @@
 import * as Models from '../models/models';
 import * as Firestore from '../firestore';
+import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 
 export const test = () => {
     let symbol = 'NKE';
@@ -241,4 +242,22 @@ export const hasTwoConsecutiveCandlesAgainstVwap = (symbol: string, isLong: bool
         }
     }
     return false;
+}
+
+export const isVwapContinuationEntry = (symbol: string, isLong: boolean, entryPrice: number) => {
+    let plan = TradingPlans.getTradingPlans(symbol);
+    if (!TradingPlans.hasSingleMomentumLevel(plan)) {
+        return false;
+    }
+    let openPrice = Models.getOpenPrice(symbol);
+    if (!openPrice) {
+        return false;
+    }
+    let keyLevel = TradingPlans.getSingleMomentumLevel(plan);
+    let vwap = Models.getCurrentVwap(symbol);
+    if (isLong) {
+        return openPrice >= vwap && entryPrice >= vwap && vwap >= keyLevel.high;
+    } else {
+        return openPrice <= vwap && entryPrice <= vwap && vwap <= keyLevel.low;
+    }
 }
