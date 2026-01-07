@@ -1312,6 +1312,20 @@ export const getHigherTimeFrameVolumes = (symbol: string, timeframe: number) => 
         return [];
     }
 }
+
+export const getHigherTimeFrameVwaps = (symbol: string, timeframe: number) => {
+    let symbolData = getSymbolData(symbol);
+    if (timeframe == 5) {
+        return symbolData.m5Vwaps;
+    } else if (timeframe == 15) {
+        return symbolData.m15Vwaps;
+    } else if (timeframe == 30) {
+        return symbolData.m30Vwaps;
+    } else {
+        return [];
+    }
+}
+
 export const getCandlesLog = (candles: Candle[]) => {
     let candleLogs = "";
     for (let i = 0; i < candles.length; i++) {

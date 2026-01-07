@@ -271,6 +271,9 @@ export const updateFromTimeSaleForHigherTimeFrame = (
     let higherTimeFrameVolumes = Models.getHigherTimeFrameVolumes(symbol, timeframe);
     let lastVolume = higherTimeFrameVolumes[higherTimeFrameVolumes.length - 1];
 
+    let higherTimeFrameVwaps = Models.getHigherTimeFrameVwaps(symbol, timeframe);
+    let lastVwap = higherTimeFrameVwaps[higherTimeFrameVwaps.length - 1];
+
 
     if (timeframeBucket < Config.Settings.marketOpenTime) {
         // update pre-market indicators
@@ -298,6 +301,7 @@ export const updateFromTimeSaleForHigherTimeFrame = (
         }
         lastCandle.close = lastPrice;
         lastCandle.volume += lastSize;
+        lastVwap.value = Models.getCurrentVwap(symbol);
 
     } else {
         // moved to a new candle
@@ -329,18 +333,26 @@ export const updateFromTimeSaleForHigherTimeFrame = (
             value: lastSize
         };
         higherTimeFrameVolumes.push(lastVolume);
+        lastVwap = {
+            time: newTime,
+            value: Models.getCurrentVwap(symbol)
+        };
+        higherTimeFrameVwaps.push(lastVwap);
     }
     //setColorForVolume(symbolData.candles, symbolData.volumes, symbolData.volumes.length - 1);
     let allCharts = Models.getChartsInAllTimeframes(symbol);
     if (timeframe == 5) {
         allCharts[1].volumeSeries.update(lastVolume);
         allCharts[1].candleSeries.update(lastCandle);
+        allCharts[1].vwapSeries.update(lastVwap);
     } else if (timeframe == 15) {
         allCharts[2].volumeSeries.update(lastVolume);
         allCharts[2].candleSeries.update(lastCandle);
+        allCharts[2].vwapSeries.update(lastVwap);
     } else if (timeframe == 30) {
         allCharts[3].volumeSeries.update(lastVolume);
         allCharts[3].candleSeries.update(lastCandle);
+        allCharts[3].vwapSeries.update(lastVwap);
     }
 }
 export const updateFromTimeSale = (timesale: Models.TimeSale) => {
