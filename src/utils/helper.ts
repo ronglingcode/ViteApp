@@ -212,8 +212,8 @@ export const isMarketOpenTime = (jsDatdeObj: Date, currentDay: Date) => {
 };
 
 export const speak = (message: string) => {
-    let seconds = getSecondsSinceMarketOpen(new Date());
-    if (seconds < 60 * 300) {
+    let minutes = getMinutesSinceMarketOpen(new Date());
+    if (minutes <  85) {
         var msg = new SpeechSynthesisUtterance();
         msg.text = message;
         window.speechSynthesis.speak(msg);
