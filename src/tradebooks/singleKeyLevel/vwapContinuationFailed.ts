@@ -77,13 +77,18 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
     triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {
         let logTagName = this.isLong ? '_vwap-continuation-failed' : '_vwap-continuation-failed';
         let logTags = Models.generateLogTags(this.symbol, `${this.symbol}_${logTagName}`);
-        let entryPrice = Chart.getBreakoutEntryPrice(this.symbol, this.isLong, useMarketOrder, parameters);
-        let stopOutPrice = Chart.getStopLossPrice(this.symbol, this.isLong, true, null);
         let entryMethod = parameters.entryMethod;
         if (!entryMethod) {
             Firestore.logError(`${this.symbol} entry method is missing`, logTags);
             return 0;
         }
+        parameters.useCurrentCandleHigh = false;
+        parameters.useFirstNewHigh = false;
+        parameters.useMarketOrderWithTightStop = false;
+
+        let entryPrice = Chart.getBreakoutEntryPrice(this.symbol, this.isLong, useMarketOrder, parameters);
+        let stopOutPrice = Chart.getStopLossPrice(this.symbol, this.isLong, true, null);
+        
         let allowedSize = 0;
         if (entryMethod == EntryMethod.ClosedCandle) {
             allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, true, logTags);
@@ -101,7 +106,7 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
             return 0;
         }
 
-        this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, stopOutPrice, allowedSize, "", logTags);
+        this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, stopOutPrice, allowedSize, entryMethod, logTags);
         return allowedSize;
     }
     private validateEntryForHigherTimeframe(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean,

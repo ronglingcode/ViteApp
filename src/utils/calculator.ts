@@ -6,9 +6,17 @@ import * as Models from '../models/models';
 export const updateStopPriceFromCurrentQuote = (symbol: string, price: number, orderIsLong: boolean) => {
     let symbolData = Models.getSymbolData(symbol);
     if (orderIsLong) {
-        return Math.max(price, symbolData.askPrice);
+        if (symbolData.askPrice) {
+            return Math.max(price, symbolData.askPrice);
+        } else {
+            return price;
+        }
     } else {
-        return Math.min(price, symbolData.bidPrice);
+        if (symbolData.bidPrice) {
+            return Math.min(price, symbolData.bidPrice);
+        } else {
+            return price;
+        }
     }
 }
 
