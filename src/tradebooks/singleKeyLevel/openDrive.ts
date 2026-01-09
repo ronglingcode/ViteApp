@@ -17,6 +17,7 @@ import * as GlobalSettings from '../../config/globalSettings';
 import * as LongDocs from '../tradebookDocs/openDriveLong';
 import * as ShortDocs from '../tradebookDocs/openDriveShort';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
+import * as TradebookUtils from '../utils';
 
 enum OpenDriveEntryMethod {
     M1 = "M1",
@@ -397,13 +398,6 @@ export class OpenDrive extends SingleKeyLevelTradebook {
         this.updateEntryMethodButtonStatus(OpenDriveEntryMethod.M15);
         this.updateEntryMethodButtonStatus(OpenDriveEntryMethod.M30);
     }
-    setButtonStatus(button: HTMLElement, status: string): void {
-        button.classList.remove("active");
-        button.classList.remove("inactive");
-        button.classList.remove("degraded");
-        button.classList.add(status);
-    }
-
     updateEntryMethodButtonStatus(buttonLabel: string): void {
         let button = this.getButtonForLabel(buttonLabel);
         if (!button) {
@@ -413,11 +407,11 @@ export class OpenDrive extends SingleKeyLevelTradebook {
         let status = VwapPatterns.getStatusForOpenDrive(this.symbol, parseInt(timeframe), this.isLong, this.getKeyLevel());
         console.log(`${this.symbol} ${timeframe} status: ${status}`);
         if (status.startsWith("good")) {
-            this.setButtonStatus(button, "active");
+            TradebookUtils.setButtonStatus(button, "active");
         } else if (status.startsWith("2 consecutive weak momentum candles")) {
-            this.setButtonStatus(button, "degraded");
+            TradebookUtils.setButtonStatus(button, "degraded");
         } else {
-            this.setButtonStatus(button, "inactive");
+            TradebookUtils.setButtonStatus(button, "inactive");
         }
     }
 }

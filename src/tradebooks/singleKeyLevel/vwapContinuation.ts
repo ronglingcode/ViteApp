@@ -19,6 +19,7 @@ import * as GlobalSettings from '../../config/globalSettings';
 import * as LongDocs from '../tradebookDocs/vwapContinuationLong';
 import * as ShortDocs from '../tradebookDocs/vwapContinuationShort';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
+import * as TradebookUtils from '../utils';
 
 export class VwapContinuation extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
@@ -406,13 +407,6 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M15);
         this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M30);
     }
-    setButtonStatus(button: HTMLElement, status: string): void {
-        button.classList.remove("active");
-        button.classList.remove("inactive");
-        button.classList.remove("degraded");
-        button.classList.add(status);
-    }
-
     updateEntryMethodButtonStatus(buttonLabel: string): void {
         let button = this.getButtonForLabel(buttonLabel);
         if (!button) {
@@ -429,9 +423,9 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         }
         let lostMomentum = VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(this.symbol, this.isLong, timeframe);
         if (lostMomentum) {
-            this.setButtonStatus(button, "inactive");
+            TradebookUtils.setButtonStatus(button, "inactive");
         } else {
-            this.setButtonStatus(button, "active");
+            TradebookUtils.setButtonStatus(button, "active");
         }
     }
 } 
