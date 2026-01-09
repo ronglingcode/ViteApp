@@ -56,10 +56,11 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
     if (liquidityScale < 0.9) {
         Firestore.logInfo(`liquidity scale is ${liquidityScale}`, logTags);
     }
+    /*
     if (!Rules.isAllowedByMovingAverage(symbol, isLong, useMarketOrder)) {
         Firestore.logError(`not allowed by moving average`, logTags);
         return 0;
-    }
+    }*/
 
     if (Models.hasEntryOrdersInSameDirection(symbol, isLong)) {
         Firestore.logInfo(`had entries in the same direction, old entries will be cancelled`, logTags);

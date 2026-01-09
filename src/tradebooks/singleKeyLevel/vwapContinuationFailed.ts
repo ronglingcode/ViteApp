@@ -86,16 +86,16 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
         }
         let allowedSize = 0;
         if (entryMethod == EntryMethod.ClosedCandle) {
-            allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
+            allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, true, logTags);
         } else if (entryMethod == EntryMethod.LiveCandle) {
-            allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
+            allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, false, logTags);
         } else if (entryMethod == EntryMethod.M5NewHighLow) {
             allowedSize = this.validateEntryForHigherTimeframe(entryPrice, stopOutPrice, useMarketOrder, 5, logTags);
         } else if (entryMethod == EntryMethod.M15NewHighLow) {
             allowedSize = this.validateEntryForHigherTimeframe(entryPrice, stopOutPrice, useMarketOrder, 15, logTags);
         } else if (entryMethod == EntryMethod.M30NewHighLow) {
             allowedSize = this.validateEntryForHigherTimeframe(entryPrice, stopOutPrice, useMarketOrder, 30, logTags);
-        } 
+        }
         if (allowedSize === 0) {
             Firestore.logError(`${this.symbol} not allowed entry`, logTags);
             return 0;
@@ -104,14 +104,14 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
         this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, stopOutPrice, allowedSize, "", logTags);
         return allowedSize;
     }
-    private validateEntryForHigherTimeframe(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, 
+    private validateEntryForHigherTimeframe(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean,
         timeframe: number, logTags: Models.LogTags): number {
         let symbol = this.symbol;
         let isLong = this.isLong;
         let candles = Models.getCandlesSinceOpenForTimeframe(symbol, timeframe);
         let vwaps = Models.getVwapsSinceOpenForTimeframe(symbol, timeframe);
         let entryPriceBreaksCandleAndVwap = false;
-        for (let i = 0; i < candles.length; i++) {
+        for (let i = 0; i < candles.length - 1; i++) {
             let candle = candles[i];
             let vwap = vwaps[i];
             // candle must has one side favor vwap
@@ -121,7 +121,7 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
                     break;
                 }
             } else {
-                if (entryPrice <= candle.low && candle.low <=vwap.value) {
+                if (entryPrice <= candle.low && candle.low <= vwap.value) {
                     entryPriceBreaksCandleAndVwap = true;
                     break;
                 }
@@ -135,7 +135,7 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
             this.symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
         return allowedSize;
     }
-    private validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
+    private validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, waitForClose: boolean, logTags: Models.LogTags): number {
         // must be on the momentum side of vwap
         let symbol = this.symbol;
         let isLong = this.isLong;
@@ -156,11 +156,21 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
             Firestore.logError(`checkRule: ${errorMessage}`, logTags);
             return 0;
         }
-        if (!this.isLong) {
-            let vwapPatternSatus = VwapPatterns.getStatusForVwapBounceFail(this.symbol);
-            Firestore.logInfo(`vwap pattern status: ${JSON.stringify(vwapPatternSatus)}`, logTags);
-            if (vwapPatternSatus != "bouncing off vwap" && this.waitForClose) {
-                Helper.speak(`not bouncing off vwap yet`);
+        if (waitForClose) {
+            if (this.isLong) {
+                let vwapPatternSatus = VwapPatterns.getStatusForVwapPushdownFail(this.symbol);
+                Firestore.logInfo(`vwap pattern status: ${JSON.stringify(vwapPatternSatus)}`, logTags);
+                if (vwapPatternSatus != "pushing down from vwap") {
+                    Firestore.logError(`not pushing down from vwap yet`, logTags);
+                    return 0;
+                }
+            } else {
+                let vwapPatternSatus = VwapPatterns.getStatusForVwapBounceFail(this.symbol);
+                Firestore.logInfo(`vwap pattern status: ${JSON.stringify(vwapPatternSatus)}`, logTags);
+                if (vwapPatternSatus != "bouncing off vwap") {
+                    Firestore.logError(`not bouncing off vwap yet`, logTags);
+                    return 0;
+                }
             }
         }
 
@@ -507,6 +517,5 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
         } else {
             return methods2;
         }
-
     }
 }

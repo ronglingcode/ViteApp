@@ -138,8 +138,54 @@ export const getStatusForVwapBounceFail = (symbol: string) => {
         let currentCandle = candles[current];
         if (prev >= 0) {
             let prevCandle = candles[prev];
-            if ((currentCandle.high > prevCandle.high) || (currentCandle.low > prevCandle.low)) {
+            if ((currentCandle.high > prevCandle.high) || ( current != candles.length - 1 && currentCandle.low > prevCandle.low)) {
                 status = "bouncing off vwap";
+                break;
+            }
+        }
+        current++;
+    }
+    return status;
+}
+
+/**
+ * Similar to getStatusForVwapBounceFail but for the opposite direction.
+ */
+export const getStatusForVwapPushdownFail = (symbol: string) => {
+    let candles = Models.getCandlesFromM1SinceOpen(symbol);
+    // get the lowest candle to start with
+    let lowestCandleIndex = 0;
+    for (let i = 1; i < candles.length; i++) {
+        if (candles[i].low < candles[lowestCandleIndex].low) {
+            lowestCandleIndex = i;
+        }
+    }
+    // assume lowest candle is below vwap
+    let current = lowestCandleIndex;
+    let vwaps = Models.getVwapsSinceOpen(symbol);
+    let status = "below vwap";
+    while (current < candles.length) {
+        let candle = candles[current];
+        if (candle.high > vwaps[current].value) {
+            status = "testing vwap";
+            break;
+        }
+        current++;
+    }
+
+    if (current >= candles.length - 1) {
+        return status;
+    }
+    current++;
+
+    // once it stops making new high or makes a new low after close, we are in the vwap pushdown phase
+    while (current < candles.length) {
+        let prev = current - 1;
+        let currentCandle = candles[current];
+        if (prev >= 0) {
+            let prevCandle = candles[prev];
+            if ((currentCandle.low < prevCandle.low) || (current != candles.length - 1 && currentCandle.high < prevCandle.high)) {
+                status = "pushing down from vwap";
                 break;
             }
         }
