@@ -6,6 +6,8 @@ import * as Chart from '../ui/chart';
 import * as TradebookUtil from './tradebookUtil';
 import * as Helper from '../utils/helper';
 import * as GlobalSettings from '../config/globalSettings';
+import * as VwapPatterns from '../algorithms/vwapPatterns';
+import * as TradebookUtils from './utils';
 
 export class VwapScalp extends Tradebook {
     public static readonly vwapScalpLong: string = 'VwapScalpLong';
@@ -34,6 +36,18 @@ export class VwapScalp extends Tradebook {
         let isLong = this.isLong;
         let logTagName = this.isLong ? '_long_vwap_scalp' : '_short_vwap_scalp';
         let logTags = Models.generateLogTags(symbol, `${symbol}_${logTagName}`);
+        let entryMethod = parameters.entryMethod;
+        if (!entryMethod) {
+            Firestore.logError(`${this.symbol} entry method is missing`, logTags);
+            return 0;
+        }
+        let timeframe = Models.getTimeframeFromEntryMethod(entryMethod);
+        let hasTwoCandlesAgainstVwap = VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(this.symbol, this.isLong, timeframe);
+        if (hasTwoCandlesAgainstVwap) {
+            Firestore.logError(`${this.symbol} has two candles against vwap for M${timeframe}, giving up`, logTags);
+            return 0;
+        }
+        
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
         let stopOutPrice = Chart.getStopLossPrice(symbol, isLong, true, null);
         let riskLevelPrice = Models.getRiskLevelPrice(symbol, stopOutPrice);
@@ -93,7 +107,7 @@ export class VwapScalp extends Tradebook {
             return 0;
         }
 
-        
+
 
         // TODO: check global rules
         return 0.21;
@@ -249,6 +263,38 @@ export class VwapScalp extends Tradebook {
     }
 
     getEntryMethods(): string[] {
-        return [];
+        return [
+            Models.TimeFrameEntryMethod.M1,
+            Models.TimeFrameEntryMethod.M5,
+            Models.TimeFrameEntryMethod.M15,
+            Models.TimeFrameEntryMethod.M30,
+        ];
+    }
+    onNewCandleClose(): void {
+        this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M1);
+        this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M5);
+        this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M15);
+        this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M30);
+    }
+    updateEntryMethodButtonStatus(buttonLabel: string): void {
+        let button = this.getButtonForLabel(buttonLabel);
+        if (!button) {
+            Firestore.logError(`${this.symbol} button not found for ${buttonLabel}`);
+            return;
+        }
+        let timeframe = 1;
+        if (buttonLabel == Models.TimeFrameEntryMethod.M5) {
+            timeframe = 5;
+        } else if (buttonLabel == Models.TimeFrameEntryMethod.M15) {
+            timeframe = 15;
+        } else if (buttonLabel == Models.TimeFrameEntryMethod.M30) {
+            timeframe = 30;
+        }
+        let lostMomentum = VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(this.symbol, this.isLong, timeframe);
+        if (lostMomentum) {
+            TradebookUtils.setButtonStatus(button, "inactive");
+        } else {
+            TradebookUtils.setButtonStatus(button, "active");
+        }
     }
 }

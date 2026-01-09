@@ -92,14 +92,7 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
             Firestore.logError(`${this.symbol} entry method is missing`, logTags);
             return 0;
         }
-        let timeframe = 1;
-        if (entryMethod == Models.TimeFrameEntryMethod.M5) {
-            timeframe = 5;
-        } else if (entryMethod == Models.TimeFrameEntryMethod.M15) {
-            timeframe = 15;
-        } else if (entryMethod == Models.TimeFrameEntryMethod.M30) {
-            timeframe = 30;
-        }
+        let timeframe = Models.getTimeframeFromEntryMethod(entryMethod);
         let hasTwoCandlesAgainstVwap = VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(this.symbol, this.isLong, timeframe);
         if (hasTwoCandlesAgainstVwap) {
             Firestore.logError(`${this.symbol} has two candles against vwap for M${timeframe}, giving up`, logTags);
@@ -413,14 +406,7 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
             Firestore.logError(`${this.symbol} button not found for ${buttonLabel}`);
             return;
         }
-        let timeframe = 1;
-        if (buttonLabel == Models.TimeFrameEntryMethod.M5) {
-            timeframe = 5;
-        } else if (buttonLabel == Models.TimeFrameEntryMethod.M15) {
-            timeframe = 15;
-        } else if (buttonLabel == Models.TimeFrameEntryMethod.M30) {
-            timeframe = 30;
-        }
+        let timeframe = Models.getTimeframeFromEntryMethod(buttonLabel);
         let lostMomentum = VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(this.symbol, this.isLong, timeframe);
         if (lostMomentum) {
             TradebookUtils.setButtonStatus(button, "inactive");

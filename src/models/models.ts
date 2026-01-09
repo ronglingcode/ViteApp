@@ -2036,6 +2036,17 @@ export enum TimeFrameEntryMethod {
     M30 = 'M30',
 }
 
+export const getTimeframeFromEntryMethod = (entryMethod: string): number => {
+    if (entryMethod == TimeFrameEntryMethod.M5) {
+        return 5;
+    } else if (entryMethod == TimeFrameEntryMethod.M15) {
+        return 15;
+    } else if (entryMethod == TimeFrameEntryMethod.M30) {
+        return 30;
+    }
+    return 1; // default to M1
+}
+
 export const getMovingAverageCandle = (symbol: string, timeframe: number,
     lookBackStart: number, m1Candles: Candle[]) => {
     let time = m1Candles[lookBackStart].time;

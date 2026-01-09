@@ -162,7 +162,8 @@ if (tosScriptsButton) {
 let testPopButton = document.getElementById("test_popup");
 if (testPopButton) {
     testPopButton.addEventListener("click", () => {
-        TradebooksManager.onNewCandleCloseForSymbol("MU");
+        TradebooksManager.onNewCandleCloseForSymbol("VST");
+        TradebooksManager.onNewCandleCloseForSymbol("OKLO");
     });
 }
 

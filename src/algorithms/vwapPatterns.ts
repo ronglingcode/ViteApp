@@ -224,13 +224,14 @@ export const hasTwoConsecutiveCandlesAgainstVwap = (symbol: string, isLong: bool
     let vwaps = Models.getVwapsSinceOpenForTimeframe(symbol, timeframe);
     if (candles.length != vwaps.length) {
         Firestore.logError(`candles ${candles.length} vwaps ${vwaps.length}`);
-        return false;
+        //return false;
     }
     if (candles.length < 2) {
         // not 2 closed candles yet
         return false;
     }
-    for (let i = 1; i < candles.length-1; i++) {
+    let maxCount = Math.min(candles.length, vwaps.length);
+    for (let i = 1; i < maxCount-1; i++) {
         let prevCandle = candles[i - 1];
         let currentCandle = candles[i];
         let prevVwap = vwaps[i - 1].value;
