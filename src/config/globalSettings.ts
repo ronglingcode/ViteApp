@@ -6,3 +6,4 @@ export const competeForTimeAndSales: boolean = true;
 export const allowLiveStats: boolean = false;
 export const showDataFeedsBar: boolean = false;
 export const checkMaxEntryThreshold: boolean = false;
+export const tradesPerSecondRollingWindowSeconds: number = 10; // Rolling window for tracking average trades per second

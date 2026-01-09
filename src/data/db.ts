@@ -395,19 +395,30 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
             });
         }
 
-        // Keep only last 3 seconds
-        let threeSecondsAgo = currentSecond - 3;
+        // Keep only last n seconds (configurable rolling window)
+        let rollingWindowSeconds = GlobalSettings.tradesPerSecondRollingWindowSeconds;
+        let nSecondsAgo = currentSecond - rollingWindowSeconds;
         symbolData.timeAndSalesPerSecond = symbolData.timeAndSalesPerSecond.filter(
-            entry => entry.second > threeSecondsAgo
+            entry => entry.second > nSecondsAgo
         );
 
-        // Update UI with last 3 seconds count
-        let last3SecondsText = symbolData.timeAndSalesPerSecond
-            .slice(-3)
-            .reverse()
-            .map(entry => entry.count)
-            .join(',');
-        Chart.updateUI(symbol, "timeAndSalesLast3Sec", `(${last3SecondsText})`);
+        // Calculate average trades per second over the rolling window
+        // Exclude the most recent second since that window is not closed yet
+        let entriesForAverage = symbolData.timeAndSalesPerSecond.length > 1 
+            ? symbolData.timeAndSalesPerSecond.slice(0, -1) 
+            : [];
+        
+        let totalTrades = 0;
+        for (let i = 0; i < entriesForAverage.length; i++) {
+            totalTrades += entriesForAverage[i].count;
+        }
+        // Calculate average trades per second
+        let averageTradesPerSecond = entriesForAverage.length > 0 
+            ? (totalTrades / entriesForAverage.length).toFixed(0)
+            : "0";
+
+        // Update UI with average trades per second
+        Chart.updateUI(symbol, "avgTradesPerSecond", `TPS:${averageTradesPerSecond}`);
     }
 
     symbolData.totalVolume += lastSize;
