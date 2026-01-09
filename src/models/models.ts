@@ -2029,6 +2029,13 @@ export interface CamarillaPivots {
     S6: number
 }
 
+export enum TimeFrameEntryMethod {
+    M1 = 'M1',
+    M5 = 'M5',
+    M15 = 'M15',
+    M30 = 'M30',
+}
+
 export const getMovingAverageCandle = (symbol: string, timeframe: number,
     lookBackStart: number, m1Candles: Candle[]) => {
     let time = m1Candles[lookBackStart].time;

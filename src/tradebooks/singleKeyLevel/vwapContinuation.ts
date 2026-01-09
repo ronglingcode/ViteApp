@@ -19,12 +19,6 @@ import * as GlobalSettings from '../../config/globalSettings';
 import * as LongDocs from '../tradebookDocs/vwapContinuationLong';
 import * as ShortDocs from '../tradebookDocs/vwapContinuationShort';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
-enum EntryMethod {
-    M1='M1',
-    M5='M5',
-    M15='M15',
-    M30='M30',
-}
 
 export class VwapContinuation extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
@@ -98,11 +92,11 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
             return 0;
         }
         let timeframe = 1;
-        if (entryMethod == EntryMethod.M5) {
+        if (entryMethod == Models.TimeFrameEntryMethod.M5) {
             timeframe = 5;
-        } else if (entryMethod == EntryMethod.M15) {
+        } else if (entryMethod == Models.TimeFrameEntryMethod.M15) {
             timeframe = 15;
-        } else if (entryMethod == EntryMethod.M30) {
+        } else if (entryMethod == Models.TimeFrameEntryMethod.M30) {
             timeframe = 30;
         }
         let hasTwoCandlesAgainstVwap = VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(this.symbol, this.isLong, timeframe);
@@ -400,17 +394,17 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
 
     getEntryMethods(): string[] {
         return [
-            EntryMethod.M1,
-            EntryMethod.M5,
-            EntryMethod.M15,
-            EntryMethod.M30,
+            Models.TimeFrameEntryMethod.M1,
+            Models.TimeFrameEntryMethod.M5,
+            Models.TimeFrameEntryMethod.M15,
+            Models.TimeFrameEntryMethod.M30,
         ];
     }
     onNewCandleClose(): void {
-        this.updateEntryMethodButtonStatus(EntryMethod.M1);
-        this.updateEntryMethodButtonStatus(EntryMethod.M5);
-        this.updateEntryMethodButtonStatus(EntryMethod.M15);
-        this.updateEntryMethodButtonStatus(EntryMethod.M30);
+        this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M1);
+        this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M5);
+        this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M15);
+        this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M30);
     }
     setButtonStatus(button: HTMLElement, status: string): void {
         button.classList.remove("active");
@@ -426,11 +420,11 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
             return;
         }
         let timeframe = 1;
-        if (buttonLabel == EntryMethod.M5) {
+        if (buttonLabel == Models.TimeFrameEntryMethod.M5) {
             timeframe = 5;
-        } else if (buttonLabel == EntryMethod.M15) {
+        } else if (buttonLabel == Models.TimeFrameEntryMethod.M15) {
             timeframe = 15;
-        } else if (buttonLabel == EntryMethod.M30) {
+        } else if (buttonLabel == Models.TimeFrameEntryMethod.M30) {
             timeframe = 30;
         }
         let lostMomentum = VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(this.symbol, this.isLong, timeframe);
