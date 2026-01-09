@@ -69,19 +69,31 @@ export class VwapScalp extends Tradebook {
         }
 
         if (GlobalSettings.checkMaxEntryThreshold) {
-        if (this.maxEntry > 0) {
-            if (this.isLong) {
-                if (entryPrice > this.maxEntry) {
-                    Firestore.logError(`entry price ${entryPrice} is greater than max entry ${this.maxEntry}`, logTags);
-                    return 0;
-                }
-            } else {
-                if (entryPrice < this.maxEntry) {
-                    Firestore.logError(`entry price ${entryPrice} is less than max entry ${this.maxEntry}`, logTags);
-                    return 0;
+            if (this.maxEntry > 0) {
+                if (this.isLong) {
+                    if (entryPrice > this.maxEntry) {
+                        Firestore.logError(`entry price ${entryPrice} is greater than max entry ${this.maxEntry}`, logTags);
+                        return 0;
+                    }
+                } else {
+                    if (entryPrice < this.maxEntry) {
+                        Firestore.logError(`entry price ${entryPrice} is less than max entry ${this.maxEntry}`, logTags);
+                        return 0;
+                    }
                 }
             }
-        }}
+        }
+
+        let threshold = this.vwapScalpPlan.threshold;
+        if (this.isLong && entryPrice < threshold) {
+            Firestore.logError(`entry price ${entryPrice} is less than threshold ${threshold}`, logTags);
+            return 0;
+        } else if (!this.isLong && entryPrice > threshold) {
+            Firestore.logError(`entry price ${entryPrice} is greater than threshold ${threshold}`, logTags);
+            return 0;
+        }
+
+        
 
         // TODO: check global rules
         return 0.21;
