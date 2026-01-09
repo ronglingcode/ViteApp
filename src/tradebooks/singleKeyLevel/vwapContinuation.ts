@@ -20,6 +20,7 @@ import * as LongDocs from '../tradebookDocs/vwapContinuationLong';
 import * as ShortDocs from '../tradebookDocs/vwapContinuationShort';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
 import * as TradebookUtils from '../utils';
+import * as Rules from '../../algorithms/rules';
 
 export class VwapContinuation extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
@@ -100,7 +101,7 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         }
         let entryPrice = Chart.getBreakoutEntryPrice(this.symbol, this.isLong, useMarketOrder, parameters);
         let stopOutPrice = Chart.getStopLossPrice(this.symbol, this.isLong, true, null);
-        let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
+        let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, timeframe, logTags);
         if (allowedSize === 0) {
             Firestore.logError(`${this.symbol} not allowed entry`, logTags);
             return 0;
@@ -111,7 +112,8 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         return allowedSize;
     }
 
-    private validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
+    private validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean,
+        timeframe: number, logTags: Models.LogTags): number {
         // check whether vwap moved to the other side of the key level
         let currentVwap = Models.getCurrentVwap(this.symbol);
         let keyLevel = this.getKeyLevel();
@@ -139,6 +141,9 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
                 Firestore.logError(`${this.symbol} not valid threshold`);
                 return 0;
             }
+        }
+        if (!Rules.isTimingAndEntryAllowedForHigherTimeframe(this.symbol, entryPrice, this.isLong, timeframe, logTags)) {
+            return 0;
         }
 
         let allowedSize = CommonRules.validateCommonEntryRules(

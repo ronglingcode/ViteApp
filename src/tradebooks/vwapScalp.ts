@@ -8,6 +8,8 @@ import * as Helper from '../utils/helper';
 import * as GlobalSettings from '../config/globalSettings';
 import * as VwapPatterns from '../algorithms/vwapPatterns';
 import * as TradebookUtils from './utils';
+import * as Rules from '../algorithms/rules';
+import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 
 export class VwapScalp extends Tradebook {
     public static readonly vwapScalpLong: string = 'VwapScalpLong';
@@ -38,22 +40,22 @@ export class VwapScalp extends Tradebook {
         let logTags = Models.generateLogTags(symbol, `${symbol}_${logTagName}`);
         let entryMethod = parameters.entryMethod;
         if (!entryMethod) {
-            Firestore.logError(`${this.symbol} entry method is missing`, logTags);
+            Firestore.logError(`entry method is missing`, logTags);
             return 0;
         }
         let timeframe = Models.getTimeframeFromEntryMethod(entryMethod);
         let hasTwoCandlesAgainstVwap = VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(this.symbol, this.isLong, timeframe);
         if (hasTwoCandlesAgainstVwap) {
-            Firestore.logError(`${this.symbol} has two candles against vwap for M${timeframe}, giving up`, logTags);
+            Firestore.logError(`has two candles against vwap for M${timeframe}, giving up`, logTags);
             return 0;
         }
         
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
         let stopOutPrice = Chart.getStopLossPrice(symbol, isLong, true, null);
         let riskLevelPrice = Models.getRiskLevelPrice(symbol, stopOutPrice);
-        let allowedSize = this.validateEntry(entryPrice, stopOutPrice, logTags);
+        let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, timeframe, logTags);
         if (allowedSize === 0) {
-            Firestore.logError(`${this.symbol} not allowed entry`, logTags);
+            Firestore.logError(`not allowed entry`, logTags);
             return 0;
         }
 
@@ -61,7 +63,7 @@ export class VwapScalp extends Tradebook {
         return allowedSize;
     }
 
-    validateEntry(entryPrice: number, stopOutPrice: number, logTags: Models.LogTags): number {
+    validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, timeframe: number, logTags: Models.LogTags): number {
         if (this.vwapScalpPlan.strongReasonToUseThisLevel.length == 0) {
             Firestore.logError(`${this.symbol} not allowed entry because of missing strong reason to use this level`, logTags);
             return 0;
@@ -107,10 +109,14 @@ export class VwapScalp extends Tradebook {
             return 0;
         }
 
+        if (!Rules.isTimingAndEntryAllowedForHigherTimeframe(this.symbol, entryPrice, this.isLong, timeframe, logTags)) {
+            return 0;
+        }
 
-
-        // TODO: check global rules
-        return 0.21;
+        let allowedSize = EntryRulesChecker.checkBasicGlobalEntryRules(
+            this.symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder,
+            this.vwapScalpPlan, false, logTags);
+        return allowedSize;
     }
 
     submitEntryOrders(dryRun: boolean, useMarketOrder: boolean,

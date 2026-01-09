@@ -15,6 +15,51 @@ import * as OrderFlowManager from '../controllers/orderFlowManager';
 import * as VwapPatterns from './vwapPatterns';
 declare let window: Models.MyWindow;
 
+
+/**
+ * On a higher time frame, we allow the entry at high/low of the day.
+ * Otherwise, need to wait for 2 closed candles,
+ * and entry needs to be above both candles high
+ */
+export const isTimingAndEntryAllowedForHigherTimeframe = (
+    symbol: string, entryPrice: number, isLong: boolean, timeframe: number,
+    logTags: Models.LogTags) => {
+    if (timeframe == 1) {
+        return true;
+    }
+    let symbolData = Models.getSymbolData(symbol);
+    if (isLong) {
+        if (entryPrice >= symbolData.highOfDay) {
+            return true;
+        }
+    } else {
+        if (entryPrice <= symbolData.lowOfDay) {
+            return true;
+        }
+    }
+    let candles = Models.getCandlesSinceOpenForTimeframe(symbol, timeframe);
+    // must have at least 2 closed candles
+    if (candles.length < 3) {
+        Firestore.logError(`must have 2 candles for M${timeframe}`, logTags);
+        return false;
+    }
+    // entry price must be higher than at least of the closed candles
+    for(let i = 0; i < candles.length-1; i++) {
+        let c = candles[i];
+        if (isLong) {
+            if (entryPrice >= c.high) {
+                return true;
+            }
+        } else {
+            if (entryPrice <= c.low) {
+                return true;
+            }
+        }
+    }
+    Firestore.logError(`entry price ${entryPrice} is not higher than at least of the closed candles`, logTags);
+    return false;
+}
+
 export const checkVwap = (symbol: string,
     isLong: boolean, entryPrice: number, stopOutPrice: number,
     currentVwap: number, secondsSinceMarketOpen: number,
