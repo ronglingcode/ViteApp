@@ -9,6 +9,8 @@ import * as TradebookUtil from '../tradebookUtil';
 import * as OrderFlow from '../../controllers/orderFlow';
 import * as LongDocs from '../tradebookDocs/aboveWaterBreakout';
 import * as ShortDocs from '../tradebookDocs/belowWaterBreakdown';
+import * as TradebookUtils from '../utils';
+import * as VwapPatterns from '../../algorithms/vwapPatterns';
 
 export class AboveWaterBreakout extends BaseBreakoutTradebook {
     public static readonly aboveWaterBreakout: string = 'aboveWaterBreakout';
@@ -184,6 +186,26 @@ export class AboveWaterBreakout extends BaseBreakoutTradebook {
     }
 
     getEntryMethods(): string[] {
-        return [];
+        return [Models.TimeFrameEntryMethod.M1, Models.TimeFrameEntryMethod.M5, Models.TimeFrameEntryMethod.M15, Models.TimeFrameEntryMethod.M30];
+    }
+    onNewCandleClose(): void {
+        this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M1);
+        this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M5);
+        this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M15);
+        this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M30);
+    }
+    updateEntryMethodButtonStatus(buttonLabel: string): void {
+        let button = this.getButtonForLabel(buttonLabel);
+        if (!button) {
+            return;
+        }
+        let timeframe = Models.getTimeframeFromEntryMethod(buttonLabel);
+        let failedMomentum = VwapPatterns.hasTwoConsecutiveCandlesAgainstLevel(
+            this.symbol, this.isLong, this.getKeyLevel(), timeframe);
+        if (failedMomentum) {
+            TradebookUtils.setButtonStatus(button, "inactive");
+        } else {
+            TradebookUtils.setButtonStatus(button, "active");
+        }
     }
 }

@@ -378,7 +378,6 @@ export class OpenDrive extends SingleKeyLevelTradebook {
         return [Models.TimeFrameEntryMethod.M1, Models.TimeFrameEntryMethod.M5, Models.TimeFrameEntryMethod.M15, Models.TimeFrameEntryMethod.M30];
     }
     onNewCandleClose(): void {
-        // TODO: check timeframe
         this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M1);
         this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M5);
         this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M15);

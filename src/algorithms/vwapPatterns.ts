@@ -260,6 +260,23 @@ export const getStatusForOpenDrive = (symbol: string, timeframe: number, isLong:
     }
     return lastStatus;
 }
+export const hasTwoConsecutiveCandlesAgainstLevel = (symbol: string, isLong: boolean, level: number, timeframe: number) => {
+    let candles = Models.getCandlesSinceOpenForTimeframe(symbol, timeframe);
+    if (candles.length < 2) {
+        // not 2 closed candles yet
+        return false;
+    }
+    for (let i = 1; i < candles.length-1; i++) {
+        let prevCandle = candles[i - 1];
+        let currentCandle = candles[i];
+        let prevCloseBelowLevel = isLong ? prevCandle.close < level : prevCandle.close > level;
+        let currentCloseBelowLevel = isLong ? currentCandle.close < level : currentCandle.close > level;
+        if (prevCloseBelowLevel && currentCloseBelowLevel) {
+            return true;
+        }
+    }   
+    return false;
+}
 
 /**
  * If we have 2 candles closed below vwap,
