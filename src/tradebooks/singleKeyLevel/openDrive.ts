@@ -19,13 +19,6 @@ import * as ShortDocs from '../tradebookDocs/openDriveShort';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
 import * as TradebookUtils from '../utils';
 
-enum OpenDriveEntryMethod {
-    M1 = "M1",
-    M5 = "M5",
-    M15 = "M15",
-    M30 = "M30",
-}
-
 export class OpenDrive extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
     public static readonly openDriveLong: string = 'openDriveLong';
@@ -74,14 +67,7 @@ export class OpenDrive extends SingleKeyLevelTradebook {
             Firestore.logError(`${this.symbol} missing entry method for open drive`, logTags);
             return 0;
         }
-        let timeframe = 1;
-        if (parameters.entryMethod == OpenDriveEntryMethod.M5) {
-            timeframe = 5;
-        } else if (parameters.entryMethod == OpenDriveEntryMethod.M15) {
-            timeframe = 15;
-        } else if (parameters.entryMethod == OpenDriveEntryMethod.M30) {
-            timeframe = 30;
-        }
+        let timeframe = Models.getTimeframeFromEntryMethod(parameters.entryMethod);
 
         let patternStatus = VwapPatterns.getStatusForOpenDrive(this.symbol, timeframe, this.isLong, this.getKeyLevel());
         let sizeMultipler = 0;
@@ -389,14 +375,14 @@ export class OpenDrive extends SingleKeyLevelTradebook {
     }
 
     getEntryMethods(): string[] {
-        return [OpenDriveEntryMethod.M1, OpenDriveEntryMethod.M5, OpenDriveEntryMethod.M15, OpenDriveEntryMethod.M30];
+        return [Models.TimeFrameEntryMethod.M1, Models.TimeFrameEntryMethod.M5, Models.TimeFrameEntryMethod.M15, Models.TimeFrameEntryMethod.M30];
     }
     onNewCandleClose(): void {
         // TODO: check timeframe
-        this.updateEntryMethodButtonStatus(OpenDriveEntryMethod.M1);
-        this.updateEntryMethodButtonStatus(OpenDriveEntryMethod.M5);
-        this.updateEntryMethodButtonStatus(OpenDriveEntryMethod.M15);
-        this.updateEntryMethodButtonStatus(OpenDriveEntryMethod.M30);
+        this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M1);
+        this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M5);
+        this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M15);
+        this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M30);
     }
     updateEntryMethodButtonStatus(buttonLabel: string): void {
         let button = this.getButtonForLabel(buttonLabel);
