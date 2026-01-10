@@ -6,7 +6,7 @@ import * as Firestore from '../../firestore';
 import * as Models from '../../models/models';
 import * as Patterns from '../../algorithms/patterns';
 import * as TradebookUtil from '../tradebookUtil';
-import * as TradebookUtils from '../utils';
+import * as TradebookUtils from '../tradebookUtil';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
 
 export class EmergingStrengthBreakout extends BaseBreakoutTradebook {

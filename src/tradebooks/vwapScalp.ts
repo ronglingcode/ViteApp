@@ -7,7 +7,7 @@ import * as TradebookUtil from './tradebookUtil';
 import * as Helper from '../utils/helper';
 import * as GlobalSettings from '../config/globalSettings';
 import * as VwapPatterns from '../algorithms/vwapPatterns';
-import * as TradebookUtils from './utils';
+import * as TradebookUtils from './tradebookUtil';
 import * as Rules from '../algorithms/rules';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 

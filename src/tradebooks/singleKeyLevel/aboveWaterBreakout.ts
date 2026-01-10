@@ -9,7 +9,7 @@ import * as TradebookUtil from '../tradebookUtil';
 import * as OrderFlow from '../../controllers/orderFlow';
 import * as LongDocs from '../tradebookDocs/aboveWaterBreakout';
 import * as ShortDocs from '../tradebookDocs/belowWaterBreakdown';
-import * as TradebookUtils from '../utils';
+import * as TradebookUtils from '../tradebookUtil';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
 
 export class AboveWaterBreakout extends BaseBreakoutTradebook {

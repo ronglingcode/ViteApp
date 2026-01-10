@@ -19,7 +19,7 @@ import * as GlobalSettings from '../../config/globalSettings';
 import * as LongDocs from '../tradebookDocs/vwapContinuationLong';
 import * as ShortDocs from '../tradebookDocs/vwapContinuationShort';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
-import * as TradebookUtils from '../utils';
+import * as TradebookUtils from '../tradebookUtil';
 import * as Rules from '../../algorithms/rules';
 
 export class VwapContinuation extends SingleKeyLevelTradebook {

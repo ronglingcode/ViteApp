@@ -17,7 +17,7 @@ import * as GlobalSettings from '../../config/globalSettings';
 import * as LongDocs from '../tradebookDocs/openDriveLong';
 import * as ShortDocs from '../tradebookDocs/openDriveShort';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
-import * as TradebookUtils from '../utils';
+import * as TradebookUtils from '../tradebookUtil';
 
 export class OpenDrive extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
