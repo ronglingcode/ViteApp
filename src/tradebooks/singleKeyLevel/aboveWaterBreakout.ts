@@ -56,6 +56,17 @@ export class AboveWaterBreakout extends BaseBreakoutTradebook {
         let logTagName = this.isLong ? '_above-water-breakout' : '_below-water-breakdown';
         let logTags = Models.generateLogTags(this.symbol, `${this.symbol}_${logTagName}`);
         let keyLevel = this.getKeyLevel();
+        if (!parameters.entryMethod) {
+            Firestore.logError(`entryMethod is not set`, logTags);
+            return 0;
+        }
+        let timeframe = Models.getTimeframeFromEntryMethod(parameters.entryMethod);
+        let hasFailedMomentum = VwapPatterns.hasTwoConsecutiveCandlesAgainstLevelAfterCloseAbove(
+            this.symbol, this.isLong, keyLevel, timeframe);
+        if (hasFailedMomentum) {
+            Firestore.logError(`closed 2 candles below level on M${timeframe}`, logTags);
+            return 0;
+        }
         let { firstTestingCandle, firstTestingCandleIsClosed, firstCandleClosedBeyondLevel, firstCandleClosedBeyondLevelIndex } = Patterns.analyzeBreakoutPatterns(this.symbol, this.isLong, keyLevel);
         let entryPrice = Chart.getBreakoutEntryPrice(this.symbol, this.isLong, useMarketOrder, parameters);
         if (firstCandleClosedBeyondLevel != null) {
@@ -200,7 +211,7 @@ export class AboveWaterBreakout extends BaseBreakoutTradebook {
             return;
         }
         let timeframe = Models.getTimeframeFromEntryMethod(buttonLabel);
-        let failedMomentum = VwapPatterns.hasTwoConsecutiveCandlesAgainstLevel(
+        let failedMomentum = VwapPatterns.hasTwoConsecutiveCandlesAgainstLevelAfterCloseAbove(
             this.symbol, this.isLong, this.getKeyLevel(), timeframe);
         if (failedMomentum) {
             TradebookUtils.setButtonStatus(button, "inactive");
