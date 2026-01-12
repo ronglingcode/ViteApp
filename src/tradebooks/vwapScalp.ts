@@ -49,10 +49,10 @@ export class VwapScalp extends Tradebook {
             Firestore.logError(`has two candles against vwap for M${timeframe}, giving up`, logTags);
             return 0;
         }
-        
+
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
         let stopOutPrice = Chart.getStopLossPrice(symbol, isLong, true, null);
-        let riskLevelPrice = Models.getRiskLevelPrice(symbol, stopOutPrice);
+        let riskLevelPrice = Models.getRiskLevelPrice(symbol, isLong, stopOutPrice, entryPrice);
         let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, timeframe, logTags);
         if (allowedSize === 0) {
             Firestore.logError(`not allowed entry`, logTags);

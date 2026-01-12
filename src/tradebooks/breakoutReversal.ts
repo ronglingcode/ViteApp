@@ -32,7 +32,7 @@ export class BreakoutReversal extends Tradebook {
         let logTags = Models.generateLogTags(symbol, `${symbol}_${logTagName}`);
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
         let stopOutPrice = Chart.getStopLossPrice(symbol, isLong, true, null);
-        let riskLevelPrice = Models.getRiskLevelPrice(symbol, stopOutPrice);
+        let riskLevelPrice = Models.getRiskLevelPrice(symbol, isLong, stopOutPrice, entryPrice);
         let allowedSize = this.validateEntry(entryPrice, stopOutPrice, logTags);
         if (allowedSize === 0) {
             Firestore.logError(`${this.symbol} not allowed entry`, logTags);
@@ -96,165 +96,165 @@ export class BreakoutReversal extends Tradebook {
             }
         }
 
-            // TODO: check more global rules
-            // TODO: if closed multiple candles above level, disable this tradebook for the day
-            return 0.21 / 2;
-        }
+        // TODO: check more global rules
+        // TODO: if closed multiple candles above level, disable this tradebook for the day
+        return 0.21 / 2;
+    }
 
-        refreshLiveStats(): void {
-            // TODO: Implement live stats refresh
-        }
+    refreshLiveStats(): void {
+        // TODO: Implement live stats refresh
+    }
 
-        refreshState(): void {
-            // TODO: Implement state refresh
-        }
+    refreshState(): void {
+        // TODO: Implement state refresh
+    }
 
-        isEnabled(): boolean {
-            return true; // TODO: Implement enable/disable logic
-        }
+    isEnabled(): boolean {
+        return true; // TODO: Implement enable/disable logic
+    }
 
-        getCommonLiveStats(): string {
-            return ''; // TODO: Implement common live stats
-        }
+    getCommonLiveStats(): string {
+        return ''; // TODO: Implement common live stats
+    }
 
-        transitionToState(newState: any): void {
-            // TODO: Implement state transition logic
-        }
+    transitionToState(newState: any): void {
+        // TODO: Implement state transition logic
+    }
 
-        getTradeManagementInstructions(): Models.TradeManagementInstructions {
-            let instructions = new Map<string, string[]>();
-            if (this.isLong) {
-                instructions = this.getTradeManagementInstructionsForLong();
-            } else {
-                instructions = this.getTradeManagementInstructionsForShort();
-            }
-            TradebookUtil.setlevelToAddInstructions(this.symbol, this.isLong, instructions);
-            TradebookUtil.setFinalTargetInstructions(this.symbol, this.isLong, instructions);
-            let conditionsToFail = this.isLong ? ["lose level"] : ["reclaim level"];
-            let result: Models.TradeManagementInstructions = {
-                mapData: instructions,
-                conditionsToFail: conditionsToFail,
-            }
-            return result;
+    getTradeManagementInstructions(): Models.TradeManagementInstructions {
+        let instructions = new Map<string, string[]>();
+        if (this.isLong) {
+            instructions = this.getTradeManagementInstructionsForLong();
+        } else {
+            instructions = this.getTradeManagementInstructionsForShort();
         }
+        TradebookUtil.setlevelToAddInstructions(this.symbol, this.isLong, instructions);
+        TradebookUtil.setFinalTargetInstructions(this.symbol, this.isLong, instructions);
+        let conditionsToFail = this.isLong ? ["lose level"] : ["reclaim level"];
+        let result: Models.TradeManagementInstructions = {
+            mapData: instructions,
+            conditionsToFail: conditionsToFail,
+        }
+        return result;
+    }
 
-        getTradeManagementInstructionsForLong(): Map < string, string[] > {
-            const instructions = new Map<string, string[]>([[
-                'conditions to fail', [
-                    "low of day",
-                ]], [
-                'conditions to trim', [
-                    "decide how much and whether to trim on first new low below vwap",
-                ]], [
-                'add or re-entry', [
-                    "vwap pushdown fail, add back previous partials",
-                ]], [
-                'partial targets', [
-                    "about 50%: push to vwap",
-                ]]
-            ]);
-            return instructions;
-        }
+    getTradeManagementInstructionsForLong(): Map<string, string[]> {
+        const instructions = new Map<string, string[]>([[
+            'conditions to fail', [
+                "low of day",
+            ]], [
+            'conditions to trim', [
+                "decide how much and whether to trim on first new low below vwap",
+            ]], [
+            'add or re-entry', [
+                "vwap pushdown fail, add back previous partials",
+            ]], [
+            'partial targets', [
+                "about 50%: push to vwap",
+            ]]
+        ]);
+        return instructions;
+    }
 
-        getTradeManagementInstructionsForShort(): Map < string, string[] > {
-            const instructions = new Map<string, string[]>([[
-                'conditions to fail', [
-                    "high of day",
-                ]], [
-                'conditions to trim', [
-                    "decide how much and whether to trim on first new high above vwap",
-                ]], [
-                'add or re-entry', [
-                    "vwap bounce fail, add back previous partials",
-                ]], [
-                'partial targets', [
-                    "about 50%: dip to vwap",
-                ]]
-            ]);
-            return instructions;
-        }
-        /** Minimal doc method for now — returns empty string. */
-        getTradebookDoc(): string {
-            if (this.isLong) {
-                return LongDocs.tradebookText;
-            } else {
-                return ShortDocs.tradebookText;
-            }
-        }
-
-        getEntryMethods(): string[] {
-            return [];
-        }
-
-        getNumberOfMinutesSinceBreakout(): number {
-            let candles = Models.getM1ClosedCandlesSinceOpen(this.symbol);
-            let breakoutDirection = !this.isLong;
-            let breakoutCandleIndex = -1;
-            for (let i = 0; i < candles.length; i++) {
-                let candle = candles[i];
-                if (breakoutDirection && candle.close > this.keyLevel) {
-                    breakoutCandleIndex = i;
-                    break;
-                }
-                if (!breakoutDirection && candle.close < this.keyLevel) {
-                    breakoutCandleIndex = i;
-                    break;
-                }
-            }
-            if (breakoutCandleIndex == -1) {
-                return 0;
-            }
-            return candles.length - breakoutCandleIndex;
-        }
-        checkEarlyExits() : Models.CheckRulesResult {
-            if (FalseBreakout.isConfirmedFalseBreakout(this.symbol, this.isLong, this.keyLevel)) {
-                let numberOfMinutesSinceBreakout = this.getNumberOfMinutesSinceBreakout();
-                if (numberOfMinutesSinceBreakout < 5) {
-                    return {
-                        allowed: false,
-                        reason: "confirmed false breakout within 5 minutes",
-                    };
-                }
-            }
-            let result: Models.CheckRulesResult = {
-                allowed: true,
-                reason: "reversal tradebook",
-            };
-            return result;
-        }
-        
-        getDisallowedReasonToAdjustSingleLimitOrder(symbol: string, keyIndex: number, order: Models.OrderModel, pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
-            return this.checkEarlyExits();
-        }
-
-        getDisallowedReasonToAdjustSingleStopOrder(symbol: string, keyIndex: number, order: Models.OrderModel, pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
-            return this.checkEarlyExits();
-        }
-
-        getDisallowedReasonToMarketOutSingleOrder(symbol: string, keyIndex: number, logTags: Models.LogTags): Models.CheckRulesResult {
-            return this.checkEarlyExits();
-        }
-        onNewCandleClose(): void {
-            let breakoutDirection = !this.isLong;
-            let closedCandles = Models.getM1ClosedCandlesSinceOpen(this.symbol);
-            if (FalseBreakout.isBreakoutOnFirstRally(closedCandles, this.keyLevel, breakoutDirection)) {
-                FalseBreakout.oneClosedAboveNextClosedBelowJustHappened(closedCandles, this.keyLevel, breakoutDirection);
-                // trigger auto entry
-                let logTagName = this.isLong ? '_long_reversal' : '_short_reversal';
-                let logTags = Models.generateLogTags(this.symbol, `${this.symbol}_${logTagName}`);
-
-                let lastClosedCandle = closedCandles[closedCandles.length - 1];
-                let entryPrice = this.isLong ? lastClosedCandle.high : lastClosedCandle.low;
-                let symbolData = Models.getSymbolData(this.symbol);
-                let stopOutPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
-                let riskLevelPrice = Models.getRiskLevelPrice(this.symbol, stopOutPrice);
-                let allowedSize = this.validateEntry(entryPrice, stopOutPrice, logTags);
-                if (allowedSize === 0) {
-                    Firestore.logError(`${this.symbol} not allowed entry`, logTags);
-                    return;
-                }
-                let planCopy = JSON.parse(JSON.stringify(this.reversalPlan)) as TradingPlansModels.ReversalPlan;
-                this.submitEntryOrdersBase(false, false, entryPrice, stopOutPrice, riskLevelPrice, allowedSize, this.reversalPlan, logTags);
-            }
+    getTradeManagementInstructionsForShort(): Map<string, string[]> {
+        const instructions = new Map<string, string[]>([[
+            'conditions to fail', [
+                "high of day",
+            ]], [
+            'conditions to trim', [
+                "decide how much and whether to trim on first new high above vwap",
+            ]], [
+            'add or re-entry', [
+                "vwap bounce fail, add back previous partials",
+            ]], [
+            'partial targets', [
+                "about 50%: dip to vwap",
+            ]]
+        ]);
+        return instructions;
+    }
+    /** Minimal doc method for now — returns empty string. */
+    getTradebookDoc(): string {
+        if (this.isLong) {
+            return LongDocs.tradebookText;
+        } else {
+            return ShortDocs.tradebookText;
         }
     }
+
+    getEntryMethods(): string[] {
+        return [];
+    }
+
+    getNumberOfMinutesSinceBreakout(): number {
+        let candles = Models.getM1ClosedCandlesSinceOpen(this.symbol);
+        let breakoutDirection = !this.isLong;
+        let breakoutCandleIndex = -1;
+        for (let i = 0; i < candles.length; i++) {
+            let candle = candles[i];
+            if (breakoutDirection && candle.close > this.keyLevel) {
+                breakoutCandleIndex = i;
+                break;
+            }
+            if (!breakoutDirection && candle.close < this.keyLevel) {
+                breakoutCandleIndex = i;
+                break;
+            }
+        }
+        if (breakoutCandleIndex == -1) {
+            return 0;
+        }
+        return candles.length - breakoutCandleIndex;
+    }
+    checkEarlyExits(): Models.CheckRulesResult {
+        if (FalseBreakout.isConfirmedFalseBreakout(this.symbol, this.isLong, this.keyLevel)) {
+            let numberOfMinutesSinceBreakout = this.getNumberOfMinutesSinceBreakout();
+            if (numberOfMinutesSinceBreakout < 5) {
+                return {
+                    allowed: false,
+                    reason: "confirmed false breakout within 5 minutes",
+                };
+            }
+        }
+        let result: Models.CheckRulesResult = {
+            allowed: true,
+            reason: "reversal tradebook",
+        };
+        return result;
+    }
+
+    getDisallowedReasonToAdjustSingleLimitOrder(symbol: string, keyIndex: number, order: Models.OrderModel, pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
+        return this.checkEarlyExits();
+    }
+
+    getDisallowedReasonToAdjustSingleStopOrder(symbol: string, keyIndex: number, order: Models.OrderModel, pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
+        return this.checkEarlyExits();
+    }
+
+    getDisallowedReasonToMarketOutSingleOrder(symbol: string, keyIndex: number, logTags: Models.LogTags): Models.CheckRulesResult {
+        return this.checkEarlyExits();
+    }
+    onNewCandleClose(): void {
+        let breakoutDirection = !this.isLong;
+        let closedCandles = Models.getM1ClosedCandlesSinceOpen(this.symbol);
+        if (FalseBreakout.isBreakoutOnFirstRally(closedCandles, this.keyLevel, breakoutDirection)) {
+            FalseBreakout.oneClosedAboveNextClosedBelowJustHappened(closedCandles, this.keyLevel, breakoutDirection);
+            // trigger auto entry
+            let logTagName = this.isLong ? '_long_reversal' : '_short_reversal';
+            let logTags = Models.generateLogTags(this.symbol, `${this.symbol}_${logTagName}`);
+
+            let lastClosedCandle = closedCandles[closedCandles.length - 1];
+            let entryPrice = this.isLong ? lastClosedCandle.high : lastClosedCandle.low;
+            let symbolData = Models.getSymbolData(this.symbol);
+            let stopOutPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
+            let riskLevelPrice = Models.getRiskLevelPrice(this.symbol, this.isLong, stopOutPrice, entryPrice);
+            let allowedSize = this.validateEntry(entryPrice, stopOutPrice, logTags);
+            if (allowedSize === 0) {
+                Firestore.logError(`${this.symbol} not allowed entry`, logTags);
+                return;
+            }
+            let planCopy = JSON.parse(JSON.stringify(this.reversalPlan)) as TradingPlansModels.ReversalPlan;
+            this.submitEntryOrdersBase(false, false, entryPrice, stopOutPrice, riskLevelPrice, allowedSize, this.reversalPlan, logTags);
+        }
+    }
+}

@@ -1233,21 +1233,32 @@ export const getUndefinedCandlesSinceOpen = (symbol: string) => {
     let tvTime = Helper.jsDateToTradingViewUTC(time);
     return getUndefinedCandleSinceTime(symbol, tvTime);
 }
-export const getRiskLevelPrice = (symbol: string, defaultPrice: number) => {
+export const getRiskLevelPrice = (symbol: string, isLong: boolean, defaultPrice: number, entryPrice: number) => {
+    let result = defaultPrice;
     let widget = getChartWidget(symbol);
-    if (!widget)
-        return defaultPrice;
-    if (widget.riskLevelPriceLine) {
-        return widget.riskLevelPriceLine.options().price;
+    if (widget && widget.riskLevelPriceLine) {
+        result = widget.riskLevelPriceLine.options().price;
     }
-    return defaultPrice;
+    // double check risk level is at least away from entry price
+    let symbolData = getSymbolData(symbol);
+    if (isLong) {
+        if (result >= entryPrice) {
+            result = symbolData.lowOfDay;
+        }
+    } else {
+        if (result <= entryPrice) {
+            result = symbolData.highOfDay;
+        }
+    }
+
+    return result;
 }
 export const getHighLowBreakoutEntryStopPrice = (symbol: string, isLong: boolean) => {
     let symbolData = getSymbolData(symbol);
     let entryPrice = isLong ? symbolData.highOfDay : symbolData.lowOfDay;
     let stopOutPrice = isLong ? symbolData.lowOfDay : symbolData.highOfDay;
     entryPrice = Calculator.updateStopPriceFromCurrentQuote(symbol, entryPrice, isLong);
-    let riskLevelPrice = getRiskLevelPrice(symbol, stopOutPrice);
+    let riskLevelPrice = getRiskLevelPrice(symbol, isLong, stopOutPrice, entryPrice);
     return {
         entryPrice: entryPrice,
         stopOutPrice: stopOutPrice,

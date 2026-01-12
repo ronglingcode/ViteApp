@@ -197,7 +197,7 @@ export const runFirstNewHighPlanHigherTimeFrame = (symbol: string, isLong: boole
     let entryPrice = result.entryPrice;
     let symbolData = Models.getSymbolData(symbol);
     let stopOutPrice = isLong ? symbolData.lowOfDay : symbolData.highOfDay;
-    let riskLevelPrice = Models.getRiskLevelPrice(symbol, stopOutPrice);
+    let riskLevelPrice = Models.getRiskLevelPrice(symbol, isLong, stopOutPrice, entryPrice);
     let multipler = EntryRulesChecker.checkFirstNewHighPlanEntryRules(symbol, isLong, entryPrice, stopOutPrice, plan, logTags);
     if (multipler <= 0) {
         Firestore.logError(`multipler is zero during rules checking`, logTags);
@@ -233,12 +233,13 @@ export const runFirstNewHighPlan = (symbol: string, isLong: boolean,
         };
     }
     let useMarketOrder = result.status == 'already triggered in current candle';
+    let entryPrice = result.entryPrice;
     let symbolData = Models.getSymbolData(symbol);
     let stopOutPrice = symbolData.lowOfDay;
     if (!isLong) {
         stopOutPrice = symbolData.highOfDay;
     }
-    let riskLevelPrice = Models.getRiskLevelPrice(symbol, stopOutPrice);
+    let riskLevelPrice = Models.getRiskLevelPrice(symbol, isLong, stopOutPrice, entryPrice);
     Strategies.overrideTradingPlans(plan, TradingPlansModels.PlanType.FirstNewHigh);
 
     if (useMarketOrder) {
@@ -246,8 +247,6 @@ export const runFirstNewHighPlan = (symbol: string, isLong: boolean,
         Firestore.logInfo('submit market order');
         return enterMarketOrderForFirstNewHigh(symbol, isLong, hasPreviousEntry, stopOutPrice, plan, logTags);
     }
-
-    let entryPrice = result.entryPrice;
     // check opposite position
     let currentQuantity = Models.getPositionNetQuantity(symbol);
     let hasOppositionPosition = (isLong && currentQuantity < 0) || (!isLong && currentQuantity > 0);

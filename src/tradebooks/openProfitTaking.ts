@@ -39,7 +39,7 @@ export class OpenProfitTaking extends Tradebook {
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
         let symbolData = Models.getSymbolData(symbol);
         let stopOutPrice = isLong ? symbolData.lowOfDay : symbolData.highOfDay;
-        let riskLevel = Models.getRiskLevelPrice(symbol, this.openProfitTakingPlan.defaultRiskLevel);
+        let riskLevel = Models.getRiskLevelPrice(symbol, isLong, this.openProfitTakingPlan.defaultRiskLevel, entryPrice);
         let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
 
         if (allowedSize === 0) {
@@ -69,7 +69,7 @@ export class OpenProfitTaking extends Tradebook {
         if (useMarketOrder) {
             let currentCandle = Models.getCurrentCandle(this.symbol);
             if ((!this.isLong && currentCandle.close > currentCandle.open) ||
-            (this.isLong && currentCandle.close < currentCandle.open)) {
+                (this.isLong && currentCandle.close < currentCandle.open)) {
                 Firestore.logError(`current candle is against momentum, use stop order instead`, logTags);
                 return 0;
             }
