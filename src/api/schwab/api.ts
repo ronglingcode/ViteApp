@@ -324,6 +324,9 @@ export const placeOrderBase = async (order: any, logTags: Models.LogTags) => {
     } else {
         Firestore.logError(`${statusCode}, duration: ${duration} ms placed order: ${JSON.stringify(json)}`, logTags);
     }
+    if (!json.orderId || json.orderId == -1 || json.orderId == "-1") {
+        Helper.speak(`order failed`);
+    }
 };
 
 const replaceOrderBase = async (newOrder: any, oldOrderId: string, logTags: Models.LogTags) => {
