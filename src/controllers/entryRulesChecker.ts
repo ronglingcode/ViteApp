@@ -11,6 +11,7 @@ import * as TradingState from '../models/tradingState';
 import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as SetupQuality from '../algorithms/setupQuality';
+import * as VwapPatterns from '../algorithms/vwapPatterns';
 declare let window: Models.MyWindow;
 
 /**
@@ -96,6 +97,29 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
             !hasBeenInTradableArea) {
             finalSize = initialSize * 0.5;
             Firestore.logError(`checkRule: not in tradable area, using 50% size`, logTags);
+        }
+    }
+    let topPlan = TradingPlans.getTradingPlans(symbol);
+    let watchAreas = topPlan.analysis.watchAreas;
+    if (watchAreas.length > 0) {
+        let watchLevel = watchAreas[0];
+        if (VwapPatterns.isNearAgainstLevel(symbol, isLong, entryPrice, watchLevel)) {
+            Firestore.logError(`entry price ${entryPrice} is near against watch level ${watchLevel}, block entry`, logTags);
+            return 0;
+        }
+        if (secondsSinceMarketOpen < 60 && openPrice &&
+            VwapPatterns.isNearAgainstLevel(symbol, isLong, openPrice, watchLevel)) {
+            Firestore.logError(`open price ${openPrice} is near against watch level ${watchLevel}, block entry`, logTags);
+            return 0;
+        }
+        if (VwapPatterns.isNearAgainstVwap(symbol, isLong, entryPrice)) {
+            Firestore.logError(`entry price ${entryPrice} is near against vwap, reduce to half size`, logTags);
+            finalSize = initialSize * 0.5;
+        }
+        if (secondsSinceMarketOpen < 60 && openPrice &&
+            VwapPatterns.isNearAgainstVwap(symbol, isLong, openPrice)) {
+            Firestore.logError(`open price ${openPrice} is near against vwap, reduce to half size`, logTags);
+            finalSize = initialSize * 0.5;
         }
     }
     let volumes = Models.getVolumesSinceOpen(symbol);

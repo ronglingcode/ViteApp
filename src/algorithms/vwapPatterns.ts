@@ -336,3 +336,26 @@ export const isVwapContinuationEntry = (symbol: string, isLong: boolean, entryPr
         return openPrice <= vwap && entryPrice <= vwap && vwap <= keyLevel.low;
     }
 }
+
+export const isNearAgainstVwap = (symbol: string, isLong: boolean, price: number) => {
+    let vwap = Models.getCurrentVwap(symbol);
+    let topPlan = TradingPlans.getTradingPlans(symbol);
+    let atr = topPlan.atr.average;
+    let buffer = atr * 0.15;
+    if (isLong) {
+        return price < vwap && price >= vwap - buffer;
+    } else {
+        return price > vwap && price <= vwap + buffer;
+    }
+}
+
+export const isNearAgainstLevel = (symbol: string, isLong: boolean, price: number, level: number) => {
+    let topPlan = TradingPlans.getTradingPlans(symbol);
+    let atr = topPlan.atr.average;
+    let buffer = atr * 0.15;
+    if (isLong) {
+        return price < level && price >= level - buffer;
+    } else {
+        return price > level && price <= level + buffer;
+    }
+}

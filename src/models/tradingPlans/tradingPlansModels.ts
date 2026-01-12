@@ -33,6 +33,7 @@ export interface Analysis {
     usePremarketKeyLevel: number,
     zoneNearEdge: ZoneNearEdge,
     dualMomentumKeyLevels: number[],
+    watchAreas: number[],
 }
 export interface ZoneNearEdge {
     zoneIsFar: boolean,
