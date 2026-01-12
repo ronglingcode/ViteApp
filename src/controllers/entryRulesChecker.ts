@@ -122,6 +122,15 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
             finalSize = initialSize * 0.5;
         }
     }
+    if (topPlan.analysis.noTradeZones.length > 0) {
+        for (let i = 0; i < topPlan.analysis.noTradeZones.length; i++) {
+            let noTradeZone = topPlan.analysis.noTradeZones[i];
+            if (noTradeZone.low < entryPrice && noTradeZone.high > entryPrice) {
+                Firestore.logError(`entry price ${entryPrice} is inside no trade zone ${noTradeZone.low} - ${noTradeZone.high}, block entry`, logTags);
+                return 0;
+            }
+        }
+    }
     let volumes = Models.getVolumesSinceOpen(symbol);
     if (volumes.length >= 3) {
         let maxVolumeIndex = 0;

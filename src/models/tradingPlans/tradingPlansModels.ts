@@ -34,6 +34,7 @@ export interface Analysis {
     zoneNearEdge: ZoneNearEdge,
     dualMomentumKeyLevels: number[],
     watchAreas: number[],
+    noTradeZones: LevelArea[],
 }
 export interface ZoneNearEdge {
     zoneIsFar: boolean,
