@@ -56,6 +56,7 @@ export class BreakoutReversal extends Tradebook {
                 Firestore.logError(`entry price ${entryPrice} is not above key level ${keyLevel}`, logTags);
                 return 0;
             }
+
         } else {
             if (entryPrice > keyLevel) {
                 Firestore.logError(`entry price ${entryPrice} is not below key level ${keyLevel}`, logTags);
@@ -72,7 +73,20 @@ export class BreakoutReversal extends Tradebook {
             Firestore.logError(`entry price ${entryPrice} must be above vwap ${currentVwap} to avoid vwap shakeout`, logTags);
             return 0;
         }
-        // if 1 candle touched the key level, it needs to trigger in the next 2 candles
+        if (this.reversalPlan.requireLevelTouch) {
+            if (this.isLong) {
+                if (symbolData.lowOfDay > keyLevel) {
+                    Firestore.logError(`has not touched key level ${keyLevel}`, logTags);
+                    return 0;
+                }
+
+            } else {
+                if (symbolData.highOfDay < keyLevel) {
+                    Firestore.logError(`has not touched key level ${keyLevel}`, logTags);
+                    return 0;
+                }
+            }
+        }
         let candles = Models.getCandlesSinceOpenForTimeframe(this.symbol, 1);
         let found = -1;
         for (let i = 0; i < candles.length - 1; i++) {

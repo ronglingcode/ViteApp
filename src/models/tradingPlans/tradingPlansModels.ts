@@ -232,6 +232,7 @@ export interface BreakoutAlgo extends AlgoPlan {
 }
 export interface ReversalPlan extends BasePlan {
     keyLevel: number,
+    requireLevelTouch: boolean,
 }
 export interface RetracementPlan {
     entryAreas: RetracementArea[];
