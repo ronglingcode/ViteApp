@@ -14,6 +14,9 @@ import { BreakoutReversal } from "./breakoutReversal";
 import { OpenProfitTaking } from "./openProfitTaking";
 import { AllTimeHighVwapContinuation } from "./allTimeHighVwapContinuation";
 import { GapAndCrapAcceleration } from "./gapAndCrapAcceleration";
+import { GapAndCrapBelowVwap } from "./gapAndCrapBelowVwap";
+import { GapAndCrapFarAboveVwap } from "./gapAndCrapFarAboveVwap";
+import { GapAndCrapNearAboveVwap } from "./gapAndCrapNearAboveVwap";
 import * as Helper from "../utils/helper";
 import * as Firestore from "../firestore";
 
@@ -91,6 +94,39 @@ export const createAllTradebooks = (symbol: string) => {
     if (plan.short.gapAndCrapAccelerationPlan) {
         let gapAndCrapAcceleration = new GapAndCrapAcceleration(symbol, false, plan.short.gapAndCrapAccelerationPlan);
         tradebooksMap.set(gapAndCrapAcceleration.getID(), gapAndCrapAcceleration);
+    }
+    if (plan.short.gapAndCrapPlan) {
+        // Always create all 3 tradebooks
+        let gapAndCrapBelowVwap = new GapAndCrapBelowVwap(symbol, false, plan.short.gapAndCrapPlan);
+        tradebooksMap.set(gapAndCrapBelowVwap.getID(), gapAndCrapBelowVwap);
+
+        let gapAndCrapFarAboveVwap = new GapAndCrapFarAboveVwap(symbol, false, plan.short.gapAndCrapPlan);
+        tradebooksMap.set(gapAndCrapFarAboveVwap.getID(), gapAndCrapFarAboveVwap);
+
+        let gapAndCrapNearAboveVwap = new GapAndCrapNearAboveVwap(symbol, false, plan.short.gapAndCrapPlan);
+        tradebooksMap.set(gapAndCrapNearAboveVwap.getID(), gapAndCrapNearAboveVwap);
+
+        // Enable only the one that matches the open price condition
+        let openPrice = Models.getOpenPrice(symbol);
+        let lastVwapBeforeOpen = Models.getLastVwapBeforeOpen(symbol);
+        if (openPrice && lastVwapBeforeOpen) {
+            let atr = Models.getAtr(symbol);
+            let threshold = atr.average * 0.5;
+            let distanceFromVwap = openPrice - lastVwapBeforeOpen;
+
+            if (openPrice < lastVwapBeforeOpen) {
+                // Open is below VWAP - enable BelowVwap tradebook
+                gapAndCrapBelowVwap.enable();
+            } else if (distanceFromVwap > threshold) {
+                // Open is far above VWAP (more than 0.5 ATR) - enable FarAboveVwap tradebook
+                gapAndCrapFarAboveVwap.enable();
+            } else {
+                // Open is near above VWAP (within 0.5 ATR) - enable NearAboveVwap tradebook
+                gapAndCrapNearAboveVwap.enable();
+            }
+        } else {
+            Firestore.logError(`${symbol} missing open price or last VWAP before open`);
+        }
     }
 
     return tradebooksMap;
@@ -173,6 +209,36 @@ export const updateTradebooksStatus = (symbol: string, tradebooksMap: Map<string
             if (openPrice < lastVwapBeforeOpen || openPrice < allTimeHigh) {
                 athVwapContTradebook.disable();
                 Firestore.logInfo(`${symbol} disabling ATH VWAP Cont: open ${openPrice} is below VWAP ${lastVwapBeforeOpen} or ATH ${allTimeHigh}`);
+            }
+        }
+    }
+
+    // Update the three gap and crap tradebooks based on open price vs VWAP
+    if (plan.short.gapAndCrapPlan) {
+        let gapAndCrapBelowVwap = tradebooksMap.get(GapAndCrapBelowVwap.gapAndCrapBelowVwapShort);
+        let gapAndCrapFarAboveVwap = tradebooksMap.get(GapAndCrapFarAboveVwap.gapAndCrapFarAboveVwapShort);
+        let gapAndCrapNearAboveVwap = tradebooksMap.get(GapAndCrapNearAboveVwap.gapAndCrapNearAboveVwapShort);
+
+        if (gapAndCrapBelowVwap && gapAndCrapFarAboveVwap && gapAndCrapNearAboveVwap) {
+            // Disable all three first
+            gapAndCrapBelowVwap.disable();
+            gapAndCrapFarAboveVwap.disable();
+            gapAndCrapNearAboveVwap.disable();
+
+            // Enable only the one that matches the current condition
+            let atr = Models.getAtr(symbol);
+            let threshold = atr.average * 0.5;
+            let distanceFromVwap = openPrice - lastVwapBeforeOpen;
+
+            if (openPrice < lastVwapBeforeOpen) {
+                // Open is below VWAP - enable BelowVwap tradebook
+                gapAndCrapBelowVwap.enable();
+            } else if (distanceFromVwap > threshold) {
+                // Open is far above VWAP (more than 0.5 ATR) - enable FarAboveVwap tradebook
+                gapAndCrapFarAboveVwap.enable();
+            } else {
+                // Open is near above VWAP (within 0.5 ATR) - enable NearAboveVwap tradebook
+                gapAndCrapNearAboveVwap.enable();
             }
         }
     }
