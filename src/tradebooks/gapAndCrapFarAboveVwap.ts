@@ -55,12 +55,11 @@ export class GapAndCrapFarAboveVwap extends Tradebook {
     validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
         let symbolData = Models.getSymbolData(this.symbol);
         let openPrice = Models.getOpenPrice(this.symbol);
-        let previousDayCandle = symbolData.previousDayCandle;
         let lastVwapBeforeOpen = Models.getLastVwapBeforeOpen(this.symbol);
         let atr = Models.getAtr(this.symbol);
 
-        if (!openPrice || !previousDayCandle || previousDayCandle.close === 0) {
-            Firestore.logError(`missing open price or previous day candle`, logTags);
+        if (!openPrice) {
+            Firestore.logError(`missing open price`, logTags);
             return 0;
         }
 
@@ -75,20 +74,6 @@ export class GapAndCrapFarAboveVwap extends Tradebook {
         let threshold = atr.average * 0.5;
         if (distanceFromVwap <= threshold) {
             Firestore.logError(`open ${openPrice} must be far above VWAP ${lastVwapBeforeOpen}, distance ${distanceFromVwap} <= threshold ${threshold} (0.5 ATR)`, logTags);
-            return 0;
-        }
-
-        // For short, we want a gap up that fails (crap)
-        let gapSize = openPrice - previousDayCandle.close;
-        if (gapSize <= 0) {
-            Firestore.logError(`no gap up for short gap and crap, gap: ${gapSize}`, logTags);
-            return 0;
-        }
-
-        // Check if gap is significant (at least 0.5% of previous close)
-        let gapPercent = (gapSize / previousDayCandle.close) * 100;
-        if (gapPercent < 0.5) {
-            Firestore.logError(`gap too small: ${gapPercent.toFixed(2)}%`, logTags);
             return 0;
         }
 

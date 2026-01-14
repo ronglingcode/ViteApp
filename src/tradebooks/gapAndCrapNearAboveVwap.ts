@@ -37,11 +37,16 @@ export class GapAndCrapNearAboveVwap extends Tradebook {
         let isLong = false; // This tradebook only supports short
         let logTagName = '_short_gap_and_crap_near_above_vwap';
         let logTags = Models.generateLogTags(symbol, `${symbol}_${logTagName}`);
+        let entryMethod = parameters.entryMethod;
+        if (!entryMethod) {
+            Firestore.logError(`entry method is missing`, logTags);
+            return 0;
+        }
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
         let symbolData = Models.getSymbolData(symbol);
         let stopOutPrice = symbolData.highOfDay;
         let riskLevelPrice = Models.getRiskLevelPrice(symbol, isLong, this.gapAndCrapPlan.defaultRiskLevel, entryPrice);
-        let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
+        let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, entryMethod, logTags);
 
         if (allowedSize === 0) {
             Firestore.logError(`${this.symbol} not allowed entry`, logTags);
@@ -52,65 +57,32 @@ export class GapAndCrapNearAboveVwap extends Tradebook {
         return allowedSize;
     }
 
-    validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
+    validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, entryMethod: string, logTags: Models.LogTags): number {
         let symbolData = Models.getSymbolData(this.symbol);
         let openPrice = Models.getOpenPrice(this.symbol);
-        let previousDayCandle = symbolData.previousDayCandle;
-        let lastVwapBeforeOpen = Models.getLastVwapBeforeOpen(this.symbol);
+        let currentVwap = Models.getCurrentVwap(this.symbol);
         let atr = Models.getAtr(this.symbol);
 
-        if (!openPrice || !previousDayCandle || previousDayCandle.close === 0) {
-            Firestore.logError(`missing open price or previous day candle`, logTags);
+        if (!openPrice) {
+            Firestore.logError(`missing open price`, logTags);
             return 0;
         }
 
-        // Open must be above VWAP
-        if (openPrice <= lastVwapBeforeOpen) {
-            Firestore.logError(`open ${openPrice} must be above VWAP ${lastVwapBeforeOpen}`, logTags);
-            return 0;
-        }
-
-        // Open must be near above VWAP (within 0.5 ATR)
-        let distanceFromVwap = openPrice - lastVwapBeforeOpen;
-        let threshold = atr.average * 0.5;
-        if (distanceFromVwap > threshold) {
-            Firestore.logError(`open ${openPrice} must be near above VWAP ${lastVwapBeforeOpen}, distance ${distanceFromVwap} > threshold ${threshold} (0.5 ATR)`, logTags);
-            return 0;
-        }
-
-        // For short, we want a gap up that fails (crap)
-        let gapSize = openPrice - previousDayCandle.close;
-        if (gapSize <= 0) {
-            Firestore.logError(`no gap up for short gap and crap, gap: ${gapSize}`, logTags);
-            return 0;
-        }
-
-        // Check if gap is significant (at least 0.5% of previous close)
-        let gapPercent = (gapSize / previousDayCandle.close) * 100;
-        if (gapPercent < 0.5) {
-            Firestore.logError(`gap too small: ${gapPercent.toFixed(2)}%`, logTags);
-            return 0;
-        }
-
-        // Check if price has started to reverse (crap part)
-        // For short, price should be moving down from the gap up open
-        let currentPrice = Models.getCurrentPrice(this.symbol);
-        if (currentPrice >= openPrice) {
-            Firestore.logError(`price not reversing down from gap up, current: ${currentPrice}, open: ${openPrice}`, logTags);
-            return 0;
-        }
-
-        // Check timing - should be within first hour
-        let secondsSinceOpen = Helper.getSecondsSinceMarketOpen(new Date());
-        if (secondsSinceOpen > 3600) {
-            Firestore.logError(`too late for gap and crap, ${secondsSinceOpen} seconds since open`, logTags);
-            return 0;
-        }
-
-        if (useMarketOrder) {
-            let currentCandle = Models.getCurrentCandle(this.symbol);
-            if (currentCandle.close > currentCandle.open) {
-                Firestore.logError(`current candle is against momentum, use stop order instead`, logTags);
+        // Validate entry method specific requirements
+        if (entryMethod === 'false b/o') {
+            // For false breakout: high of day must have touched pm high, and entry price must be below pm high
+            if (symbolData.highOfDay < symbolData.premktHigh) {
+                Firestore.logError(`high of day ${symbolData.highOfDay} has not touched pm high ${symbolData.premktHigh}`, logTags);
+                return 0;
+            }
+            if (entryPrice >= symbolData.premktHigh) {
+                Firestore.logError(`entry price ${entryPrice} must be below pm high ${symbolData.premktHigh}`, logTags);
+                return 0;
+            }
+        } else if (entryMethod === 'vwap b/d') {
+            // For vwap breakdown: entry price must be below vwap
+            if (entryPrice >= currentVwap) {
+                Firestore.logError(`entry price ${entryPrice} must be below vwap ${currentVwap}`, logTags);
                 return 0;
             }
         }
@@ -119,7 +91,7 @@ export class GapAndCrapNearAboveVwap extends Tradebook {
         let allowedSize = EntryRulesChecker.checkBasicGlobalEntryRules(
             this.symbol, false, entryPrice, stopOutPrice, useMarketOrder,
             this.gapAndCrapPlan, false, logTags);
-        return allowedSize;
+        return allowedSize / 2;
     }
 
     submitEntryOrders(dryRun: boolean, useMarketOrder: boolean,
@@ -202,17 +174,10 @@ export class GapAndCrapNearAboveVwap extends Tradebook {
     }
 
     onNewTimeSalesData(): void {
-        // Disable after first 60 minutes
-        let secondsSinceOpen = Helper.getSecondsSinceMarketOpen(new Date());
-        if (secondsSinceOpen > 3600) {
-            if (this.isEnabled()) {
-                this.disable();
-            }
-            return;
-        }
+
     }
 
     getEntryMethods(): string[] {
-        return [];
+        return ['false b/o', 'vwap b/d'];
     }
 }
