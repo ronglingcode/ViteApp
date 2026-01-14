@@ -12,7 +12,9 @@ import * as TradingState from "../models/tradingState";
 import { VwapScalp } from "./vwapScalp";
 import { BreakoutReversal } from "./breakoutReversal";
 import { OpenProfitTaking } from "./openProfitTaking";
+import { AllTimeHighVwapContinuation } from "./allTimeHighVwapContinuation";
 import * as Helper from "../utils/helper";
+import * as Firestore from "../firestore";
 
 export const createAllTradebooks = (symbol: string) => {
     let plan = TradingPlans.getTradingPlans(symbol);
@@ -80,6 +82,10 @@ export const createAllTradebooks = (symbol: string) => {
     if (plan.short.openProfitTakingPlan) {
         let openProfitTaking = new OpenProfitTaking(symbol, false, plan.short.openProfitTakingPlan);
         tradebooksMap.set(openProfitTaking.getID(), openProfitTaking);
+    }
+    if (plan.long.allTimeHighVwapContinuationPlan) {
+        let allTimeHighVwapContinuation = new AllTimeHighVwapContinuation(symbol, true, plan.long.allTimeHighVwapContinuationPlan);
+        tradebooksMap.set(allTimeHighVwapContinuation.getID(), allTimeHighVwapContinuation);
     }
 
     return tradebooksMap;
@@ -153,6 +159,18 @@ export const updateTradebooksStatus = (symbol: string, tradebooksMap: Map<string
 
     let isLongEnabled = plan.long.enabled;
     let isShortEnabled = plan.short.enabled;
+
+    // Disable AllTimeHighVwapContinuation if open is below VWAP or all-time high
+    if (plan.long.allTimeHighVwapContinuationPlan) {
+        let athVwapContTradebook = tradebooksMap.get(AllTimeHighVwapContinuation.allTimeHighVwapContinuationLong);
+        if (athVwapContTradebook) {
+            let allTimeHigh = plan.long.allTimeHighVwapContinuationPlan.allTimeHigh;
+            if (openPrice < lastVwapBeforeOpen || openPrice < allTimeHigh) {
+                athVwapContTradebook.disable();
+                Firestore.logInfo(`${symbol} disabling ATH VWAP Cont: open ${openPrice} is below VWAP ${lastVwapBeforeOpen} or ATH ${allTimeHigh}`);
+            }
+        }
+    }
 
     let specificTradebooks: Map<string, boolean> = new Map();
 

@@ -50,6 +50,11 @@ export class AllTimeHighVwapContinuation extends Tradebook {
             Firestore.logError(`has two candles against vwap for M${timeframe}, giving up`, logTags);
             return 0;
         }
+        let hasTwoCandlesAgainstLevel = VwapPatterns.hasTwoConsecutiveCandlesAgainstLevel(this.symbol, isLong, this.allTimeHighVwapContinuationPlan.allTimeHigh, timeframe);
+        if (hasTwoCandlesAgainstLevel) {
+            Firestore.logError(`has two candles against all-time high for M${timeframe}, giving up`, logTags);
+            return 0;
+        }
 
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
         let stopOutPrice = Chart.getStopLossPrice(symbol, isLong, true, null);
@@ -84,16 +89,17 @@ export class AllTimeHighVwapContinuation extends Tradebook {
         if (symbolData.lowOfDay > currentVwap) {
             // Just a warning, not going to block the trade
             // because sometimes vwap will move until the candle is closed
-            Firestore.logError(`not touch vwap yet: ${currentVwap}`, logTags);
+            // Firestore.logError(`not touch vwap yet: ${currentVwap}`, logTags);
         }
 
         // Check if price has broken above all-time high
         if (symbolData.highOfDay <= allTimeHigh) {
             Firestore.logError(`price has not broken above all-time high ${allTimeHigh}, current high: ${symbolData.highOfDay}`, logTags);
-            return 0;
+            //return 0;
         }
 
         if (!Rules.isTimingAndEntryAllowedForHigherTimeframe(this.symbol, entryPrice, true, timeframe, logTags)) {
+            Firestore.logError(`not timing and entry allowed for higher timeframe`, logTags);
             return 0;
         }
 
@@ -177,7 +183,7 @@ export class AllTimeHighVwapContinuation extends Tradebook {
     }
 
     onNewTimeSalesData(): void {
-        // No max entry logic needed
+        // Disable logic is handled in tradebooksManager.ts
     }
 
     getEntryMethods(): string[] {

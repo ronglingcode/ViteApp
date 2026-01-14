@@ -138,7 +138,7 @@ export const getStatusForVwapBounceFail = (symbol: string) => {
         let currentCandle = candles[current];
         if (prev >= 0) {
             let prevCandle = candles[prev];
-            if ((currentCandle.high > prevCandle.high) || ( current != candles.length - 1 && currentCandle.low > prevCandle.low)) {
+            if ((currentCandle.high > prevCandle.high) || (current != candles.length - 1 && currentCandle.low > prevCandle.low)) {
                 status = "bouncing off vwap";
                 break;
             }
@@ -260,6 +260,23 @@ export const getStatusForOpenDrive = (symbol: string, timeframe: number, isLong:
     }
     return lastStatus;
 }
+export const hasTwoConsecutiveCandlesAgainstLevel = (symbol: string, isLong: boolean, level: number, timeframe: number) => {
+    let candles = Models.getCandlesSinceOpenForTimeframe(symbol, timeframe);
+    if (candles.length < 2) {
+        // not 2 closed candles yet
+        return false;
+    }
+    for (let i = 1; i < candles.length; i++) {
+        let prevCandle = candles[i - 1];
+        let currentCandle = candles[i];
+        let prevCloseBelowLevel = isLong ? prevCandle.close < level : prevCandle.close > level;
+        let currentCloseBelowLevel = isLong ? currentCandle.close < level : currentCandle.close > level;
+        if (prevCloseBelowLevel && currentCloseBelowLevel) {
+            return true;
+        }
+    }
+    return false;
+}
 export const hasTwoConsecutiveCandlesAgainstLevelAfterCloseAbove = (symbol: string, isLong: boolean, level: number, timeframe: number) => {
     let candles = Models.getCandlesSinceOpenForTimeframe(symbol, timeframe);
     if (candles.length < 2) {
@@ -305,7 +322,7 @@ export const hasTwoConsecutiveCandlesAgainstVwap = (symbol: string, isLong: bool
         return false;
     }
     let maxCount = Math.min(candles.length, vwaps.length);
-    for (let i = 1; i < maxCount-1; i++) {
+    for (let i = 1; i < maxCount - 1; i++) {
         let prevCandle = candles[i - 1];
         let currentCandle = candles[i];
         let prevVwap = vwaps[i - 1].value;
