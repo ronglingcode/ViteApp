@@ -7,6 +7,7 @@ import * as TradebookUtil from './tradebookUtil';
 import * as LongDocs from './tradebookDocs/breakdownReversalLong';
 import * as ShortDocs from './tradebookDocs/breakdownReversalLong';
 import * as FalseBreakout from '../patterns/falseBreakout';
+import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 
 export class BreakoutReversal extends Tradebook {
     public static readonly reversalLong: string = 'ReversalLong';
@@ -32,18 +33,19 @@ export class BreakoutReversal extends Tradebook {
         let logTags = Models.generateLogTags(symbol, `${symbol}_${logTagName}`);
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
         let stopOutPrice = Chart.getStopLossPrice(symbol, isLong, true, null);
-        let riskLevelPrice = Models.getRiskLevelPrice(symbol, isLong, stopOutPrice, entryPrice);
-        let allowedSize = this.validateEntry(entryPrice, stopOutPrice, logTags);
+        let riskLevelPrice = Models.getRiskLevelPrice(symbol, isLong, this.reversalPlan.defaultRiskLevel, entryPrice);
+        let planCopy = JSON.parse(JSON.stringify(this.reversalPlan)) as TradingPlansModels.ReversalPlan;
+        let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, planCopy, logTags);
         if (allowedSize === 0) {
             Firestore.logError(`${this.symbol} not allowed entry`, logTags);
             return 0;
         }
 
-        let planCopy = JSON.parse(JSON.stringify(this.reversalPlan)) as TradingPlansModels.ReversalPlan;
-        this.submitEntryOrdersBase(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskLevelPrice, allowedSize, this.reversalPlan, logTags);
+        this.submitEntryOrdersBase(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskLevelPrice, allowedSize, planCopy, logTags);
         return allowedSize;
     }
-    private validateEntry(entryPrice: number, stopOutPrice: number, logTags: Models.LogTags): number {
+    private validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean,
+        plan: TradingPlansModels.ReversalPlan, logTags: Models.LogTags): number {
         if (!this.isEnabled()) {
             return 0;
         }
@@ -64,14 +66,16 @@ export class BreakoutReversal extends Tradebook {
             }
         }
         // must be on the the opposite side of vwap to avoid vwap shakeout
+        // reduce to 50% size if not against vwap
+        let multiplier = 1;
         let currentVwap = Models.getCurrentVwap(this.symbol);
         if (this.isLong && entryPrice > currentVwap) {
             Firestore.logError(`entry price ${entryPrice} must be below vwap ${currentVwap} to avoid vwap shakeout`, logTags);
-            return 0;
+            multiplier = 0.5;
         }
         if (!this.isLong && entryPrice < currentVwap) {
             Firestore.logError(`entry price ${entryPrice} must be above vwap ${currentVwap} to avoid vwap shakeout`, logTags);
-            return 0;
+            multiplier = 0.5;
         }
         if (this.reversalPlan.requireLevelTouch) {
             if (this.isLong) {
@@ -105,14 +109,18 @@ export class BreakoutReversal extends Tradebook {
         }
         if (found != 1) {
             if (found + 2 < candles.length) {
-                Firestore.logError(`passed time window for reversal setup, ${found}th candle above key level`, logTags);
-                return 0;
+                //Firestore.logError(`passed time window for reversal setup, ${found}th candle above key level`, logTags);
+                //return 0;
+                // if we can to re-enable this rule, we should use the last testing candle, 
+                // not the first testing candel
             }
         }
 
-        // TODO: check more global rules
-        // TODO: if closed multiple candles above level, disable this tradebook for the day
-        return 0.21 / 2;
+        // if closed 3 candles above level, disable this tradebook for the day
+        // should use a default risk level to avoid risking too big
+        let allowedSize = EntryRulesChecker.checkBasicGlobalEntryRules(
+            this.symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder, plan, false, logTags);
+        return allowedSize * multiplier;
     }
 
     refreshLiveStats(): void {
@@ -262,7 +270,7 @@ export class BreakoutReversal extends Tradebook {
             let symbolData = Models.getSymbolData(this.symbol);
             let stopOutPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
             let riskLevelPrice = Models.getRiskLevelPrice(this.symbol, this.isLong, stopOutPrice, entryPrice);
-            let allowedSize = this.validateEntry(entryPrice, stopOutPrice, logTags);
+            let allowedSize = this.validateEntry(entryPrice, stopOutPrice, false, this.reversalPlan, logTags);
             if (allowedSize === 0) {
                 Firestore.logError(`${this.symbol} not allowed entry`, logTags);
                 return;
