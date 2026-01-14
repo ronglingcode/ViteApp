@@ -197,7 +197,12 @@ export class GapAndCrap extends Tradebook {
     }
 
     getEntryMethodsAllowedForAll(): string[] {
-        return [Models.CommonEntryMethods.BelowWaterBreakdown];
+        let firstNewLows = Models.getFirstNewLowsHigherTimeframeEntryMethods();
+        let falsePremarketHighBreakouts = [Models.CommonEntryMethods.FalsePremarketHighBreakout];
+        return [...firstNewLows, ...falsePremarketHighBreakouts,
+        Models.CommonEntryMethods.VwapBounceFail,
+        Models.CommonEntryMethods.LowOfDay,
+        ];
     }
     getEntryMethods(): string[] {
         if (this.basePlan.accelerationLevel) {

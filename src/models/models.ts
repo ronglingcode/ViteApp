@@ -2041,6 +2041,14 @@ export interface CamarillaPivots {
 }
 export enum CommonEntryMethods {
     BelowWaterBreakdown = 'BelowWaterBreakdown',
+    FirstNewLowM5 = 'FirstNewLowM5',
+    FirstNewLowM15 = 'FirstNewLowM15',
+    FirstNewLowM30 = 'FirstNewLowM30',
+    FalsePremarketHighBreakout = 'FalsePremarketHighBreakout',
+    VwapBounceFail = 'VwapBounceFail',
+    LowOfDay = 'LowOfDay',
+    HighOfDay = 'HighOfDay',
+
 }
 export enum TimeFrameEntryMethod {
     M1 = 'M1',
@@ -2100,4 +2108,9 @@ export const getCandlesSinceOpenForTimeframe = (symbol: string, timeframe: numbe
     } else {
         return getCandlesFromM1SinceOpen(symbol);
     }
+}
+
+
+export const getFirstNewLowsHigherTimeframeEntryMethods = (): string[] => {
+    return [CommonEntryMethods.FirstNewLowM5, CommonEntryMethods.FirstNewLowM15, CommonEntryMethods.FirstNewLowM30];
 }
