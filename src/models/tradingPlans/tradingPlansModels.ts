@@ -127,6 +127,7 @@ export interface SingleDirectionPlans {
     vwapScalpPlan?: VwapScalpPlan,
     openProfitTakingPlan?: OpenProfitTakingPlan,
     allTimeHighVwapContinuationPlan?: AllTimeHighVwapContinuationPlan,
+    gapAndCrapAccelerationPlan?: GapAndCrapAccelerationPlan,
     /* used strategies end */
 
     profitTakingFade60Plan?: ProfitTakingFade60Plan,
@@ -152,6 +153,10 @@ export interface VwapScalpPlan extends BasePlan {
 }
 export interface AllTimeHighVwapContinuationPlan extends BasePlan {
     allTimeHigh: number,
+}
+export interface GapAndCrapAccelerationPlan extends BasePlan {
+    accelerationLevel: number,
+    defaultRiskLevel: number,
 }
 export interface keyLevels {
     otherLevels?: number[];

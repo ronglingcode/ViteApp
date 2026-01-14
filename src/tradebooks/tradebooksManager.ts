@@ -13,6 +13,7 @@ import { VwapScalp } from "./vwapScalp";
 import { BreakoutReversal } from "./breakoutReversal";
 import { OpenProfitTaking } from "./openProfitTaking";
 import { AllTimeHighVwapContinuation } from "./allTimeHighVwapContinuation";
+import { GapAndCrapAcceleration } from "./gapAndCrapAcceleration";
 import * as Helper from "../utils/helper";
 import * as Firestore from "../firestore";
 
@@ -86,6 +87,10 @@ export const createAllTradebooks = (symbol: string) => {
     if (plan.long.allTimeHighVwapContinuationPlan) {
         let allTimeHighVwapContinuation = new AllTimeHighVwapContinuation(symbol, true, plan.long.allTimeHighVwapContinuationPlan);
         tradebooksMap.set(allTimeHighVwapContinuation.getID(), allTimeHighVwapContinuation);
+    }
+    if (plan.short.gapAndCrapAccelerationPlan) {
+        let gapAndCrapAcceleration = new GapAndCrapAcceleration(symbol, false, plan.short.gapAndCrapAccelerationPlan);
+        tradebooksMap.set(gapAndCrapAcceleration.getID(), gapAndCrapAcceleration);
     }
 
     return tradebooksMap;
