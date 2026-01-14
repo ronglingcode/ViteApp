@@ -5,16 +5,14 @@ import * as Models from '../models/models';
 import * as Chart from '../ui/chart';
 import * as TradebookUtil from './tradebookUtil';
 import * as Helper from '../utils/helper';
-import * as GlobalSettings from '../config/globalSettings';
 import * as VwapPatterns from '../algorithms/vwapPatterns';
 import * as TradebookUtils from './tradebookUtil';
 import * as Rules from '../algorithms/rules';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 
 export class AllTimeHighVwapContinuation extends Tradebook {
-    public static readonly allTimeHighVwapContinuationLong: string = 'AllTimeHighVwapContinuationLong';
+    public static readonly allTimeHighVwapContinuationLong: string = 'ATHVwapCont';
     private allTimeHighVwapContinuationPlan: TradingPlansModels.AllTimeHighVwapContinuationPlan;
-    private maxEntry: number = 0;
 
     public getID(): string {
         return AllTimeHighVwapContinuation.allTimeHighVwapContinuationLong;
@@ -25,12 +23,11 @@ export class AllTimeHighVwapContinuation extends Tradebook {
         if (!isLong) {
             throw new Error('AllTimeHighVwapContinuation tradebook only supports long positions');
         }
-        let tradebookName = 'Long All-Time High VWAP Continuation';
-        let buttonLabel = 'All-Time High VWAP Continuation';
+        let tradebookName = 'ATH VWAP Cont';
+        let buttonLabel = 'ATH VWAP Cont';
         super(symbol, true, tradebookName, buttonLabel);
         this.allTimeHighVwapContinuationPlan = plan;
         this.enableByDefault = false;
-        this.maxEntry = 0;
     }
 
     refreshLiveStats(): void {
@@ -68,11 +65,6 @@ export class AllTimeHighVwapContinuation extends Tradebook {
     }
 
     validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, timeframe: number, logTags: Models.LogTags): number {
-        if (this.allTimeHighVwapContinuationPlan.strongReasonToUseThisLevel.length == 0) {
-            Firestore.logError(`${this.symbol} not allowed entry because of missing strong reason to use this level`, logTags);
-            return 0;
-        }
-
         let symbolData = Models.getSymbolData(this.symbol);
         let allTimeHigh = this.allTimeHighVwapContinuationPlan.allTimeHigh;
         let currentVwap = Models.getCurrentVwap(this.symbol);
@@ -98,21 +90,6 @@ export class AllTimeHighVwapContinuation extends Tradebook {
         // Check if price has broken above all-time high
         if (symbolData.highOfDay <= allTimeHigh) {
             Firestore.logError(`price has not broken above all-time high ${allTimeHigh}, current high: ${symbolData.highOfDay}`, logTags);
-            return 0;
-        }
-
-        if (GlobalSettings.checkMaxEntryThreshold) {
-            if (this.maxEntry > 0) {
-                if (entryPrice > this.maxEntry) {
-                    Firestore.logError(`entry price ${entryPrice} is greater than max entry ${this.maxEntry}`, logTags);
-                    return 0;
-                }
-            }
-        }
-
-        let threshold = this.allTimeHighVwapContinuationPlan.threshold;
-        if (entryPrice < threshold) {
-            Firestore.logError(`entry price ${entryPrice} is less than threshold ${threshold}`, logTags);
             return 0;
         }
 
@@ -200,46 +177,7 @@ export class AllTimeHighVwapContinuation extends Tradebook {
     }
 
     onNewTimeSalesData(): void {
-        let candles = Models.getCandlesFromM1SinceOpen(this.symbol);
-        if (candles.length == 0) {
-            return;
-        }
-        if (candles.length >= 2) {
-            if (this.maxEntry > 0) {
-                this.maxEntry = 0;
-                Chart.clearMaxEntry(this.symbol);
-            }
-            return;
-        }
-        let openPrice = candles[0].open;
-        let allTimeHigh = this.allTimeHighVwapContinuationPlan.allTimeHigh;
-        if (openPrice >= allTimeHigh) {
-            // opened above all-time high, no max entry needed
-            return;
-        }
-        let lastCandle = candles[candles.length - 1];
-        let symbolData = Models.getSymbolData(this.symbol);
-        let risk = symbolData.highOfDay - symbolData.lowOfDay + 0.01;
-        if (lastCandle.close <= lastCandle.open) {
-            let newMaxEntry = symbolData.highOfDay + 0.3 * risk;
-            newMaxEntry = Helper.roundPrice(this.symbol, newMaxEntry);
-            this.updateMaxEntryThreshold(newMaxEntry);
-        }
-    }
-
-    updateMaxEntryThreshold(newValue: number): void {
-        if (!GlobalSettings.checkMaxEntryThreshold) {
-            return;
-        }
-        if (this.maxEntry == 0) {
-            this.maxEntry = newValue;
-            Chart.drawMaxEntry(this.symbol, this.maxEntry);
-            return;
-        }
-        if (newValue > this.maxEntry) {
-            this.maxEntry = Math.max(this.maxEntry, newValue);
-            Chart.drawMaxEntry(this.symbol, this.maxEntry);
-        }
+        // No max entry logic needed
     }
 
     getEntryMethods(): string[] {
