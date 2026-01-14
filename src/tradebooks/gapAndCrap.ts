@@ -205,11 +205,6 @@ export class GapAndCrap extends Tradebook {
         ];
     }
     getEntryMethods(): string[] {
-        if (this.basePlan.accelerationLevel) {
-            this.getEntryMethodsForAccelerationLevel(this.basePlan.accelerationLevel);
-        } else {
-
-        }
         return [];
     }
     getEntryMethodsForAccelerationLevel(accelerationLevel: number): string[] {
