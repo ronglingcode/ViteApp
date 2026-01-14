@@ -1550,6 +1550,12 @@ export const getLastVwapBeforeOpen = (symbol: string) => {
     let tvTime = Helper.jsDateToTradingViewUTC(time);
     let symbolData = getSymbolData(symbol);
     let vwaps = symbolData.m1Vwaps;
+
+    if (vwaps.length == 0) {
+        Firestore.logError(`getLastVwapBeforeOpen no vwaps found`);
+        return 0;
+    }
+
     let i = 0;
     while (i < vwaps.length) {
         const candle = vwaps[i];
