@@ -2039,7 +2039,9 @@ export interface CamarillaPivots {
     S5: number,
     S6: number
 }
-
+export enum CommonEntryMethods {
+    BelowWaterBreakdown = 'BelowWaterBreakdown',
+}
 export enum TimeFrameEntryMethod {
     M1 = 'M1',
     M5 = 'M5',

@@ -204,6 +204,10 @@ export interface OpenProfitTakingPlan extends BasePlan {
     defaultRiskLevel: number,
     mustOpenWithin: number,
 }
+export interface GapAndCrapPlan extends BasePlan {
+    accelerationLevel?: number,
+    defaultRiskLevel: number,
+}
 export interface OpenDriveContinuation60Plan extends BasePlan {
     disableIfOpenWorseThanPrice: number,
     requireOpenBetterThanVwap: boolean,

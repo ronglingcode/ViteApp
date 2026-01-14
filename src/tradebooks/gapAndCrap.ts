@@ -10,13 +10,13 @@ import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 
 export class GapAndCrap extends Tradebook {
     public static readonly gapAndCrapShort: string = 'GapAndCrapShort';
-    private basePlan: TradingPlansModels.BasePlan;
+    private basePlan: TradingPlansModels.GapAndCrapPlan;
 
     public getID(): string {
         return GapAndCrap.gapAndCrapShort;
     }
 
-    constructor(symbol: string, isLong: boolean, basePlan: TradingPlansModels.BasePlan) {
+    constructor(symbol: string, isLong: boolean, basePlan: TradingPlansModels.GapAndCrapPlan) {
         // This tradebook only supports short positions
         if (isLong) {
             throw new Error('GapAndCrap tradebook only supports short positions');
@@ -196,7 +196,31 @@ export class GapAndCrap extends Tradebook {
         }
     }
 
+    getEntryMethodsAllowedForAll(): string[] {
+        return [Models.CommonEntryMethods.BelowWaterBreakdown];
+    }
     getEntryMethods(): string[] {
+        if (this.basePlan.accelerationLevel) {
+            this.getEntryMethodsForAccelerationLevel(this.basePlan.accelerationLevel);
+        } else {
+
+        }
+        return [];
+    }
+    getEntryMethodsForAccelerationLevel(accelerationLevel: number): string[] {
+        let priceToUse = Models.getCurrentPrice(this.symbol);
+        let openPrice = Models.getOpenPrice(this.symbol);
+        if (openPrice) {
+            priceToUse = openPrice;
+        }
+
+        if (priceToUse < accelerationLevel) {
+            // aggressive entry
+        } else {
+            // must wait for price to close below like below water breakout
+            return [Models.CommonEntryMethods.BelowWaterBreakdown];
+        }
+
         return [];
     }
 }
