@@ -37,23 +37,12 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
         Firestore.logError(`blocked because less than $20M traded after open, be carefull`, logTags);
         return 0;
     }
-    if (Rules.isDailyRangeTooSmall(symbol, atr, true, logTags)) {
+    let allowEarlyEntry = Rules.shouldAllowEarlyEntry(symbol, secondsSinceMarketOpen);
+    if (!allowEarlyEntry.allowed) {
+        Firestore.logError(`${symbol} ${allowEarlyEntry.reason}`, logTags);
         return 0;
     }
     let symbolData = Models.getSymbolData(symbol);
-    let volumeQuality = SetupQuality.getPremarketVolumeQuality(symbol, symbolData.premarketDollarCollection);
-    if (volumeQuality == Models.PremarketVolumeQuality.TooLow) {
-        if (secondsSinceMarketOpen < 60 * 15) {
-            Firestore.logError(`${symbol} premarket volume quality too low: ${volumeQuality}, wait 15 minutes`);
-            return 0;
-        }
-    }
-    if (volumeQuality == Models.PremarketVolumeQuality.Ok) {
-        if (secondsSinceMarketOpen < 60) {
-            Firestore.logError(`${symbol} premarket volume quality is ok, but still too early to trade`, logTags);
-            return 0;
-        }
-    }
     if (liquidityScale < 0.9) {
         Firestore.logInfo(`liquidity scale is ${liquidityScale}`, logTags);
     }
@@ -67,11 +56,10 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
         Firestore.logInfo(`had entries in the same direction, old entries will be cancelled`, logTags);
     }
     let tradingTiming = TradingPlans.getTradingTiming(symbol, basePlan);
-    let deferTradingInSeconds = tradingTiming.deferTradingInSeconds;
     let stopTradingAfterSeconds = tradingTiming.stopTradingAfterSeconds;
-    if (Rules.isBlockedByTiming(secondsSinceMarketOpen, deferTradingInSeconds, stopTradingAfterSeconds)) {
+    if (Rules.isBlockedByAfterTrading(stopTradingAfterSeconds, secondsSinceMarketOpen)) {
         Firestore.logError(
-            `defer ${deferTradingInSeconds} seconds, stop after ${stopTradingAfterSeconds},  currently ${secondsSinceMarketOpen}`,
+            `stop after ${stopTradingAfterSeconds},  currently ${secondsSinceMarketOpen}`,
             logTags,
         );
         return 0;
@@ -186,9 +174,6 @@ export const checkGlobalEntryRules = (symbol: string, isLong: boolean,
 
     if ((isLong && entryPrice < momentumStartPrice) || (!isLong && entryPrice > momentumStartPrice)) {
         Firestore.logError(`checkRule: entry price ${entryPrice} is against momentum start price ${momentumStartPrice}`, logTags);
-        return 0;
-    }
-    if (Rules.isDailyRangeTooSmall(symbol, atr, true, logTags)) {
         return 0;
     }
     if (Rules.isSpreadTooLarge(symbol)) {

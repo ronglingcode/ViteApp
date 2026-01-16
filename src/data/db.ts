@@ -404,16 +404,16 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
 
         // Calculate average trades per second over the rolling window
         // Exclude the most recent second since that window is not closed yet
-        let entriesForAverage = symbolData.timeAndSalesPerSecond.length > 1 
-            ? symbolData.timeAndSalesPerSecond.slice(0, -1) 
+        let entriesForAverage = symbolData.timeAndSalesPerSecond.length > 1
+            ? symbolData.timeAndSalesPerSecond.slice(0, -1)
             : [];
-        
+
         let totalTrades = 0;
         for (let i = 0; i < entriesForAverage.length; i++) {
             totalTrades += entriesForAverage[i].count;
         }
         // Calculate average trades per second
-        let averageTradesPerSecond = entriesForAverage.length > 0 
+        let averageTradesPerSecond = entriesForAverage.length > 0
             ? (totalTrades / entriesForAverage.length).toFixed(0)
             : "0";
 
@@ -627,10 +627,9 @@ export const updateChartColor = (symbol: string, widget: Models.ChartWidget) => 
     }
     let atr = Models.getAtr(symbol);
     let logTags: Models.LogTags = {}
-    let enougthAtr = !Rules.isDailyRangeTooSmall(symbol, atr, false, logTags);
     let liquidityScale = Models.getLiquidityScale(symbol);
     // exclude spread rules for chart color
-    let allRulesPassed = enougthAtr && liquidityScale > 0; // && !Rules.isSpreadTooLarge(symbol);
+    let allRulesPassed = liquidityScale > 0; // && !Rules.isSpreadTooLarge(symbol);
     if (allRulesPassed && widget.isDark) {
         Chart.lightChart(symbol);
     } else if (!allRulesPassed && !widget.isDark) {

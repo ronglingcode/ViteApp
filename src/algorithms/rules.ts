@@ -13,6 +13,7 @@ import * as TradingState from '../models/tradingState';
 import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as OrderFlowManager from '../controllers/orderFlowManager';
 import * as VwapPatterns from './vwapPatterns';
+import * as SetupQuality from './setupQuality';
 declare let window: Models.MyWindow;
 
 
@@ -44,7 +45,7 @@ export const isTimingAndEntryAllowedForHigherTimeframe = (
         return false;
     }
     // entry price must be higher than at least of the closed candles
-    for(let i = 0; i < candles.length-1; i++) {
+    for (let i = 0; i < candles.length - 1; i++) {
         let c = candles[i];
         if (isLong) {
             if (entryPrice >= c.high) {
@@ -353,13 +354,13 @@ export const isBlockedByTiming = (secondsSinceMarketOpen: number, deferInSeconds
     return isBlockedByDeferTrading(deferInSeconds, secondsSinceMarketOpen) ||
         isBlockedByAfterTrading(stopAfterSeconds, secondsSinceMarketOpen);
 }
-const isBlockedByDeferTrading = (deferInSeconds: number, secondsSinceMarketOpen: number) => {
+export const isBlockedByDeferTrading = (deferInSeconds: number, secondsSinceMarketOpen: number) => {
     if (deferInSeconds <= 0) {
         return false;
     }
     return secondsSinceMarketOpen < deferInSeconds;
 }
-const isBlockedByAfterTrading = (stopAfterSeconds: number, secondsSinceMarketOpen: number) => {
+export const isBlockedByAfterTrading = (stopAfterSeconds: number, secondsSinceMarketOpen: number) => {
     if (stopAfterSeconds <= 0) {
         return false;
     }
@@ -491,35 +492,6 @@ export const isSpreadTooLarge = (symbol: string) => {
     }
 
     return false;
-}
-/**
- * TODO: Return this function with after seeing good order flow 
- */
-export const isDailyRangeTooSmall = (symbol: string,
-    atr: TradingPlansModels.AverageTrueRange,
-    showLogs: boolean, logTags: Models.LogTags) => {
-    // kind of replaced by spread rules
-    return false;
-    if (Helper.isFutures(symbol)) {
-        return false;
-    }
-    let symbolData = Models.getSymbolData(symbol);
-    let dailyRange = symbolData.highOfDay - symbolData.lowOfDay;
-    let lowerBound = atr.average * 0.05;
-    if (symbol == 'TSLA') {
-        lowerBound = atr.average * 0.02;
-    } else if (symbol == 'NVDA') {
-        lowerBound = atr.average * 0.03;
-    }
-    if (dailyRange < lowerBound) {
-        dailyRange = Math.round(dailyRange * 100) / 100;
-        if (showLogs) {
-            Firestore.logError(`risk is too small: ${dailyRange} < ${lowerBound} (0.05 * ${atr.average})`, logTags);
-        }
-        return true;
-    } else {
-        return false;
-    }
 }
 export const isAllowedAsPaperCut = (symbol: string, entryPrice: number,
     stopLossPrice: number, exitPrice: number) => {
@@ -683,4 +655,34 @@ export const isAllowedByMovingAverage = (symbol: string, isLong: boolean, useMar
         }
     }
     return false;
+}
+
+export const shouldAllowEarlyEntry = (symbol: string, secondsSinceMarketOpen: number) => {
+    let result: Models.CheckRulesResult = {
+        allowed: true,
+        reason: "default",
+    };
+    let topPlan = TradingPlans.getTradingPlans(symbol);
+    if (isBlockedByDeferTrading(topPlan.analysis.deferTradingInSeconds, secondsSinceMarketOpen)) {
+        result.allowed = false;
+        result.reason = `defer trading in ${topPlan.analysis.deferTradingInSeconds} seconds`;
+        return result;
+    }
+    let symbolData = Models.getSymbolData(symbol);
+    let volumeQuality = SetupQuality.getPremarketVolumeQuality(symbol, symbolData.premarketDollarCollection);
+    if (volumeQuality == Models.PremarketVolumeQuality.Ok) {
+        if (secondsSinceMarketOpen < 60) {
+            result.allowed = false;
+            result.reason = `premarket volume quality: ${volumeQuality}, wait 1 minute`;
+            return result;
+        }
+    }
+    if (volumeQuality == Models.PremarketVolumeQuality.TooLow) {
+        if (secondsSinceMarketOpen < 60 * 15) {
+            result.allowed = false;
+            result.reason = `premarket volume quality: ${volumeQuality}, wait 15 minutes`;
+            return result;
+        }
+    }
+    return result;
 }

@@ -173,12 +173,6 @@ const checkLiquidityAndDailyRange = (symbol: string, isLong: boolean, isFirstLoo
     } else {
         Firestore.logInfo(`liquidity pass with ${scale}`);
     }
-    let enoughAtr = meetAtrRule(symbol, logTags);
-    if (!enoughAtr) {
-        logError(isFirstLoop, `range too small, recheck after 0.4 seconds`, logTags);
-        prepareNextLoop(0.4, symbol, isLong, plan, planType, logTags);
-        return false;
-    }
     return true;
 }
 const runPlan = (symbol: string, isLong: boolean,
@@ -218,8 +212,3 @@ const logError = (isFirstLoop: boolean, msg: string, logTags: Models.LogTags) =>
     }
 }
 
-const meetAtrRule = (symbol: string, logTags: Models.LogTags) => {
-    let plan = TradingPlans.getTradingPlans(symbol);
-    let atr = plan.atr;
-    return !Rules.isDailyRangeTooSmall(symbol, atr, true, logTags);
-}

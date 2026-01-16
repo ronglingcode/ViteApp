@@ -83,8 +83,7 @@ export const loop = (symbol: string, isLong: boolean, isFirstLoop: boolean,
     let currentCandle = Models.getCurrentCandle(symbol);
     let hasReversal = Patterns.hasReversalBarSinceOpen(symbol, isLong, plan.strictMode, plan.considerCurrentCandleAfterOneMinute, "loop");
     let scale = Models.getLiquidityScale(symbol);
-    let enoughAtr = meetAtrRule(symbol, currentCandle, logTags);
-    if (enoughAtr && hasReversal && scale > 0) {
+    if (hasReversal && scale > 0) {
         // meet condition, submit orders
         algoState.initialSizeMultiplier = EntryHandler.runRedToGreenPlan(symbol, isLong, plan);
         if (algoState.initialSizeMultiplier <= 0) {
@@ -94,9 +93,6 @@ export const loop = (symbol: string, isLong: boolean, isFirstLoop: boolean,
     } else {
         if (!hasReversal) {
             logError(isFirstLoop, `not reversal, recheck after 0.4 seconds`, logTags);
-        }
-        if (!enoughAtr) {
-            logError(isFirstLoop, `range too small, recheck after 0.4 seconds`, logTags);
         }
         if (scale == 0) {
             logError(isFirstLoop, `not enough liquidity, recheck after 0.4 seconds`, logTags);
@@ -112,8 +108,3 @@ const logError = (isFirstLoop: boolean, msg: string, logTags: Models.LogTags) =>
     }
 }
 
-const meetAtrRule = (symbol: string, currentCandle: Models.Candle, logTags: Models.LogTags) => {
-    let plan = TradingPlans.getTradingPlans(symbol);
-    let atr = plan.atr;
-    return !Rules.isDailyRangeTooSmall(symbol, atr, true, logTags);
-}
