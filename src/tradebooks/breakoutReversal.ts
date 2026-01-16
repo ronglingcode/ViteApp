@@ -258,6 +258,9 @@ export class BreakoutReversal extends Tradebook {
         return this.checkEarlyExits();
     }
     onNewCandleClose(): void {
+
+        // consider making a pop out or add a time limit
+        return;
         let breakoutDirection = !this.isLong;
         let closedCandles = Models.getM1ClosedCandlesSinceOpen(this.symbol);
         if (FalseBreakout.isBreakoutOnFirstRally(closedCandles, this.keyLevel, breakoutDirection)) {
