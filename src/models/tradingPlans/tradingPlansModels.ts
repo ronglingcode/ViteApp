@@ -84,11 +84,11 @@ export interface TradebooksConfig {
 }
 export interface VwapLevelOpenConfig {
     shortOpenDrive: TradebookCommonConfig,
-    longVwapPushdownFail: TradebookCommonConfig,
+    longVwapPushdownFail: VwapBounceFailConfig,
 }
 export interface VwapOpenLevelConfig {
     shortBelowWaterBreakout: BreakoutTradebookConfig,
-    longVwapPushdownFail: TradebookCommonConfig,
+    longVwapPushdownFail: VwapBounceFailConfig,
 }
 export interface OpenVwapLevelConfig {
     longVwapContinuation: TradebookCommonConfig,
