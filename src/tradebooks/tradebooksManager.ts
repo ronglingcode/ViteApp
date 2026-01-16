@@ -11,7 +11,6 @@ import { VwapContinuationFailed } from "./singleKeyLevel/vwapContinuationFailed"
 import * as TradingState from "../models/tradingState";
 import { VwapScalp } from "./vwapScalp";
 import { BreakoutReversal } from "./breakoutReversal";
-import { OpenProfitTaking } from "./openProfitTaking";
 import { AllTimeHighVwapContinuation } from "./allTimeHighVwapContinuation";
 import { GapAndCrapAcceleration } from "./gapAndCrapAcceleration";
 import { GapAndCrapBelowVwap } from "./gapAndCrapBelowVwap";
@@ -78,14 +77,6 @@ export const createAllTradebooks = (symbol: string) => {
     if (plan.short.reversalPlan) {
         let reversal = new BreakoutReversal(symbol, false, plan.short.reversalPlan);
         tradebooksMap.set(reversal.getID(), reversal);
-    }
-    if (plan.long.openProfitTakingPlan) {
-        let openProfitTaking = new OpenProfitTaking(symbol, true, plan.long.openProfitTakingPlan);
-        tradebooksMap.set(openProfitTaking.getID(), openProfitTaking);
-    }
-    if (plan.short.openProfitTakingPlan) {
-        let openProfitTaking = new OpenProfitTaking(symbol, false, plan.short.openProfitTakingPlan);
-        tradebooksMap.set(openProfitTaking.getID(), openProfitTaking);
     }
     if (plan.long.allTimeHighVwapContinuationPlan) {
         let allTimeHighVwapContinuation = new AllTimeHighVwapContinuation(symbol, true, plan.long.allTimeHighVwapContinuationPlan);
