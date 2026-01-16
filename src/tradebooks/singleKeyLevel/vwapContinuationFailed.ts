@@ -26,7 +26,7 @@ enum EntryMethod {
 export class VwapContinuationFailed extends SingleKeyLevelTradebook {
     public static readonly longVwapPushDownFailed: string = 'LongVwapPushdownFailed';
     public static readonly shortVwapBounceFailed: string = 'ShortVwapBounceFailed';
-    public waitForClose: boolean = true;
+    public waitForClose: boolean = false;
     public legCounter: number = 0;
     public lowOfDayToBreak: number = 0;
     public disableExitRules: boolean = false;
