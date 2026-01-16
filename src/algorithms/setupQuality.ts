@@ -14,6 +14,9 @@ export const getPremarketVolumeQuality = (symbol: string, premarketDollar: Model
     if (premarketDollar.lastDayDollar >= 999 * oneMillion) {
         return Models.PremarketVolumeQuality.Elevated;
     }
+    if (premarketDollar.lastDayShares >= oneMillion) {
+        return Models.PremarketVolumeQuality.Elevated;
+    }
     if (premarketDollar.rvol >= 2.4) {
         return Models.PremarketVolumeQuality.Elevated;
     }
