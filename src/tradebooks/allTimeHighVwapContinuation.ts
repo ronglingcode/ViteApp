@@ -58,7 +58,8 @@ export class AllTimeHighVwapContinuation extends Tradebook {
 
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
         let stopOutPrice = Chart.getStopLossPrice(symbol, isLong, true, null);
-        let riskLevelPrice = Models.getRiskLevelPrice(symbol, isLong, stopOutPrice, entryPrice);
+        let defaultRiskLevel = this.allTimeHighVwapContinuationPlan.defaultRiskLevel ?? stopOutPrice;
+        let riskLevelPrice = Models.getRiskLevelPrice(symbol, isLong, defaultRiskLevel, entryPrice);
         let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, timeframe, logTags);
         if (allowedSize === 0) {
             Firestore.logError(`not allowed entry`, logTags);

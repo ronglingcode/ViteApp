@@ -185,6 +185,7 @@ export interface BasePlan {
     planType?: PlanType,
     timeframe?: number,
     entryMethod?: string,
+    defaultRiskLevel?: number,
 };
 export interface PlanConfigs {
     size: number,
@@ -211,11 +212,9 @@ export interface ProfitTakingFade60Plan extends BasePlan {
     onlyIfOpenBelow: number,
 }
 export interface OpenProfitTakingPlan extends BasePlan {
-    defaultRiskLevel: number,
     mustOpenWithin: number,
 }
 export interface GapAndCrapPlan extends BasePlan {
-    defaultRiskLevel: number,
 }
 export interface OpenDriveContinuation60Plan extends BasePlan {
     disableIfOpenWorseThanPrice: number,
@@ -233,7 +232,6 @@ export interface BreakoutAlgo extends AlgoPlan {
 export interface ReversalPlan extends BasePlan {
     keyLevel: number,
     requireLevelTouch: boolean,
-    defaultRiskLevel: number,
 }
 export interface RetracementPlan {
     entryAreas: RetracementArea[];
