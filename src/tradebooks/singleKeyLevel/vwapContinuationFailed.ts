@@ -42,7 +42,14 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
     }
 
     public updateConfig(config: TradingPlansModels.TradebooksConfig): void {
-        if (!this.isLong) {
+        if (this.isLong) {
+            if (!config.vwap_level_open.longVwapPushdownFail.waitForClose) {
+                this.waitForClose = false;
+            }
+            if (!config.vwap_open_level.longVwapPushdownFail.waitForClose) {
+                this.waitForClose = false;
+            }
+        } else {
             if (!config.level_open_vwap.shortVwapBounceFail.waitForClose) {
                 this.waitForClose = false;
             }
@@ -88,7 +95,7 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
 
         let entryPrice = Chart.getBreakoutEntryPrice(this.symbol, this.isLong, useMarketOrder, parameters);
         let stopOutPrice = Chart.getStopLossPrice(this.symbol, this.isLong, true, null);
-        
+
         let allowedSize = 0;
         if (entryMethod == EntryMethod.ClosedCandle) {
             allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, true, logTags);
