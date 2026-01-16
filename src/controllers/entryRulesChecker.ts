@@ -28,11 +28,8 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
         Firestore.logError(`checkRule: Daily max loss exceeded`, logTags);
         return 0;
     }
-    let { tradingPlans, atr, secondsSinceMarketOpen, premarketVwapTrend, currentVwap, momentumStartPrice } = getCommonInfo(symbol, isLong);
-
-
+    let { secondsSinceMarketOpen } = getCommonInfo(symbol, isLong);
     let liquidityScale = Models.getLiquidityScale(symbol);
-
     if (liquidityScale == 0) {
         Firestore.logError(`blocked because less than $20M traded after open, be carefull`, logTags);
         return 0;
@@ -42,7 +39,6 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
         Firestore.logError(`${symbol} ${allowEarlyEntry.reason}`, logTags);
         return 0;
     }
-    let symbolData = Models.getSymbolData(symbol);
     if (liquidityScale < 0.9) {
         Firestore.logInfo(`liquidity scale is ${liquidityScale}`, logTags);
     }
@@ -65,17 +61,9 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
         return 0;
     }
     let openPrice = Models.getOpenPrice(symbol);
-    if (openPrice) {
-        let disallowedReason = Rules.getDisallowedReasonBasedOnOpenPriceZone(symbol, isLong, openPrice, tradingPlans);
-        if (disallowedReason.length > 0) {
-            Firestore.logError(`blocked entry: ${disallowedReason}`, logTags);
-            return 0;
-        }
-    }
     let isEntryPriceInTradableArea = Models.isPriceInTradableArea(symbol, isLong, entryPrice);
     let isOpenInTradableArea = openPrice ? Models.isPriceInTradableArea(symbol, isLong, openPrice) : false;
     let hasBeenInTradableArea = Models.hasPriceBeenInTradableArea(symbol, isLong);
-
 
     let initialSize = liquidityScale * RiskManager.getRiskMultiplerForNextEntry(symbol, isLong, basePlan, logTags);
     let finalSize = initialSize;
@@ -161,23 +149,10 @@ export const checkGlobalEntryRules = (symbol: string, isLong: boolean,
         return 0;
     }
 
-
-    let symbolData = Models.getSymbolData(symbol);
-
-    /*
-    if (RiskManager.isRealizedProfitLossOverThreshold(symbol)) {
-        Firestore.logError(`realized loss exceeded 20%, do not trade this stock any more.`, logTags);
-        return 0;
-    }*/
-
     let { tradingPlans, atr, secondsSinceMarketOpen, premarketVwapTrend, currentVwap, momentumStartPrice } = getCommonInfo(symbol, isLong);
 
     if ((isLong && entryPrice < momentumStartPrice) || (!isLong && entryPrice > momentumStartPrice)) {
         Firestore.logError(`checkRule: entry price ${entryPrice} is against momentum start price ${momentumStartPrice}`, logTags);
-        return 0;
-    }
-    if (Rules.isSpreadTooLarge(symbol)) {
-        Firestore.logError(`spread too big, block entry`, logTags);
         return 0;
     }
 
@@ -193,13 +168,17 @@ export const checkGlobalEntryRules = (symbol: string, isLong: boolean,
         return 0;
     }
     let tradingTiming = TradingPlans.getTradingTiming(symbol, basePlan);
-    let deferTradingInSeconds = tradingTiming.deferTradingInSeconds;
     let stopTradingAfterSeconds = tradingTiming.stopTradingAfterSeconds;
-    if (Rules.isBlockedByTiming(secondsSinceMarketOpen, deferTradingInSeconds, stopTradingAfterSeconds)) {
+    if (Rules.isBlockedByAfterTrading(stopTradingAfterSeconds, secondsSinceMarketOpen)) {
         Firestore.logError(
-            `defer ${deferTradingInSeconds} seconds, stop after ${stopTradingAfterSeconds},  currently ${secondsSinceMarketOpen}`,
+            `stop after ${stopTradingAfterSeconds},  currently ${secondsSinceMarketOpen}`,
             logTags,
         );
+        return 0;
+    }
+    let allowEarlyEntry = Rules.shouldAllowEarlyEntry(symbol, secondsSinceMarketOpen);
+    if (!allowEarlyEntry.allowed) {
+        Firestore.logError(`${symbol} ${allowEarlyEntry.reason}`, logTags);
         return 0;
     }
 
@@ -213,10 +192,7 @@ export const checkGlobalEntryRules = (symbol: string, isLong: boolean,
         Firestore.logInfo(`liquidity scale is ${liquidityScale}`, logTags);
     }
 
-    if (premarketVwapTrend == 0 && secondsSinceMarketOpen < 115) {
-        //Firestore.logError(`must wait 2 minutes when premkt trend is mixed`, logTags);
-        //return 0;
-    }
+
     /* TPS-27
     if (Patterns.isConsecutiveBarsSameDirection(symbol, isLong)) {
         Firestore.logError(`consecutive bars, wait for pullback`, logTags);
