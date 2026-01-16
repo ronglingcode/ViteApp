@@ -11,6 +11,7 @@ import * as Firestore from '../firestore';
 import * as GlobalSettings from '../config/globalSettings';
 import * as Calculator from '../utils/calculator';
 import * as SetupQuality from '../algorithms/setupQuality';
+import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 
 declare let window: Models.MyWindow;
 
@@ -62,6 +63,11 @@ export const setPreviousDayPremarketVolume = async (symbol: string, startDate: s
   let symbolData = Models.getSymbolData(symbol);
   symbolData.premarketDollarCollection = premarketDollarCollection;
   let volumeQuality = SetupQuality.getPremarketVolumeQuality(symbol, premarketDollarCollection);
+  let topPlan = TradingPlans.getTradingPlans(symbol);
+  let waitSeconds = topPlan.analysis.deferTradingInSeconds;
+  if (volumeQuality != Models.PremarketVolumeQuality.Elevated && waitSeconds < 60) {
+    alert(`${symbol} will be blocked for 1st minute`);
+  }
   let lastDayDollar = Calculator.numberToString(premarketDollarCollection.lastDayDollar);
   let previousDaysDollarMedian = Calculator.numberToString(premarketDollarCollection.previousDaysDollarMedian);
   let rvol = Calculator.ratioToPercentageString(premarketDollarCollection.rvol);
@@ -96,14 +102,14 @@ export const getFullPriceHistory = async (symbol: string, isFutures: boolean) =>
   let dailyBars: Candle[] = [];
   // Calculate number of days (approximately 3 years = ~1095 days)
   let nDays = 3 * 365; // 3 years
-  
+
   // Calculate today's date (to exclude today, we pass today as endDateExcluded)
   let today = new Date();
   let todayString = TimeHelper.formatDateToYYYYMMDD(today);
-  
+
   // Use Massive API's daily candles method (always use Massive API for daily bars)
   dailyBars = await massiveApi.getDailyCandlesForLastNDays(symbol, nDays, todayString);
-  
+
   // Filter out today's bars if any (as a safety measure)
   dailyBars = dailyBars.filter(candle => {
     let candleDate = new Date(candle.datetime);
