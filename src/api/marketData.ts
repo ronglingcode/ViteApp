@@ -58,27 +58,32 @@ export const testTradeStationStreamBar = async () => {
     console.log('Response fully received');
   }
 }
-export const setPreviousDayPremarketVolume = async (symbol: string, startDate: string) => {
-  let premarketDollarCollection = await getPremarketDollarFromDate(symbol, startDate);
+export const setPreviousDayPremarketVolume = async (symbol: string, premarketDollarCollection: Models.PremarketDollarCollection) => {
   let symbolData = Models.getSymbolData(symbol);
   symbolData.premarketDollarCollection = premarketDollarCollection;
   let volumeQuality = SetupQuality.getPremarketVolumeQuality(symbol, premarketDollarCollection);
-  let topPlan = TradingPlans.getTradingPlans(symbol);
-  let waitSeconds = topPlan.analysis.deferTradingInSeconds;
-  if (volumeQuality != Models.PremarketVolumeQuality.Elevated && waitSeconds < 60) {
-    alert(`${symbol} will be blocked for 1st minute`);
-  }
   let lastDayDollar = Calculator.numberToString(premarketDollarCollection.lastDayDollar);
   let previousDaysDollarMedian = Calculator.numberToString(premarketDollarCollection.previousDaysDollarMedian);
   let rvol = Calculator.ratioToPercentageString(premarketDollarCollection.rvol);
   Firestore.logInfo(`${symbol} premarket volume quality: ${volumeQuality}, $${lastDayDollar}, rvol: ${rvol}, median: $${previousDaysDollarMedian}`);
 }
-export const getFullPriceHistory = async (symbol: string, isFutures: boolean) => {
+export const getFullPriceHistory = async (symbol: string, isFutures: boolean, todayStringInput: string) => {
   // For futures, return empty data for now
   if (isFutures) {
+    let defaultPremarketDollarCollection: Models.PremarketDollarCollection = {
+      previousDaysDollar: [],
+      previousDaysDollarAverage: 0,
+      previousDaysDollarMedian: 0,
+      lastDayDollar: 0,
+      previousDaysShares: [],
+      lastDayShares: 0,
+      previousDaysSharesAverage: 0,
+      rvol: 0,
+    }
     return {
       today1MinuteBars: [],
-      dailyBars: []
+      dailyBars: [],
+      premarketDollarCollection: defaultPremarketDollarCollection,
     };
   }
 
@@ -115,10 +120,11 @@ export const getFullPriceHistory = async (symbol: string, isFutures: boolean) =>
     let candleDate = new Date(candle.datetime);
     return candleDate.toDateString() !== today.toDateString();
   });
-
+  let premarketDollarCollection = await getPremarketDollarFromDate(symbol, todayStringInput);
   return {
     today1MinuteBars: today1MinuteBars,
-    dailyBars: dailyBars
+    dailyBars: dailyBars,
+    premarketDollarCollection: premarketDollarCollection,
   };
 }
 export const getPriceHistory = async (symbol: string, isFutures: boolean, timeframe: number) => {

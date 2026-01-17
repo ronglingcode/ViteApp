@@ -44,7 +44,7 @@ import * as VwapPatterns from './algorithms/vwapPatterns';
 import './tosClient';
 import * as TradebooksManager from './tradebooks/tradebooksManager';
 import * as GlobalSettings from './config/globalSettings';
-
+import * as Rules from './algorithms/rules';
 declare let window: Models.MyWindow;
 
 console.log('main.ts loaded');
@@ -217,15 +217,20 @@ window.TradingApp.TOS.initialize().then(async () => {
             alert(`${symbol} market cap too low, only $ ${marketCap} M`);
             return;
         }
-        MarketData.getFullPriceHistory(symbol, Helper.isFutures(symbol)).then((priceHistory) => {
+        MarketData.getFullPriceHistory(symbol, Helper.isFutures(symbol), todayString).then((priceHistory) => {
             // populate current chart with today's 1-minute bars
             DB.initialize(symbol, priceHistory.today1MinuteBars, priceHistory.dailyBars);
             Chart.updateAccountUIStatusForSymbol(symbol);
+            MarketData.setPreviousDayPremarketVolume(symbol, priceHistory.premarketDollarCollection);
+            const secondsSinceMarketOpen = 0;
+            let allowEarlyEntry = Rules.shouldAllowEarlyEntry(symbol, secondsSinceMarketOpen);
+            if (!allowEarlyEntry.allowed) {
+                alert(`${symbol} ${allowEarlyEntry.reason}`);
+            }
             if (now > Helper.getMarketOpenTime()) {
                 AutoTrader.onMarketOpen(symbol);
             }
         });
-        MarketData.setPreviousDayPremarketVolume(symbol, todayString);
     }
     UI.setupAutoSync();
     AutoTrader.scheduleEvents();
