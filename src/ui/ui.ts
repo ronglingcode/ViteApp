@@ -1,6 +1,8 @@
 import * as Models from '../models/models';
 import * as Chart from './chart';
 import * as Config from '../config/config';
+import * as TimeHelper from '../utils/timeHelper';
+import * as Firestore from '../firestore';
 declare let window: Models.MyWindow;
 
 export let currentChartReviewIndex: number = -1;
@@ -104,4 +106,29 @@ export const addOneLineSpan = (root: HTMLElement, text: string, className?: stri
         span.className = className;
     }
     root.appendChild(span);
+}
+export const updateClock = (timeAndSalesTime: Date) => {
+    let clock = document.getElementById("clock");
+    if (!clock)
+        return;
+    let localTime = new Date();
+    let localTimeString = TimeHelper.formatDateToHHMMSSMMM(localTime);
+    let marketTimeString = TimeHelper.formatDateToHHMMSSMMM(timeAndSalesTime);
+
+    // Calculate time difference in seconds
+    let timeDiffMs = Math.abs(localTime.getTime() - timeAndSalesTime.getTime());
+    let timeDiffSeconds = timeDiffMs / 1000;
+    let timeDiffString = timeDiffSeconds.toFixed(1);
+
+    let clockText = `Local: ${localTimeString} Market: ${marketTimeString} Diff: ${timeDiffString}s`;
+
+    // If difference is larger than 0.5 seconds, show in red and log warning
+    if (timeDiffSeconds > 0.5) {
+        clock.style.color = 'red';
+        Firestore.logError(`Clock sync issue: diff ${timeDiffString}s`);
+    } else {
+        clock.style.color = '';
+    }
+
+    clock.textContent = clockText;
 }

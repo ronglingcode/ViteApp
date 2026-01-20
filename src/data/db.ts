@@ -364,6 +364,7 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
 
     Chart.updateUI(symbol, "currentPrice", Helper.numberToStringWithPaddingToCents(timesale.lastPrice));
     let allCharts = Models.getChartsInAllTimeframes(symbol);
+    UI.updateClock(Helper.numberToDate(timesale.tradeTime));
     let timeframeBucket = Helper.numberToDate(timesale.tradeTime);
     timeframeBucket.setSeconds(0, 0);
     timeframeBucket = TimeHelper.roundToTimeFrameBucketTime(timeframeBucket, usedTimeframe);

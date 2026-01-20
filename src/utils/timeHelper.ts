@@ -17,6 +17,14 @@ export const formatDateToHHMMSS = (date: Date): string => {
     return `${hours}:${minutes}:${seconds}`;
 }
 
+export const formatDateToHHMMSSMMM = (date: Date): string => {
+    let hours = date.getHours().toString().padStart(2, '0');
+    let minutes = date.getMinutes().toString().padStart(2, '0');
+    let seconds = date.getSeconds().toString().padStart(2, '0');
+    let milliseconds = date.getMilliseconds().toString().padStart(3, '0');
+    return `${hours}:${minutes}:${seconds}.${milliseconds}`;
+}
+
 export const getPreciseTimeString = (date: Date) => {
     let hours = date.getHours().toString().padStart(2, '0');
     let minutes = date.getMinutes().toString().padStart(2, '0');
