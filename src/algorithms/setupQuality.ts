@@ -41,6 +41,8 @@ export const getPremarketVolumeQualityForRetailFavorites = (symbol: string, prem
             return Models.PremarketVolumeQuality.Elevated;
         }
     } else if (symbol == 'TSLA') {
+        if (premarketDollar.lastDayShares > oneMillion)
+            return Models.PremarketVolumeQuality.Elevated;
         if (premarketDollar.lastDayDollar < 750 * oneMillion) {
             return Models.PremarketVolumeQuality.Ok;
         } else {
