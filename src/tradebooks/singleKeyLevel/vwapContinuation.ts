@@ -95,9 +95,10 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         }
         let timeframe = Models.getTimeframeFromEntryMethod(entryMethod);
         let hasTwoCandlesAgainstVwap = VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(this.symbol, this.isLong, timeframe);
+        let multiplier = 1;
         if (hasTwoCandlesAgainstVwap) {
-            Firestore.logError(`${this.symbol} has two candles against vwap for M${timeframe}, giving up`, logTags);
-            return 0;
+            Firestore.logError(`${this.symbol} has two candles against vwap for M${timeframe}, use half size. Add after close back above vwap`, logTags);
+            multiplier = 0.5;
         }
         let entryPrice = Chart.getBreakoutEntryPrice(this.symbol, this.isLong, useMarketOrder, parameters);
         let stopOutPrice = Chart.getStopLossPrice(this.symbol, this.isLong, true, null);
@@ -106,7 +107,7 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
             Firestore.logError(`${this.symbol} not allowed entry`, logTags);
             return 0;
         }
-
+        allowedSize = allowedSize * multiplier;
         this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, stopOutPrice, allowedSize, "", logTags);
         return allowedSize;
     }
