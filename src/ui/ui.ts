@@ -125,7 +125,7 @@ export const updateClock = (timeAndSalesTime: Date) => {
     // If difference is larger than 0.5 seconds, show in red and log warning
     if (timeDiffSeconds > 0.5) {
         clock.style.color = 'red';
-        Firestore.logError(`Clock sync issue: diff ${timeDiffString}s`);
+        //Firestore.logError(`Clock sync issue: diff ${timeDiffString}s`);
     } else {
         clock.style.color = '';
     }
