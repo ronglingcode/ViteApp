@@ -335,6 +335,28 @@ export const hasTwoConsecutiveCandlesAgainstVwap = (symbol: string, isLong: bool
     }
     return false;
 }
+export const getNumberOfCandlesClosedAgainstVwap = (symbol: string, isLong: boolean, timeframe: number) => {
+    let candles = Models.getCandlesSinceOpenForTimeframe(symbol, timeframe);
+    let vwaps = Models.getVwapsSinceOpenForTimeframe(symbol, timeframe);
+    if (candles.length < 2 || vwaps.length < 2) {
+        return 0;
+    }
+    let maxCount = Math.min(candles.length, vwaps.length);
+    // Count consecutive candles closed against VWAP from the most recent closed candle
+    // Last candle (index maxCount - 1) is considered not closed yet, so start from maxCount - 2
+    let count = 0;
+    for (let i = 0; i <= maxCount - 2; i++) {
+        let candle = candles[i];
+        let vwap = vwaps[i].value;
+        let closedAgainstVwap = isLong ? candle.close < vwap : candle.close > vwap;
+        if (closedAgainstVwap) {
+            count++;
+        } else {
+            break;
+        }
+    }
+    return count;
+}
 
 export const isVwapContinuationEntry = (symbol: string, isLong: boolean, entryPrice: number) => {
     let plan = TradingPlans.getTradingPlans(symbol);
