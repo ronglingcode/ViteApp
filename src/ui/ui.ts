@@ -112,6 +112,7 @@ export const updateClock = (timeAndSalesTime: Date) => {
     if (!clock)
         return;
     let localTime = new Date();
+    TimeHelper.setCurrentMarketTime(timeAndSalesTime);
     let localTimeString = TimeHelper.formatDateToHHMMSSMMM(localTime);
     let marketTimeString = TimeHelper.formatDateToHHMMSSMMM(timeAndSalesTime);
 

@@ -622,7 +622,7 @@ const setColorForVolume = (candles: Models.CandlePlus[], volumes: Models.LineSer
     }
 }
 export const updateChartColor = (symbol: string, widget: Models.ChartWidget) => {
-    let mo = Helper.getSecondsSinceMarketOpen(new Date());
+    let mo = Helper.getSecondsSinceMarketOpen(TimeHelper.getCurrentMarketTime());
     if (mo <= 0) {
         return;
     }

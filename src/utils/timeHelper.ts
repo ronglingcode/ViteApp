@@ -1,3 +1,12 @@
+let currentMarketTime = new Date();
+
+export const setCurrentMarketTime = (time: Date) => {
+    currentMarketTime = time;
+}
+export const getCurrentMarketTime = () => {
+    return currentMarketTime;
+}
+
 /**
  * Format a Date object to YYYY-MM-DD string
  * @param date - Date to format
