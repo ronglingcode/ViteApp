@@ -318,12 +318,15 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         if (newResult.allowed) {
             return newResult;
         }
-        if (Patterns.isPriceWorseThanVwap(symbol, this.isLong, newPrice)) {
-            allowedReason.reason = "new price is worse than vwap";
+        if (VwapPatterns.isNearAlignWithVwap(symbol, this.isLong, newPrice)) {
             allowedReason.allowed = false;
+            if (this.isLong) {
+                allowedReason.reason = "near above vwap";
+            } else {
+                allowedReason.reason = "near below vwap";
+            }
             return allowedReason;
         }
-
         return allowedReason;
     }
 
@@ -347,9 +350,13 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
             return newResult;
         }
 
-        if (Patterns.isPriceWorseThanVwap(symbol, this.isLong, newPrice)) {
-            result.reason = "new price is worse than vwap";
+        if (VwapPatterns.isNearAlignWithVwap(symbol, this.isLong, newPrice)) {
             result.allowed = false;
+            if (this.isLong) {
+                result.reason = "near above vwap";
+            } else {
+                result.reason = "near below vwap";
+            }
             return result;
         }
         return result;
@@ -373,12 +380,16 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         if (newResult.allowed) {
             return newResult;
         }
-
-        if (Patterns.isPriceWorseThanVwap(symbol, this.isLong, currentPrice)) {
-            result.reason = "new price is worse than vwap";
+        if (VwapPatterns.isNearAlignWithVwap(symbol, this.isLong, currentPrice)) {
             result.allowed = false;
+            if (this.isLong) {
+                result.reason = "near above vwap";
+            } else {
+                result.reason = "near below vwap";
+            }
             return result;
         }
+
 
         return result;
     }
@@ -426,6 +437,22 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
             reason: "defaultallowed",
         };
         if (VwapPatterns.isNearAlignWithVwap(symbol, this.isLong, exitPrice)) {
+            result.allowed = false;
+            if (this.isLong) {
+                result.reason = "near above vwap";
+            } else {
+                result.reason = "near below vwap";
+            }
+            return result;
+        }
+        return result;
+    }
+    getDisallowedReasonToAdjustAllExitPairs(symbol: string, logTags: Models.LogTags, newPrice: number): Models.CheckRulesResult {
+        let result: Models.CheckRulesResult = {
+            allowed: true,
+            reason: "default allowed",
+        };
+        if (VwapPatterns.isNearAlignWithVwap(symbol, this.isLong, newPrice)) {
             result.allowed = false;
             if (this.isLong) {
                 result.reason = "near above vwap";
