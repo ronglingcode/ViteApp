@@ -474,10 +474,21 @@ const aggregateEntriesExecutions = (executions: Models.OrderExecution[]) => {
     results.sort((a, b) => (a.time > b.time ? 1 : -1));
     return results;
 };
+const getClusteredPrice = (price: number): number => {
+    if (price > 100) {
+        // Cluster by 4 cents
+        return Math.floor(price * 100 / 4) * 4 / 100;
+    } else if (price > 50) {
+        // Cluster by 2 cents
+        return Math.floor(price * 100 / 2) * 2 / 100;
+    }
+    return price;
+}
 export const aggregateExecutionsPerMinutePerSidePerPrice = (executions: Models.OrderExecution[]) => {
     let map = new Map<string, Models.OrderExecution[]>();
     executions.forEach(element => {
-        let key = `${element.symbol}-${element.minutesSinceOpen}-${element.isBuy}-${element.roundedPrice}`;
+        let clusteredPrice = getClusteredPrice(element.roundedPrice);
+        let key = `${element.symbol}-${element.minutesSinceOpen}-${element.isBuy}-${clusteredPrice}`;
         let v = map.get(key);
         if (v) {
             v.push(element);
