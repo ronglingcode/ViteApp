@@ -11,6 +11,7 @@ import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as Helper from '../utils/helper';
 import { checkCommonAdjustStops } from './exitRulesChecker';
 import * as VolumeMonitor from './volumeMonitor';
+import * as TraderFocus from './traderFocus';
 
 export const isAllowedForAll = (symbol: string, logTags: Models.LogTags) => {
     let seconds = Helper.getSecondsSinceMarketOpen(new Date());
@@ -30,12 +31,6 @@ export const isAllowedForAll = (symbol: string, logTags: Models.LogTags) => {
     let { planConfigs, breakoutTradeState, isHigherTimeFrame } = getCommonInfo(symbol);
     if (breakoutTradeState.plan.planConfigs.setupQuality == TradingPlansModels.SetupQuality.Scalp) {
         return true;
-    }
-    if (breakoutTradeState.hasValue) {
-        if (breakoutTradeState.maxPullbackReached > 0.75) {
-            Firestore.logInfo(`allow early exits due to pullback ${breakoutTradeState.maxPullbackReached} > 0.75`, logTags);
-            return true;
-        }
     }
 
     return false;
@@ -74,6 +69,19 @@ export const checkFlattenRules = (symbol: string, logTags: Models.LogTags) => {
     if (isAllowedForAll(symbol, logTags)) {
         return true;
     }
+
+    // Get the tradebook and call its method to check flatten rules
+    let tradebook = TraderFocus.getTradebookFromPosition(symbol);
+    if (tradebook) {
+        let currentPrice = Models.getCurrentPrice(symbol);
+        let result = tradebook.getDisallowedReasonToFlatten(symbol, logTags, currentPrice);
+        if (!result.allowed) {
+            Firestore.logInfo(`flatten disallowed: ${result.reason}`, logTags);
+            return false;
+        }
+        // If tradebook allows it, continue with additional checks below
+    }
+
     let { exitPairsCount, isLong, breakoutTradeState, planConfigs, isHigherTimeFrame } = getCommonInfo(symbol);
     if (planConfigs?.alwaysAllowFlatten) {
         if (isHigherTimeFrame) {

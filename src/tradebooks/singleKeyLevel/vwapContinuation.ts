@@ -419,4 +419,21 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
             TradebookUtils.setButtonStatus(button, "active");
         }
     }
+
+    getDisallowedReasonToFlatten(symbol: string, logTags: Models.LogTags, exitPrice: number): Models.CheckRulesResult {
+        let result: Models.CheckRulesResult = {
+            allowed: true,
+            reason: "defaultallowed",
+        };
+        if (VwapPatterns.isNearAlignWithVwap(symbol, this.isLong, exitPrice)) {
+            result.allowed = false;
+            if (this.isLong) {
+                result.reason = "near above vwap";
+            } else {
+                result.reason = "near below vwap";
+            }
+            return result;
+        }
+        return result;
+    }
 } 

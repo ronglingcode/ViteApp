@@ -116,6 +116,14 @@ export abstract class Tradebook {
         };
         return result;
     }
+    getDisallowedReasonToFlatten(symbol: string, logTags: Models.LogTags, exitPrice: number): Models.CheckRulesResult {
+        Firestore.logInfo(`base tradebook check rules`, logTags);
+        let result: Models.CheckRulesResult = {
+            allowed: true,
+            reason: "base tradebook",
+        };
+        return result;
+    }
     hasPositionForTradebook(): boolean {
         let symbol = this.symbol;
         let isLong = this.isLong;
