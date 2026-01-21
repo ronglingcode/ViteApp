@@ -475,10 +475,16 @@ const aggregateEntriesExecutions = (executions: Models.OrderExecution[]) => {
     return results;
 };
 const getClusteredPrice = (price: number): number => {
-    if (price > 100) {
+    if (price > 200) {
+        // Cluster by 5 cents
+        return Math.floor(price * 100 / 5) * 5 / 100;
+    } else if (price > 100) {
         // Cluster by 4 cents
         return Math.floor(price * 100 / 4) * 4 / 100;
     } else if (price > 50) {
+        // Cluster by 3 cents
+        return Math.floor(price * 100 / 3) * 3 / 100;
+    } else if (price > 25) {
         // Cluster by 2 cents
         return Math.floor(price * 100 / 2) * 2 / 100;
     }
