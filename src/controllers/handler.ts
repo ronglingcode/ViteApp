@@ -342,6 +342,14 @@ export const adjustAllExits = async (symbol: string, newPrice: number, logTags: 
         Firestore.logError(`adjustAllExits: netQ should not be 0, retry`);
         return;
     }
+    let tradebook = TraderFocus.getTradebookFromPosition(symbol);
+    if (tradebook) {
+        let result = tradebook.getDisallowedReasonToAdjustAllExitPairs(symbol, logTags, newPrice);
+        if (!result.allowed) {
+            Firestore.logInfo(`adjust exit pairs disallowed: ${result.reason}`, logTags);
+            return;
+        }
+    }
     if (isStopLeg) {
         let { newUpdatedPrice } = AdjustExitsHandler.prepareAdjustStopExits(symbol, newPrice, '');
         newPrice = newUpdatedPrice;
