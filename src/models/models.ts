@@ -1683,19 +1683,24 @@ export const setConfigData = async () => {
         tradingSettings: config.tradingSettings,
         googleDocContent: googleDocContent,
     };
-    scheduleTradingPlansRefreshBeforeMarketOpen();
+    refreshTradingPlanEveryMinute();
     return true;
 }
 
-const scheduleTradingPlansRefreshBeforeMarketOpen = () => {
-    let seconds = Helper.getSecondsToMarketOpen(new Date());
-    seconds = seconds - 10;// give 10 seconds before market open
-    if (seconds <= 0)
-        return;
-    console.log(`refresh trading plan in ${seconds} seconds`);
-    setTimeout(() => {
+let tradingPlansRefreshInterval: NodeJS.Timeout | null = null;
+
+const refreshTradingPlanEveryMinute = () => {
+    // Clear any existing interval
+    if (tradingPlansRefreshInterval) {
+        clearInterval(tradingPlansRefreshInterval);
+    }
+
+    console.log(`refresh trading plan every minute`);
+    // Refresh immediately, then every minute
+    refreshTradingPlans();
+    tradingPlansRefreshInterval = setInterval(() => {
         refreshTradingPlans();
-    }, seconds * 1000);
+    }, 60 * 1000); // 60 seconds = 1 minute
 }
 
 export const getEnabledTradebooksForSingleDirection = (symbol: string, isLong: boolean) => {
