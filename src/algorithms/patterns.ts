@@ -804,31 +804,37 @@ export const hasClosedOutsideVwap = (symbol: string, isLong: boolean) => {
 }
 
 export const hasRetestLevel = (symbol: string, isLong: boolean) => {
+    let plans = TradingPlans.getTradingPlans(symbol);
+    if (TradingPlans.hasSingleMomentumLevel(plans)) {
+        let keyLevel = TradingPlans.getSingleMomentumLevel(plans);
+        let level = isLong ? keyLevel.high : keyLevel.low;
+        return hasRetestThisLevelBeforeEntry(symbol, isLong, level);
+    }
+
+
+    return false;
+}
+export const hasRetestThisLevelBeforeEntry = (symbol: string, isLong: boolean, level: number) => {
     let openPrice = Models.getOpenPrice(symbol);
     if (!openPrice) {
         return false;
     }
-    let plans = TradingPlans.getTradingPlans(symbol);
-    if (TradingPlans.hasSingleMomentumLevel(plans)) {
-        let keyLevel = TradingPlans.getSingleMomentumLevel(plans);
-        let symbolData = Models.getSymbolData(symbol);
-        if (isLong) {
-            if (openPrice > keyLevel.high) {
-                return symbolData.lowOfDay < keyLevel.high;
-            } else {
-                return openPrice > keyLevel.low && symbolData.lowOfDay < keyLevel.low;
-            }
+    let keyLevel = level;
+    let symbolData = Models.getSymbolData(symbol);
+    if (isLong) {
+        if (openPrice > keyLevel) {
+            return symbolData.lowOfDay < keyLevel;
         } else {
-            if (openPrice < keyLevel.low) {
-                return symbolData.highOfDay > keyLevel.low;
-            } else {
-                return openPrice < keyLevel.high && symbolData.highOfDay > keyLevel.high;
-            }
+            return openPrice > keyLevel && symbolData.lowOfDay < keyLevel;
+        }
+    } else {
+        if (openPrice < keyLevel) {
+            return symbolData.highOfDay > keyLevel;
+        } else {
+            return openPrice < keyLevel && symbolData.highOfDay > keyLevel;
         }
     }
-    return false;
 }
-
 export const hasPullbackToVwapBeforeOpen = (symbol: string, lookBackBarsCount: number) => {
     let time = Helper.getMarketOpenTime();
     let tvTime = Helper.jsDateToTradingViewUTC(time);

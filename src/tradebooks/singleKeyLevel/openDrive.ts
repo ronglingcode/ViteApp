@@ -202,6 +202,9 @@ export class OpenDrive extends SingleKeyLevelTradebook {
     getDisallowedReasonToAdjustSingleLimitOrder(
         symbol: string, keyIndex: number, order: Models.OrderModel,
         pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
+        if (Patterns.hasRetestThisLevelBeforeEntry(symbol, this.isLong, this.getKeyLevel())) {
+            Helper.speak(`respect original stop that retest key level`);
+        }
         let allowedReason: Models.CheckRulesResult = {
             allowed: false,
             reason: "default disallow",
@@ -239,6 +242,9 @@ export class OpenDrive extends SingleKeyLevelTradebook {
 
     getDisallowedReasonToAdjustSingleStopOrder(
         symbol: string, keyIndex: number, order: Models.OrderModel, pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
+        if (Patterns.hasRetestThisLevelBeforeEntry(symbol, this.isLong, this.getKeyLevel())) {
+            Helper.speak(`respect original stop that retest key level`);
+        }
         if (this.disableExitRules) {
             return {
                 allowed: true,
@@ -330,6 +336,9 @@ export class OpenDrive extends SingleKeyLevelTradebook {
     }
 
     getDisallowedReasonToMarketOutSingleOrder(symbol: string, keyIndex: number, logTags: Models.LogTags): Models.CheckRulesResult {
+        if (Patterns.hasRetestThisLevelBeforeEntry(symbol, this.isLong, this.getKeyLevel())) {
+            Helper.speak(`respect original stop that retest key level`);
+        }
         if (this.disableExitRules) {
             return {
                 allowed: true,
@@ -366,6 +375,26 @@ export class OpenDrive extends SingleKeyLevelTradebook {
         return result;
     }
 
+    getDisallowedReasonToAdjustAllExitPairs(symbol: string, logTags: Models.LogTags, newPrice: number): Models.CheckRulesResult {
+        if (Patterns.hasRetestThisLevelBeforeEntry(symbol, this.isLong, this.getKeyLevel())) {
+            Helper.speak(`respect original stop that retest key level`);
+        }
+        let result: Models.CheckRulesResult = {
+            allowed: true,
+            reason: "default allow",
+        };
+        return result;
+    }
+    getDisallowedReasonToFlatten(symbol: string, logTags: Models.LogTags): Models.CheckRulesResult {
+        if (Patterns.hasRetestThisLevelBeforeEntry(symbol, this.isLong, this.getKeyLevel())) {
+            Helper.speak(`respect original stop that retest key level`);
+        }
+        let result: Models.CheckRulesResult = {
+            allowed: true,
+            reason: "default allow",
+        };
+        return result;
+    }
     getTradebookDoc(): string {
         if (this.isLong) {
             return LongDocs.tradebookText;
