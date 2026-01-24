@@ -81,14 +81,14 @@ export class BreakoutReversal extends Tradebook {
         if (this.reversalPlan.requireLevelTouch) {
             if (this.isLong) {
                 if (symbolData.lowOfDay > keyLevel) {
-                    Firestore.logError(`has not touched key level ${keyLevel}`, logTags);
-                    return 0;
+                    Firestore.logError(`has not touched key level ${keyLevel}, reduce half size`, logTags);
+                    multiplier = 0.5;
                 }
 
             } else {
                 if (symbolData.highOfDay < keyLevel) {
-                    Firestore.logError(`has not touched key level ${keyLevel}`, logTags);
-                    return 0;
+                    Firestore.logError(`has not touched key level ${keyLevel}, reduce half size`, logTags);
+                    multiplier = 0.5;
                 }
             }
         }
