@@ -416,19 +416,33 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M15);
         this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M30);
     }
+
+    onNewTimeSalesData(): void {
+        this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M1);
+        this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M5);
+        this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M15);
+        this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M30);
+    }
     updateEntryMethodButtonStatus(buttonLabel: string): void {
         let button = this.getButtonForLabel(buttonLabel);
         if (!button) {
             Firestore.logError(`${this.symbol} button not found for ${buttonLabel}`);
             return;
         }
+        let currentPrice = Models.getCurrentPrice(this.symbol);
+        let currentVwap = Models.getCurrentVwap(this.symbol);
+        let isAgainstVwap = (this.isLong && currentPrice < currentVwap) || (!this.isLong && currentPrice > currentVwap);
+        if (isAgainstVwap) {
+            TradebookUtils.setButtonStatus(button, "inactive");
+            return;
+        }
         let timeframe = Models.getTimeframeFromEntryMethod(buttonLabel);
         let lostMomentum = VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(this.symbol, this.isLong, timeframe);
         if (lostMomentum) {
             TradebookUtils.setButtonStatus(button, "inactive");
-        } else {
-            TradebookUtils.setButtonStatus(button, "active");
+            return;
         }
+        TradebookUtils.setButtonStatus(button, "active");
     }
 
     getDisallowedReasonToFlatten(symbol: string, logTags: Models.LogTags, exitPrice: number): Models.CheckRulesResult {
