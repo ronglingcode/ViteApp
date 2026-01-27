@@ -15,6 +15,7 @@ import * as ProxyServer from '../api/proxyServer';
 import * as LevelToAdd from '../tradebooks/tradebookDocs/levelToAdd';
 import * as MarketDataFeatures from './marketDataFeatures';
 import * as Chart from '../ui/chart';
+import * as GlobalSettings from '../config/globalSettings';
 
 declare let window: Models.MyWindow;
 
@@ -305,6 +306,9 @@ export const clearTradeConversation = (symbol: string) => {
  * Test trade analysis flow
  */
 export const testTradeAnalysis = async (symbol: string) => {
+    if (!GlobalSettings.enableAiAgent) {
+        return;
+    }
     if (!window.HybridApp.AccountCache) {
         return;
     }

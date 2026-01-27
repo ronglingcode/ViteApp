@@ -292,3 +292,10 @@ if (!GlobalSettings.showDataFeedsBar) {
         (feed2[i] as HTMLElement).style.display = 'none';
     }
 }
+
+if (!GlobalSettings.enableLeftPaneFeatures) {
+    let leftPane = document.getElementById('traderFocus');
+    if (leftPane) {
+        leftPane.style.display = 'none';
+    }
+}
