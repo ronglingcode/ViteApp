@@ -108,7 +108,8 @@ export interface AverageTrueRange {
     average: number,
     mutiplier: number,
     minimumMultipler: number,
-    maxRisk: number
+    maxRisk: number,
+    maxQuantity: number,
 }
 export interface VwapCorrection {
     volumeSum: number,

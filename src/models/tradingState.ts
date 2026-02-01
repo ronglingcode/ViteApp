@@ -15,6 +15,7 @@ const getDefaultAtr = () => {
         mutiplier: 0,
         minimumMultipler: 1,
         maxRisk: 0,
+        maxQuantity: 0,
     }
     return result;
 }
@@ -224,6 +225,7 @@ export const getAtrInTrade = (symbol: string) => {
         mutiplier: 1,
         minimumMultipler: 1,
         maxRisk: 0,
+        maxQuantity: 0,
     };
     if (readOnlyState) {
         let atr = readOnlyState.atr;

@@ -54,52 +54,6 @@ export class GapAndCrap extends Tradebook {
     }
 
     validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
-        let symbolData = Models.getSymbolData(this.symbol);
-        let openPrice = Models.getOpenPrice(this.symbol);
-        let previousDayCandle = symbolData.previousDayCandle;
-
-        if (!openPrice || !previousDayCandle || previousDayCandle.close === 0) {
-            Firestore.logError(`missing open price or previous day candle`, logTags);
-            return 0;
-        }
-
-        // For short, we want a gap up that fails (crap)
-        let gapSize = openPrice - previousDayCandle.close;
-        if (gapSize <= 0) {
-            Firestore.logError(`no gap up for short gap and crap, gap: ${gapSize}`, logTags);
-            return 0;
-        }
-
-        // Check if gap is significant (at least 0.5% of previous close)
-        let gapPercent = (gapSize / previousDayCandle.close) * 100;
-        if (gapPercent < 0.5) {
-            Firestore.logError(`gap too small: ${gapPercent.toFixed(2)}%`, logTags);
-            return 0;
-        }
-
-        // Check if price has started to reverse (crap part)
-        // For short, price should be moving down from the gap up open
-        let currentPrice = Models.getCurrentPrice(this.symbol);
-        if (currentPrice >= openPrice) {
-            Firestore.logError(`price not reversing down from gap up, current: ${currentPrice}, open: ${openPrice}`, logTags);
-            return 0;
-        }
-
-        // Check timing - should be within first hour
-        let secondsSinceOpen = Helper.getSecondsSinceMarketOpen(new Date());
-        if (secondsSinceOpen > 3600) {
-            Firestore.logError(`too late for gap and crap, ${secondsSinceOpen} seconds since open`, logTags);
-            return 0;
-        }
-
-        if (useMarketOrder) {
-            let currentCandle = Models.getCurrentCandle(this.symbol);
-            if (currentCandle.close > currentCandle.open) {
-                Firestore.logError(`current candle is against momentum, use stop order instead`, logTags);
-                return 0;
-            }
-        }
-
         // Use basic global entry rules
         let allowedSize = EntryRulesChecker.checkBasicGlobalEntryRules(
             this.symbol, false, entryPrice, stopOutPrice, useMarketOrder,
@@ -197,31 +151,7 @@ export class GapAndCrap extends Tradebook {
         }
     }
 
-    getEntryMethodsAllowedForAll(): string[] {
-        let firstNewLows = Models.getFirstNewLowsHigherTimeframeEntryMethods();
-        let falsePremarketHighBreakouts = [Models.CommonEntryMethods.FalsePremarketHighBreakout];
-        return [...firstNewLows, ...falsePremarketHighBreakouts,
-        Models.CommonEntryMethods.VwapBounceFail,
-        Models.CommonEntryMethods.LowOfDay,
-        ];
-    }
     getEntryMethods(): string[] {
-        return [];
-    }
-    getEntryMethodsForAccelerationLevel(accelerationLevel: number): string[] {
-        let priceToUse = Models.getCurrentPrice(this.symbol);
-        let openPrice = Models.getOpenPrice(this.symbol);
-        if (openPrice) {
-            priceToUse = openPrice;
-        }
-
-        if (priceToUse < accelerationLevel) {
-            // aggressive entry
-        } else {
-            // must wait for price to close below like below water breakout
-            return [Models.CommonEntryMethods.BelowWaterBreakdown];
-        }
-
-        return [];
+        return ['risk', 'quantity'];
     }
 }

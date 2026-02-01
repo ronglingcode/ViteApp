@@ -9,6 +9,7 @@ import * as Firestore from '../firestore';
 import * as Helper from '../utils/helper';
 import * as EntryHandler from './entryHandler';
 import * as AdjustExitsHandler from './adjustExitsHandler';
+import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 declare let window: Models.MyWindow;
 
 export const submitAddPartial = async (
@@ -101,6 +102,14 @@ export const submitEntryOrdersWithFixedRisk = (
     stopOutPrice = afterSplippage.stopOutPrice;
 
     let totalShares = RiskManager.calculateTotalShares(symbol, entryPrice, riskLevel, setupQuality, multiplier);
+    let topPlan = TradingPlans.getTradingPlans(symbol);
+    let atr = topPlan.atr;
+    if (atr.maxQuantity > 0) {
+        if (totalShares > atr.maxQuantity) {
+            Firestore.logError(`totalShares ${totalShares} > atr.maxQuantity ${atr.maxQuantity}`, logTags);
+            totalShares = atr.maxQuantity;
+        }
+    }
     let profitTargets = TakeProfit.getInitialProfitTargets(symbol, totalShares, entryPrice, riskLevel, exitTargets.initialTargets, logTags);
     let sizedProfitTargets: Models.ProfitTarget[] = [];
     for (let i = 0; i < profitTargets.length && i < sizingCount; i++) {
