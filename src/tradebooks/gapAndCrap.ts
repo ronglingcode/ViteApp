@@ -25,7 +25,7 @@ export class GapAndCrap extends Tradebook {
         let buttonLabel = 'Gap and Crap';
         super(symbol, false, tradebookName, buttonLabel);
         this.basePlan = basePlan;
-        this.enableByDefault = false;
+        this.enableByDefault = true;
     }
 
     refreshLiveStats(): void {
