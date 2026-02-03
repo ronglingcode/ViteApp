@@ -54,6 +54,10 @@ export class GapAndCrap extends Tradebook {
     }
 
     validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
+        if (entryPrice > this.basePlan.maxDailyResistance) {
+            Firestore.logError(`entry price ${entryPrice} is above max daily resistance ${this.basePlan.maxDailyResistance}`, logTags);
+            return 0;
+        }
         // Use basic global entry rules
         let allowedSize = EntryRulesChecker.checkBasicGlobalEntryRules(
             this.symbol, false, entryPrice, stopOutPrice, useMarketOrder,
@@ -145,6 +149,9 @@ export class GapAndCrap extends Tradebook {
     }
 
     getEntryMethods(): string[] {
-        return ['risk', 'quantity'];
+        return [
+            'risk',
+            //  'quantity'
+        ];
     }
 }

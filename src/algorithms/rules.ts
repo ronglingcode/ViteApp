@@ -670,13 +670,7 @@ export const shouldAllowEarlyEntry = (symbol: string, secondsSinceMarketOpen: nu
     }
     let symbolData = Models.getSymbolData(symbol);
     let volumeQuality = SetupQuality.getPremarketVolumeQuality(symbol, symbolData.premarketDollarCollection);
-    if (volumeQuality == Models.PremarketVolumeQuality.Ok) {
-        if (secondsSinceMarketOpen < 60) {
-            result.allowed = false;
-            result.reason = `premarket volume quality: ${volumeQuality}, wait 1 minute`;
-            return result;
-        }
-    }
+
     if (volumeQuality == Models.PremarketVolumeQuality.TooLow) {
         if (secondsSinceMarketOpen < 60 * 15) {
             result.allowed = false;

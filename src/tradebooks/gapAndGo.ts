@@ -6,6 +6,7 @@ import * as Firestore from '../firestore';
 import * as TradebookUtil from './tradebookUtil';
 import * as Helper from '../utils/helper';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
+import * as VwapPatterns from '../algorithms/vwapPatterns';
 
 export class GapAndGo extends Tradebook {
     public static readonly gapAndGoLong: string = 'GapAndGoLong';
@@ -53,6 +54,36 @@ export class GapAndGo extends Tradebook {
     }
 
     validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
+        if (entryPrice < this.basePlan.minDailySupport) {
+            Firestore.logError(`entry price ${entryPrice} is below min daily support ${this.basePlan.minDailySupport}`, logTags);
+            return 0;
+        }
+        let openPrice = Models.getOpenPrice(this.symbol);
+        let openVwap = Models.getLastVwapBeforeOpen(this.symbol);
+        // if open below vwap, once it gets above it, it cannot close 2 candles below vwap to lose momentum
+        if (openPrice && openVwap && openPrice < openVwap) {
+            let hasReclaimedVwap = false;
+            let candles = Models.getM1ClosedCandlesSinceOpen(this.symbol);
+            for (let i = 0; i < candles.length; i++) {
+                let candle = candles[i];
+                if (candle.close > openVwap) {
+                    hasReclaimedVwap = true;
+                    break;
+                }
+            }
+            let lastTwoCandlesCloseBelowVwap = false;
+            if (candles.length >= 2) {
+                let lastCandle = candles[candles.length - 1];
+                let prevCandle = candles[candles.length - 2];
+                if (lastCandle.close < openVwap && prevCandle.close < openVwap) {
+                    lastTwoCandlesCloseBelowVwap = true;
+                }
+            }
+            if (hasReclaimedVwap && lastTwoCandlesCloseBelowVwap) {
+                Firestore.logError(`reclaimed vwap but now 2 candles closed below vwap, giving up M1`, logTags);
+                return 0;
+            }
+        }
         // Use basic global entry rules
         let allowedSize = EntryRulesChecker.checkBasicGlobalEntryRules(
             this.symbol, true, entryPrice, stopOutPrice, useMarketOrder,
@@ -144,6 +175,9 @@ export class GapAndGo extends Tradebook {
     }
 
     getEntryMethods(): string[] {
-        return ['risk', 'quantity'];
+        return [
+            'risk',
+            // 'quantity'
+        ];
     }
 }

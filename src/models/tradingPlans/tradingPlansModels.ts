@@ -213,8 +213,12 @@ export interface ProfitTakingFade60Plan extends BasePlan {
     onlyIfOpenBelow: number,
 }
 export interface GapAndGoPlan extends BasePlan {
+    /** the min support on daily chart, below it, we cannot long */
+    minDailySupport: number,
 }
 export interface GapAndCrapPlan extends BasePlan {
+    /** the max resistance on daily chart, above it, we cannot short */
+    maxDailyResistance: number,
 }
 export interface OpenDriveContinuation60Plan extends BasePlan {
     disableIfOpenWorseThanPrice: number,
