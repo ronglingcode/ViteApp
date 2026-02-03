@@ -301,6 +301,7 @@ const getHtmlContentsAndTradebooks = (symbol: string, tabIndex: number) => {
     let tradebooksMap = setupTradingPlans(symbol, htmlContents.tradingPlans, htmlContents.tradebookButtons);
     setupExitButtons(symbol, htmlContents.exitButtonsContainer);
     setupTimeframeButtons(htmlContents.timeframeButtonsContainer, symbol);
+    setupAddCountButtons(htmlContents.container, symbol);
     let refreshButton = htmlContents.container.getElementsByClassName("refresh")[0] as HTMLElement;
     refreshButton.addEventListener("click", (pointerEvent) => {
         Firestore.logInfo(`refresh for ${symbol}`);
@@ -314,6 +315,23 @@ const getHtmlContentsAndTradebooks = (symbol: string, tabIndex: number) => {
     return { htmlContents, tradebooksMap };
 };
 
+const setupAddCountButtons = (container: HTMLElement, symbol: string) => {
+    let children = container.getElementsByClassName("add_count");
+    for (let i = 0; i < children.length; i++) {
+        let child = children[i];
+        child.addEventListener("click", (pointerEvent) => {
+            let sender = pointerEvent.target as HTMLElement;
+            let buttonText = sender.innerText;
+            console.log(`buttonText: ${buttonText}`);
+            let addCount = parseInt(buttonText[1]);
+
+            for (let j = 0; j < addCount; j++) {
+                Handler.reloadPartialAtMarket(symbol);
+            }
+            Firestore.logInfo(`reload ${symbol} for ${addCount}0%`);
+        });
+    }
+}
 const setupTimeframeButtons = (container: HTMLElement, symbol: string) => {
     let children = container.getElementsByTagName("span");
     let timeframes = [1, 5, 15, 30];
@@ -562,7 +580,7 @@ export const addToTimeAndSales = (
     if (!widget) {
         return;
     }
-    
+
     let container = widget.htmlContents.container;
     let classnameForUnfiltered = `${classname}Unfiltered`;
     let classnameForFiltered = `${classname}Filtered`;
@@ -1530,7 +1548,7 @@ export const drawCamPivots = (symbolData: Models.SymbolData, allCharts: Models.T
             chart.candleSeries.removePriceLine(l);
         }
         chart.camPivotLevels = [];
-        
+
         // Draw resistance and support levels - matching Backtest colors exactly
         for (const level of ChartSettings.camPivotLevels) {
             const pivotKey = level.key as keyof typeof pivots;
@@ -1547,7 +1565,7 @@ export const drawPreviousDayHighLow = (symbolData: Models.SymbolData, allCharts:
     let prevDayCandle = symbolData.previousDayCandle;
     let prevHigh = prevDayCandle.high;
     let prevLow = prevDayCandle.low;
-    
+
     allCharts.forEach(chart => {
         // Clear previous day high/low lines
         for (let i = 0; chart.previousDayLevels.length > i; i++) {
@@ -1555,13 +1573,13 @@ export const drawPreviousDayHighLow = (symbolData: Models.SymbolData, allCharts:
             chart.candleSeries.removePriceLine(l);
         }
         chart.previousDayLevels = [];
-        
+
         // Draw previous day high and low in red
         const prevDayLevels = [
             { price: prevHigh, label: "y-high" },
             { price: prevLow, label: "y-low" }
         ];
-        
+
         for (const level of prevDayLevels) {
             if (level.price > 0) {
                 let l = createPriceLine(chart.candleSeries, level.price, level.label, "red", 2, false, "dashed");

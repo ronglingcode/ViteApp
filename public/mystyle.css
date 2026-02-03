@@ -62,7 +62,8 @@ body {
 }
 
 .exitButtons span,
-.timeframebuttons span {
+.timeframebuttons span,
+span.add_count {
     margin: 0 2px;
     border: solid 1px grey;
     padding: 1px 2px;
@@ -94,6 +95,7 @@ body {
 .tradingPlansShort span:hover,
 .exitButtons span:hover,
 .timeframebuttons span:hover,
+span.add_count:hover,
 .sideBar .longButton:hover,
 .sideBar .shortButton:hover,
 .sizingButton:hover {
