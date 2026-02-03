@@ -16,6 +16,7 @@ import { GapAndCrapAcceleration } from "./gapAndCrapAcceleration";
 import * as Helper from "../utils/helper";
 import * as Firestore from "../firestore";
 import { GapAndCrap } from "./gapAndCrap";
+import { GapAndGo } from "./gapAndGo";
 
 export const createAllTradebooks = (symbol: string) => {
     let plan = TradingPlans.getTradingPlans(symbol);
@@ -88,7 +89,10 @@ export const createAllTradebooks = (symbol: string) => {
         let gapAndCrap = new GapAndCrap(symbol, false, plan.short.gapAndCrapPlan);
         tradebooksMap.set(gapAndCrap.getID(), gapAndCrap);
     }
-
+    if (plan.long.gapAndGoPlan) {
+        let gapAndGo = new GapAndGo(symbol, true, plan.long.gapAndGoPlan);
+        tradebooksMap.set(gapAndGo.getID(), gapAndGo);
+    }
     return tradebooksMap;
 }
 

@@ -129,6 +129,7 @@ export interface SingleDirectionPlans {
     allTimeHighVwapContinuationPlan?: AllTimeHighVwapContinuationPlan,
     gapAndCrapAccelerationPlan?: GapAndCrapAccelerationPlan,
     gapAndCrapPlan?: GapAndCrapPlan,
+    gapAndGoPlan?: GapAndGoPlan,
     /* used strategies end */
 
     profitTakingFade60Plan?: ProfitTakingFade60Plan,
@@ -210,6 +211,8 @@ export interface PremarketPlan extends BasePlan { }
 export interface ProfitTakingFade60Plan extends BasePlan {
     enableAutoTrigger: boolean,
     onlyIfOpenBelow: number,
+}
+export interface GapAndGoPlan extends BasePlan {
 }
 export interface GapAndCrapPlan extends BasePlan {
 }

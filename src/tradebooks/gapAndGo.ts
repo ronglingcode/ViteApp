@@ -5,25 +5,24 @@ import * as Models from '../models/models';
 import * as Firestore from '../firestore';
 import * as TradebookUtil from './tradebookUtil';
 import * as Helper from '../utils/helper';
-import * as Rules from '../algorithms/rules';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 
-export class GapAndCrap extends Tradebook {
-    public static readonly gapAndCrapShort: string = 'GapAndCrapShort';
-    private basePlan: TradingPlansModels.GapAndCrapPlan;
+export class GapAndGo extends Tradebook {
+    public static readonly gapAndGoLong: string = 'GapAndGoLong';
+    private basePlan: TradingPlansModels.GapAndGoPlan;
 
     public getID(): string {
-        return GapAndCrap.gapAndCrapShort;
+        return GapAndGo.gapAndGoLong;
     }
 
-    constructor(symbol: string, isLong: boolean, basePlan: TradingPlansModels.GapAndCrapPlan) {
-        // This tradebook only supports short positions
-        if (isLong) {
-            throw new Error('GapAndCrap tradebook only supports short positions');
+    constructor(symbol: string, isLong: boolean, basePlan: TradingPlansModels.GapAndGoPlan) {
+        // This tradebook only supports long positions
+        if (!isLong) {
+            throw new Error('GapAndGo tradebook only supports long positions');
         }
-        let tradebookName = 'Short Gap and Crap';
-        let buttonLabel = 'Gap and Crap';
-        super(symbol, false, tradebookName, buttonLabel);
+        let tradebookName = 'Long Gap and Go';
+        let buttonLabel = 'Gap and Go';
+        super(symbol, true, tradebookName, buttonLabel);
         this.basePlan = basePlan;
         this.enableByDefault = true;
     }
@@ -34,12 +33,12 @@ export class GapAndCrap extends Tradebook {
 
     triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {
         let symbol = this.symbol;
-        let isLong = false; // This tradebook only supports short
-        let logTagName = '_short_gap_and_crap';
+        let isLong = true; // This tradebook only supports long
+        let logTagName = '_long_gap_and_go';
         let logTags = Models.generateLogTags(symbol, `${symbol}_${logTagName}`);
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
         let symbolData = Models.getSymbolData(symbol);
-        let stopOutPrice = symbolData.highOfDay;
+        let stopOutPrice = symbolData.lowOfDay;
         let defaultRiskLevel = this.basePlan.defaultRiskLevel ?? stopOutPrice;
         let riskLevelPrice = Models.getRiskLevelPrice(symbol, isLong, defaultRiskLevel, entryPrice);
         let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
@@ -56,7 +55,7 @@ export class GapAndCrap extends Tradebook {
     validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
         // Use basic global entry rules
         let allowedSize = EntryRulesChecker.checkBasicGlobalEntryRules(
-            this.symbol, false, entryPrice, stopOutPrice, useMarketOrder,
+            this.symbol, true, entryPrice, stopOutPrice, useMarketOrder,
             this.basePlan, false, logTags);
         return allowedSize;
     }
@@ -94,7 +93,7 @@ export class GapAndCrap extends Tradebook {
     }
 
     getTightStopLevels(): Models.DisplayLevel[] {
-        let tightStopLevels = TradebookUtil.getTightStopLevelsForTrend(this.symbol, false);
+        let tightStopLevels = TradebookUtil.getTightStopLevelsForTrend(this.symbol, true);
         return tightStopLevels;
     }
 
@@ -103,11 +102,11 @@ export class GapAndCrap extends Tradebook {
     }
 
     getTradeManagementInstructions(): Models.TradeManagementInstructions {
-        let instructions = this.getTradeManagementInstructionsForShort();
-        TradebookUtil.setlevelToAddInstructions(this.symbol, false, instructions);
-        TradebookUtil.setFinalTargetInstructions(this.symbol, false, instructions);
+        let instructions = this.getTradeManagementInstructionsForLong();
+        TradebookUtil.setlevelToAddInstructions(this.symbol, true, instructions);
+        TradebookUtil.setFinalTargetInstructions(this.symbol, true, instructions);
 
-        let conditionsToFail = ["new high of day, lose gap reversal momentum"];
+        let conditionsToFail = ["new low of day, lose gap continuation momentum"];
 
         let result: Models.TradeManagementInstructions = {
             mapData: instructions,
@@ -116,22 +115,22 @@ export class GapAndCrap extends Tradebook {
         return result;
     }
 
-    getTradeManagementInstructionsForShort(): Map<string, string[]> {
+    getTradeManagementInstructionsForLong(): Map<string, string[]> {
         const instructions = new Map<string, string[]>([
             ['conditions to fail', [
-                'new high of day breakout',
+                'new low of day breakdown',
                 'reclaim open price (gap fill fails)',
             ]],
             ['conditions to trim', [
-                'first new high after initial fade',
+                'first new low after initial push',
                 'M5 reversal candle',
             ]],
             ['add or re-entry', [
-                'add on open price rejection if weak',
+                'add on open price rejection if strong',
                 'add on VWAP rejection',
             ]],
             ['partial targets', [
-                "25-40%: first leg fade toward previous close",
+                "25-40%: first leg push toward previous close",
                 "40-60%: approach previous day close",
                 "60-80%: reclaim previous day close",
                 "80-100%: extended target beyond previous close",
