@@ -88,6 +88,10 @@ export class GapAndGo extends Tradebook {
         let allowedSize = EntryRulesChecker.checkBasicGlobalEntryRules(
             this.symbol, true, entryPrice, stopOutPrice, useMarketOrder,
             this.basePlan, false, logTags);
+        let currentVwap = Models.getCurrentVwap(this.symbol);
+        if (entryPrice < currentVwap) {
+            return allowedSize * 0.5;
+        }
         return allowedSize;
     }
 
