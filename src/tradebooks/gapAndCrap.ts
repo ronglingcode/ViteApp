@@ -42,6 +42,10 @@ export class GapAndCrap extends Tradebook {
         let stopOutPrice = symbolData.highOfDay;
         let defaultRiskLevel = this.basePlan.defaultRiskLevel ?? stopOutPrice;
         let riskLevelPrice = Models.getRiskLevelPrice(symbol, isLong, defaultRiskLevel, entryPrice);
+        let entryMethod = parameters.entryMethod;
+        if (entryMethod === 'HOD') {
+            riskLevelPrice = symbolData.highOfDay;
+        }
         let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
 
         if (allowedSize === 0) {
@@ -155,8 +159,8 @@ export class GapAndCrap extends Tradebook {
 
     getEntryMethods(): string[] {
         return [
-            'risk',
-            //  'quantity'
+            'default',
+            'HOD'
         ];
     }
 }

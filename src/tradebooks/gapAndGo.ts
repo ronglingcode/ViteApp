@@ -35,6 +35,8 @@ export class GapAndGo extends Tradebook {
     triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {
         let symbol = this.symbol;
         let isLong = true; // This tradebook only supports long
+        let entryMethod = parameters.entryMethod;
+
         let logTagName = '_long_gap_and_go';
         let logTags = Models.generateLogTags(symbol, `${symbol}_${logTagName}`);
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
@@ -42,6 +44,9 @@ export class GapAndGo extends Tradebook {
         let stopOutPrice = symbolData.lowOfDay;
         let defaultRiskLevel = this.basePlan.defaultRiskLevel ?? stopOutPrice;
         let riskLevelPrice = Models.getRiskLevelPrice(symbol, isLong, defaultRiskLevel, entryPrice);
+        if (entryMethod === 'LOD') {
+            riskLevelPrice = symbolData.lowOfDay;
+        }
         let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
 
         if (allowedSize === 0) {
@@ -180,8 +185,8 @@ export class GapAndGo extends Tradebook {
 
     getEntryMethods(): string[] {
         return [
-            'risk',
-            // 'quantity'
+            'default',
+            'LOD'
         ];
     }
 }
