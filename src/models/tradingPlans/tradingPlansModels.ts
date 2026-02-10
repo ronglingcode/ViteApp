@@ -219,6 +219,17 @@ export interface GapAndGoPlan extends BasePlan {
 export interface GapAndCrapPlan extends BasePlan {
     /** the max resistance on daily chart, above it, we cannot short */
     maxDailyResistance: number,
+    /** the number of days in a row that form this heavy supply zone */
+    heavySupplyZoneDays?: number,
+    /** the length of such recent rally */
+    recentRallyWithoutPullback?: string,
+    /** the extended gap up in ATR */
+    extendedGapUpInAtr?: number,
+    earnings?: string,
+    /** the price of the top edge of current range */
+    topEdgeOfCurrentRange?: number,
+    /** description of the previous event */
+    nearBelowPreviousEventKeyLevel?: string
 }
 export interface OpenDriveContinuation60Plan extends BasePlan {
     disableIfOpenWorseThanPrice: number,

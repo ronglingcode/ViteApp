@@ -246,6 +246,31 @@ const verifyTradingPlansForSingleDirection = (symbol: string, plan: TradingPlans
             return false;
         }
     }
+    if (plan.gapAndCrapPlan) {
+        let hasOneReasonSet = false;
+        if (plan.gapAndCrapPlan.heavySupplyZoneDays) {
+            hasOneReasonSet = true;
+        }
+        if (plan.gapAndCrapPlan.recentRallyWithoutPullback) {
+            hasOneReasonSet = true;
+        }
+        if (plan.gapAndCrapPlan.extendedGapUpInAtr) {
+            hasOneReasonSet = true;
+        }
+        if (plan.gapAndCrapPlan.earnings) {
+            hasOneReasonSet = true;
+        }
+        if (plan.gapAndCrapPlan.topEdgeOfCurrentRange) {
+            hasOneReasonSet = true;
+        }
+        if (plan.gapAndCrapPlan.nearBelowPreviousEventKeyLevel) {
+            hasOneReasonSet = true;
+        }
+        if (!hasOneReasonSet) {
+            Firestore.logError(`${symbol} missing one reason set for gap and crap plan`);
+            return false;
+        }
+    }
     return true;
 }
 
