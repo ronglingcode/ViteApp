@@ -67,9 +67,9 @@ export class GapAndCrap extends Tradebook {
             Firestore.logError(`entry price ${entryPrice} is above premkt high ${symbolData.premktHigh}`, logTags);
             return 0;
         }
-        let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
-        if (secondsSinceMarketOpen > 60 * 5) {
-            Firestore.logError(`disable gap and crap after 5 minutes`, logTags);
+        let candles = Models.getCandlesFromM1SinceOpen(this.symbol);
+        if (candles.length > 5) {
+            Firestore.logError(`disable gap and crap after 5 candles`, logTags);
             return 0;
         }
         // Use basic global entry rules
