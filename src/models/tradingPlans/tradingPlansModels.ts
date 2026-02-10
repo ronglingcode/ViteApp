@@ -215,6 +215,18 @@ export interface ProfitTakingFade60Plan extends BasePlan {
 export interface GapAndGoPlan extends BasePlan {
     /** the min support on daily chart, below it, we cannot long */
     minDailySupport: number,
+    /** the high from recent pullback */
+    recentPullback?: number,
+    /** number of days of the condition and its edge price */
+    nearAboveConsolidationRange?: string,
+    /** number of days of the condition and its edge price */
+    nearBelowConsolidationRangeTop?: string,
+    /** the description of the previous key event */
+    nearPreviousKeyEventLevel?: string,
+    /** breakout price of inside bar  */
+    previousInsideDay?: number,
+    /** price of all time high */
+    allTimeHigh?: number,
 }
 export interface GapAndCrapPlan extends BasePlan {
     /** the max resistance on daily chart, above it, we cannot short */
