@@ -39,6 +39,10 @@ export class GapDownAndGoUp extends Tradebook {
         let stopOutPrice = symbolData.lowOfDay;
         let defaultRiskLevel = this.basePlan.defaultRiskLevel ?? stopOutPrice;
         let riskLevelPrice = Models.getRiskLevelPrice(symbol, isLong, defaultRiskLevel, entryPrice);
+        let entryMethod = parameters.entryMethod;
+        if (entryMethod === 'LOD') {
+            riskLevelPrice = symbolData.lowOfDay;
+        }
         let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
 
         if (allowedSize === 0) {
@@ -161,6 +165,9 @@ export class GapDownAndGoUp extends Tradebook {
     }
 
     getEntryMethods(): string[] {
-        return ['risk', 'quantity'];
+        return [
+            'default',
+            'LOD'
+        ];
     }
 }
