@@ -59,8 +59,9 @@ export class GapAndGo extends Tradebook {
     }
 
     validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
-        if (entryPrice < this.basePlan.minDailySupport) {
-            Firestore.logError(`entry price ${entryPrice} is below min daily support ${this.basePlan.minDailySupport}`, logTags);
+        let minSupport = this.basePlan.support.low;
+        if (entryPrice < minSupport) {
+            Firestore.logError(`entry price ${entryPrice} is below min daily support ${minSupport}`, logTags);
             return 0;
         }
         let openPrice = Models.getOpenPrice(this.symbol);
@@ -95,7 +96,13 @@ export class GapAndGo extends Tradebook {
             this.basePlan, false, logTags);
         let currentVwap = Models.getCurrentVwap(this.symbol);
         if (entryPrice < currentVwap) {
-            return allowedSize * 0.5;
+            let notTooFar = minSupport + 0.5 * Models.getAtr(this.symbol).average;
+            if (entryPrice > notTooFar) {
+                Firestore.logError(`entry price ${entryPrice} is too far from min support ${minSupport} by more than 0.5 ATR at ${notTooFar}`, logTags);
+                return 0;
+            } else {
+                return allowedSize * 0.5;
+            }
         }
         return allowedSize;
     }

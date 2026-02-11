@@ -216,7 +216,7 @@ export interface ProfitTakingFade60Plan extends BasePlan {
 }
 export interface GapAndGoPlan extends BasePlan {
     /** the min support on daily chart, below it, we cannot long */
-    minDailySupport: number,
+    support: LevelArea,
     /** the high from recent pullback */
     recentPullback?: number,
     /** number of days of the condition and its edge price */
