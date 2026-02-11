@@ -130,6 +130,8 @@ export interface SingleDirectionPlans {
     gapAndCrapAccelerationPlan?: GapAndCrapAccelerationPlan,
     gapAndCrapPlan?: GapAndCrapPlan,
     gapAndGoPlan?: GapAndGoPlan,
+    gapDownAndGoDownPlan?: GapDownAndGoDownPlan,
+    gapDownAndGoUpPlan?: GapDownAndGoUpPlan,
     /* used strategies end */
 
     profitTakingFade60Plan?: ProfitTakingFade60Plan,
@@ -242,6 +244,11 @@ export interface GapAndCrapPlan extends BasePlan {
     topEdgeOfCurrentRange?: number,
     /** description of the previous event */
     nearBelowPreviousEventKeyLevel?: string
+}
+export interface GapDownAndGoDownPlan extends BasePlan {
+}
+export interface GapDownAndGoUpPlan extends BasePlan {
+    support: LevelArea[],
 }
 export interface OpenDriveContinuation60Plan extends BasePlan {
     disableIfOpenWorseThanPrice: number,
