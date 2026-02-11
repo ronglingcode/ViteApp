@@ -246,9 +246,18 @@ export interface GapAndCrapPlan extends BasePlan {
     nearBelowPreviousEventKeyLevel?: string
 }
 export interface GapDownAndGoDownPlan extends BasePlan {
+    nearBelowConsolidationRange?: LevelArea,
+    nearBelowConsolidationRangeTop?: number,
+    buyersTrappedBelowThisLevel?: number,
+    /** the low of last 2 days */
+    previousInsideDay?: number,
+
 }
 export interface GapDownAndGoUpPlan extends BasePlan {
     support: LevelArea[],
+    nearAboveSupport?: LevelArea,
+    nearAboveKeyEventLevel?: number,
+
 }
 export interface OpenDriveContinuation60Plan extends BasePlan {
     disableIfOpenWorseThanPrice: number,

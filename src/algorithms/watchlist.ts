@@ -296,6 +296,38 @@ const verifyTradingPlansForSingleDirection = (symbol: string, plan: TradingPlans
             return false;
         }
     }
+    if (plan.gapDownAndGoDownPlan) {
+        let hasOneReasonSet = false;
+        if (plan.gapDownAndGoDownPlan.nearBelowConsolidationRange) {
+            hasOneReasonSet = true;
+        }
+        if (plan.gapDownAndGoDownPlan.nearBelowConsolidationRangeTop) {
+            hasOneReasonSet = true;
+        }
+        if (plan.gapDownAndGoDownPlan.buyersTrappedBelowThisLevel) {
+            hasOneReasonSet = true;
+        }
+        if (plan.gapDownAndGoDownPlan.previousInsideDay) {
+            hasOneReasonSet = true;
+        }
+        if (!hasOneReasonSet) {
+            Firestore.logError(`${symbol} missing one reason set for gap down and go down plan`);
+            return false;
+        }
+    }
+    if (plan.gapDownAndGoUpPlan) {
+        let hasOneReasonSet = false;
+        if (plan.gapDownAndGoUpPlan.nearAboveSupport) {
+            hasOneReasonSet = true;
+        }
+        if (plan.gapDownAndGoUpPlan.nearAboveKeyEventLevel) {
+            hasOneReasonSet = true;
+        }
+        if (!hasOneReasonSet) {
+            Firestore.logError(`${symbol} missing one reason set for gap down and go up plan`);
+            return false;
+        }
+    }
     return true;
 }
 
