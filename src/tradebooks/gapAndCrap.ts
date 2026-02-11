@@ -58,26 +58,29 @@ export class GapAndCrap extends Tradebook {
     }
 
     validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
-        if (entryPrice > this.basePlan.maxDailyResistance) {
-            Firestore.logError(`entry price ${entryPrice} is above max daily resistance ${this.basePlan.maxDailyResistance}`, logTags);
-            return 0;
+        let currentVwap = Models.getCurrentVwap(this.symbol);
+        if (this.basePlan.resistance.length > 0) {
+            let resistance = this.basePlan.resistance[0];
+            if (entryPrice > resistance.high) {
+                Firestore.logError(`entry price ${entryPrice} is above resistance ${resistance.high}`, logTags);
+                return 0;
+            }
+
+            if (entryPrice > currentVwap) {
+                let atr = Models.getAtr(this.symbol).average;
+                let minPrice = resistance.low - 0.5 * atr;
+                if (entryPrice < minPrice) {
+                    Firestore.logError(`entry price ${entryPrice} is below min price ${minPrice}`, logTags);
+                    return 0;
+                }
+            }
         }
-        let symbolData = Models.getSymbolData(this.symbol);
-        if (entryPrice > symbolData.premktHigh) {
-            Firestore.logError(`entry price ${entryPrice} is above premkt high ${symbolData.premktHigh}`, logTags);
-            return 0;
-        }
-        let candles = Models.getCandlesFromM1SinceOpen(this.symbol);
-        if (candles.length > 5) {
-            Firestore.logError(`disable gap and crap after 5 candles`, logTags);
-            return 0;
-        }
+
         // Use basic global entry rules
         let allowedSize = EntryRulesChecker.checkBasicGlobalEntryRules(
             this.symbol, false, entryPrice, stopOutPrice, useMarketOrder,
             this.basePlan, false, logTags);
 
-        let currentVwap = Models.getCurrentVwap(this.symbol);
         if (entryPrice > currentVwap) {
             return allowedSize * 0.5;
         }

@@ -230,7 +230,7 @@ export interface GapAndGoPlan extends BasePlan {
 }
 export interface GapAndCrapPlan extends BasePlan {
     /** the max resistance on daily chart, above it, we cannot short */
-    maxDailyResistance: number,
+    resistance: LevelArea[],
     /** the number of days in a row that form this heavy supply zone */
     heavySupplyZoneDays?: number,
     /** the length of such recent rally */
