@@ -1233,11 +1233,18 @@ export const getUndefinedCandlesSinceOpen = (symbol: string) => {
     let tvTime = Helper.jsDateToTradingViewUTC(time);
     return getUndefinedCandleSinceTime(symbol, tvTime);
 }
-export const getRiskLevelPrice = (symbol: string, isLong: boolean, defaultPrice: number, entryPrice: number) => {
-    let result = defaultPrice;
+export const getManualRiskLevel = (symbol: string) => {
     let widget = getChartWidget(symbol);
     if (widget && widget.riskLevelPriceLine) {
-        result = widget.riskLevelPriceLine.options().price;
+        return widget.riskLevelPriceLine.options().price;
+    }
+    return null;
+}
+export const getRiskLevelPrice = (symbol: string, isLong: boolean, defaultPrice: number, entryPrice: number) => {
+    let result = defaultPrice;
+    let manualRiskLevel = getManualRiskLevel(symbol);
+    if (manualRiskLevel) {
+        result = manualRiskLevel;
     }
     // double check risk level is at least away from entry price
     let symbolData = getSymbolData(symbol);
@@ -1253,6 +1260,74 @@ export const getRiskLevelPrice = (symbol: string, isLong: boolean, defaultPrice:
 
     return result;
 }
+
+export const chooseRiskLevel = (symbol: string, isLong: boolean, entryPrice: number,
+    defaultRiskLevels?: number[]): number => {
+    let currentVwap = getCurrentVwap(symbol);
+    let symbolData = getSymbolData(symbol);
+    let manualRiskLevel = getManualRiskLevel(symbol);
+    let levels = [currentVwap];
+    if (defaultRiskLevels) {
+        levels.push(...defaultRiskLevels);
+    }
+
+    if (isLong) {
+        levels.sort((a, b) => b - a); // high to low
+        let result = chooseRiskLevelForLong(entryPrice, levels, symbolData.lowOfDay);
+        if (manualRiskLevel && manualRiskLevel < entryPrice) {
+            return Math.max(result, manualRiskLevel);
+        } else {
+            return result;
+        }
+    } else {
+        levels.sort((a, b) => a - b); // low to high
+        let result = chooseRiskLevelForShort(entryPrice, levels, symbolData.highOfDay);
+        if (manualRiskLevel && manualRiskLevel > entryPrice) {
+            return Math.min(result, manualRiskLevel);
+        } else {
+            return result;
+        }
+    }
+};
+
+export const chooseRiskLevelForLong = (entryPrice: number, levels: number[], lowOfDay: number) => {
+    let index = 0;
+    let levelsUnderEntryPrice: number[] = [];
+    while (index < levels.length) {
+        let level = levels[index];
+        if (entryPrice > level) {
+            levelsUnderEntryPrice.push(level);
+        }
+        index++;
+    }
+    if (levelsUnderEntryPrice.length == 0) {
+        return lowOfDay;
+    }
+    if (levelsUnderEntryPrice.length == 1) {
+        return Math.min(levelsUnderEntryPrice[0], lowOfDay);
+    }
+    return Math.min(levelsUnderEntryPrice[1], lowOfDay);
+};
+
+export const chooseRiskLevelForShort = (entryPrice: number, levels: number[], highOfDay: number) => {
+    let index = 0;
+    let levelsAboveEntryPrice: number[] = [];
+    while (index < levels.length) {
+        let level = levels[index];
+        if (entryPrice < level) {
+            levelsAboveEntryPrice.push(level);
+        }
+        index++;
+    }
+    if (levelsAboveEntryPrice.length == 0) {
+        return highOfDay;
+    }
+    if (levelsAboveEntryPrice.length == 1) {
+        return Math.max(levelsAboveEntryPrice[0], highOfDay);
+    }
+    return Math.max(levelsAboveEntryPrice[1], highOfDay);
+};
+
 export const getHighLowBreakoutEntryStopPrice = (symbol: string, isLong: boolean) => {
     let symbolData = getSymbolData(symbol);
     let entryPrice = isLong ? symbolData.highOfDay : symbolData.lowOfDay;

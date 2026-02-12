@@ -160,7 +160,7 @@ export interface AllTimeHighVwapContinuationPlan extends BasePlan {
 }
 export interface GapAndCrapAccelerationPlan extends BasePlan {
     accelerationLevel: number,
-    defaultRiskLevel: number,
+    defaultRiskLevels: number[],
 }
 export interface keyLevels {
     otherLevels?: number[];
@@ -188,7 +188,7 @@ export interface BasePlan {
     planType?: PlanType,
     timeframe?: number,
     entryMethod?: string,
-    defaultRiskLevel?: number,
+    defaultRiskLevels?: number[],
 };
 export interface PlanConfigs {
     size: number,
@@ -229,6 +229,7 @@ export interface GapAndGoPlan extends BasePlan {
     previousInsideDay?: number,
     /** price of all time high */
     allTimeHigh?: number,
+    defaultRiskLevels: number[],
 }
 export interface GapAndCrapPlan extends BasePlan {
     /** the max resistance on daily chart, above it, we cannot short */
@@ -244,6 +245,7 @@ export interface GapAndCrapPlan extends BasePlan {
     topEdgeOfCurrentRange?: number,
     /** description of the previous event */
     nearBelowPreviousEventKeyLevel?: string
+    defaultRiskLevels: number[],
 }
 export interface GapDownAndGoDownPlan extends BasePlan {
     nearBelowConsolidationRange?: LevelArea,
@@ -251,12 +253,14 @@ export interface GapDownAndGoDownPlan extends BasePlan {
     buyersTrappedBelowThisLevel?: number,
     /** the low of last 2 days */
     previousInsideDay?: number,
+    defaultRiskLevels: number[],
 
 }
 export interface GapDownAndGoUpPlan extends BasePlan {
     support: LevelArea[],
     nearAboveSupport?: LevelArea,
     nearAboveKeyEventLevel?: number,
+    defaultRiskLevels: number[],
 
 }
 export interface OpenDriveContinuation60Plan extends BasePlan {

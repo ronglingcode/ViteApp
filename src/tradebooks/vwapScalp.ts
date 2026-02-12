@@ -52,8 +52,7 @@ export class VwapScalp extends Tradebook {
 
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
         let stopOutPrice = Chart.getStopLossPrice(symbol, isLong, true, null);
-        let defaultRiskLevel = this.vwapScalpPlan.defaultRiskLevel ?? stopOutPrice;
-        let riskLevelPrice = Models.getRiskLevelPrice(symbol, isLong, defaultRiskLevel, entryPrice);
+        let riskLevelPrice = Models.chooseRiskLevel(symbol, isLong, entryPrice, this.vwapScalpPlan.defaultRiskLevels);
         let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, timeframe, logTags);
         if (allowedSize === 0) {
             Firestore.logError(`not allowed entry`, logTags);

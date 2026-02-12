@@ -40,7 +40,7 @@ export class GapAndCrapAcceleration extends Tradebook {
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
         let symbolData = Models.getSymbolData(symbol);
         let stopOutPrice = symbolData.highOfDay;
-        let riskLevelPrice = Models.getRiskLevelPrice(symbol, isLong, this.gapAndCrapAccelerationPlan.defaultRiskLevel, entryPrice);
+        let riskLevelPrice = Models.chooseRiskLevel(symbol, isLong, entryPrice, this.gapAndCrapAccelerationPlan.defaultRiskLevels);
         let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
 
         if (allowedSize === 0) {
