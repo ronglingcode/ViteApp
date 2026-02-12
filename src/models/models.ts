@@ -1892,8 +1892,6 @@ export const getMarketCapInMillions = (symbol: string) => {
 }
 
 export const getAtrThreshold = (symbol: string) => {
-    // sometimes it's just about 1 ATR but less than 1 ATR
-    return 0.5;
     let cap = getMarketCapInMillions(symbol);
     let capInBillions = cap / 1000;
     if (capInBillions >= 100) {
