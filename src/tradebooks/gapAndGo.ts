@@ -96,7 +96,7 @@ export class GapAndGo extends Tradebook {
             this.basePlan, false, logTags);
         let currentVwap = Models.getCurrentVwap(this.symbol);
         if (entryPrice < currentVwap) {
-            let notTooFar = minSupport + Models.getAtrThreshold(this.symbol) * Models.getAtr(this.symbol).average;
+            let notTooFar = minSupport + 2 * Models.getAtr(this.symbol).average;
             if (entryPrice > notTooFar) {
                 Firestore.logError(`entry price ${entryPrice} is too far from min support ${minSupport} by more than 0.5 ATR at ${notTooFar}`, logTags);
                 return 0;
