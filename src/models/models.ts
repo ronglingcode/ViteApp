@@ -1262,9 +1262,8 @@ export const getRiskLevelPrice = (symbol: string, isLong: boolean, defaultPrice:
 }
 
 export const chooseRiskLevel = (symbol: string, isLong: boolean, entryPrice: number,
-    defaultRiskLevels?: number[]): number => {
+    stopLossLevel: number, defaultRiskLevels?: number[]): number => {
     let currentVwap = getCurrentVwap(symbol);
-    let symbolData = getSymbolData(symbol);
     let manualRiskLevel = getManualRiskLevel(symbol);
     let levels = [currentVwap];
     if (defaultRiskLevels) {
@@ -1273,7 +1272,7 @@ export const chooseRiskLevel = (symbol: string, isLong: boolean, entryPrice: num
 
     if (isLong) {
         levels.sort((a, b) => b - a); // high to low
-        let result = chooseRiskLevelForLong(entryPrice, levels, symbolData.lowOfDay);
+        let result = chooseRiskLevelForLong(entryPrice, levels, stopLossLevel);
         if (manualRiskLevel && manualRiskLevel < entryPrice) {
             return Math.max(result, manualRiskLevel);
         } else {
@@ -1281,7 +1280,7 @@ export const chooseRiskLevel = (symbol: string, isLong: boolean, entryPrice: num
         }
     } else {
         levels.sort((a, b) => a - b); // low to high
-        let result = chooseRiskLevelForShort(entryPrice, levels, symbolData.highOfDay);
+        let result = chooseRiskLevelForShort(entryPrice, levels, stopLossLevel);
         if (manualRiskLevel && manualRiskLevel > entryPrice) {
             return Math.min(result, manualRiskLevel);
         } else {
@@ -1290,7 +1289,7 @@ export const chooseRiskLevel = (symbol: string, isLong: boolean, entryPrice: num
     }
 };
 
-export const chooseRiskLevelForLong = (entryPrice: number, levels: number[], lowOfDay: number) => {
+export const chooseRiskLevelForLong = (entryPrice: number, levels: number[], stopLossLevel: number) => {
     let index = 0;
     let levelsUnderEntryPrice: number[] = [];
     while (index < levels.length) {
@@ -1301,15 +1300,15 @@ export const chooseRiskLevelForLong = (entryPrice: number, levels: number[], low
         index++;
     }
     if (levelsUnderEntryPrice.length == 0) {
-        return lowOfDay;
+        return stopLossLevel;
     }
     if (levelsUnderEntryPrice.length == 1) {
-        return Math.min(levelsUnderEntryPrice[0], lowOfDay);
+        return Math.min(levelsUnderEntryPrice[0], stopLossLevel);
     }
-    return Math.min(levelsUnderEntryPrice[1], lowOfDay);
+    return Math.min(levelsUnderEntryPrice[1], stopLossLevel);
 };
 
-export const chooseRiskLevelForShort = (entryPrice: number, levels: number[], highOfDay: number) => {
+export const chooseRiskLevelForShort = (entryPrice: number, levels: number[], stopLossLevel: number) => {
     let index = 0;
     let levelsAboveEntryPrice: number[] = [];
     while (index < levels.length) {
@@ -1320,12 +1319,12 @@ export const chooseRiskLevelForShort = (entryPrice: number, levels: number[], hi
         index++;
     }
     if (levelsAboveEntryPrice.length == 0) {
-        return highOfDay;
+        return stopLossLevel;
     }
     if (levelsAboveEntryPrice.length == 1) {
-        return Math.max(levelsAboveEntryPrice[0], highOfDay);
+        return Math.max(levelsAboveEntryPrice[0], stopLossLevel);
     }
-    return Math.max(levelsAboveEntryPrice[1], highOfDay);
+    return Math.max(levelsAboveEntryPrice[1], stopLossLevel);
 };
 
 export const getHighLowBreakoutEntryStopPrice = (symbol: string, isLong: boolean) => {

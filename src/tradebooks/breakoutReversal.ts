@@ -33,7 +33,7 @@ export class BreakoutReversal extends Tradebook {
         let logTags = Models.generateLogTags(symbol, `${symbol}_${logTagName}`);
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
         let stopOutPrice = Chart.getStopLossPrice(symbol, isLong, true, null);
-        let riskLevelPrice = Models.chooseRiskLevel(symbol, isLong, entryPrice, this.reversalPlan.defaultRiskLevels);
+        let riskLevelPrice = Models.chooseRiskLevel(symbol, isLong, entryPrice, stopOutPrice, this.reversalPlan.defaultRiskLevels);
         let planCopy = JSON.parse(JSON.stringify(this.reversalPlan)) as TradingPlansModels.ReversalPlan;
         let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, planCopy, logTags);
         if (allowedSize === 0) {
@@ -272,7 +272,7 @@ export class BreakoutReversal extends Tradebook {
             let entryPrice = this.isLong ? lastClosedCandle.high : lastClosedCandle.low;
             let symbolData = Models.getSymbolData(this.symbol);
             let stopOutPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
-            let riskLevelPrice = Models.chooseRiskLevel(this.symbol, this.isLong, entryPrice, this.reversalPlan.defaultRiskLevels);
+            let riskLevelPrice = Models.chooseRiskLevel(this.symbol, this.isLong, entryPrice, stopOutPrice, this.reversalPlan.defaultRiskLevels);
             let allowedSize = this.validateEntry(entryPrice, stopOutPrice, false, this.reversalPlan, logTags);
             if (allowedSize === 0) {
                 Firestore.logError(`${this.symbol} not allowed entry`, logTags);
