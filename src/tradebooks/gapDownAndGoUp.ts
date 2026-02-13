@@ -5,6 +5,7 @@ import * as Models from '../models/models';
 import * as Firestore from '../firestore';
 import * as TradebookUtil from './tradebookUtil';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
+import * as Helper from '../utils/helper';
 
 export class GapDownAndGoUp extends Tradebook {
     public static readonly gapDownAndGoUpLong: string = 'GapDownAndGoUpLong';
@@ -26,7 +27,11 @@ export class GapDownAndGoUp extends Tradebook {
     }
 
     refreshLiveStats(): void {
-        // TODO: Implement live stats refresh if needed
+        let entryPrice = Models.getCurrentPrice(this.symbol);
+        let symbolData = Models.getSymbolData(this.symbol);
+        let stopOutPrice = symbolData.lowOfDay;
+        let riskLevel = Models.chooseRiskLevel(this.symbol, this.isLong, entryPrice, stopOutPrice, this.basePlan.defaultRiskLevels);
+        Helper.updateHtmlIfChanged(this.htmlStats, `risk level: ${riskLevel}`);
     }
 
     triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {

@@ -813,10 +813,10 @@ export const drawRiskLevels = (symbol: string) => {
         return;
     }
     let netq = Models.getPositionNetQuantity(symbol);
-    if (netq > 0) {
+    if (netq >= 0) {
         drawRiskLevelForShort(symbol, widget);
     }
-    if (netq < 0) {
+    if (netq <= 0) {
         drawRiskLevelForLong(symbol, widget);
     }
 }

@@ -29,7 +29,11 @@ export class GapAndCrap extends Tradebook {
     }
 
     refreshLiveStats(): void {
-        // TODO: Implement live stats refresh if needed
+        let entryPrice = Models.getCurrentPrice(this.symbol);
+        let symbolData = Models.getSymbolData(this.symbol);
+        let stopOutPrice = symbolData.highOfDay;
+        let riskLevel = Models.chooseRiskLevel(this.symbol, this.isLong, entryPrice, stopOutPrice, this.basePlan.defaultRiskLevels);
+        Helper.updateHtmlIfChanged(this.htmlStats, `risk level: ${riskLevel}`);
     }
 
     triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {
@@ -112,10 +116,6 @@ export class GapAndCrap extends Tradebook {
 
     isEnabled(): boolean {
         return true; // TODO: Implement enable/disable logic
-    }
-
-    getCommonLiveStats(): string {
-        return super.getCommonLiveStats();
     }
 
     getTightStopLevels(): Models.DisplayLevel[] {

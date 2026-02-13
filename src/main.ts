@@ -162,8 +162,7 @@ if (tosScriptsButton) {
 let testPopButton = document.getElementById("test_popup");
 if (testPopButton) {
     testPopButton.addEventListener("click", () => {
-        TradebooksManager.onNewCandleCloseForSymbol("VST");
-        TradebooksManager.onNewCandleCloseForSymbol("OKLO");
+        Chart.drawRiskLevels("RIVN");
     });
 }
 
