@@ -234,6 +234,8 @@ export interface ChartWidget {
     entryPriceLine?: LightweightCharts.IPriceLine,
     stopLossPriceLine?: LightweightCharts.IPriceLine,
     stopLossOfPendingEntryPriceLine?: LightweightCharts.IPriceLine,
+    riskLevelForLong?: LightweightCharts.IPriceLine,
+    riskLevelForShort?: LightweightCharts.IPriceLine,
     riskLevelPriceLine?: LightweightCharts.IPriceLine,
     entryOrders: OrderModel[],
     entryOrdersPriceLines: LightweightCharts.IPriceLine[],

@@ -387,7 +387,7 @@ export const onMinuteClosed = (
                 break;
             }
         }
-    }   
+    }
 }
 /**
  * If the newly closed candle is a breakout entry candle
@@ -581,6 +581,7 @@ export const onNewTimeAndSalesData = (symbol: string, newPrice: number, isNewCan
     if (status) {
         Chart.updateToolTipPriceLine(symbol, status);
     }
+    Chart.drawRiskLevels(symbol);
 }
 export const saveRedToGreenState = (symbol: string) => {
     let seconds = Helper.getSecondsSinceMarketOpen(new Date());

@@ -807,7 +807,64 @@ export const updateAccountUIStatus = async (symbolList: string[], source: string
         TraderFocus.updateTradeManagementUI();
     }
 };
+export const drawRiskLevels = (symbol: string) => {
+    let widget = Models.getChartWidget(symbol);
+    if (!widget) {
+        return;
+    }
+    let netq = Models.getPositionNetQuantity(symbol);
+    if (netq > 0) {
+        drawRiskLevelForShort(symbol, widget);
+    }
+    if (netq < 0) {
+        drawRiskLevelForLong(symbol, widget);
+    }
+}
 
+const drawRiskLevelForShort = (symbol: string, widget: Models.ChartWidget) => {
+    let topPlan = TradingPlans.getTradingPlans(symbol);
+    let shortPlan = topPlan.short;
+    let defaultRiskLevels: number[] = [];
+    if (shortPlan.gapAndCrapPlan) {
+        defaultRiskLevels = shortPlan.gapAndCrapPlan.defaultRiskLevels;
+    }
+    let entryPrice = Models.getCurrentPrice(symbol);
+    let symbolData = Models.getSymbolData(symbol);
+    let stopOutPrice = symbolData.highOfDay;
+    let riskLevel = Models.chooseRiskLevel(symbol, false, entryPrice, stopOutPrice, defaultRiskLevels);
+
+    if (widget.riskLevelForShort) {
+        let currentLevel = widget.riskLevelForShort.options().price;
+        if (currentLevel != riskLevel) {
+            widget.candleSeries.removePriceLine(widget.riskLevelForShort);
+        } else {
+            return;
+        }
+    }
+    widget.riskLevelForShort = createPriceLine(
+        widget.candleSeries, riskLevel, "risk for short", "red", null, false, "solid");
+}
+const drawRiskLevelForLong = (symbol: string, widget: Models.ChartWidget) => {
+    let topPlan = TradingPlans.getTradingPlans(symbol);
+    let longPlan = topPlan.long;
+    let defaultRiskLevels: number[] = [];
+    if (longPlan.gapAndGoPlan) {
+        defaultRiskLevels = longPlan.gapAndGoPlan.defaultRiskLevels;
+    }
+    let entryPrice = Models.getCurrentPrice(symbol);
+    let symbolData = Models.getSymbolData(symbol);
+    let stopOutPrice = symbolData.lowOfDay;
+    let riskLevel = Models.chooseRiskLevel(symbol, true, entryPrice, stopOutPrice, defaultRiskLevels);
+    if (widget.riskLevelForLong) {
+        let currentLevel = widget.riskLevelForLong.options().price;
+        if (currentLevel != riskLevel) {
+            widget.candleSeries.removePriceLine(widget.riskLevelForLong);
+        } else {
+            return;
+        }
+    }
+    widget.riskLevelForLong = createPriceLine(widget.candleSeries, riskLevel, "risk for long", "green", null, false, "solid");
+}
 export const updateAccountUIStatusForSymbol = (symbol: string) => {
     let widget = Models.getChartWidget(symbol);
     if (!widget) {
