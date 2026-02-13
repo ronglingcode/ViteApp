@@ -1273,7 +1273,7 @@ export const chooseRiskLevel = (symbol: string, isLong: boolean, entryPrice: num
     if (isLong) {
         levels.sort((a, b) => b - a); // high to low
         let result = chooseRiskLevelForLong(entryPrice, levels, stopLossLevel);
-        if (manualRiskLevel && manualRiskLevel < entryPrice) {
+        if (manualRiskLevel && manualRiskLevel < entryPrice && manualRiskLevel < stopLossLevel) {
             return Math.max(result, manualRiskLevel);
         } else {
             return result;
@@ -1281,7 +1281,7 @@ export const chooseRiskLevel = (symbol: string, isLong: boolean, entryPrice: num
     } else {
         levels.sort((a, b) => a - b); // low to high
         let result = chooseRiskLevelForShort(entryPrice, levels, stopLossLevel);
-        if (manualRiskLevel && manualRiskLevel > entryPrice) {
+        if (manualRiskLevel && manualRiskLevel > entryPrice && manualRiskLevel > stopLossLevel) {
             return Math.min(result, manualRiskLevel);
         } else {
             return result;
