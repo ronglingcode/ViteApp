@@ -2208,6 +2208,8 @@ export const translateLevels = (symbol: string, levels: string[]) => {
         let level = levels[i];
         if (level == "pm high") {
             result.push(symbolData.premktHigh);
+        } else if (level == "pm low") {
+            result.push(symbolData.premktLow);
         } else {
             result.push(Number(level));
         }
