@@ -232,8 +232,10 @@ export interface GapAndGoPlan extends BasePlan {
     defaultRiskLevels: number[],
 }
 export interface GapAndCrapPlan extends BasePlan {
-    /** the max resistance on daily chart, above it, we cannot short */
-    resistance: LevelArea[],
+    /** the max resistance on daily chart, above it, we cannot short. -1: no limit when it's not based on resistance, but more due to extended rally */
+    aboveThisLevelNoMoreShort: number,
+    /** the min resistance on daily chart, below it, we can only short if it's below vwap continuation. -1: no limit when it's not based on resistance, but more due to extended rally, or it's in the middle of heavy zone */
+    belowThisLevelOnlyVwapContinuation: number,
     /** the number of days in a row that form this heavy supply zone */
     heavySupplyZoneDays?: number,
     /** the length of such recent rally */

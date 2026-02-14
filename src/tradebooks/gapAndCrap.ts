@@ -61,21 +61,17 @@ export class GapAndCrap extends Tradebook {
     }
 
     validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
+        let maxLevelToShort = this.basePlan.aboveThisLevelNoMoreShort;
+        if (maxLevelToShort > 0 && entryPrice > maxLevelToShort) {
+            Firestore.logError(`entry price ${entryPrice} is above max level to short:${maxLevelToShort}`, logTags);
+            return 0;
+        }
         let currentVwap = Models.getCurrentVwap(this.symbol);
-        if (this.basePlan.resistance.length > 0) {
-            let resistance = this.basePlan.resistance[0];
-            if (entryPrice > resistance.high) {
-                Firestore.logError(`entry price ${entryPrice} is above resistance ${resistance.high}`, logTags);
+        let minLevelToShort = this.basePlan.belowThisLevelOnlyVwapContinuation;
+        if (minLevelToShort > 0) {
+            if (entryPrice > currentVwap && entryPrice < minLevelToShort) {
+                Firestore.logError(`below this level only vwap continuation: entry price ${entryPrice} is above vwap:${currentVwap} and below min level to short:${minLevelToShort}`, logTags);
                 return 0;
-            }
-
-            if (entryPrice > currentVwap) {
-                let atr = Models.getAtr(this.symbol).average;
-                let minPrice = resistance.low - 0.5 * atr;
-                if (entryPrice < minPrice) {
-                    Firestore.logError(`entry price ${entryPrice} is below min price ${minPrice}`, logTags);
-                    return 0;
-                }
             }
         }
 
