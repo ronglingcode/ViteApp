@@ -12,7 +12,6 @@ import * as Broker from '../api/broker';
 import * as MarketData from '../api/marketData';
 import * as Vwap from '../algorithms/vwap';
 import * as Patterns from '../algorithms/patterns';
-import * as AutoFirstNewHigh from './autoFirstNewHigh';
 import * as AutoLevelMomentum from './autoLevelMomentum';
 import * as OrderFlow from '../controllers/orderFlow';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
@@ -319,13 +318,9 @@ export const onMinuteClosed = (
     isRealtime: boolean, symbolData: Models.SymbolData) => {
     let seconds = Helper.getSecondsSinceMarketOpen(new Date());
     if (isRealtime) {
-        AutoFirstNewHigh.onMinuteClosed(symbol);
-
-
         checkVolumeOnCandleClose(symbol, newlyClosedCandle);
         if (120 <= seconds && seconds <= 180) {
             Firestore.logInfo(`2nd candle just closed, minutes since open ${newlyClosedCandle.minutesSinceMarketOpen}`);
-            AutoFirstNewHigh.TryAutoTrigger(symbol);
         }
         if (seconds < 0) {
             let openPositions = Models.getOpenPositions();
@@ -417,8 +412,6 @@ export const updateAllAlgo = (symbol: string) => {
     }
 }
 export const clearExistingAlgos = (symbol: string) => {
-    AutoFirstNewHigh.stopAlgo(symbol);
-    AutoFirstNewHigh.stopAlgo(symbol);
 }
 
 export const refreshAlgoPeriodically = () => {
@@ -433,9 +426,6 @@ export const refreshAlgoPeriodically = () => {
     }
 }
 const refreshAlgoPeriodicallyForSymbol = (symbol: string, secondsSinceMarketOpen: number) => {
-    if (secondsSinceMarketOpen > 60) {
-        //AutoFirstNewHigh.refreshPeriodically(symbol);
-    }
 }
 
 export const pauseAlgo = (symbol: string) => {
