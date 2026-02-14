@@ -1643,9 +1643,7 @@ export const drawPreviousDayHighLow = (symbolData: Models.SymbolData, allCharts:
 export const drawLevelsAfterChartInitialize = (widget: Models.ChartWidget) => {
     let tradingPlans = TradingPlans.getTradingPlans(widget.symbol);
     let keyLevels = tradingPlans.keyLevels;
-    let lastDefenseForLong = [TradingPlans.getLastDefenseForLongInRetracement(widget.symbol)];
-    let lastDefenseForShort = [TradingPlans.getLastDefenseForShortInRetracement(widget.symbol)];
-    drawKeyLevels(widget, keyLevels, lastDefenseForLong, lastDefenseForShort);
+    drawKeyLevels(widget, keyLevels, [], []);
 }
 
 export const drawKeyLevels = (widget: Models.ChartWidget, keyLevels: TradingPlansModels.keyLevels,

@@ -100,60 +100,6 @@ export const getTradingPlans = (symbol: string) => {
 
     return window.HybridApp.TradingPlans[0];
 }
-export const getLastDefenseForLongInRetracement = (symbol: string) => {
-    let p = getTradingPlansForSingleDirection(symbol, true);
-    if (p.retracement) {
-        return p.retracement.lastDefense;
-    }
-    return 0;
-};
-export const getLastDefenseForShortInRetracement = (symbol: string) => {
-    let p = getTradingPlansForSingleDirection(symbol, false);
-    let resistances: number[] = [];
-    if (p.retracement) {
-        return p.retracement.lastDefense;
-    }
-    return 0;
-};
-export const getMatchingRetracementArea = (symbol: string, isLong: boolean, entryPrice: number) => {
-    let pullbackPlan = getTradingPlansForSingleDirection(symbol, isLong).retracement;
-    if (!pullbackPlan) {
-        return null;
-    }
-    let areas = pullbackPlan.entryAreas;
-    for (let i = 0; i < areas.length; i++) {
-        const area = areas[i];
-        let pa = area.priceArea;
-        if (isWithinRange(entryPrice, pa.priceLevel, pa.upperRoom, pa.lowerRoom)) {
-            return area;
-        }
-    }
-    if (pullbackPlan.vwapArea) {
-        let currentVwap = Models.getCurrentVwap(symbol);
-        let area = pullbackPlan.vwapArea;
-        let pa = area.priceArea;
-        if (isWithinRange(entryPrice, currentVwap, pa.upperRoom, pa.lowerRoom)) {
-            return pullbackPlan.vwapArea;
-        }
-    }
-    let openPrice = Models.getOpenPrice(symbol);
-    if (pullbackPlan.openPriceArea && openPrice) {
-        let area = pullbackPlan.openPriceArea;
-        let pa = area.priceArea;
-        if (isWithinRange(entryPrice, openPrice, pa.upperRoom, pa.lowerRoom)) {
-            return pullbackPlan.openPriceArea;
-        }
-    }
-
-    return null;
-};
-
-const isWithinRange = (entry: number, target: number, upperRoom: number, lowerRoom: number) => {
-    let upperPrice = target + upperRoom;
-    let lowerPrice = target - lowerRoom;
-    return (lowerPrice <= entry) && (entry <= upperPrice);
-};
-
 export const fetchConfigData = async () => {
     let data = await Firestore.fetchConfigData();
     let stockSelections: string[] = [];
@@ -197,31 +143,6 @@ export const getVwapCorrection = (symbol: string) => {
 
 export const getKeyAreasToDraw = (symbol: string) => {
     let results: Models.KeyAreaToDraw[] = [];
-    let p = getTradingPlans(symbol);
-    if (p.long.retracement) {
-        let r = p.long.retracement;
-        r.entryAreas.forEach(area => {
-            let pa = area.priceArea;
-            let item: Models.KeyAreaToDraw = {
-                upperPrice: pa.priceLevel + pa.upperRoom,
-                lowerPrice: pa.priceLevel - pa.lowerRoom,
-                direction: 1,
-            };
-            results.push(item);
-        });
-    }
-    if (p.short.retracement) {
-        let r = p.short.retracement;
-        r.entryAreas.forEach(area => {
-            let pa = area.priceArea;
-            let item: Models.KeyAreaToDraw = {
-                upperPrice: pa.priceLevel + pa.upperRoom,
-                lowerPrice: pa.priceLevel - pa.lowerRoom,
-                direction: -1,
-            };
-            results.push(item);
-        });
-    }
     return results;
 }
 

@@ -134,8 +134,6 @@ export interface SingleDirectionPlans {
     gapDownAndGoUpPlan?: GapDownAndGoUpPlan,
     /* used strategies end */
 
-    retracement?: RetracementPlan,
-
     levelBreakout?: LevelBreakoutPlan,
 
     deferredBreakoutPlan?: DeferredBreakoutPlan,
@@ -262,16 +260,6 @@ export interface AlgoPlan extends BasePlan {
 export interface ReversalPlan extends BasePlan {
     keyLevel: number,
     requireLevelTouch: boolean,
-}
-export interface RetracementPlan {
-    entryAreas: RetracementArea[];
-    lastDefense: number,
-    vwapArea?: RetracementArea,
-    openPriceArea?: RetracementArea,
-};
-export interface RetracementArea extends BasePlan {
-    priceArea: PriceArea,
-    stopPrice: number,
 }
 export interface LevelBreakoutPlan extends BasePlan {
     entryPrice: number,
