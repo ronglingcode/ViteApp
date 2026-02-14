@@ -308,7 +308,7 @@ export const updateUIBasedOnOpenZone = () => {
     });
 }
 export const autoTriggerRedToGreen60 = () => {
-    // ProfitTakingFade60 removed; other 60s plans (e.g. OpenDriveContinuation60) handled elsewhere if needed
+    // RedToGreen60 plans (ProfitTakingFade60, OpenDriveContinuation60) removed
 }
 export const onMarketOpen = (symbol: string) => {
     // handle when market opens

@@ -60,17 +60,7 @@ export const stopAlgo = (symbol: string) => {
     }
 }
 export const checkPendingCondition = (symbol: string) => {
-    let s = algoStateBySymbol.get(symbol);
-    if (!s || !s.hasPendingCondition || s.pendingConditionPassed) {
-        return;
-    }
-    if (s.planType == TradingPlansModels.PlanType.OpenDriveContinuation60) {
-        let hasReversal = EntryRulesChecker.conditionallyHasReversalBarSinceOpen(symbol, s.isLong, true, true);
-        if (hasReversal) {
-            s.pendingConditionPassed = true;
-            Firestore.logInfo(`${symbol} pending condition passed`);
-        }
-    }
+    // OpenDriveContinuation60 removed
 }
 const prepareNextLoop = (waitInSeconds: number, symbol: string, isLong: boolean,
     plan: TradingPlansModels.BasePlan, planType: TradingPlansModels.PlanType, logTags: Models.LogTags) => {
@@ -99,35 +89,8 @@ export const loop = (symbol: string, isLong: boolean, isFirstLoop: boolean,
         return;
     }
 
-    // wait for conditions to meet to submit orders
-    if (planType == TradingPlansModels.PlanType.OpenDriveContinuation60) {
-        runAsOpeningDriveContinuation(symbol, isLong, isFirstLoop, plan as TradingPlansModels.OpenDriveContinuation60Plan, planType, logTags);
-    }
+    // OpenDriveContinuation60 removed; no plan types left for this algo
 }
-const runAsOpeningDriveContinuation = (symbol: string, isLong: boolean, isFirstLoop: boolean,
-    plan: TradingPlansModels.OpenDriveContinuation60Plan, planType: TradingPlansModels.PlanType, logTags: Models.LogTags) => {
-    let checkedPassed = checkLiquidityAndDailyRange(symbol, isLong, isFirstLoop, plan, planType, logTags);
-    if (!checkedPassed) {
-        return;
-    }
-    let hasReversal = EntryRulesChecker.conditionallyHasReversalBarSinceOpen(symbol, isLong, true, true);
-    let s = algoStateBySymbol.get(symbol);
-    if (!s) {
-        logError(isFirstLoop, `no algo state, existing`, logTags);
-        return;
-    }
-    if (!hasReversal && !s.pendingConditionPassed) {
-        logError(isFirstLoop, `not reversal, recheck after 0.4 seconds`, logTags);
-        if (!s.hasPendingCondition) {
-            Firestore.logInfo(`set pending condition for ${symbol}`, logTags);
-            s.hasPendingCondition = true;
-        }
-        prepareNextLoop(0.4, symbol, isLong, plan, planType, logTags);
-        return;
-    }
-    runPlan(symbol, isLong, plan, planType, logTags);
-}
-
 const checkLiquidityAndDailyRange = (symbol: string, isLong: boolean, isFirstLoop: boolean,
     plan: TradingPlansModels.BasePlan, planType: TradingPlansModels.PlanType, logTags: Models.LogTags) => {
     let scale = Models.getLiquidityScale(symbol);

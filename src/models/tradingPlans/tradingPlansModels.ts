@@ -134,7 +134,6 @@ export interface SingleDirectionPlans {
     gapDownAndGoUpPlan?: GapDownAndGoUpPlan,
     /* used strategies end */
 
-    openDriveContinuation60Plan?: OpenDriveContinuation60Plan,
     retracement?: RetracementPlan,
 
     breakoutAlgo?: BreakoutAlgo,
@@ -168,7 +167,6 @@ export interface keyLevels {
 };
 export enum PlanType {
     LevelMomentum = 'LevelMomentum',
-    OpenDriveContinuation60 = 'OpenDriveContinuation60',
     OpenChase = 'OpenChase',
     Retracement = 'Retracement',
     NewsBreakout = 'NewsBreakout',
@@ -258,11 +256,6 @@ export interface GapDownAndGoUpPlan extends BasePlan {
     defaultRiskLevels: string[],
 
 }
-export interface OpenDriveContinuation60Plan extends BasePlan {
-    disableIfOpenWorseThanPrice: number,
-    requireOpenBetterThanVwap: boolean,
-}
-
 export interface AlgoPlan extends BasePlan {
     expirationInSeconds: number,
     allowPremarket: boolean,

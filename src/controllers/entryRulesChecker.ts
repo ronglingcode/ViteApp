@@ -206,8 +206,7 @@ export const checkGlobalEntryRules = (symbol: string, isLong: boolean,
     let isOpenInTradableArea = openPrice ? Models.isPriceInTradableArea(symbol, isLong, openPrice) : false;
     let hasBeenInTradableArea = Models.hasPriceBeenInTradableArea(symbol, isLong);
     if (openPrice &&
-        (basePlan.planType == 'OpenDriveContinuation60' ||
-            basePlan.planType == 'LevelMomentum')) {
+        basePlan.planType == 'LevelMomentum') {
         let isTradeDirectionAgainstOpenVwap = (isLong && !openPriceIsAboveVwap) ||
             (!isLong && openPriceIsAboveVwap);
         /*

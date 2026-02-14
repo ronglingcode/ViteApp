@@ -302,22 +302,11 @@ export const validateProfitTargets = (p: TradingPlansModels.ProfitTargets) => {
 
 export const validateTradingPlansForOneDirection = (
     plan: TradingPlansModels.SingleDirectionPlans, isLong: boolean) => {
-    let direction = isLong ? "long" : "short";
-    if (plan.openDriveContinuation60Plan) {
-        let openPlan = plan.openDriveContinuation60Plan;
-        if (!openPlan.requireOpenBetterThanVwap && (
-            !openPlan.disableIfOpenWorseThanPrice || openPlan.disableIfOpenWorseThanPrice == 0)) {
-            return `no open price requirement for gap and go ${direction}`;
-        }
-    }
     return "";
 }
 
 export const flattenPlans = (plan: TradingPlansModels.SingleDirectionPlans) => {
     let results: TradingPlansModels.BasePlan[] = [];
-    if (plan.openDriveContinuation60Plan) {
-        results.push(plan.openDriveContinuation60Plan);
-    }
     if (plan.firstBreakoutPlan) {
         results.push(plan.firstBreakoutPlan);
     }
@@ -359,7 +348,7 @@ export const noZero = (numbers: number[]) => {
 }
 
 export const hasFirst60PlanForOneSide = (plan: TradingPlansModels.SingleDirectionPlans) => {
-    return !!plan.openDriveContinuation60Plan;
+    return false;
 }
 
 export const isInRange = (price: number, vwap: number, high: string, low: string) => {

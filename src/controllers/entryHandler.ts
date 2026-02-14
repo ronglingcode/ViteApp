@@ -130,8 +130,6 @@ export const runRedToGreen60Plan = (symbol: string, isLong: boolean,
             if ((isLong && newEntryPrice > entryPrice) ||
                 (!isLong && newEntryPrice < entryPrice)) {
                 entryPrice = newEntryPrice;
-            } else if (planType == TradingPlansModels.PlanType.OpenDriveContinuation60) {
-                entryPrice = newEntryPrice;
             } else {
                 Firestore.logError(`do not allow earlier custom entry price before opponent stops out`, logTags);
             }
