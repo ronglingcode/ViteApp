@@ -12,7 +12,6 @@ import * as Broker from '../api/broker';
 import * as MarketData from '../api/marketData';
 import * as Vwap from '../algorithms/vwap';
 import * as Patterns from '../algorithms/patterns';
-import * as AutoRedToGreen from './autoRedToGreen';
 import * as AutoFirstNewHigh from './autoFirstNewHigh';
 import * as AutoRedToGreen60 from './autoRedToGreen60';
 import * as AutoLevelMomentum from './autoLevelMomentum';
@@ -420,7 +419,6 @@ export const updateAllAlgo = (symbol: string) => {
 }
 export const clearExistingAlgos = (symbol: string) => {
     AutoFirstNewHigh.stopAlgo(symbol);
-    AutoRedToGreen.stopAlgo(symbol);
     AutoFirstNewHigh.stopAlgo(symbol);
     AutoRedToGreen60.stopAlgo(symbol);
 }
