@@ -13,7 +13,6 @@ import * as MarketData from '../api/marketData';
 import * as Vwap from '../algorithms/vwap';
 import * as Patterns from '../algorithms/patterns';
 import * as AutoFirstNewHigh from './autoFirstNewHigh';
-import * as AutoRedToGreen60 from './autoRedToGreen60';
 import * as AutoLevelMomentum from './autoLevelMomentum';
 import * as OrderFlow from '../controllers/orderFlow';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
@@ -420,7 +419,6 @@ export const updateAllAlgo = (symbol: string) => {
 export const clearExistingAlgos = (symbol: string) => {
     AutoFirstNewHigh.stopAlgo(symbol);
     AutoFirstNewHigh.stopAlgo(symbol);
-    AutoRedToGreen60.stopAlgo(symbol);
 }
 
 export const refreshAlgoPeriodically = () => {
@@ -521,7 +519,6 @@ export const checkAlgoPendingCondition = (symbol: string) => {
     if (seconds > 60) {
         return;
     }
-    AutoRedToGreen60.checkPendingCondition(symbol);
 }
 export const updatePullbackDepth = (symbol: string, newPrice: number) => {
     let netQuantity = Models.getPositionNetQuantity(symbol);
