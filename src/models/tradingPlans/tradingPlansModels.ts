@@ -136,7 +136,6 @@ export interface SingleDirectionPlans {
 
     retracement?: RetracementPlan,
 
-    breakoutAlgo?: BreakoutAlgo,
     levelBreakout?: LevelBreakoutPlan,
 
     deferredBreakoutPlan?: DeferredBreakoutPlan,
@@ -259,10 +258,6 @@ export interface GapDownAndGoUpPlan extends BasePlan {
 export interface AlgoPlan extends BasePlan {
     expirationInSeconds: number,
     allowPremarket: boolean,
-}
-export interface BreakoutAlgo extends AlgoPlan {
-    entryPrice: number,
-    useHighLowOfDay: boolean,
 }
 export interface ReversalPlan extends BasePlan {
     keyLevel: number,
