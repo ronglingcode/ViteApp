@@ -231,9 +231,6 @@ export const flattenPlans = (plan: TradingPlansModels.SingleDirectionPlans) => {
     if (plan.firstBreakoutPlan) {
         results.push(plan.firstBreakoutPlan);
     }
-    if (plan.redtoGreenPlan) {
-        results.push(plan.redtoGreenPlan);
-    }
     if (plan.firstNewHighPlan) {
         results.push(plan.firstNewHighPlan);
     }

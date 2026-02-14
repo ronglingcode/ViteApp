@@ -124,17 +124,5 @@ export const isCurrentTradeFirstSignal = (symbol: string, isLong: boolean) => {
     if (state.activeBasePlan?.planType == TradingPlansModels.PlanType.FirstNewHigh) {
         return true;
     }
-    if (state.activeBasePlan?.planType == TradingPlansModels.PlanType.RedToGreen && secondsSinceOpen < 120) {
-        let candles = Models.getUndefinedCandlesSinceOpen(symbol);
-        if (candles.length > 0) {
-            let openCandle = candles[0];
-            let openPrice = openCandle.open;
-            let closePrice = openCandle.close;
-            if ((isLong && openPrice > closePrice) ||
-                (!isLong && openPrice < closePrice)) {
-                return true;
-            }
-        }
-    }
     return false;
 }

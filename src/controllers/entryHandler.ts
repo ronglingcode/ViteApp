@@ -156,33 +156,6 @@ export const clickOpenChasePlan = (symbol: string, shiftKey: boolean) => {
         Firestore.logError(`no open flush tradebook for ${symbol}`);
     }
 }
-export const runRedToGreenPlan = (symbol: string, isLong: boolean, plan: TradingPlansModels.RedToGreenPlan) => {
-    let logTags = Models.generateLogTags(symbol, `${symbol}_red2green-plan`);
-    let { entryPrice, stopOutPrice, riskLevelPrice } = Models.getHighLowBreakoutEntryStopPrice(symbol, isLong);
-    let widget = Models.getChartWidget(symbol);
-    if (widget) {
-        if (widget.entryPriceLine) {
-            let newEntryPrice = widget.entryPriceLine.options().price;
-            if ((isLong && newEntryPrice > entryPrice) ||
-                (!isLong && newEntryPrice < entryPrice)) {
-                entryPrice = newEntryPrice;
-            } else {
-                Firestore.logError(`do not allow custom price before opponent stops out`, logTags);
-            }
-        }
-        if (widget.stopLossPriceLine) {
-            Firestore.logError(`do not allow custom stop loss for red to green`, logTags);
-        }
-    }
-
-    Strategies.overrideTradingPlans(plan, TradingPlansModels.PlanType.RedToGreen);
-    let multipler = EntryRulesChecker.checkRedToGreenPlanEntryRules(symbol, isLong, entryPrice, stopOutPrice, plan, logTags);
-    if (multipler <= 0) {
-        return 0;
-    }
-    breakoutEntryWithoutRules(symbol, isLong, entryPrice, stopOutPrice, riskLevelPrice, logTags, multipler, plan, "", "");
-    return multipler;
-};
 export const runFirstNewHighPlanHigherTimeFrame = (symbol: string, isLong: boolean,
     timeframe: number,
     plan: TradingPlansModels.FirstNewHighPlan) => {

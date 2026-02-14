@@ -136,7 +136,6 @@ export interface SingleDirectionPlans {
 
     levelBreakout?: LevelBreakoutPlan,
 
-    redtoGreenPlan?: RedToGreenPlan,
     firstBreakoutPlan?: FirstBreakoutPlan,
     firstNewHighPlan?: FirstNewHighPlan,
     premarketPlan?: PremarketPlan,
@@ -166,7 +165,6 @@ export enum PlanType {
     OpenChase = 'OpenChase',
     Retracement = 'Retracement',
     NewsBreakout = 'NewsBreakout',
-    RedToGreen = 'RedToGreen',
     FirstNewHigh = 'FirstNewHigh',
     LevelBreakout = 'LevelBreakout',
     VwapBounceFail = 'VwapBounceFail',
@@ -263,10 +261,6 @@ export interface LevelBreakoutPlan extends BasePlan {
     entryPrice: number,
 }
 export interface FirstRetracementPlan extends BasePlan { }
-export interface RedToGreenPlan extends BasePlan {
-    strictMode: boolean,
-    considerCurrentCandleAfterOneMinute: boolean,
-}
 export interface FirstBreakoutPlan extends BasePlan {
 
 }

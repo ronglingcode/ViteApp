@@ -281,27 +281,6 @@ export const isAgainstFirstFiveMinute = (symbol: string, isLong: boolean,
 }
 
 
-export const checkRedToGreenPlanEntryRules = (symbol: string, isLong: boolean, entryPrice: number, stopOutPrice: number,
-    plan: TradingPlansModels.RedToGreenPlan, logTags: Models.LogTags) => {
-    let allowedSizeMutiplier = checkGlobalEntryRules(symbol, isLong, plan, logTags, entryPrice, stopOutPrice);
-    if (allowedSizeMutiplier == 0) {
-        return 0;
-    }
-
-    let hasReversalBarSinceOpen = Patterns.hasReversalBarSinceOpen(symbol, isLong, plan.strictMode, plan.considerCurrentCandleAfterOneMinute, "checkRedToGreenPlanEntryRules");
-    let firstBarIsPinBar = Patterns.firstBarIsPinBar(symbol);
-    if (!hasReversalBarSinceOpen && !firstBarIsPinBar) {
-        Firestore.logError(`checkRule: no reversal bar yet`, logTags);
-        return 0;
-    }
-
-    if (Vwap.isAgainstCurrentVwap(symbol, isLong, entryPrice)) {
-        Firestore.logError(`against current vwap`, logTags);
-        return 0;
-    }
-
-    return allowedSizeMutiplier;
-};
 export const checkFirstNewHighPlanEntryRules = (symbol: string, isLong: boolean, entryPrice: number, stopOutPrice: number,
     plan: TradingPlansModels.FirstNewHighPlan, logTags: Models.LogTags) => {
     let allowedSizeMutiplier = checkGlobalEntryRules(symbol, isLong, plan, logTags, entryPrice, stopOutPrice);
