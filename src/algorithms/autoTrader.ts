@@ -15,7 +15,6 @@ import * as Patterns from '../algorithms/patterns';
 import * as AutoRedToGreen from './autoRedToGreen';
 import * as AutoFirstNewHigh from './autoFirstNewHigh';
 import * as AutoRedToGreen60 from './autoRedToGreen60';
-import * as AutoFirstBreakout from './autoFirstBreakout';
 import * as AutoLevelMomentum from './autoLevelMomentum';
 import * as OrderFlow from '../controllers/orderFlow';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
@@ -424,7 +423,6 @@ export const clearExistingAlgos = (symbol: string) => {
     AutoRedToGreen.stopAlgo(symbol);
     AutoFirstNewHigh.stopAlgo(symbol);
     AutoRedToGreen60.stopAlgo(symbol);
-    AutoFirstBreakout.stopAlgo(symbol);
 }
 
 export const refreshAlgoPeriodically = () => {
