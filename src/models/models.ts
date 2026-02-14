@@ -1264,12 +1264,13 @@ export const getRiskLevelPrice = (symbol: string, isLong: boolean, defaultPrice:
 }
 
 export const chooseRiskLevel = (symbol: string, isLong: boolean, entryPrice: number,
-    stopLossLevel: number, defaultRiskLevels?: number[]): number => {
+    stopLossLevel: number, defaultRiskLevels?: string[]): number => {
     let currentVwap = getCurrentVwap(symbol);
     let manualRiskLevel = getManualRiskLevel(symbol);
     let levels = [currentVwap];
-    if (defaultRiskLevels) {
-        levels.push(...defaultRiskLevels);
+    let translated = getDefaultRiskLevels(symbol, defaultRiskLevels);
+    if (translated.length > 0) {
+        levels.push(...translated);
     }
 
     if (isLong) {
@@ -2198,4 +2199,26 @@ export const getCandlesSinceOpenForTimeframe = (symbol: string, timeframe: numbe
 
 export const getFirstNewLowsHigherTimeframeEntryMethods = (): string[] => {
     return [CommonEntryMethods.FirstNewLowM5, CommonEntryMethods.FirstNewLowM15, CommonEntryMethods.FirstNewLowM30];
+}
+
+export const translateLevels = (symbol: string, levels: string[]) => {
+    let result: number[] = [];
+    let symbolData = getSymbolData(symbol);
+    for (let i = 0; i < levels.length; i++) {
+        let level = levels[i];
+        if (level == "pm high") {
+            result.push(symbolData.premktHigh);
+        } else {
+            result.push(Number(level));
+        }
+    }
+    return result;
+}
+
+/** Get default risk levels as number[]; uses translateLevels so string keys like "pm high" are resolved. */
+export const getDefaultRiskLevels = (symbol: string, defaultRiskLevels: string[] | undefined): number[] => {
+    if (!defaultRiskLevels || defaultRiskLevels.length === 0) {
+        return [];
+    }
+    return translateLevels(symbol, defaultRiskLevels);
 }

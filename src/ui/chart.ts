@@ -824,10 +824,7 @@ export const drawRiskLevels = (symbol: string) => {
 const drawRiskLevelForShort = (symbol: string, widget: Models.ChartWidget) => {
     let topPlan = TradingPlans.getTradingPlans(symbol);
     let shortPlan = topPlan.short;
-    let defaultRiskLevels: number[] = [];
-    if (shortPlan.gapAndCrapPlan) {
-        defaultRiskLevels = shortPlan.gapAndCrapPlan.defaultRiskLevels;
-    }
+    let defaultRiskLevels = shortPlan.gapAndCrapPlan?.defaultRiskLevels;
     let entryPrice = Models.getCurrentPrice(symbol);
     let symbolData = Models.getSymbolData(symbol);
     let stopOutPrice = symbolData.highOfDay;
@@ -847,10 +844,7 @@ const drawRiskLevelForShort = (symbol: string, widget: Models.ChartWidget) => {
 const drawRiskLevelForLong = (symbol: string, widget: Models.ChartWidget) => {
     let topPlan = TradingPlans.getTradingPlans(symbol);
     let longPlan = topPlan.long;
-    let defaultRiskLevels: number[] = [];
-    if (longPlan.gapAndGoPlan) {
-        defaultRiskLevels = longPlan.gapAndGoPlan.defaultRiskLevels;
-    }
+    let defaultRiskLevels = longPlan.gapAndGoPlan?.defaultRiskLevels;
     let entryPrice = Models.getCurrentPrice(symbol);
     let symbolData = Models.getSymbolData(symbol);
     let stopOutPrice = symbolData.lowOfDay;
