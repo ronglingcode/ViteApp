@@ -136,7 +136,6 @@ export interface SingleDirectionPlans {
 
     levelBreakout?: LevelBreakoutPlan,
 
-    deferredBreakoutPlan?: DeferredBreakoutPlan,
     redtoGreenPlan?: RedToGreenPlan,
     firstBreakoutPlan?: FirstBreakoutPlan,
     firstNewHighPlan?: FirstNewHighPlan,
@@ -170,7 +169,6 @@ export enum PlanType {
     RedToGreen = 'RedToGreen',
     FirstNewHigh = 'FirstNewHigh',
     LevelBreakout = 'LevelBreakout',
-    DeferredBreakout = 'DeferredBreakout',
     VwapBounceFail = 'VwapBounceFail',
     VwapCrossSuccess = 'VwapCrossSuccess',
 };
@@ -275,7 +273,6 @@ export interface FirstBreakoutPlan extends BasePlan {
 export interface FirstNewHighPlan extends BasePlan {
     enableAutoTrigger: boolean,
 }
-export interface DeferredBreakoutPlan extends BasePlan { }
 export interface ProfitTargets {
     targets: number[],
     /**
