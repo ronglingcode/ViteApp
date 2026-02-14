@@ -134,7 +134,6 @@ export interface SingleDirectionPlans {
     gapDownAndGoUpPlan?: GapDownAndGoUpPlan,
     /* used strategies end */
 
-    profitTakingFade60Plan?: ProfitTakingFade60Plan,
     openDriveContinuation60Plan?: OpenDriveContinuation60Plan,
     retracement?: RetracementPlan,
 
@@ -169,14 +168,12 @@ export interface keyLevels {
 };
 export enum PlanType {
     LevelMomentum = 'LevelMomentum',
-    ProfitTakingFade60 = 'ProfitTakingFade60',
     OpenDriveContinuation60 = 'OpenDriveContinuation60',
     OpenChase = 'OpenChase',
     Retracement = 'Retracement',
     NewsBreakout = 'NewsBreakout',
     RedToGreen = 'RedToGreen',
     FirstNewHigh = 'FirstNewHigh',
-    BreakoutAlgo = 'BreakoutAlgo',
     LevelBreakout = 'LevelBreakout',
     DeferredBreakout = 'DeferredBreakout',
     VwapBounceFail = 'VwapBounceFail',
@@ -210,10 +207,6 @@ export interface LevelMomentumPlan extends BasePlan {
     enableAutoTrigger: boolean,
 }
 export interface PremarketPlan extends BasePlan { }
-export interface ProfitTakingFade60Plan extends BasePlan {
-    enableAutoTrigger: boolean,
-    onlyIfOpenBelow: number,
-}
 export interface GapAndGoPlan extends BasePlan {
     /** the min support on daily chart, below it, we cannot long */
     support: LevelArea,

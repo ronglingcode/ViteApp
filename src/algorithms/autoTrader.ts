@@ -308,20 +308,7 @@ export const updateUIBasedOnOpenZone = () => {
     });
 }
 export const autoTriggerRedToGreen60 = () => {
-    let watchlist = Models.getWatchlist();
-    watchlist.forEach(item => {
-        let symbol = item.symbol;
-        let plan = TradingPlans.getTradingPlans(symbol);
-        let longPlan = plan.long.profitTakingFade60Plan;
-        let shortPlan = plan.short.profitTakingFade60Plan;
-
-        if (longPlan && longPlan.enableAutoTrigger) {
-            AutoRedToGreen60.startAlgo(symbol, true, longPlan, TradingPlansModels.PlanType.ProfitTakingFade60);
-        }
-        if (shortPlan && shortPlan.enableAutoTrigger) {
-            AutoRedToGreen60.startAlgo(symbol, false, shortPlan, TradingPlansModels.PlanType.ProfitTakingFade60);
-        }
-    });
+    // ProfitTakingFade60 removed; other 60s plans (e.g. OpenDriveContinuation60) handled elsewhere if needed
 }
 export const onMarketOpen = (symbol: string) => {
     // handle when market opens

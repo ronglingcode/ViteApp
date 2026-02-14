@@ -64,8 +64,7 @@ export const checkPendingCondition = (symbol: string) => {
     if (!s || !s.hasPendingCondition || s.pendingConditionPassed) {
         return;
     }
-    if (s.planType == TradingPlansModels.PlanType.OpenDriveContinuation60 ||
-        s.planType == TradingPlansModels.PlanType.ProfitTakingFade60) {
+    if (s.planType == TradingPlansModels.PlanType.OpenDriveContinuation60) {
         let hasReversal = EntryRulesChecker.conditionallyHasReversalBarSinceOpen(symbol, s.isLong, true, true);
         if (hasReversal) {
             s.pendingConditionPassed = true;
@@ -103,42 +102,8 @@ export const loop = (symbol: string, isLong: boolean, isFirstLoop: boolean,
     // wait for conditions to meet to submit orders
     if (planType == TradingPlansModels.PlanType.OpenDriveContinuation60) {
         runAsOpeningDriveContinuation(symbol, isLong, isFirstLoop, plan as TradingPlansModels.OpenDriveContinuation60Plan, planType, logTags);
-    } else if (planType == TradingPlansModels.PlanType.ProfitTakingFade60) {
-        runAsProfitTakingFade(symbol, isLong, isFirstLoop, plan as TradingPlansModels.ProfitTakingFade60Plan, planType, logTags);
     }
 }
-const runAsProfitTakingFade = (symbol: string, isLong: boolean, isFirstLoop: boolean,
-    plan: TradingPlansModels.ProfitTakingFade60Plan, planType: TradingPlansModels.PlanType, logTags: Models.LogTags) => {
-    let checkedPassed = checkLiquidityAndDailyRange(symbol, isLong, isFirstLoop, plan, planType, logTags);
-    if (!checkedPassed) {
-        return;
-    }
-    let hasReversal = EntryRulesChecker.conditionallyHasReversalBarSinceOpen(symbol, isLong, true, true);
-    let s = algoStateBySymbol.get(symbol);
-    if (!s) {
-        logError(isFirstLoop, `no algo state, existing`, logTags);
-        return;
-    }
-    if (!isLong && plan.onlyIfOpenBelow > 0) {
-        let openPrice = Models.getOpenPrice(symbol);
-        if (openPrice && openPrice >= plan.onlyIfOpenBelow) {
-            logError(isFirstLoop, `open price ${openPrice} is not below ${plan.onlyIfOpenBelow} `, logTags);
-            return;
-        }
-    }
-    if (!hasReversal && !s.pendingConditionPassed) {
-        logError(isFirstLoop, `not reversal, recheck after 0.4 seconds`, logTags);
-        if (!s.hasPendingCondition) {
-            Firestore.logInfo(`set pending condition for ${symbol}`, logTags);
-            s.hasPendingCondition = true;
-        }
-        prepareNextLoop(0.4, symbol, isLong, plan, planType, logTags);
-        return;
-    }
-    // TODO: check price is below vwap
-    runPlan(symbol, isLong, plan, planType, logTags);
-}
-
 const runAsOpeningDriveContinuation = (symbol: string, isLong: boolean, isFirstLoop: boolean,
     plan: TradingPlansModels.OpenDriveContinuation60Plan, planType: TradingPlansModels.PlanType, logTags: Models.LogTags) => {
     let checkedPassed = checkLiquidityAndDailyRange(symbol, isLong, isFirstLoop, plan, planType, logTags);

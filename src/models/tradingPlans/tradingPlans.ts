@@ -318,9 +318,6 @@ export const flattenPlans = (plan: TradingPlansModels.SingleDirectionPlans) => {
     if (plan.openDriveContinuation60Plan) {
         results.push(plan.openDriveContinuation60Plan);
     }
-    if (plan.profitTakingFade60Plan) {
-        results.push(plan.profitTakingFade60Plan);
-    }
     if (plan.firstBreakoutPlan) {
         results.push(plan.firstBreakoutPlan);
     }
@@ -362,8 +359,7 @@ export const noZero = (numbers: number[]) => {
 }
 
 export const hasFirst60PlanForOneSide = (plan: TradingPlansModels.SingleDirectionPlans) => {
-    return plan.profitTakingFade60Plan ||
-        plan.openDriveContinuation60Plan;
+    return !!plan.openDriveContinuation60Plan;
 }
 
 export const isInRange = (price: number, vwap: number, high: string, low: string) => {
