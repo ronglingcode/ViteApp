@@ -119,34 +119,6 @@ export const marketEntryWithoutRules = (symbol: string, isLong: boolean,
     TradingState.onPlaceMarketTrade(symbol, isLong, estimatedEntryPrice, stopOutPrice, riskLevel, submitEntryResult, allowedSizeMutiplier, plan);
 };
 
-export const runRedToGreen60Plan = (symbol: string, isLong: boolean,
-    plan: TradingPlansModels.BasePlan, planType: TradingPlansModels.PlanType,
-    logTags: Models.LogTags) => {
-    let { entryPrice, stopOutPrice, riskLevelPrice } = Models.getHighLowBreakoutEntryStopPrice(symbol, isLong);
-    let widget = Models.getChartWidget(symbol);
-    if (widget) {
-        if (widget.entryPriceLine) {
-            let newEntryPrice = widget.entryPriceLine.options().price;
-            if ((isLong && newEntryPrice > entryPrice) ||
-                (!isLong && newEntryPrice < entryPrice)) {
-                entryPrice = newEntryPrice;
-            } else {
-                Firestore.logError(`do not allow earlier custom entry price before opponent stops out`, logTags);
-            }
-        }
-        if (widget.stopLossPriceLine) {
-            Firestore.logError(`do not allow custom stop loss for red to green`, logTags);
-        }
-    }
-
-    Strategies.overrideTradingPlans(plan, planType);
-    let multipler = EntryRulesChecker.checkGlobalEntryRules(symbol, isLong, plan, logTags, entryPrice, stopOutPrice);
-    if (multipler <= 0) {
-        return 0;
-    }
-    breakoutEntryWithoutRules(symbol, isLong, entryPrice, stopOutPrice, riskLevelPrice, logTags, multipler, plan, "", "");
-    return multipler;
-};
 export const clickOpenChasePlan = (symbol: string, shiftKey: boolean) => {
     let tradebooksMap = Models.getTradebooks(symbol);
     let openFlushTradebook = tradebooksMap.get(OpenFlush.openFlushShort);
