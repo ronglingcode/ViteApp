@@ -272,43 +272,6 @@ export const enterMarketOrderForFirstNewHigh = (
     };
 }
 
-
-export const runReversalPlan = (symbol: string, isLong: boolean, plan: TradingPlansModels.ReversalPlan,
-    useMarketOrder: boolean) => {
-    let logTags = Models.generateLogTags(symbol, "reversal");
-    let keyLevel = plan.keyLevel;
-    let symbolData = Models.getSymbolData(symbol);
-    let stopOutPrice = symbolData.lowOfDay;
-    if (isLong) {
-        if (symbolData.lowOfDay > keyLevel) {
-            Firestore.logError(`not touch key level yet: ${keyLevel}`, logTags);
-            return;
-        }
-    } else {
-        if (symbolData.highOfDay < keyLevel) {
-            Firestore.logError(`not touch key level yet: ${keyLevel}`, logTags);
-            return;
-        }
-        stopOutPrice = symbolData.highOfDay;
-    }
-    let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
-    if ((isLong && entryPrice < keyLevel) ||
-        (!isLong && entryPrice > keyLevel)) {
-        Firestore.logError(`entry price against key level ${entryPrice} ${keyLevel}`, logTags);
-        return;
-    }
-    plan.planConfigs.setupQuality = TradingPlansModels.SetupQuality.Scalp;
-    let size = EntryRulesChecker.checkGlobalEntryRules(symbol, isLong, plan, logTags, entryPrice, stopOutPrice);
-    if (size <= 0) {
-        return;
-    }
-    if (useMarketOrder) {
-        marketEntryWithoutRules(symbol, isLong, stopOutPrice, stopOutPrice, logTags, size, plan, "");
-    } else {
-        breakoutEntryWithoutRules(symbol, isLong, entryPrice, stopOutPrice, stopOutPrice, logTags, size, plan, "", "");
-    }
-}
-
 export const runBreakoutPlan = (symbol: string, isLong: boolean, marketOrder: boolean, plan: TradingPlansModels.LevelBreakoutPlan) => {
     let logTags = Models.generateLogTags(symbol, `${symbol}_breakout-plan`);
     Firestore.logInfo(logTags.logSessionName, logTags);
