@@ -300,21 +300,6 @@ export const checkFirstNewHighPlanEntryRules = (symbol: string, isLong: boolean,
     return allowedSizeMutiplier;
 };
 
-export const checkLevelBreakoutPlanEntryRules = (symbol: string, isLong: boolean, entryPrice: number, stopOutPrice: number,
-    plan: TradingPlansModels.LevelBreakoutPlan, logTags: Models.LogTags) => {
-    let allowedSizeMutiplier = checkGlobalEntryRules(symbol, isLong, plan, logTags, entryPrice, stopOutPrice);
-    if (allowedSizeMutiplier == 0) {
-        return 0;
-    }
-
-    let { atr, secondsSinceMarketOpen } = getCommonInfo(symbol, isLong);
-    if (secondsSinceMarketOpen < 60) {
-        Firestore.logError(`must wait for 60 seconds`, logTags);
-        return 0;
-    }
-
-    return RiskManager.getRiskMultiplerForNextEntry(symbol, isLong, plan, logTags);
-}
 
 
 export const checkPartialEntry = (symbol: string, isLong: boolean, quantity: number,
