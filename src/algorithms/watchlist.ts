@@ -72,13 +72,7 @@ export const createWatchlist = async () => {
             watchlist = [];
             break;
         }
-        let momentumStartForLong = TradingPlans.getMomentumStartLevel(symbol, true);
-        let momentumStartForShort = TradingPlans.getMomentumStartLevel(symbol, false);
-        if (momentumStartForLong == 0 || momentumStartForShort == 0) {
-            Firestore.logError(`${symbol} must define momentum start range to avoid trading in a choppy range`);
-            watchlist = [];
-            break;
-        }
+
 
         if (!finishedStockAnalysis(symbol, tradingPlans)) {
             Firestore.logError(`must finish all analysis for ${symbol}`);

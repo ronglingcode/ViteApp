@@ -149,12 +149,7 @@ export const checkGlobalEntryRules = (symbol: string, isLong: boolean,
         return 0;
     }
 
-    let { tradingPlans, atr, secondsSinceMarketOpen, premarketVwapTrend, currentVwap, momentumStartPrice } = getCommonInfo(symbol, isLong);
-
-    if ((isLong && entryPrice < momentumStartPrice) || (!isLong && entryPrice > momentumStartPrice)) {
-        Firestore.logError(`checkRule: entry price ${entryPrice} is against momentum start price ${momentumStartPrice}`, logTags);
-        return 0;
-    }
+    let { tradingPlans, atr, secondsSinceMarketOpen, premarketVwapTrend, currentVwap } = getCommonInfo(symbol, isLong);
 
     let risk = Math.abs(entryPrice - stopOutPrice);
     let maxRisk = atr.maxRisk;
@@ -395,10 +390,8 @@ const checkParitalEntryForExistingPosition = (symbol: string, isLong: boolean,
 
 const getCommonInfo = (symbol: string, isLong: boolean) => {
     let plan = TradingPlans.getTradingPlans(symbol);
-    let momentumStartPrice = TradingPlans.getMomentumStartLevel(symbol, isLong);
     return {
         tradingPlans: plan,
-        momentumStartPrice: momentumStartPrice,
         atr: plan.atr,
         todayRange: Models.getTodayRange(plan.atr),
         averageRange: plan.atr.average,

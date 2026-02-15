@@ -157,8 +157,6 @@ export interface GapAndCrapAccelerationPlan extends BasePlan {
 }
 export interface keyLevels {
     otherLevels?: number[];
-    momentumStartForLong: number,
-    momentumStartForShort: number,
 };
 export enum PlanType {
     LevelMomentum = 'LevelMomentum',

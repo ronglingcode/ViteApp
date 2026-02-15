@@ -14,19 +14,6 @@ export const getTradingPlansForSingleDirection = (symbol: string, isLong: boolea
     else
         return plans.short;
 }
-export const getMomentumStartLevel = (symbol: string, isLong: boolean) => {
-    let plan = getTradingPlans(symbol);
-    let usePremarketLevel = plan.analysis.usePremarketKeyLevel;
-    let symbolData = Models.getSymbolData(plan.symbol);
-    if (symbolData.premktHigh > 0 && symbolData.premktLow > 0) {
-        if (usePremarketLevel == 1) {
-            return symbolData.premktHigh;
-        } else if (usePremarketLevel == -1) {
-            return symbolData.premktLow;
-        }
-    }
-    return isLong ? plan.keyLevels.momentumStartForLong : plan.keyLevels.momentumStartForShort;
-}
 
 export const hasMomentumLevels = (plan: TradingPlansModels.TradingPlans) => {
     return hasSingleMomentumLevel(plan) || hasDualMomentumLevels(plan);
@@ -159,12 +146,7 @@ export const validateTradingPlans = (symbol: string, tradingPlans: TradingPlansM
         return "miss max risk in ATR";
     }*/
     let keyLevels = tradingPlans.keyLevels;
-    if (keyLevels.momentumStartForLong <= 0) {
-        return "missing momentumStartForLong";
-    }
-    if (keyLevels.momentumStartForShort <= 0) {
-        return "missing momentumStartForShort";
-    }
+
 
     let longPlans = flattenPlans(tradingPlans.long);
     for (let i = 0; i < longPlans.length; i++) {

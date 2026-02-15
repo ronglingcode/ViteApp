@@ -1536,9 +1536,6 @@ export const drawKeyAreas = (widget: Models.ChartWidget, isLong: boolean, areas:
     });
 };
 export const drawMomentumLevels = (widget: Models.ChartWidget) => {
-    let momentumStartForLong = TradingPlans.getMomentumStartLevel(widget.symbol, true);
-    let momentumStartForShort = TradingPlans.getMomentumStartLevel(widget.symbol, false);
-    let sameLevel = momentumStartForLong == momentumStartForShort;
     let allCharts = Models.getChartsInAllTimeframes(widget.symbol);
     allCharts.forEach(chart => {
         for (let i = 0; chart.momentumLevels.length > i; i++) {
@@ -1546,32 +1543,7 @@ export const drawMomentumLevels = (widget: Models.ChartWidget) => {
             chart.candleSeries.removePriceLine(l);
         }
         chart.momentumLevels = [];
-        if (momentumStartForShort != 0) {
-            let text = "drowntrend start";
-            if (sameLevel) {
-                let topPlan = TradingPlans.getTradingPlans(widget.symbol);
-                let hasReversalForLong = topPlan.long.reversalPlan && topPlan.long.reversalPlan.keyLevel == momentumStartForShort;
-                let hasReversalForShort = topPlan.short.reversalPlan && topPlan.short.reversalPlan.keyLevel == momentumStartForShort;
-                if (hasReversalForLong || hasReversalForShort) {
-                    text = "b/o or reversal";
-                } else {
-                    text = "inflection";
-                }
-            }
-            let l =
-                createPriceLine(
-                    chart.candleSeries, momentumStartForShort,
-                    text, "red", 2, false, "solid",
-                );
-            chart.momentumLevels.push(l);
-        }
-        if (momentumStartForLong != 0 && !sameLevel) {
-            let l = createPriceLine(
-                chart.candleSeries, momentumStartForLong,
-                "uptrend start", "green", 2, false, "solid",
-            );
-            chart.momentumLevels.push(l);
-        }
+
         let topPlan = TradingPlans.getTradingPlans(widget.symbol);
         if (topPlan.long.firstTargetToAdd > 0) {
             let l = createPriceLine(
