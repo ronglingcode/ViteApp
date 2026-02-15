@@ -128,36 +128,3 @@ export const clickOpenChasePlan = (symbol: string, shiftKey: boolean) => {
         Firestore.logError(`no open flush tradebook for ${symbol}`);
     }
 }
-
-
-export const enterMarketOrderForFirstNewHigh = (
-    symbol: string, isLong: boolean, hasPreviousEntries: boolean,
-    stopOutPrice: number, plan: TradingPlansModels.FirstNewHighPlan,
-    logTags: Models.LogTags
-) => {
-    if (hasPreviousEntries) {
-        let entryOrders = Models.getBreakoutEntryOrders(symbol, isLong);
-        let ids: string[] = [];
-        entryOrders.forEach((eo: Models.EntryOrderModel) => {
-            ids.push(eo.orderID);
-        });
-        Broker.cancelOrders(ids);
-    }
-    let entryPrice = Models.getCurrentPrice(symbol);
-    let multipler = plan.planConfigs.size;
-    if (!hasPreviousEntries) {
-        multipler = EntryRulesChecker.checkFirstNewHighPlanEntryRules(symbol, isLong, entryPrice, stopOutPrice, plan, logTags);
-        if (multipler <= 0) {
-            Firestore.logError(`multipler is zero during rules checking`, logTags);
-            return {
-                orderSubmitted: false,
-                needContinueNextCycle: false,
-            };
-        }
-    }
-    marketEntryWithoutRules(symbol, isLong, stopOutPrice, stopOutPrice, logTags, multipler, plan, "");
-    return {
-        orderSubmitted: true,
-        needContinueNextCycle: true,
-    };
-}
