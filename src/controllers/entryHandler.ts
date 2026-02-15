@@ -128,30 +128,6 @@ export const clickOpenChasePlan = (symbol: string, shiftKey: boolean) => {
         Firestore.logError(`no open flush tradebook for ${symbol}`);
     }
 }
-export const runFirstNewHighPlanHigherTimeFrame = (symbol: string, isLong: boolean,
-    timeframe: number,
-    plan: TradingPlansModels.FirstNewHighPlan) => {
-    let result = Patterns.checkFirstNewHighPattern(symbol, isLong, timeframe);
-    let logTags = Models.generateLogTags(symbol, `1st_new_high_${timeframe}`);
-    if (result.status != 'ok') {
-        Firestore.logError(result.status);
-        return;
-    }
-    let entryPrice = result.entryPrice;
-    let symbolData = Models.getSymbolData(symbol);
-    let stopOutPrice = isLong ? symbolData.lowOfDay : symbolData.highOfDay;
-    let riskLevelPrice = Models.getRiskLevelPrice(symbol, isLong, stopOutPrice, entryPrice);
-    let multipler = EntryRulesChecker.checkFirstNewHighPlanEntryRules(symbol, isLong, entryPrice, stopOutPrice, plan, logTags);
-    if (multipler <= 0) {
-        Firestore.logError(`multipler is zero during rules checking`, logTags);
-        return;
-    }
-    let newPlan = {
-        ...plan,
-        timeframe: timeframe
-    }
-    breakoutEntryWithoutRules(symbol, isLong, entryPrice, stopOutPrice, riskLevelPrice, logTags, multipler, newPlan, "", "");
-}
 
 
 export const enterMarketOrderForFirstNewHigh = (
