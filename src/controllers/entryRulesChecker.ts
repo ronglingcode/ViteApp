@@ -142,24 +142,6 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
     return finalSize;
 }
 
-export const isAgainstFirstFiveMinute = (symbol: string, isLong: boolean,
-    entryPrice: number, secondsSinceMarketOpen: number) => {
-    if (300 < secondsSinceMarketOpen && secondsSinceMarketOpen < 600) {
-        let candles = Models.getUndefinedCandlesSinceOpen(symbol);
-        let isAgainst = false;
-        if (isLong) {
-            isAgainst = Patterns.isLowerHighs(candles, 5);
-            return isAgainst && entryPrice < candles[0].high;
-        } else {
-            isAgainst = Patterns.isHigherLows(candles, 5);
-            return isAgainst && entryPrice > candles[0].low;
-        }
-    } else {
-        return false;
-    }
-}
-
-
 export const checkPartialEntry = (symbol: string, isLong: boolean, quantity: number,
     entryPrice: number, stopLossPrice: number, logTags: Models.LogTags) => {
     let { todayRange } = getCommonInfo(symbol, isLong);
