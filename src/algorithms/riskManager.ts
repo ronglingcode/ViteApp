@@ -7,8 +7,8 @@ import * as Helper from '../utils/helper';
 export const getMaxDailyLossLimit = () => {
     let initialBalance = TradingState.getInitialBalance();
     if (initialBalance > 120000) {
-        // each trade risk 0.0523*0.21 = 1.1% of the entire cash account
-        return initialBalance * 0.0523;
+        // each trade risk 0.0575*0.21 = 1.2% of the entire cash account
+        return initialBalance * 0.0575;
     } else {
         return 5000; // each trade use 21%
     }
