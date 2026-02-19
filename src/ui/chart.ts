@@ -812,11 +812,13 @@ export const drawRiskLevels = (symbol: string) => {
     if (!widget) {
         return;
     }
+    let topPlan = TradingPlans.getTradingPlans(symbol);
+
     let netq = Models.getPositionNetQuantity(symbol);
-    if (netq >= 0) {
+    if (netq >= 0 && topPlan.short.enabled) {
         drawRiskLevelForShort(symbol, widget);
     }
-    if (netq <= 0) {
+    if (netq <= 0 && topPlan.long.enabled) {
         drawRiskLevelForLong(symbol, widget);
     }
 }
