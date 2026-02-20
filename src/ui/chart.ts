@@ -826,7 +826,14 @@ export const drawRiskLevels = (symbol: string) => {
 const drawRiskLevelForShort = (symbol: string, widget: Models.ChartWidget) => {
     let topPlan = TradingPlans.getTradingPlans(symbol);
     let shortPlan = topPlan.short;
-    let defaultRiskLevels = shortPlan.gapAndCrapPlan?.defaultRiskLevels;
+    let defaultRiskLevels: string[] = [];
+    if (shortPlan.gapAndCrapPlan) {
+        defaultRiskLevels = shortPlan.gapAndCrapPlan.defaultRiskLevels;
+    } else if (shortPlan.gapDownAndGoDownPlan) {
+        defaultRiskLevels = shortPlan.gapDownAndGoDownPlan.defaultRiskLevels;
+    } else if (shortPlan.reversalPlan && shortPlan.reversalPlan.defaultRiskLevels) {
+        defaultRiskLevels = shortPlan.reversalPlan.defaultRiskLevels;
+    }
     let entryPrice = Models.getCurrentPrice(symbol);
     let symbolData = Models.getSymbolData(symbol);
     let stopOutPrice = symbolData.highOfDay;
@@ -846,7 +853,14 @@ const drawRiskLevelForShort = (symbol: string, widget: Models.ChartWidget) => {
 const drawRiskLevelForLong = (symbol: string, widget: Models.ChartWidget) => {
     let topPlan = TradingPlans.getTradingPlans(symbol);
     let longPlan = topPlan.long;
-    let defaultRiskLevels = longPlan.gapAndGoPlan?.defaultRiskLevels;
+    let defaultRiskLevels: string[] = [];
+    if (longPlan.gapAndGoPlan) {
+        defaultRiskLevels = longPlan.gapAndGoPlan.defaultRiskLevels;
+    } else if (longPlan.gapDownAndGoUpPlan) {
+        defaultRiskLevels = longPlan.gapDownAndGoUpPlan.defaultRiskLevels;
+    } else if (longPlan.reversalPlan && longPlan.reversalPlan.defaultRiskLevels) {
+        defaultRiskLevels = longPlan.reversalPlan.defaultRiskLevels;
+    }
     let entryPrice = Models.getCurrentPrice(symbol);
     let symbolData = Models.getSymbolData(symbol);
     let stopOutPrice = symbolData.lowOfDay;
