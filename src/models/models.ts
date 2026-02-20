@@ -1274,21 +1274,17 @@ export const chooseRiskLevel = (symbol: string, isLong: boolean, entryPrice: num
     }
 
     if (isLong) {
-        levels.sort((a, b) => b - a); // high to low
-        let result = chooseRiskLevelForLong(entryPrice, levels, stopLossLevel);
         if (manualRiskLevel && manualRiskLevel < entryPrice && manualRiskLevel < stopLossLevel) {
-            return Math.max(result, manualRiskLevel);
-        } else {
-            return result;
+            return manualRiskLevel;
         }
+        levels.sort((a, b) => b - a); // high to low
+        return chooseRiskLevelForLong(entryPrice, levels, stopLossLevel);
     } else {
-        levels.sort((a, b) => a - b); // low to high
-        let result = chooseRiskLevelForShort(entryPrice, levels, stopLossLevel);
         if (manualRiskLevel && manualRiskLevel > entryPrice && manualRiskLevel > stopLossLevel) {
-            return Math.min(result, manualRiskLevel);
-        } else {
-            return result;
+            return manualRiskLevel;
         }
+        levels.sort((a, b) => a - b); // low to high
+        return chooseRiskLevelForShort(entryPrice, levels, stopLossLevel);
     }
 };
 
