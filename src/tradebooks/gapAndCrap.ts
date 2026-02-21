@@ -12,6 +12,25 @@ export class GapAndCrap extends Tradebook {
     public static readonly gapAndCrapShort: string = 'GapAndCrapShort';
     private basePlan: TradingPlansModels.GapAndCrapPlan;
 
+    /**
+     * Returns true if at least one reason is set on the gap-and-crap plan.
+     * Otherwise logs error and returns false. Use when validating a plan has a reason set.
+     */
+    public static hasAtLeastOneReasonSet(plan: TradingPlansModels.GapAndCrapPlan, symbol: string): boolean {
+        const hasOne =
+            !!plan.heavySupplyZoneDays ||
+            !!plan.recentRallyWithoutPullback ||
+            !!plan.extendedGapUpInAtr ||
+            !!plan.earnings ||
+            !!plan.topEdgeOfCurrentRange ||
+            !!plan.nearBelowPreviousEventKeyLevel;
+        if (!hasOne) {
+            Firestore.logError(`${symbol} missing one reason set for gap and crap plan`);
+            return false;
+        }
+        return true;
+    }
+
     public getID(): string {
         return GapAndCrap.gapAndCrapShort;
     }

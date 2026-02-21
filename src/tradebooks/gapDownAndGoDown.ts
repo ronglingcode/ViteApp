@@ -11,6 +11,23 @@ export class GapDownAndGoDown extends Tradebook {
     public static readonly gapDownAndGoDownShort: string = 'GapDownAndGoDownShort';
     private basePlan: TradingPlansModels.GapDownAndGoDownPlan;
 
+    /**
+     * Returns true if at least one reason is set on the gap-down-and-go-down plan.
+     * Otherwise logs error and returns false.
+     */
+    public static hasAtLeastOneReasonSet(plan: TradingPlansModels.GapDownAndGoDownPlan, symbol: string): boolean {
+        const hasOne =
+            !!plan.nearBelowConsolidationRange ||
+            !!plan.nearBelowConsolidationRangeTop ||
+            !!plan.buyersTrappedBelowThisLevel ||
+            !!plan.previousInsideDay;
+        if (!hasOne) {
+            Firestore.logError(`${symbol} missing one reason set for gap down and go down plan`);
+            return false;
+        }
+        return true;
+    }
+
     public getID(): string {
         return GapDownAndGoDown.gapDownAndGoDownShort;
     }

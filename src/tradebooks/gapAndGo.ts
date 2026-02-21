@@ -12,6 +12,25 @@ export class GapAndGo extends Tradebook {
     public static readonly gapAndGoLong: string = 'GapAndGoLong';
     private basePlan: TradingPlansModels.GapAndGoPlan;
 
+    /**
+     * Returns true if at least one reason is set on the gap-and-go plan.
+     * Otherwise logs error and returns false.
+     */
+    public static hasAtLeastOneReasonSet(plan: TradingPlansModels.GapAndGoPlan, symbol: string): boolean {
+        const hasOne =
+            !!plan.recentPullback ||
+            !!plan.nearAboveConsolidationRange ||
+            !!plan.nearBelowConsolidationRangeTop ||
+            !!plan.nearPreviousKeyEventLevel ||
+            !!plan.previousInsideDay ||
+            !!plan.allTimeHigh;
+        if (!hasOne) {
+            Firestore.logError(`${symbol} missing one reason set for gap and go plan`);
+            return false;
+        }
+        return true;
+    }
+
     public getID(): string {
         return GapAndGo.gapAndGoLong;
     }

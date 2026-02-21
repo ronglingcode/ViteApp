@@ -9,6 +9,10 @@ import * as Rules from './rules';
 import { disableNetwork } from 'firebase/firestore';
 import * as googleDocsApi from '../api/googleDocs/googleDocsApi';
 import { populateBestIdeas } from '../controllers/traderFocus';
+import { GapAndCrap } from '../tradebooks/gapAndCrap';
+import { GapAndGo } from '../tradebooks/gapAndGo';
+import { GapDownAndGoDown } from '../tradebooks/gapDownAndGoDown';
+import { GapDownAndGoUp } from '../tradebooks/gapDownAndGoUp';
 
 declare let window: Models.MyWindow;
 
@@ -240,87 +244,17 @@ const verifyTradingPlansForSingleDirection = (symbol: string, plan: TradingPlans
             return false;
         }
     }
-    if (plan.gapAndCrapPlan) {
-        let hasOneReasonSet = false;
-        if (plan.gapAndCrapPlan.heavySupplyZoneDays) {
-            hasOneReasonSet = true;
-        }
-        if (plan.gapAndCrapPlan.recentRallyWithoutPullback) {
-            hasOneReasonSet = true;
-        }
-        if (plan.gapAndCrapPlan.extendedGapUpInAtr) {
-            hasOneReasonSet = true;
-        }
-        if (plan.gapAndCrapPlan.earnings) {
-            hasOneReasonSet = true;
-        }
-        if (plan.gapAndCrapPlan.topEdgeOfCurrentRange) {
-            hasOneReasonSet = true;
-        }
-        if (plan.gapAndCrapPlan.nearBelowPreviousEventKeyLevel) {
-            hasOneReasonSet = true;
-        }
-        if (!hasOneReasonSet) {
-            Firestore.logError(`${symbol} missing one reason set for gap and crap plan`);
-            return false;
-        }
+    if (plan.gapAndCrapPlan && !GapAndCrap.hasAtLeastOneReasonSet(plan.gapAndCrapPlan, symbol)) {
+        return false;
     }
-    if (plan.gapAndGoPlan) {
-        let hasOneReasonSet = false;
-        if (plan.gapAndGoPlan.recentPullback) {
-            hasOneReasonSet = true;
-        }
-        if (plan.gapAndGoPlan.nearAboveConsolidationRange) {
-            hasOneReasonSet = true;
-        }
-        if (plan.gapAndGoPlan.nearBelowConsolidationRangeTop) {
-            hasOneReasonSet = true;
-        }
-        if (plan.gapAndGoPlan.nearPreviousKeyEventLevel) {
-            hasOneReasonSet = true;
-        }
-        if (plan.gapAndGoPlan.previousInsideDay) {
-            hasOneReasonSet = true;
-        }
-        if (plan.gapAndGoPlan.allTimeHigh) {
-            hasOneReasonSet = true;
-        }
-        if (!hasOneReasonSet) {
-            Firestore.logError(`${symbol} missing one reason set for gap and go plan`);
-            return false;
-        }
+    if (plan.gapAndGoPlan && !GapAndGo.hasAtLeastOneReasonSet(plan.gapAndGoPlan, symbol)) {
+        return false;
     }
-    if (plan.gapDownAndGoDownPlan) {
-        let hasOneReasonSet = false;
-        if (plan.gapDownAndGoDownPlan.nearBelowConsolidationRange) {
-            hasOneReasonSet = true;
-        }
-        if (plan.gapDownAndGoDownPlan.nearBelowConsolidationRangeTop) {
-            hasOneReasonSet = true;
-        }
-        if (plan.gapDownAndGoDownPlan.buyersTrappedBelowThisLevel) {
-            hasOneReasonSet = true;
-        }
-        if (plan.gapDownAndGoDownPlan.previousInsideDay) {
-            hasOneReasonSet = true;
-        }
-        if (!hasOneReasonSet) {
-            Firestore.logError(`${symbol} missing one reason set for gap down and go down plan`);
-            return false;
-        }
+    if (plan.gapDownAndGoDownPlan && !GapDownAndGoDown.hasAtLeastOneReasonSet(plan.gapDownAndGoDownPlan, symbol)) {
+        return false;
     }
-    if (plan.gapDownAndGoUpPlan) {
-        let hasOneReasonSet = false;
-        if (plan.gapDownAndGoUpPlan.nearAboveSupport) {
-            hasOneReasonSet = true;
-        }
-        if (plan.gapDownAndGoUpPlan.nearAboveKeyEventLevel) {
-            hasOneReasonSet = true;
-        }
-        if (!hasOneReasonSet) {
-            Firestore.logError(`${symbol} missing one reason set for gap down and go up plan`);
-            return false;
-        }
+    if (plan.gapDownAndGoUpPlan && !GapDownAndGoUp.hasAtLeastOneReasonSet(plan.gapDownAndGoUpPlan, symbol)) {
+        return false;
     }
     return true;
 }
