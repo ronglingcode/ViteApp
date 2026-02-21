@@ -17,6 +17,7 @@ import * as Helper from "../utils/helper";
 import * as Firestore from "../firestore";
 import { GapAndCrap } from "./gapAndCrap";
 import { GapAndGo } from "./gapAndGo";
+import { GapGiveAndGo } from "./gapGiveAndGo";
 import { GapDownAndGoDown } from "./gapDownAndGoDown";
 import { GapDownAndGoUp } from "./gapDownAndGoUp";
 
@@ -94,6 +95,10 @@ export const createAllTradebooks = (symbol: string) => {
     if (plan.long.gapAndGoPlan) {
         let gapAndGo = new GapAndGo(symbol, true, plan.long.gapAndGoPlan);
         tradebooksMap.set(gapAndGo.getID(), gapAndGo);
+    }
+    if (plan.long.gapGiveAndGoPlan) {
+        let gapGiveAndGo = new GapGiveAndGo(symbol, true, plan.long.gapGiveAndGoPlan);
+        tradebooksMap.set(gapGiveAndGo.getID(), gapGiveAndGo);
     }
     if (plan.short.gapDownAndGoDownPlan) {
         let gapDownAndGoDown = new GapDownAndGoDown(symbol, false, plan.short.gapDownAndGoDownPlan);

@@ -130,6 +130,7 @@ export interface SingleDirectionPlans {
     gapAndCrapAccelerationPlan?: GapAndCrapAccelerationPlan,
     gapAndCrapPlan?: GapAndCrapPlan,
     gapAndGoPlan?: GapAndGoPlan,
+    gapGiveAndGoPlan?: GapGiveAndGoPlan,
     gapDownAndGoDownPlan?: GapDownAndGoDownPlan,
     gapDownAndGoUpPlan?: GapDownAndGoUpPlan,
     /* used strategies end */
@@ -196,6 +197,20 @@ export interface LevelMomentumPlan extends BasePlan {
     enableAutoTrigger: boolean,
 }
 export interface PremarketPlan extends BasePlan { }
+export interface GapGiveAndGoPlan extends BasePlan {
+    /** the min support on daily chart, below it, we cannot long */
+    support: LevelArea,
+    nearAboveConsolidationRange?: string,
+    /** number of days of the condition and its edge price */
+    nearBelowConsolidationRangeTop?: string,
+    /** the description of the previous key event */
+    nearPreviousKeyEventLevel?: string,
+    /** breakout price of inside bar  */
+    previousInsideDay?: number,
+    /** price of all time high */
+    allTimeHigh?: number,
+    defaultRiskLevels: string[],
+}
 export interface GapAndGoPlan extends BasePlan {
     /** the min support on daily chart, below it, we cannot long */
     support: LevelArea,

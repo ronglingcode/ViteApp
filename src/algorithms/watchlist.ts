@@ -11,6 +11,7 @@ import * as googleDocsApi from '../api/googleDocs/googleDocsApi';
 import { populateBestIdeas } from '../controllers/traderFocus';
 import { GapAndCrap } from '../tradebooks/gapAndCrap';
 import { GapAndGo } from '../tradebooks/gapAndGo';
+import { GapGiveAndGo } from '../tradebooks/gapGiveAndGo';
 import { GapDownAndGoDown } from '../tradebooks/gapDownAndGoDown';
 import { GapDownAndGoUp } from '../tradebooks/gapDownAndGoUp';
 
@@ -244,16 +245,40 @@ const verifyTradingPlansForSingleDirection = (symbol: string, plan: TradingPlans
             return false;
         }
     }
-    if (plan.gapAndCrapPlan && !GapAndCrap.hasAtLeastOneReasonSet(plan.gapAndCrapPlan, symbol)) {
-        return false;
+    let hasBestTradebook = false;
+    if (plan.gapAndCrapPlan) {
+        if (!GapAndCrap.hasAtLeastOneReasonSet(plan.gapAndCrapPlan, symbol)) {
+            return false;
+        }
+        hasBestTradebook = true;
     }
-    if (plan.gapAndGoPlan && !GapAndGo.hasAtLeastOneReasonSet(plan.gapAndGoPlan, symbol)) {
-        return false;
+    if (plan.gapAndGoPlan) {
+        if (!GapAndGo.hasAtLeastOneReasonSet(plan.gapAndGoPlan, symbol)) {
+            return false;
+        }
+        hasBestTradebook = true;
     }
-    if (plan.gapDownAndGoDownPlan && !GapDownAndGoDown.hasAtLeastOneReasonSet(plan.gapDownAndGoDownPlan, symbol)) {
-        return false;
+    if (plan.gapGiveAndGoPlan) {
+        if (!GapGiveAndGo.hasAtLeastOneReasonSet(plan.gapGiveAndGoPlan, symbol)) {
+            return false;
+        }
+        hasBestTradebook = true;
     }
-    if (plan.gapDownAndGoUpPlan && !GapDownAndGoUp.hasAtLeastOneReasonSet(plan.gapDownAndGoUpPlan, symbol)) {
+
+    if (plan.gapDownAndGoDownPlan) {
+        if (!GapDownAndGoDown.hasAtLeastOneReasonSet(plan.gapDownAndGoDownPlan, symbol)) {
+            return false;
+        }
+        hasBestTradebook = true;
+    }
+    if (plan.gapDownAndGoUpPlan) {
+        if (!GapDownAndGoUp.hasAtLeastOneReasonSet(plan.gapDownAndGoUpPlan, symbol)) {
+            return false;
+        }
+        hasBestTradebook = true;
+    }
+    if (!hasBestTradebook) {
+        Firestore.logError(`${symbol} missing best tradebook`);
         return false;
     }
     return true;
