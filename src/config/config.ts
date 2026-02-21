@@ -49,7 +49,7 @@ export const isEquity = (): boolean => {
     return settings.isEquity;
 };
 let currentDay = new Date();
-if (window.TradingData &&window.TradingData.Settings.currentDayStr) {
+if (window.TradingData && window.TradingData.Settings.currentDayStr) {
     currentDay = new Date(window.TradingData.Settings.currentDayStr); // '2022-11-04 6:30',
 }
 let currentDayStr = `${currentDay.getFullYear()}-${currentDay.getMonth() + 1}-${currentDay.getDate()}`;
@@ -61,5 +61,7 @@ export const Settings = {
     // I can focus on no more than 4 stocks at the same time,
     // see details in https://sunrisetrading.atlassian.net/browse/TPS-161
     'maxStocksCount': 4,
+    /** When true, fetch today's orders via time-window pagination (getAllOrdersByTimeWindows). When false, use single-request getAllOrders. */
+    fetchOrdersByTimeWindows: true,
 };
 console.log(Settings)

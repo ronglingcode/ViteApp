@@ -235,7 +235,9 @@ export const getAccountInfo = async () => {
     let accounts = await response.json();
     let account = accounts[0].securitiesAccount;
     let accountHash = secret.schwab().accountHash;
-    let ordersData = await getAllOrders(accountHash, accessToken);
+    const ordersData = Config.Settings.fetchOrdersByTimeWindows
+        ? await getAllOrdersByTimeWindows(accountHash, accessToken)
+        : await getAllOrders(accountHash, accessToken);
     //console.log(ordersData);
     //console.log(account);
     let entryOrders = OrderFactory.extractEntryOrders(ordersData);
@@ -288,7 +290,129 @@ export const getAllOrders = async (accountId: string, accessToken: string) => {
     return equityOrders;
     */
     return ordersData;
-}
+};
+
+const ORDERS_PAGE_SIZE = 500;
+const toTimeStr = (dateStr: string, hour: number, min: number = 0) =>
+    `${dateStr}T${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}:00.000Z`;
+
+/** Add minutes to an ISO date string, return new ISO string. */
+const addMinutesToIso = (iso: string, minutes: number) =>
+    new Date(new Date(iso).getTime() + minutes * 60 * 1000).toISOString();
+
+const getOrdersInWindow = async (
+    accountId: string, accessToken: string, from: string, to: string
+): Promise<{ orders: any[]; full: boolean }> => {
+    const url = `${getTraderApiHost()}/accounts/${accountId}/orders?fromEnteredTime=${encodeURIComponent(from)}&toEnteredTime=${encodeURIComponent(to)}&maxResults=${ORDERS_PAGE_SIZE}`;
+    const res = await webRequest.asyncGet(url, accessToken);
+    const data = await res.json();
+    const orders: any[] = Array.isArray(data) ? data : (Array.isArray(data?.orders) ? data.orders : []);
+    return { orders, full: orders.length >= ORDERS_PAGE_SIZE };
+};
+
+/**
+ * Fetch all orders for today by splitting the day into time windows. Uses fine buckets
+ * (6 x 5 min) for the first 30 minutes after market open; 1-hour buckets for the rest.
+ * Use this if getAllOrders misses orders. Same signature as getAllOrders.
+ */
+export const getAllOrdersByTimeWindows = async (accountId: string, accessToken: string): Promise<any[]> => {
+    const today = TimeHelper.getTodayString();
+    const tomorrow = TimeHelper.getTomorrowString();
+    const allOrders: any[] = [];
+    const seenIds = new Set<string>();
+
+    const addOrders = (orders: any[]) => {
+        for (const o of orders) {
+            const id = o.orderId ?? o.orderID;
+            if (id != null && !seenIds.has(String(id))) {
+                seenIds.add(String(id));
+                allOrders.push(o);
+            }
+        }
+    };
+
+    // Market open (9:30 AM Eastern) in UTC for today
+    const marketOpenDate = TimeHelper.getMarketOpenTimeInLocal();
+    const marketOpenIso = marketOpenDate.toISOString();
+    const marketOpenMs = marketOpenDate.getTime();
+    const openUtcHour = marketOpenDate.getUTCHours();
+    const openUtcMin = marketOpenDate.getUTCMinutes();
+
+    for (let hour = 0; hour < 24; hour++) {
+        const hourStart = toTimeStr(today, hour);
+        const hourEnd = hour === 23 ? `${tomorrow}T00:00:00.000Z` : toTimeStr(today, hour + 1);
+
+        if (hour === openUtcHour) {
+            // This hour contains market open: split into before-open, 6 x 5-min morning, after-morning
+            if (openUtcMin > 0) {
+                const beforeOpenEnd = toTimeStr(today, openUtcHour, openUtcMin);
+                const { orders, full } = await getOrdersInWindow(accountId, accessToken, hourStart, beforeOpenEnd);
+                addOrders(orders);
+                if (full) {
+                    for (let m = 0; m < openUtcMin; m++) {
+                        const fromM = toTimeStr(today, hour, m);
+                        const toM = toTimeStr(today, hour, m + 1);
+                        const { orders: om } = await getOrdersInWindow(accountId, accessToken, fromM, toM);
+                        addOrders(om);
+                    }
+                }
+            }
+            // First 30 min after market open: 6 x 5-minute buckets
+            for (let slot = 0; slot < 6; slot++) {
+                const fromSlot = addMinutesToIso(marketOpenIso, slot * 5);
+                const toSlot = addMinutesToIso(marketOpenIso, (slot + 1) * 5);
+                const { orders: slotOrders, full: slotFull } = await getOrdersInWindow(accountId, accessToken, fromSlot, toSlot);
+                addOrders(slotOrders);
+                if (!slotFull) continue;
+                for (let m = 0; m < 5; m++) {
+                    const fromM = addMinutesToIso(marketOpenIso, slot * 5 + m);
+                    const toM = addMinutesToIso(marketOpenIso, slot * 5 + m + 1);
+                    const { orders: om } = await getOrdersInWindow(accountId, accessToken, fromM, toM);
+                    addOrders(om);
+                }
+            }
+            // From market open + 30 min to end of this hour (skip if open is at :30 so range would be empty)
+            if (openUtcMin + 30 < 60) {
+                const morningEndIso = addMinutesToIso(marketOpenIso, 30);
+                const { orders: afterOrders, full: afterFull } = await getOrdersInWindow(accountId, accessToken, morningEndIso, hourEnd);
+                addOrders(afterOrders);
+                if (afterFull) {
+                    for (let m = 30; m < 60; m++) {
+                        const fromM = addMinutesToIso(marketOpenIso, m);
+                        const toM = m === 59 ? hourEnd : addMinutesToIso(marketOpenIso, m + 1);
+                        const { orders: om } = await getOrdersInWindow(accountId, accessToken, fromM, toM);
+                        addOrders(om);
+                    }
+                }
+            }
+            continue;
+        }
+
+        const { orders, full } = await getOrdersInWindow(accountId, accessToken, hourStart, hourEnd);
+        addOrders(orders);
+        if (!full) continue;
+        for (let sub = 0; sub < 6; sub++) {
+            const minFrom = hour * 60 + sub * 10;
+            const minTo = minFrom + 10;
+            const fromSub = toTimeStr(today, Math.floor(minFrom / 60), minFrom % 60);
+            const toSub = minTo >= 24 * 60 ? `${tomorrow}T00:00:00.000Z` : toTimeStr(today, Math.floor(minTo / 60), minTo % 60);
+            const { orders: subOrders, full: subFull } = await getOrdersInWindow(accountId, accessToken, fromSub, toSub);
+            addOrders(subOrders);
+            if (!subFull) continue;
+            const startMin = hour * 60 + sub * 10;
+            for (let m = 0; m < 10; m++) {
+                const totalMin = startMin + m;
+                const fromMin = toTimeStr(today, Math.floor(totalMin / 60), totalMin % 60);
+                const endMin = totalMin + 1;
+                const toMin = endMin >= 24 * 60 ? `${tomorrow}T00:00:00.000Z` : toTimeStr(today, Math.floor(endMin / 60), endMin % 60);
+                const { orders: minOrders } = await getOrdersInWindow(accountId, accessToken, fromMin, toMin);
+                addOrders(minOrders);
+            }
+        }
+    }
+    return allOrders;
+};
+
 const filterOrdersNotOnSameDay = (orders: any) => {
     let result: any[] = [];
     let startTime = Config.Settings.dtStartTime;
