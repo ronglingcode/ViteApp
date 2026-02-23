@@ -71,7 +71,7 @@ export const handleKeyPressed = (code: string, shiftKey: boolean) => {
     } else if (code === 'KeyP') {
         Handler.replaceWithProfitTakingExitOrders(symbol, false, 0);
     } else if (code === 'KeyU') {
-        AutoTrader.pauseAlgo(symbol);
+        // unused
     } else if (code == 'KeyJ') {
         Handler.trailStop(symbol, 5, shiftKey);
     } else if (code == 'KeyK') {

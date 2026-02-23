@@ -427,10 +427,6 @@ export const refreshAlgoPeriodically = () => {
 }
 const refreshAlgoPeriodicallyForSymbol = (symbol: string, secondsSinceMarketOpen: number) => {
 }
-
-export const pauseAlgo = (symbol: string) => {
-    clearExistingAlgos(symbol);
-}
 export const refreshEntryStopLoss = () => {
     let items = Models.getWatchlist();
     items.forEach(item => {

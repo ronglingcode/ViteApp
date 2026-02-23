@@ -27,7 +27,6 @@ export const cancelKeyPressed = async (symbol: string) => {
         Broker.cancelBreakoutEntryOrders(symbol);
     }
     TradingState.clearPendingOrder(symbol);
-    AutoTrader.clearExistingAlgos(symbol);
 }
 
 export const hasSplitPartials = (symbol: string, isLong: boolean) => {
