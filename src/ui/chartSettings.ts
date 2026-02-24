@@ -87,7 +87,10 @@ export const getPopupChartSettings = () => {
 export const getChartSettings = (tabIndex: number, totalCount: number) => {
     let width = focusChartSize.width;
     let height = focusChartSize.height;
-    if (totalCount == 2) {
+    if (totalCount === 1) {
+        width = bigChartSize.width;
+        height = bigChartSize.height;
+    } else if (totalCount == 2) {
         width = halfChartSize.width;
         height = halfChartSize.height;
     } else if (totalCount > 2) {
