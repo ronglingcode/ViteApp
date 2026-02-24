@@ -1440,11 +1440,10 @@ export const drawRiskLevel = (symbol: string, price: number) => {
     }
 
     let currentLevel = widget.riskLevelPriceLine.options().price;
+    widget.candleSeries.removePriceLine(widget.riskLevelPriceLine);
+    widget.riskLevelPriceLine = undefined;
     if (currentLevel != price) {
         widget.riskLevelPriceLine = createPriceLine(widget.candleSeries, price, "Risk Level", null, null, false, "solid");
-    } else {
-        widget.candleSeries.removePriceLine(widget.riskLevelPriceLine);
-        widget.riskLevelPriceLine = undefined;
     }
 };
 export const drawStopLoss = (symbol: string, price: number) => {
