@@ -358,8 +358,11 @@ export const adjustAllExits = async (symbol: string, newPrice: number, logTags: 
 }
 export const setRiskLevel = (symbol: string) => {
     let crosshairPrice = Chart.getCrossHairPrice(symbol);
-    if (crosshairPrice)
-        Chart.drawRiskLevel(symbol, crosshairPrice);
+    if (!crosshairPrice) {
+        return;
+    }
+
+    Chart.drawRiskLevel(symbol, crosshairPrice);
 }
 export const raiseTargetsIfWasLess = (symbol: string) => {
     let logTags = Models.generateLogTags(symbol, `${symbol}-raise_all_exits_below`);

@@ -1416,10 +1416,6 @@ export const clearPriceLines = (symbol: string) => {
         widget.candleSeries.removePriceLine(widget.stopLossPriceLine);
         widget.stopLossPriceLine = undefined;
     }
-    if (widget.riskLevelPriceLine) {
-        widget.candleSeries.removePriceLine(widget.riskLevelPriceLine);
-        widget.riskLevelPriceLine = undefined;
-    }
 };
 
 export const updateUI = (symbol: string, className: string, text: string) => {
@@ -1438,10 +1434,18 @@ export const drawRiskLevel = (symbol: string, price: number) => {
     if (!widget)
         return;
 
-    if (widget.riskLevelPriceLine) {
-        widget.candleSeries.removePriceLine(widget.riskLevelPriceLine);
+    if (!widget.riskLevelPriceLine) {
+        widget.riskLevelPriceLine = createPriceLine(widget.candleSeries, price, "Risk Level", null, null, false, "solid");
+        return;
     }
-    widget.riskLevelPriceLine = createPriceLine(widget.candleSeries, price, "Risk Level", null, null, false, "solid");
+
+    let currentLevel = widget.riskLevelPriceLine.options().price;
+    if (currentLevel != price) {
+        widget.riskLevelPriceLine = createPriceLine(widget.candleSeries, price, "Risk Level", null, null, false, "solid");
+    } else {
+        widget.candleSeries.removePriceLine(widget.riskLevelPriceLine);
+        widget.riskLevelPriceLine = undefined;
+    }
 };
 export const drawStopLoss = (symbol: string, price: number) => {
     let widget = Models.getChartWidget(symbol);
