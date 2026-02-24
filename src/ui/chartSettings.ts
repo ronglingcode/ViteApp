@@ -8,8 +8,8 @@ const greenColor = '#00c851';
 const blueColor = '#304ffe';
 export const defaultVolumeColor = '#CFCFCF';// '#E1F5FE';
 export const bigChartSize = {
-    width: 930,
-    height: 780,
+    width: 700,
+    height: 700,
 };
 export const focusChartSize = {
     width: 455,
