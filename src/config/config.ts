@@ -62,6 +62,6 @@ export const Settings = {
     // see details in https://sunrisetrading.atlassian.net/browse/TPS-161
     'maxStocksCount': 4,
     /** When true, fetch today's orders via time-window pagination (getAllOrdersByTimeWindows). When false, use single-request getAllOrders. */
-    fetchOrdersByTimeWindows: false,
+    fetchOrdersByTimeWindows: true,
 };
 console.log(Settings)
