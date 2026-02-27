@@ -20,8 +20,8 @@ export const quarterChartSize = {
     height: 400,
 };
 export const halfChartSize = {
-    width: 400,
-    height: 400,
+    width: 500,
+    height: 500,
 };
 export const chartSettings = {
     width: focusChartSize.width,
