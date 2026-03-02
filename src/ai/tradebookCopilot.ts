@@ -153,6 +153,7 @@ export const updatePlaybookStrip = (symbol: string) => {
         label.textContent = 'Active Setups';
         label.className = 'playbookStripLabel';
         content.textContent = enabledBooks.join(' | ');
+        content.textContent = "";
         strip.style.display = 'block';
     } else {
         strip.style.display = 'none';
