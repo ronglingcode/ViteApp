@@ -113,7 +113,7 @@ export const updatePlaybookStrip = (symbol: string) => {
             if (tradebook) {
                 let instructions = tradebook.getTradeManagementInstructions();
                 let dirTag = isLong ? 'LONG' : 'SHORT';
-                label.textContent = `${tradebook.name} ${dirTag}`;
+                label.textContent = `${tradebook.name}`;
                 label.className = isLong ? 'playbookStripLabel playbookStripLong' : 'playbookStripLabel playbookStripShort';
 
                 // Build condensed management summary
@@ -127,7 +127,11 @@ export const updatePlaybookStrip = (symbol: string) => {
                         parts.push(`${section}: ${items[0]}`);
                     }
                 });
-                content.textContent = parts.join(' | ');
+                let contentText = parts.join(' | ');
+                if (contentText.length > 100) {
+                    contentText = contentText.slice(0, 97) + '...';
+                }
+                content.textContent = contentText;
                 strip.style.display = 'block';
                 return;
             }
