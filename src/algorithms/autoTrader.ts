@@ -18,6 +18,7 @@ import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import * as VwapPatterns from './vwapPatterns';
 import * as Agent from '../ai/agent';
+import * as TradebookCopilot from '../ai/tradebookCopilot';
 import { VwapContinuationFailed } from '../tradebooks/singleKeyLevel/vwapContinuationFailed';
 
 declare let window: Models.MyWindow;
@@ -331,7 +332,7 @@ export const onMinuteClosed = (
         }
         getBreakoutEntryClosePercentage(symbol, newlyClosedCandle);
         if (seconds > 0) {
-            Agent.testTradeAnalysis(symbol);
+            TradebookCopilot.onCandleClose(symbol);
         }
     }
     if (seconds > 10) {
@@ -543,6 +544,7 @@ export const onNewTimeAndSalesData = (symbol: string, newPrice: number, isNewCan
     alertHigherVolume(symbol);
     saveRedToGreenState(symbol);
     TradebooksManager.onNewTimeAndSalesDataForSymbol(symbol);
+    TradebookCopilot.onPriceUpdate(symbol);
     let status = getChartAnalysis(symbol);
     if (status) {
         Chart.updateToolTipPriceLine(symbol, status);

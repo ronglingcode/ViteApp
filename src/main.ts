@@ -40,6 +40,7 @@ import * as MassiveStreaming from './api/massive/streaming';
 import * as MassiveApi from './api/massive/api';
 import * as DB from './data/db';
 import * as Agent from './ai/agent';
+import * as TradebookCopilot from './ai/tradebookCopilot';
 import * as VwapPatterns from './algorithms/vwapPatterns';
 import './tosClient';
 import * as TradebooksManager from './tradebooks/tradebooksManager';
@@ -191,6 +192,7 @@ window.TradingApp.TOS.initialize().then(async () => {
     // create watchlist and setup chart
     Chart.setup();
     Flowchart.setup();
+    TradebookCopilot.setup();
     let timeframe = 1;
 
     Models.setTimeframe(timeframe);
