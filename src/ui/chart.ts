@@ -24,7 +24,6 @@ import * as TimeHelper from '../utils/timeHelper';
 import * as TraderFocus from '../controllers/traderFocus';
 import * as QuestionPopup from './questionPopup';
 import * as GlobalSettings from '../config/globalSettings';
-import * as TradebookCopilot from '../ai/tradebookCopilot';
 declare let window: Models.MyWindow;
 
 export const setup = () => {
@@ -1767,12 +1766,6 @@ const createTradebookUINew = (tradebook: Tradebook, sideBar: HTMLElement, classN
             });
         });
     });
-    container.addEventListener('mouseenter', () => {
-        TradebookCopilot.showTradebookInStrip(tradebook.symbol, tradebook);
-    });
-    container.addEventListener('mouseleave', () => {
-        TradebookCopilot.updatePlaybookStrip(tradebook.symbol);
-    });
     sideBar.appendChild(container);
     return { buttons, stats, container };
 }
@@ -1855,12 +1848,6 @@ const createTradebookUI = (tradebook: Tradebook, sideBar: HTMLElement, className
             tradebook.sizingCount = sizingBarButtonsSize[i];
         });
     }*/
-    container.addEventListener('mouseenter', () => {
-        TradebookCopilot.showTradebookInStrip(tradebook.symbol, tradebook);
-    });
-    container.addEventListener('mouseleave', () => {
-        TradebookCopilot.updatePlaybookStrip(tradebook.symbol);
-    });
     sideBar.appendChild(container);
     container.style.display = 'none';
     return { buttons, stats, container };
