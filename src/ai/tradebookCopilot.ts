@@ -128,8 +128,8 @@ export const updatePlaybookStrip = (symbol: string) => {
                     }
                 });
                 let contentText = parts.join(' | ');
-                if (contentText.length > 50) {
-                    contentText = contentText.slice(0, 47) + '...';
+                if (contentText.length > 100) {
+                    contentText = contentText.slice(0, 97) + '...';
                 }
                 content.textContent = contentText;
                 strip.style.display = 'block';
