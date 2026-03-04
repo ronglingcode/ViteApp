@@ -266,6 +266,7 @@ export interface SymbolFundamental {
     symbol: string,
     marketCap: number,
     marketCapFloat: number,
+    sharesOutstanding: number,
 };
 export interface ChartWidgetHtmlContents {
     container: HTMLElement, // chartContainer
@@ -363,6 +364,7 @@ export interface SymbolData {
     camPivots: CamarillaPivots,
     allTimeHigh: number,
     previousDayCandle: Candle,
+    sharesOutstanding: number,
 };
 export const getDefaultCamPivots = (): CamarillaPivots => {
     let pivots: CamarillaPivots = {
@@ -1090,6 +1092,7 @@ export const getDefaultSymbolData = () => {
         },
         camPivots: getDefaultCamPivots(),
         allTimeHigh: 0,
+        sharesOutstanding: 0,
         previousDayCandle: {
             symbol: '',
             time: 0 as LightweightCharts.UTCTimestamp,

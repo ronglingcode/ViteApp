@@ -218,6 +218,7 @@ export const getFundamentals = async (symbol: string) => {
                 symbol: symbol,
                 marketCapFloat: fundamental.marketCapFloat,
                 marketCap: fundamental.marketCap,
+                sharesOutstanding: fundamental.sharesOutstanding,
             };
             return f;
         })

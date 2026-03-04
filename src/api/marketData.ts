@@ -67,6 +67,22 @@ export const setPreviousDayPremarketVolume = async (symbol: string, premarketDol
   let rvol = Calculator.ratioToPercentageString(premarketDollarCollection.rvol);
   Firestore.logInfo(`${symbol} premarket volume quality: ${volumeQuality}, $${lastDayDollar}, rvol: ${rvol}, median: $${previousDaysDollarMedian}`);
 }
+export const getSharesOutstanding = async (symbol: string) => {
+  let sharesOutstanding = await massiveApi.getSharesOutstanding(symbol);
+  let symbolData = Models.getSymbolData(symbol);
+  symbolData.sharesOutstanding = sharesOutstanding;
+  return sharesOutstanding;
+}
+
+export const getImpliedMarketCapInBillions = (symbol: string): number => {
+  let symbolData = Models.getSymbolData(symbol);
+  let sharesOutstanding = symbolData.sharesOutstanding;
+  let currentPrice = Models.getCurrentPrice(symbol);
+  if (currentPrice <= 0 || sharesOutstanding <= 0) return 0;
+  let impliedMarketCap = sharesOutstanding * currentPrice;
+  return Math.round(impliedMarketCap / 10000000) / 100;
+}
+
 export const getFullPriceHistory = async (symbol: string, isFutures: boolean, todayStringInput: string) => {
   // For futures, return empty data for now
   if (isFutures) {
