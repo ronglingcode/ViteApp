@@ -65,7 +65,8 @@ export const setPreviousDayPremarketVolume = async (symbol: string, premarketDol
   let lastDayDollar = Calculator.numberToString(premarketDollarCollection.lastDayDollar);
   let previousDaysDollarMedian = Calculator.numberToString(premarketDollarCollection.previousDaysDollarMedian);
   let rvol = Calculator.ratioToPercentageString(premarketDollarCollection.rvol);
-  Firestore.logInfo(`${symbol} premarket volume quality: ${volumeQuality}, $${lastDayDollar}, rvol: ${rvol}, median: $${previousDaysDollarMedian}`);
+  let lastDaySharesInMillions = (premarketDollarCollection.lastDayShares / 1000000).toFixed(2);
+  Firestore.logInfo(`${symbol} premarket volume quality: ${volumeQuality}, $${lastDayDollar}, ${lastDaySharesInMillions}M shares, rvol: ${rvol}, median: $${previousDaysDollarMedian}`);
 }
 export const getSharesOutstanding = async (symbol: string) => {
   let sharesOutstanding = await massiveApi.getSharesOutstanding(symbol);
