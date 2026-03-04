@@ -180,6 +180,7 @@ export interface BreakoutTradeState {
     adjustedTargetDueToMaxPullback: boolean,
     exitDescription: string,
     closedOutsideRatio: number,
+    stopTightenPhase: 'idle' | 'needs_tighten' | 'done',
 };
 export interface StreamingAccountActivity {
     symbol: string,

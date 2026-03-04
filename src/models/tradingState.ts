@@ -37,6 +37,7 @@ const getDefaultBreakoutTradeState = (isLong: boolean) => {
         adjustedTargetDueToMaxPullback: false,
         exitDescription: "",
         closedOutsideRatio: -1,
+        stopTightenPhase: 'idle',
         submitEntryResult: {
             isSingleOrder: false,
             profitTargets: [],
@@ -206,6 +207,7 @@ const onPlaceTrade = async (symbol: string, isLong: boolean, isMarketOrder: bool
         adjustedTargetDueToMaxPullback: false,
         exitDescription: "",
         closedOutsideRatio: -1,
+        stopTightenPhase: 'idle',
     };
     if (isLong) {
         symbolState.breakoutTradeStateForLong = bts;
