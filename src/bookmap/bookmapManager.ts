@@ -18,10 +18,9 @@ export const initialize = (symbol: string, chartWidth: number): void => {
     let panelElement = widget.htmlContents.bookmapPanel;
     if (!panelElement) return;
 
-    let config: Partial<BookmapConfig> = {};
-    if (!GlobalSettings.enableBookmapHeatmap) {
-        config.heatmapEnabled = false;
-    }
+    let config: Partial<BookmapConfig> = {
+        heatmapEnabled: GlobalSettings.enableBookmapHeatmap,
+    };
 
     let overlay = new BookmapCanvas(symbol, panelElement, chartWidth, config);
     bookmapInstances.set(symbol, overlay);
