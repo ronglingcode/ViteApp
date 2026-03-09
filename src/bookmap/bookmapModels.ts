@@ -60,9 +60,10 @@ export interface BookmapConfig {
     maxSharesForScaling: number;
 
     heatmapEnabled: boolean;
-    heatmapMaxSize: number;        // size at which color reaches max intensity (bright red)
-    heatmapMinSize: number;        // minimum size to show any color
-    heatmapMaxHistory: number;     // max snapshots to keep in memory
+    heatmapUpperPercentile: number; // percentile (0-100) at which color reaches max intensity
+    heatmapLowerPercentile: number; // percentile (0-100) below which orders are not shown
+    heatmapMaxHistory: number;      // max snapshots to keep in memory
+    heatmapRecalcIntervalMs: number; // how often to recalculate dynamic thresholds
 }
 
 export const DEFAULT_BOOKMAP_CONFIG: BookmapConfig = {
@@ -75,7 +76,8 @@ export const DEFAULT_BOOKMAP_CONFIG: BookmapConfig = {
     maxSharesForScaling: 50000,
 
     heatmapEnabled: false,
-    heatmapMaxSize: 2000,
-    heatmapMinSize: 50,
+    heatmapUpperPercentile: 97,
+    heatmapLowerPercentile: 3,
     heatmapMaxHistory: 10000,
+    heatmapRecalcIntervalMs: 2000,
 };

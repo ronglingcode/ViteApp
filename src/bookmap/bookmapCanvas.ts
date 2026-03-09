@@ -34,6 +34,11 @@ export class BookmapCanvas {
     private gridColor: string = '#333';
     private textColor: string = '#aaa';
 
+    // Dynamic heatmap thresholds (recalculated periodically from percentiles)
+    private heatmapLowerCutoff: number = 0;
+    private heatmapUpperCutoff: number = 1;
+    private lastHeatmapRecalc: number = 0;
+
     // Mouse interaction state
     private isDragging: boolean = false;
     private dragStartX: number = 0;
@@ -489,6 +494,39 @@ export class BookmapCanvas {
     }
 
     /**
+     * Recalculate dynamic heatmap thresholds from visible order sizes.
+     * Uses percentile-based cutoffs so color scaling adapts to each stock's
+     * typical order book depth (like Bookmap's adaptive contrast algorithm).
+     */
+    private recalcHeatmapThresholds(): void {
+        let now = Date.now();
+        if (now - this.lastHeatmapRecalc < this.config.heatmapRecalcIntervalMs) return;
+        this.lastHeatmapRecalc = now;
+
+        let slices = this.bookHistory.getSlicesInRange(this.timeFrom, this.timeTo);
+        if (slices.length === 0) return;
+
+        // Collect all order sizes from visible slices (sample if too many)
+        let sizes: number[] = [];
+        let step = Math.max(1, Math.floor(slices.length / 50)); // sample up to ~50 slices
+        for (let i = 0; i < slices.length; i += step) {
+            for (let [, size] of slices[i].levels) {
+                if (size > 0) sizes.push(size);
+            }
+        }
+
+        if (sizes.length < 5) return; // not enough data to compute percentiles
+
+        sizes.sort((a, b) => a - b);
+        let lowerIdx = Math.floor(sizes.length * this.config.heatmapLowerPercentile / 100);
+        let upperIdx = Math.floor(sizes.length * this.config.heatmapUpperPercentile / 100);
+        upperIdx = Math.min(upperIdx, sizes.length - 1);
+
+        this.heatmapLowerCutoff = sizes[lowerIdx];
+        this.heatmapUpperCutoff = Math.max(sizes[upperIdx], this.heatmapLowerCutoff + 1);
+    }
+
+    /**
      * Draw 2D time-history heatmap: each time slice paints colored rectangles
      * at price levels. Orders that persist across slices form horizontal "walls"
      * that grow over time. Color scales from dark blue (small) to bright red (large).
@@ -497,7 +535,10 @@ export class BookmapCanvas {
         let slices = this.bookHistory.getSlicesInRange(this.timeFrom, this.timeTo);
         if (slices.length === 0) return;
 
-        let minSize = this.config.heatmapMinSize;
+        this.recalcHeatmapThresholds();
+
+        let lowerCutoff = this.heatmapLowerCutoff;
+        let upperCutoff = this.heatmapUpperCutoff;
         let pixelsPerMs = this.chartWidth / (this.timeTo - this.timeFrom);
         let priceRange = this.priceTo - this.priceFrom;
         if (priceRange <= 0) return;
@@ -531,12 +572,12 @@ export class BookmapCanvas {
             if (x + w < 0 || x > this.chartWidth) continue;
 
             for (let [price, size] of slice.levels) {
-                if (size < minSize) continue;
+                if (size <= lowerCutoff) continue;
 
                 let y = this.priceToY(price);
                 if (y < -rowHeight || y > this.chartHeight + rowHeight) continue;
 
-                let color = this.sizeToColor(size);
+                let color = this.sizeToColor(size, lowerCutoff, upperCutoff);
                 if (!color) continue;
 
                 this.ctx.fillStyle = color;
@@ -546,13 +587,13 @@ export class BookmapCanvas {
     }
 
     /**
-     * Map order size to a color on the heatmap scale.
+     * Map order size to a color using dynamic percentile-based cutoffs.
      * Dark blue/black (small) → blue → cyan → green → yellow → orange → bright red (large).
      */
-    private sizeToColor(size: number): string {
-        if (size < this.config.heatmapMinSize) return '';
+    private sizeToColor(size: number, lowerCutoff: number, upperCutoff: number): string {
+        if (size <= lowerCutoff) return '';
 
-        let fraction = Math.min(size / this.config.heatmapMaxSize, 1);
+        let fraction = Math.min((size - lowerCutoff) / (upperCutoff - lowerCutoff), 1);
         let r: number, g: number, b: number;
 
         if (fraction < 0.15) {
