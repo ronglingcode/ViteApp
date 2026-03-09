@@ -99,6 +99,13 @@ src/
 │   ├── levelOneQuote.ts       # Level 1 quote model
 │   └── tradingPlans/          # Trading plan models
 │
+├── bookmap/                   # Bookmap visualization (volume dots + heatmap)
+│   ├── bookmapCanvas.ts       # Pure canvas chart — custom rendering, zoom, pan, crosshair
+│   ├── bookmapManager.ts      # Per-symbol instance management, public API
+│   ├── bookmapModels.ts       # Interfaces (TradeCluster, OrderBookSnapshot, BookmapConfig)
+│   ├── tradeClusterer.ts      # Trade clustering by time+price buckets
+│   └── schwabBookData.ts      # Schwab Level 2 book data subscription + parsing
+│
 ├── data/
 │   └── db.ts                  # In-memory database, candle aggregation
 │
@@ -176,6 +183,9 @@ Key flags:
 - `premarketVolumeThresholdInMillions`: 0.9 (minimum premarket volume)
 - `enableLeftPaneFeatures`: currently `false` (disables AI agent UI)
 - `enableAiAgent`: tied to left pane feature flag
+- `enableBookmap`: enables/disables bookmap panel (reduces candle chart height when enabled)
+- `enableBookmapHeatmap`: enables Level 2 heatmap rendering (Phase 2)
+- `enableBookDataLogging`: logs raw Schwab book data for format analysis
 
 ### Profiles (`src/config/profiles/`)
 Trading profiles define broker, asset type, entry/exit rules:

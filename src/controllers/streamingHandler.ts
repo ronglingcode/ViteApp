@@ -6,6 +6,7 @@ import * as Firestore from '../firestore';
 import * as Broker from '../api/broker';
 import * as GlobalSettings from '../config/globalSettings';
 import * as UI from '../ui/ui';
+import * as BookmapManager from '../bookmap/bookmapManager';
 // https://polygon.io/glossary/conditions-indicators
 export const conditionsNotUpdateHighLow = [
     "W", "C", "T", "U", "M", "Q", "N", "H", "I", "V", "7"
@@ -26,6 +27,9 @@ export const handleTimeAndSalesData = (data: any) => {
     let updated = DB.tryUpdateMaxTimeSaleTimestamp(record, 'a');
     
     Chart.addToTimeAndSales(symbol, 'alpacaFeed', shouldFilter, record);
+    if (!shouldFilter && record.lastPrice && record.lastSize && record.timestamp) {
+        BookmapManager.onTrade(symbol, record.lastPrice, record.lastSize, record.timestamp);
+    }
     if (shouldFilter) {
         return;
     }

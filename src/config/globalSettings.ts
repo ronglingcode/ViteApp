@@ -13,3 +13,9 @@ export const showTradebooksForPosition: boolean = enableLeftPaneFeatures && true
 export const showDataFeedsBar: boolean = false;
 export const checkMaxEntryThreshold: boolean = false;
 export const tradesPerSecondRollingWindowSeconds: number = 10; // Rolling window for tracking average trades per second
+
+// Bookmap features
+export const enableBookmap: boolean = true;
+export const enableBookmapHeatmap: boolean = false;  // enable after book data format is known
+export const enableBookDataLogging: boolean = true;   // Phase 1: log raw Schwab book data
+export const bookmapWidth: number = 150;
