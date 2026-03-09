@@ -1,6 +1,7 @@
 import * as Secret from '../../config/secret';
 import * as GlobalSettings from '../../config/globalSettings';
 import * as BookmapManager from '../../bookmap/bookmapManager';
+import { OrderBookReconstructor } from './orderBookReconstructor';
 import type { OrderBookLevel, OrderBookSnapshot } from '../../bookmap/bookmapModels';
 
 // ============================================
@@ -34,10 +35,34 @@ interface DatabentoMbp10Record {
 }
 
 // ============================================
+// Databento MBO Types
+// ============================================
+
+interface DatabentoMboRecord {
+    ts_recv: string;
+    hd: {
+        ts_event: string;
+        rtype: number;
+        publisher_id: number;
+        instrument_id: number;
+    };
+    order_id: string;
+    channel_id: number;
+    price: string;
+    size: number;
+    action: string; // A=Add, C=Cancel, M=Modify, T=Trade, F=Fill, R=Clear, N=None
+    side: string;   // B=Bid, A=Ask, N=None
+    flags: number;
+    ts_in_delta: number;
+    sequence: number;
+}
+
+// ============================================
 // State
 // ============================================
 
 const activeFeeds: Map<string, AbortController> = new Map();
+const reconstructors: Map<string, OrderBookReconstructor> = new Map();
 const SAMPLE_INTERVAL_MS = 200; // target ~5 snapshots/sec
 
 // ============================================
@@ -77,73 +102,24 @@ const parseMbp10ToSnapshot = (record: DatabentoMbp10Record): OrderBookSnapshot |
 };
 
 // ============================================
-// Fetching
+// Fetching — MBP-10
 // ============================================
 
 /**
  * Fetch MBP-10 data from Databento via proxy and feed to bookmap.
- * The proxy returns { data: "NDJSON string", parseError: "..." } since
- * NDJSON isn't valid JSON. We extract the data field and split by newlines.
+ * Each record is a pre-aggregated 10-level snapshot — no reconstruction needed.
  */
-export const fetchBookData = async (
+const fetchMbp10Data = async (
     symbol: string,
     start: string,
     end: string,
     abortSignal?: AbortSignal
 ): Promise<number> => {
-    let apiKey = Secret.databento().apiKey;
-    if (!apiKey) {
-        console.warn('[Databento] No API key found in secrets');
-        return 0;
-    }
+    let lines = await fetchNdjsonLines(symbol, 'mbp-10', start, end, abortSignal);
+    if (lines.length === 0) return 0;
 
-    let proxyUrl = `${GlobalSettings.losthostWithPort}/databento/v0/timeseries.get_range`;
-
-    let requestBody = {
-        dataset: GlobalSettings.databentoDataset,
-        symbols: symbol,
-        schema: 'mbp-10',
-        start: start,
-        end: end,
-        encoding: 'json',
-        compression: 'none',
-    };
-
-    console.log(`[Databento] Fetching MBP-10 for ${symbol}: ${start} → ${end}`);
-
-    let response = await fetch(proxyUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify(requestBody),
-        signal: abortSignal,
-    });
-
-    if (!response.ok) {
-        let errorText = await response.text();
-        console.error(`[Databento] API error ${response.status}: ${errorText}`);
-        return 0;
-    }
-
-    let responseJson = await response.json();
-
-    // The proxy wraps NDJSON in { data: "...", parseError: "..." }
-    let ndjsonText: string;
-    if (responseJson.data && typeof responseJson.data === 'string') {
-        ndjsonText = responseJson.data;
-    } else if (typeof responseJson === 'string') {
-        ndjsonText = responseJson;
-    } else {
-        console.warn('[Databento] Unexpected response format:', responseJson);
-        return 0;
-    }
-
-    let lines = ndjsonText.split('\n').filter(line => line.trim().length > 0);
     console.log(`[Databento] Received ${lines.length} MBP-10 records for ${symbol}`);
 
-    // Sample records by timestamp to avoid overwhelming the bookmap
     let fedCount = 0;
     let lastFedTimestamp = 0;
 
@@ -170,13 +146,169 @@ export const fetchBookData = async (
         }
     }
 
-    console.log(`[Databento] Fed ${fedCount} snapshots to bookmap for ${symbol}`);
+    console.log(`[Databento] Fed ${fedCount} MBP-10 snapshots to bookmap for ${symbol}`);
     return fedCount;
 };
 
 // ============================================
-// Feed Management
+// Fetching — MBO (Full Depth)
 // ============================================
+
+/**
+ * Fetch MBO data from Databento via proxy, reconstruct full-depth order book,
+ * and feed snapshots to bookmap at sampled intervals.
+ */
+const fetchMboData = async (
+    symbol: string,
+    start: string,
+    end: string,
+    abortSignal?: AbortSignal
+): Promise<number> => {
+    let lines = await fetchNdjsonLines(symbol, 'mbo', start, end, abortSignal);
+    if (lines.length === 0) return 0;
+
+    console.log(`[Databento] Received ${lines.length} MBO records for ${symbol}`);
+
+    let reconstructor = new OrderBookReconstructor();
+    reconstructors.set(symbol, reconstructor);
+
+    let fedCount = 0;
+    let lastFedTimestamp = 0;
+
+    for (let line of lines) {
+        if (abortSignal?.aborted) break;
+
+        let record: DatabentoMboRecord;
+        try {
+            record = JSON.parse(line);
+        } catch {
+            continue;
+        }
+
+        let timestampMs = Number(record.ts_recv) / 1e6;
+        let price = priceToDollars(record.price);
+
+        // Process event into reconstructor (updates running book state)
+        reconstructor.processEvent(
+            record.order_id,
+            record.action,
+            record.side,
+            price,
+            record.size,
+            timestampMs
+        );
+
+        // Emit a snapshot at sampled intervals
+        if (timestampMs - lastFedTimestamp >= SAMPLE_INTERVAL_MS) {
+            let snapshot = reconstructor.toSnapshot();
+            if (snapshot.bids.length > 0 || snapshot.asks.length > 0) {
+                BookmapManager.onOrderBookUpdate(symbol, snapshot);
+                lastFedTimestamp = timestampMs;
+                fedCount++;
+            }
+        }
+    }
+
+    // Emit final snapshot
+    if (fedCount === 0 || lastFedTimestamp > 0) {
+        let finalSnapshot = reconstructor.toSnapshot();
+        if (finalSnapshot.bids.length > 0 || finalSnapshot.asks.length > 0) {
+            BookmapManager.onOrderBookUpdate(symbol, finalSnapshot);
+            fedCount++;
+        }
+    }
+
+    console.log(`[Databento] Fed ${fedCount} MBO snapshots to bookmap for ${symbol} (${reconstructor.orderCount} orders tracked, ${reconstructor.bidLevelCount} bid levels, ${reconstructor.askLevelCount} ask levels)`);
+    return fedCount;
+};
+
+// ============================================
+// Shared NDJSON Fetcher
+// ============================================
+
+/**
+ * Fetch NDJSON lines from Databento via proxy.
+ * The proxy returns { data: "NDJSON string", parseError: "..." } since
+ * NDJSON isn't valid JSON. We extract the data field and split by newlines.
+ */
+const fetchNdjsonLines = async (
+    symbol: string,
+    schema: string,
+    start: string,
+    end: string,
+    abortSignal?: AbortSignal
+): Promise<string[]> => {
+    let apiKey = Secret.databento().apiKey;
+    if (!apiKey) {
+        console.warn('[Databento] No API key found in secrets');
+        return [];
+    }
+
+    let proxyUrl = `${GlobalSettings.losthostWithPort}/databento/v0/timeseries.get_range`;
+
+    let requestBody = {
+        dataset: GlobalSettings.databentoDataset,
+        symbols: symbol,
+        schema: schema,
+        start: start,
+        end: end,
+        encoding: 'json',
+        compression: 'none',
+    };
+
+    console.log(`[Databento] Fetching ${schema} for ${symbol}: ${start} → ${end}`);
+
+    let response = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(requestBody),
+        signal: abortSignal,
+    });
+
+    if (!response.ok) {
+        let errorText = await response.text();
+        console.error(`[Databento] API error ${response.status}: ${errorText}`);
+        return [];
+    }
+
+    let responseJson = await response.json();
+
+    // The proxy wraps NDJSON in { data: "...", parseError: "..." }
+    let ndjsonText: string;
+    if (responseJson.data && typeof responseJson.data === 'string') {
+        ndjsonText = responseJson.data;
+    } else if (typeof responseJson === 'string') {
+        ndjsonText = responseJson;
+    } else {
+        console.warn('[Databento] Unexpected response format:', responseJson);
+        return [];
+    }
+
+    return ndjsonText.split('\n').filter(line => line.trim().length > 0);
+};
+
+// ============================================
+// Public API
+// ============================================
+
+/**
+ * Fetch book data using the configured schema (MBO or MBP-10).
+ */
+export const fetchBookData = async (
+    symbol: string,
+    start: string,
+    end: string,
+    abortSignal?: AbortSignal
+): Promise<number> => {
+    if (GlobalSettings.databentoSchema === 'mbo') {
+        return fetchMboData(symbol, start, end, abortSignal);
+    } else {
+        return fetchMbp10Data(symbol, start, end, abortSignal);
+    }
+};
 
 /**
  * Start feeding historical book data for a symbol.
@@ -218,12 +350,14 @@ export const stopFeed = (symbol: string): void => {
         controller.abort();
         activeFeeds.delete(symbol);
     }
+    reconstructors.delete(symbol);
 };
 
 /** Stop all active feeds */
 export const stopAllFeeds = (): void => {
     activeFeeds.forEach(controller => controller.abort());
     activeFeeds.clear();
+    reconstructors.clear();
 };
 
 // ============================================

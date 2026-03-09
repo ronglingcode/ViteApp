@@ -44,6 +44,21 @@ Uses a **pure canvas chart** (no TradingView LWC) for continuous time axis rende
   - Binary search for efficient range queries (`getSlicesInRange`)
   - Configurable max history size with automatic pruning
 
+- `../api/databento/bookData.ts` — Databento historical data (MBP-10 or MBO)
+  - Fetches order book data via HTTP API through localhost proxy (CORS)
+  - Parses NDJSON response, converts fixed-point prices (÷1e9 → dollars)
+  - MBP-10 mode: each record is a pre-aggregated 10-level snapshot
+  - MBO mode: individual order events → `OrderBookReconstructor` builds full-depth book
+  - Samples at ~200ms intervals to avoid flooding bookmap
+  - Feeds `OrderBookSnapshot` to bookmap manager (same interface as Schwab)
+
+- `../api/databento/orderBookReconstructor.ts` — MBO order book reconstruction
+  - Maintains running state of all individual orders (`Map<orderId, TrackedOrder>`)
+  - Aggregates by price level (`Map<price, totalSize>`) for bids and asks
+  - Processes events: Add, Cancel (full/partial), Modify, Clear
+  - Trade/Fill/None events are no-ops (don't affect book state)
+  - `toSnapshot()` emits current book state as `OrderBookSnapshot`
+
 ## Data Flow
 
 ### Volume Dots (trades)
@@ -55,7 +70,7 @@ Massive/Alpaca WebSocket → streamingHandler.ts → BookmapManager.onTrade()
                                                BookmapCanvas.drawVolumeDots()
 ```
 
-### Heatmap (order book)
+### Heatmap (order book — Schwab live)
 ```
 Schwab WebSocket → schwab/streaming.ts → SchwabBookData.handleBookData()
                                                 ↓
@@ -68,13 +83,43 @@ Schwab WebSocket → schwab/streaming.ts → SchwabBookData.handleBookData()
                                         BookmapCanvas.drawHeatmap() → 2D colored rectangles
 ```
 
+### Heatmap (order book — Databento historical, MBP-10 mode)
+```
+BookmapManager.initialize() → DatabentoBookData.startHistoricalFeed()
+                                        ↓
+                              fetch via proxy → hist.databento.com (MBP-10, NDJSON)
+                                        ↓
+                              parseMbp10ToSnapshot() [fixed-point ÷ 1e9 → dollars]
+                                        ↓
+                              sample every ~200ms by timestamp
+                                        ↓
+                              BookmapManager.onOrderBookUpdate() → same pipeline as Schwab
+```
+
+### Heatmap (order book — Databento historical, MBO full-depth mode)
+```
+BookmapManager.initialize() → DatabentoBookData.startHistoricalFeed()
+                                        ↓
+                              fetch via proxy → hist.databento.com (MBO, NDJSON)
+                                        ↓
+                              OrderBookReconstructor.processEvent() per record
+                              (Add/Cancel/Modify/Clear → updates running book state)
+                                        ↓
+                              sample every ~200ms → reconstructor.toSnapshot()
+                                        ↓
+                              BookmapManager.onOrderBookUpdate() → same pipeline
+```
+
 ## Configuration
 
 In `src/config/globalSettings.ts`:
-- `enableBookmap: boolean` — master toggle (also adjusts candle chart heights)
+- `enableBookmap: boolean` — master toggle; all sub-features gate on this
 - `enableBookmapHeatmap: boolean` — enable Level 2 heatmap rendering
 - `enableBookDataLogging: boolean` — log raw Schwab book data
 - `bookmapWidth: number` — bookmap panel width (currently unused, width matches candle chart)
+- `enableDatabentoBookData: boolean` — fetch historical data from Databento
+- `databentoDataset: string` — Databento dataset (default: `"XNAS.ITCH"` for Nasdaq TotalView)
+- `databentoSchema: string` — `"mbo"` for full depth (all price levels), `"mbp-10"` for top 10 levels
 
 In `src/bookmap/bookmapModels.ts` (`DEFAULT_BOOKMAP_CONFIG`):
 - `timeBucketSeconds: 0.5` — clustering time resolution
@@ -128,7 +173,28 @@ Chart heights are reduced when bookmap is enabled (see `chartSettings.ts` `*With
 - Dynamic percentile-based color scaling adapts to each stock's typical order sizes (like Bookmap's adaptive contrast)
 - Set `enableBookmapHeatmap = true` to activate (enabled by default)
 
-### Data Depth Limitation
-- Schwab `NASDAQ_BOOK` / `LISTED_BOOK` provides **full snapshots** (~15 levels per side), not deltas
-- Coverage is roughly $1-2 on each side of the current price — the nearest, most actionable levels
-- Deeper order book data (50+ levels or full depth) requires direct exchange feeds (NASDAQ TotalView, CME, etc.)
+### Phase 4: Databento MBP-10 Integration (DONE)
+- Fetches historical MBP-10 (10-level depth) data from Databento via localhost proxy
+- API: `POST https://hist.databento.com/v0/timeseries.get_range` with Basic auth
+- Proxy at `localhost:3000/databento/v0/timeseries.get_range` forwards requests (avoids CORS)
+- Parses NDJSON response: each record has 10 bid/ask levels with fixed-point prices (÷1e9)
+- Samples records at ~200ms intervals, feeds `OrderBookSnapshot` to bookmap manager
+- Free API key = T+1 delayed data (historical only); same code works for live upgrade later
+
+### Phase 5: Databento MBO Full Depth (DONE)
+- MBO (Market by Order) provides individual order events at ALL price levels
+- `OrderBookReconstructor` maintains running book state from MBO events:
+  - `Add` → insert order, increment price level size
+  - `Cancel` → remove/reduce order (supports partial cancels)
+  - `Modify` → update order price/size (removes old, adds new)
+  - `Clear` → reset entire book (used at session start/snapshots)
+  - `Trade`/`Fill`/`None` → no-ops (don't affect book state)
+- Emits full-depth `OrderBookSnapshot` at sampled intervals (same pipeline as MBP-10)
+- Set `databentoSchema = "mbo"` to use full depth, `"mbp-10"` for top 10 only
+- MBO generates significantly more data than MBP-10 (every individual order event)
+
+### Data Depth
+- **Schwab live**: ~15 levels per side via `NASDAQ_BOOK` / `LISTED_BOOK` (full snapshots, not deltas)
+- **Databento MBP-10**: 10 levels per side from Nasdaq TotalView (historical, delayed with free key)
+- **Databento MBO**: Full depth — all orders at all price levels, reconstructed from individual order events
+- For true full depth across all exchanges, use DBEQ.MAX dataset or direct exchange feeds

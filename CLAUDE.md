@@ -107,6 +107,11 @@ src/
 │   ├── schwabBookData.ts      # Schwab Level 2 book data subscription + parsing
 │   └── orderBookHistory.ts    # Time-series storage for 2D heatmap rendering
 │
+├── api/
+│   ├── ...                    # (existing broker APIs)
+│   └── databento/             # Databento market data (order book depth)
+│       └── bookData.ts        # MBP-10 historical fetch, NDJSON parser, feeds OrderBookSnapshot
+│
 ├── data/
 │   └── db.ts                  # In-memory database, candle aggregation
 │
@@ -184,9 +189,11 @@ Key flags:
 - `premarketVolumeThresholdInMillions`: 0.9 (minimum premarket volume)
 - `enableLeftPaneFeatures`: currently `false` (disables AI agent UI)
 - `enableAiAgent`: tied to left pane feature flag
-- `enableBookmap`: enables/disables bookmap panel (reduces candle chart height when enabled)
-- `enableBookmapHeatmap`: enables 2D time-history heatmap rendering
-- `enableBookDataLogging`: logs raw Schwab book data to console
+- `enableBookmap`: master toggle for bookmap panel — all sub-features gate on this
+- `enableBookmapHeatmap`: enables 2D time-history heatmap rendering (requires `enableBookmap`)
+- `enableBookDataLogging`: logs raw Schwab book data to console (requires `enableBookmap`)
+- `enableDatabentoBookData`: fetches historical MBP-10 data from Databento (requires `enableBookmap`)
+- `databentoDataset`: Databento dataset identifier (default: `"XNAS.ITCH"` for Nasdaq TotalView)
 
 ### Profiles (`src/config/profiles/`)
 Trading profiles define broker, asset type, entry/exit rules:
