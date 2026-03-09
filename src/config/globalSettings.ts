@@ -19,3 +19,7 @@ export const enableBookmap: boolean = true;
 export const enableBookmapHeatmap: boolean = true;   // Phase 3: 2D time-history heatmap
 export const enableBookDataLogging: boolean = true;   // Phase 1: log raw Schwab book data
 export const bookmapWidth: number = 150;
+
+// Databento order book data
+export const enableDatabentoBookData: boolean = true;
+export const databentoDataset: string = "XNAS.ITCH";

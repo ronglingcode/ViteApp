@@ -2,6 +2,7 @@ import { BookmapCanvas } from './bookmapCanvas';
 import type { OrderBookSnapshot, BookmapConfig } from './bookmapModels';
 import * as Models from '../models/models';
 import * as GlobalSettings from '../config/globalSettings';
+import * as DatabentoBookData from '../api/databento/bookData';
 
 const bookmapInstances: Map<string, BookmapCanvas> = new Map();
 
@@ -24,6 +25,11 @@ export const initialize = (symbol: string, chartWidth: number): void => {
 
     let overlay = new BookmapCanvas(symbol, panelElement, chartWidth, config);
     bookmapInstances.set(symbol, overlay);
+
+    // Start Databento historical book data feed if enabled
+    if (GlobalSettings.enableDatabentoBookData) {
+        DatabentoBookData.startHistoricalFeed(symbol);
+    }
 };
 
 /**
@@ -54,6 +60,7 @@ export const onTimeframeChange = (symbol: string, _timeframe: number): void => {
 };
 
 export const destroy = (symbol: string): void => {
+    DatabentoBookData.stopFeed(symbol);
     let instance = bookmapInstances.get(symbol);
     if (instance) {
         instance.destroy();
@@ -62,6 +69,7 @@ export const destroy = (symbol: string): void => {
 };
 
 export const destroyAll = (): void => {
+    DatabentoBookData.stopAllFeeds();
     bookmapInstances.forEach((instance) => {
         instance.destroy();
     });

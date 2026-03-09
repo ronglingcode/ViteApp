@@ -84,8 +84,9 @@ In `src/bookmap/bookmapModels.ts` (`DEFAULT_BOOKMAP_CONFIG`):
 - `maxSharesForScaling: 50000` — volume at which dot reaches max radius
 - `dotOpacity: 0.7` — dot transparency
 - `heatmapEnabled: false` — heatmap rendering toggle (overridden by `globalSettings.enableBookmapHeatmap`)
-- `heatmapMaxSize: 10000` — order size at which color reaches max intensity (bright red)
-- `heatmapMinSize: 500` — minimum order size to render any color
+- `heatmapUpperPercentile: 97` — percentile at which color reaches max intensity (bright red)
+- `heatmapLowerPercentile: 3` — percentile below which orders are not rendered
+- `heatmapRecalcIntervalMs: 2000` — how often dynamic thresholds are recalculated
 - `heatmapMaxHistory: 10000` — max snapshots to keep in `OrderBookHistory`
 
 ## Layout
@@ -123,5 +124,11 @@ Chart heights are reduced when bookmap is enabled (see `chartSettings.ts` `*With
 - Walls stop growing when orders disappear/are filled; walls thin/lighten when size drops below threshold
 - Color scale: dark blue/black (small) → blue → cyan → green → yellow → orange → bright red (large)
 - Performance optimization: skips sub-pixel slices when zoomed out
-- Auto-fit price range considers both volume dots and heatmap price levels
+- Auto-fit price range driven by volume dots only (heatmap levels excluded to prevent zoom-out to distant orders)
+- Dynamic percentile-based color scaling adapts to each stock's typical order sizes (like Bookmap's adaptive contrast)
 - Set `enableBookmapHeatmap = true` to activate (enabled by default)
+
+### Data Depth Limitation
+- Schwab `NASDAQ_BOOK` / `LISTED_BOOK` provides **full snapshots** (~15 levels per side), not deltas
+- Coverage is roughly $1-2 on each side of the current price — the nearest, most actionable levels
+- Deeper order book data (50+ levels or full depth) requires direct exchange feeds (NASDAQ TotalView, CME, etc.)
