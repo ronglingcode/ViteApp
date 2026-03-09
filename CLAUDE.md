@@ -104,7 +104,8 @@ src/
 │   ├── bookmapManager.ts      # Per-symbol instance management, public API
 │   ├── bookmapModels.ts       # Interfaces (TradeCluster, OrderBookSnapshot, BookmapConfig)
 │   ├── tradeClusterer.ts      # Trade clustering by time+price buckets
-│   └── schwabBookData.ts      # Schwab Level 2 book data subscription + parsing
+│   ├── schwabBookData.ts      # Schwab Level 2 book data subscription + parsing
+│   └── orderBookHistory.ts    # Time-series storage for 2D heatmap rendering
 │
 ├── data/
 │   └── db.ts                  # In-memory database, candle aggregation
@@ -184,8 +185,8 @@ Key flags:
 - `enableLeftPaneFeatures`: currently `false` (disables AI agent UI)
 - `enableAiAgent`: tied to left pane feature flag
 - `enableBookmap`: enables/disables bookmap panel (reduces candle chart height when enabled)
-- `enableBookmapHeatmap`: enables Level 2 heatmap rendering (Phase 2)
-- `enableBookDataLogging`: logs raw Schwab book data for format analysis
+- `enableBookmapHeatmap`: enables 2D time-history heatmap rendering
+- `enableBookDataLogging`: logs raw Schwab book data to console
 
 ### Profiles (`src/config/profiles/`)
 Trading profiles define broker, asset type, entry/exit rules:
@@ -204,9 +205,23 @@ Trading profiles define broker, asset type, entry/exit rules:
 - **Feature flags** in `globalSettings.ts` control what's enabled
 - Commit messages are short, lowercase, descriptive of the trading logic change
 
+## Local Development
+
+### Prerequisites
+1. **Localhost proxy** must be running on port 3000 for broker API calls (CORS)
+2. **Secrets in localStorage** — the app reads API keys from `localStorage` under the `tradingscripts.*` prefix. Run `scripts/injectSecrets.js` in the browser console to populate them, or paste the script contents directly. This file is gitignored.
+3. **Market hours** — charts only appear when watchlist symbols are populated from live market data feeds (Massive/Schwab). Outside market hours the UI shows the header but no charts.
+
+### Testing with Preview
+When using Claude Code's preview server (`npm run dev` on port 5173):
+- Inject secrets via `preview_eval` before reloading the page
+- The proxy server at `http://localhost:3000` must also be running for API calls to succeed
+- Schwab streaming (WebSocket) provides real-time quotes, order book data, and account activity
+
 ## Important Warnings
 
 - `secret.ts` contains real API keys — never commit to public repos
+- `scripts/injectSecrets.js` contains real API keys — it is gitignored, never commit it
 - The app executes real trades with real money when connected to Schwab
 - The localhost proxy (port 3000) must be running for API calls to work
 - Chart data comes from both WebSocket streams and remote TradingView scripts loaded from `tradingdata-15425.web.app`

@@ -1,6 +1,6 @@
 # Bookmap Feature
 
-Custom bookmap-style visualization showing order flow as volume dots and (future) Level 2 heatmap.
+Custom bookmap-style visualization showing order flow as volume dots and Level 2 heatmap.
 
 ## Architecture
 
@@ -46,12 +46,26 @@ Uses a **pure canvas chart** (no TradingView LWC) for continuous time axis rende
 
 ## Data Flow
 
+### Volume Dots (trades)
 ```
 Massive/Alpaca WebSocket → streamingHandler.ts → BookmapManager.onTrade()
                                                        ↓
                                                TradeClusterer.addTrade()
                                                        ↓
-                                               BookmapCanvas.draw() → canvas rendering
+                                               BookmapCanvas.drawVolumeDots()
+```
+
+### Heatmap (order book)
+```
+Schwab WebSocket → schwab/streaming.ts → SchwabBookData.handleBookData()
+                                                ↓
+                                        parseBookDataToSnapshot()
+                                                ↓
+                                        BookmapManager.onOrderBookUpdate()
+                                                ↓
+                                        OrderBookHistory.addSnapshot()
+                                                ↓
+                                        BookmapCanvas.drawHeatmap() → 2D colored rectangles
 ```
 
 ## Configuration
@@ -69,6 +83,10 @@ In `src/bookmap/bookmapModels.ts` (`DEFAULT_BOOKMAP_CONFIG`):
 - `maxDotRadius: 12` / `minDotRadius: 2` — dot size range
 - `maxSharesForScaling: 50000` — volume at which dot reaches max radius
 - `dotOpacity: 0.7` — dot transparency
+- `heatmapEnabled: false` — heatmap rendering toggle (overridden by `globalSettings.enableBookmapHeatmap`)
+- `heatmapMaxSize: 10000` — order size at which color reaches max intensity (bright red)
+- `heatmapMinSize: 500` — minimum order size to render any color
+- `heatmapMaxHistory: 10000` — max snapshots to keep in `OrderBookHistory`
 
 ## Layout
 
