@@ -2,10 +2,11 @@ import * as Models from '../models/models';
 import * as BookmapManager from './bookmapManager';
 import type { OrderBookLevel, OrderBookSnapshot } from './bookmapModels';
 import * as Firestore from '../firestore';
+import * as GlobalSettings from '../config/globalSettings';
 declare let window: Models.MyWindow;
 
 /** Phase 1: log raw book data to understand format */
-let logRawBookData: boolean = true;
+let logRawBookData: boolean = GlobalSettings.enableBookDataLogging;
 
 /**
  * Subscribe to Schwab NASDAQ_BOOK and LISTED_BOOK streaming.
@@ -46,19 +47,19 @@ export const subscribeBookData = (webSocket: WebSocket): void => {
 
 /**
  * Handle incoming book data messages.
- * Phase 1: Logs raw data to console and Firestore.
- * Phase 2: Parse into OrderBookSnapshot and feed to BookmapManager.
+ *
+ * Schwab book data format (numeric keys):
+ *   content[].key = symbol
+ *   content[]."1" = book timestamp (ms)
+ *   content[]."2" = bids array: [{ "0": price, "1": totalVolume, "2": numBids, "3": exchanges[] }]
+ *   content[]."3" = asks array: [{ "0": price, "1": totalVolume, "2": numAsks, "3": exchanges[] }]
  */
 export const handleBookData = (service: string, element: any): void => {
     if (logRawBookData) {
         console.log(`[BookData] Service: ${service}`);
         console.log(element);
-        let summary = JSON.stringify(element).substring(0, 500);
-        Firestore.logInfo(`BookData ${service}: ${summary}`);
     }
 
-    // Phase 2: uncomment after analyzing logged data format
-    /*
     let contents = element.content;
     if (!contents) return;
 
@@ -69,18 +70,49 @@ export const handleBookData = (service: string, element: any): void => {
             BookmapManager.onOrderBookUpdate(symbol, snapshot);
         }
     });
-    */
 };
 
 /**
  * Parse raw Schwab book data into an OrderBookSnapshot.
- * TODO: Implement after understanding the data format from logs.
+ *
+ * Raw format uses numeric string keys:
+ *   data["1"] = timestamp (ms)
+ *   data["2"] = bid levels: [{ "0": price, "1": totalVolume }]
+ *   data["3"] = ask levels: [{ "0": price, "1": totalVolume }]
  */
-const parseBookDataToSnapshot = (_data: any): OrderBookSnapshot | null => {
-    // Expected structure (hypothetical based on TDA reverse engineering):
-    // data["1"] = bid levels array [{price, size, numOrders}]
-    // data["2"] = ask levels array [{price, size, numOrders}]
-    return null;
+const parseBookDataToSnapshot = (data: any): OrderBookSnapshot | null => {
+    let rawBids = data["2"];
+    let rawAsks = data["3"];
+    let bookTime = data["1"] || Date.now();
+
+    if (!rawBids && !rawAsks) return null;
+
+    let bids: OrderBookLevel[] = [];
+    let asks: OrderBookLevel[] = [];
+
+    if (Array.isArray(rawBids)) {
+        for (let level of rawBids) {
+            let price = level["0"];
+            let size = level["1"];
+            if (price != null && size != null) {
+                bids.push({ price, size, lastUpdate: bookTime });
+            }
+        }
+    }
+
+    if (Array.isArray(rawAsks)) {
+        for (let level of rawAsks) {
+            let price = level["0"];
+            let size = level["1"];
+            if (price != null && size != null) {
+                asks.push({ price, size, lastUpdate: bookTime });
+            }
+        }
+    }
+
+    if (bids.length === 0 && asks.length === 0) return null;
+
+    return { bids, asks, lastUpdate: bookTime };
 };
 
 export const setLogRawBookData = (enabled: boolean): void => {
