@@ -75,7 +75,7 @@ export const DEFAULT_BOOKMAP_CONFIG: BookmapConfig = {
     maxSharesForScaling: 50000,
 
     heatmapEnabled: false,
-    heatmapMaxSize: 10000,
-    heatmapMinSize: 500,
+    heatmapMaxSize: 2000,
+    heatmapMinSize: 50,
     heatmapMaxHistory: 10000,
 };

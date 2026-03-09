@@ -325,19 +325,6 @@ export class BookmapCanvas {
             }
         }
 
-        // Also consider heatmap book data prices
-        if (this.config.heatmapEnabled && this.bookHistory.length > 0) {
-            let slices = this.bookHistory.getSlicesInRange(this.timeFrom, this.timeTo);
-            for (let slice of slices) {
-                for (let [price, size] of slice.levels) {
-                    if (size < this.config.heatmapMinSize) continue;
-                    if (price < minPrice) minPrice = price;
-                    if (price > maxPrice) maxPrice = price;
-                    hasVisible = true;
-                }
-            }
-        }
-
         if (!hasVisible) return;
 
         let padding = (maxPrice - minPrice) * 0.1 || 0.05;
