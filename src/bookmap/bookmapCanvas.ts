@@ -1,6 +1,7 @@
 import type { OrderBookSnapshot, BookmapConfig } from './bookmapModels';
 import { DEFAULT_BOOKMAP_CONFIG } from './bookmapModels';
 import { TradeClusterer } from './tradeClusterer';
+import { OrderBookHistory } from './orderBookHistory';
 import * as ChartSettings from '../ui/chartSettings';
 
 /**
@@ -14,6 +15,7 @@ export class BookmapCanvas {
     private clusterer: TradeClusterer;
     private config: BookmapConfig;
     private orderBook: OrderBookSnapshot | null = null;
+    private bookHistory: OrderBookHistory;
     private animationFrameId: number | null = null;
     private needsRedraw: boolean = true;
     private symbol: string;
@@ -54,6 +56,7 @@ export class BookmapCanvas {
         this.panelElement = panelElement;
         this.config = { ...DEFAULT_BOOKMAP_CONFIG, ...config };
         this.clusterer = new TradeClusterer(this.config);
+        this.bookHistory = new OrderBookHistory(this.config.heatmapMaxHistory);
 
         // Initialize time window to now - 5 minutes
         let now = Date.now();
@@ -254,6 +257,9 @@ export class BookmapCanvas {
 
     updateOrderBook(orderBook: OrderBookSnapshot): void {
         this.orderBook = orderBook;
+        if (this.config.heatmapEnabled) {
+            this.bookHistory.addSnapshot(orderBook);
+        }
         this.needsRedraw = true;
     }
 
@@ -291,7 +297,7 @@ export class BookmapCanvas {
 
         this.drawGrid();
 
-        if (this.config.heatmapEnabled && this.orderBook) {
+        if (this.config.heatmapEnabled && this.bookHistory.length > 0) {
             this.drawHeatmap();
         }
 
@@ -316,6 +322,19 @@ export class BookmapCanvas {
                 if (cluster.priceLevel < minPrice) minPrice = cluster.priceLevel;
                 if (cluster.priceLevel > maxPrice) maxPrice = cluster.priceLevel;
                 hasVisible = true;
+            }
+        }
+
+        // Also consider heatmap book data prices
+        if (this.config.heatmapEnabled && this.bookHistory.length > 0) {
+            let slices = this.bookHistory.getSlicesInRange(this.timeFrom, this.timeTo);
+            for (let slice of slices) {
+                for (let [price, size] of slice.levels) {
+                    if (size < this.config.heatmapMinSize) continue;
+                    if (price < minPrice) minPrice = price;
+                    if (price > maxPrice) maxPrice = price;
+                    hasVisible = true;
+                }
             }
         }
 
@@ -482,44 +501,100 @@ export class BookmapCanvas {
         }
     }
 
+    /**
+     * Draw 2D time-history heatmap: each time slice paints colored rectangles
+     * at price levels. Orders that persist across slices form horizontal "walls"
+     * that grow over time. Color scales from dark blue (small) to bright red (large).
+     */
     private drawHeatmap(): void {
-        if (!this.orderBook) return;
+        let slices = this.bookHistory.getSlicesInRange(this.timeFrom, this.timeTo);
+        if (slices.length === 0) return;
 
-        let maxSize = 0;
-        for (let level of this.orderBook.bids) {
-            if (level.size > maxSize) maxSize = level.size;
-        }
-        for (let level of this.orderBook.asks) {
-            if (level.size > maxSize) maxSize = level.size;
-        }
-        if (maxSize === 0) return;
+        let minSize = this.config.heatmapMinSize;
+        let pixelsPerMs = this.chartWidth / (this.timeTo - this.timeFrom);
+        let priceRange = this.priceTo - this.priceFrom;
+        if (priceRange <= 0) return;
 
-        this.drawBookSide(this.orderBook.bids, maxSize, true);
-        this.drawBookSide(this.orderBook.asks, maxSize, false);
+        // Row height: each $0.01 price level gets proportional pixel height, minimum 1px
+        let rowHeight = Math.max(1, (this.chartHeight / priceRange) * 0.01);
+
+        // When zoomed out, skip slices that would be sub-pixel to save perf
+        let minSlicePixelWidth = 0.5;
+        let skipFactor = 1;
+        if (slices.length > 1) {
+            let avgGapMs = (slices[slices.length - 1].timestamp - slices[0].timestamp) / slices.length;
+            let avgGapPx = avgGapMs * pixelsPerMs;
+            if (avgGapPx < minSlicePixelWidth) {
+                skipFactor = Math.ceil(minSlicePixelWidth / avgGapPx);
+            }
+        }
+
+        for (let i = 0; i < slices.length; i += skipFactor) {
+            let slice = slices[i];
+            let x = this.timeToX(slice.timestamp);
+
+            // Width extends to next slice (or small default)
+            let nextIdx = Math.min(i + skipFactor, slices.length - 1);
+            let nextTime = (nextIdx > i)
+                ? slices[nextIdx].timestamp
+                : slice.timestamp + 1000;
+            let w = Math.max(1, (nextTime - slice.timestamp) * pixelsPerMs);
+
+            // Skip if off-screen
+            if (x + w < 0 || x > this.chartWidth) continue;
+
+            for (let [price, size] of slice.levels) {
+                if (size < minSize) continue;
+
+                let y = this.priceToY(price);
+                if (y < -rowHeight || y > this.chartHeight + rowHeight) continue;
+
+                let color = this.sizeToColor(size);
+                if (!color) continue;
+
+                this.ctx.fillStyle = color;
+                this.ctx.fillRect(x, y - rowHeight / 2, w, rowHeight);
+            }
+        }
     }
 
-    private drawBookSide(
-        levels: OrderBookSnapshot['bids'],
-        maxSize: number,
-        isBid: boolean
-    ): void {
-        let levelsToShow = Math.min(levels.length, this.config.heatmapLevels);
-        let baseColor = isBid ? '0, 200, 83' : '255, 23, 68';
+    /**
+     * Map order size to a color on the heatmap scale.
+     * Dark blue/black (small) → blue → cyan → green → yellow → orange → bright red (large).
+     */
+    private sizeToColor(size: number): string {
+        if (size < this.config.heatmapMinSize) return '';
 
-        for (let i = 0; i < levelsToShow; i++) {
-            let level = levels[i];
-            let y = this.priceToY(level.price);
-            if (y < 0 || y > this.chartHeight) continue;
+        let fraction = Math.min(size / this.config.heatmapMaxSize, 1);
+        let r: number, g: number, b: number;
 
-            let sizeFraction = level.size / maxSize;
-            let barWidth = sizeFraction * this.config.maxBarWidth;
-            let barHeight = 2;
-            let x = this.chartWidth - barWidth - 10;
-            let alpha = 0.2 + (sizeFraction * 0.6);
-
-            this.ctx.fillStyle = `rgba(${baseColor}, ${alpha})`;
-            this.ctx.fillRect(x, y - barHeight / 2, barWidth, barHeight);
+        if (fraction < 0.15) {
+            // Dark blue/black → blue
+            let t = fraction / 0.15;
+            r = 0; g = 0; b = Math.floor(40 + t * 140);
+        } else if (fraction < 0.3) {
+            // Blue → cyan
+            let t = (fraction - 0.15) / 0.15;
+            r = 0; g = Math.floor(t * 180); b = Math.floor(180 - t * 30);
+        } else if (fraction < 0.5) {
+            // Cyan → green
+            let t = (fraction - 0.3) / 0.2;
+            r = 0; g = Math.floor(180 + t * 20); b = Math.floor(150 - t * 150);
+        } else if (fraction < 0.7) {
+            // Green → yellow
+            let t = (fraction - 0.5) / 0.2;
+            r = Math.floor(t * 255); g = Math.floor(200 + t * 55); b = 0;
+        } else if (fraction < 0.85) {
+            // Yellow → orange
+            let t = (fraction - 0.7) / 0.15;
+            r = 255; g = Math.floor(255 - t * 115); b = 0;
+        } else {
+            // Orange → bright red
+            let t = (fraction - 0.85) / 0.15;
+            r = 255; g = Math.floor(140 - t * 140); b = 0;
         }
+
+        return `rgb(${r}, ${g}, ${b})`;
     }
 
     // ============================================
@@ -579,6 +654,7 @@ export class BookmapCanvas {
     reset(): void {
         this.clusterer.clear();
         this.orderBook = null;
+        this.bookHistory.clear();
         this.needsRedraw = true;
     }
 }

@@ -16,6 +16,6 @@ export const tradesPerSecondRollingWindowSeconds: number = 10; // Rolling window
 
 // Bookmap features
 export const enableBookmap: boolean = true;
-export const enableBookmapHeatmap: boolean = false;  // enable after book data format is known
+export const enableBookmapHeatmap: boolean = true;   // Phase 3: 2D time-history heatmap
 export const enableBookDataLogging: boolean = true;   // Phase 1: log raw Schwab book data
 export const bookmapWidth: number = 150;

@@ -60,9 +60,9 @@ export interface BookmapConfig {
     maxSharesForScaling: number;
 
     heatmapEnabled: boolean;
-    maxBarWidth: number;
-    barOpacity: number;
-    heatmapLevels: number;
+    heatmapMaxSize: number;        // size at which color reaches max intensity (bright red)
+    heatmapMinSize: number;        // minimum size to show any color
+    heatmapMaxHistory: number;     // max snapshots to keep in memory
 }
 
 export const DEFAULT_BOOKMAP_CONFIG: BookmapConfig = {
@@ -75,7 +75,7 @@ export const DEFAULT_BOOKMAP_CONFIG: BookmapConfig = {
     maxSharesForScaling: 50000,
 
     heatmapEnabled: false,
-    maxBarWidth: 60,
-    barOpacity: 0.4,
-    heatmapLevels: 20,
+    heatmapMaxSize: 10000,
+    heatmapMinSize: 500,
+    heatmapMaxHistory: 10000,
 };

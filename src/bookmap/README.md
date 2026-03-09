@@ -37,8 +37,12 @@ Uses a **pure canvas chart** (no TradingView LWC) for continuous time axis rende
 
 - `schwabBookData.ts` — Schwab Level 2 data subscription
   - Subscribes to `NASDAQ_BOOK` and `LISTED_BOOK` streaming services
-  - Phase 1 (current): logs raw data to console + Firestore for format analysis
-  - Phase 2 (TODO): parse into `OrderBookSnapshot` and feed to bookmap
+  - Parses raw book data into `OrderBookSnapshot` and feeds to bookmap manager
+
+- `orderBookHistory.ts` — Time-series storage for heatmap rendering
+  - Stores `BookSlice` entries (timestamp + Map<price, size>)
+  - Binary search for efficient range queries (`getSlicesInRange`)
+  - Configurable max history size with automatic pruning
 
 ## Data Flow
 
@@ -90,13 +94,16 @@ Chart heights are reduced when bookmap is enabled (see `chartSettings.ts` `*With
 - Green (uptick) / red (downtick) dots with sqrt-scaled radius
 - Mouse zoom, pan, crosshair
 
-### Phase 2: Schwab Book Data Discovery (IN PROGRESS)
+### Phase 2: Schwab Book Data Parsing (DONE)
 - Subscribe to NASDAQ_BOOK / LISTED_BOOK via Schwab streaming
-- Log raw messages to understand undocumented data format
-- Implement `parseBookDataToSnapshot()` after format is known
+- Parsed undocumented format: `"2"` = bids, `"3"` = asks, each level `"0"` = price, `"1"` = totalVolume
+- Feeds parsed `OrderBookSnapshot` to bookmap manager
 
-### Phase 3: Heatmap
-- Render Level 2 order book as horizontal colored bars at price levels
-- Bar width/opacity proportional to limit order size
-- Real-time updates as orders are placed/pulled
-- Set `enableBookmapHeatmap = true` to activate
+### Phase 3: 2D Heatmap (DONE)
+- `OrderBookHistory` stores time-series of order book snapshots with binary search for efficient range queries
+- Each time slice paints colored rectangles at each price level, forming horizontal "walls" that grow as orders persist
+- Walls stop growing when orders disappear/are filled; walls thin/lighten when size drops below threshold
+- Color scale: dark blue/black (small) → blue → cyan → green → yellow → orange → bright red (large)
+- Performance optimization: skips sub-pixel slices when zoomed out
+- Auto-fit price range considers both volume dots and heatmap price levels
+- Set `enableBookmapHeatmap = true` to activate (enabled by default)
