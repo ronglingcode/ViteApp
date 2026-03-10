@@ -675,6 +675,7 @@ export const shouldAllowEarlyEntry = (symbol: string, secondsSinceMarketOpen: nu
         if (secondsSinceMarketOpen < 60 * 15) {
             result.allowed = false;
             result.reason = `premarket volume quality: ${volumeQuality}, wait 15 minutes`;
+            result.allowed = true;
             return result;
         }
     }
