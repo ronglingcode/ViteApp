@@ -19,15 +19,15 @@ export const getPriceHistory = async (symbol: string, timeframe: number) => {
     return getBars(symbol, url);
 };
 
-export const getPriceHistoryFromOldDateForHigherTimeframe = async (symbol: string, timeframe: number, 
+export const getPriceHistoryFromOldDateForHigherTimeframe = async (symbol: string, timeframe: number,
     startDate: string, endDate: string) => {
     let apiKey = Secret.massive().apiKey;
     let host = 'https://api.massive.com';
-    
+
     let url = `${host}/v2/aggs/ticker/${symbol}/range/${timeframe}/minute/${startDate}/${endDate}?adjusted=true&extendedHours=true&sort=asc&limit=50000&apiKey=${apiKey}`;
-  
+
     return getBars(symbol, url);
-  };
+};
 
 export const getBars = async (symbol: string, url: string) => {
     const config = {
@@ -58,6 +58,23 @@ export const getBars = async (symbol: string, url: string) => {
     return candles;
 };
 
+export const getSharesOutstanding = async (symbol: string): Promise<number> => {
+    const apiKey = Secret.massive().apiKey;
+    const host = 'https://api.massive.com';
+    const url = `${host}/v3/reference/tickers/${symbol}?apiKey=${apiKey}`;
+    const config = { method: 'GET' };
+    try {
+        const response = await fetch(url, config);
+        const json = await response.json();
+        console.log(json);
+        const sharesOutstanding = json.results?.weighted_shares_outstanding || json.results?.share_class_shares_outstanding || 0;
+        return sharesOutstanding;
+    } catch (err) {
+        console.log(`Failed to get shares outstanding for ${symbol}`, err);
+        return 0;
+    }
+};
+
 /**
  * Get daily candles for the last N days
  * @param symbol - Stock symbol
@@ -69,21 +86,21 @@ export const getDailyCandlesForLastNDays = async (
     symbol: string,
     nDays: number,
     endDateExcluded: string
-  ): Promise<Models.CandlePlus[]> => {
+): Promise<Models.CandlePlus[]> => {
     const apiKey = Secret.massive().apiKey;
     const host = 'https://api.massive.com';
-    
+
     // Calculate start date
     const end = new Date(endDateExcluded);
     end.setDate(end.getDate() - 1);
     const start = new Date(end);
     start.setDate(start.getDate() - nDays - 1);
-    
+
     const startDateStr = TimeHelper.formatDateToYYYYMMDD(start);
     const endDateStr = TimeHelper.formatDateToYYYYMMDD(end);
-    
+
     // Use daily aggregation endpoint
     const url = `${host}/v2/aggs/ticker/${symbol}/range/1/day/${startDateStr}/${endDateStr}?adjusted=true&sort=asc&limit=50000&apiKey=${apiKey}`;
-    
+
     return getBars(symbol, url);
-  };
+};

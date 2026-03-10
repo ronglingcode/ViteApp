@@ -80,6 +80,11 @@ export class GapAndCrap extends Tradebook {
     }
 
     validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
+        let symbolData = Models.getSymbolData(this.symbol);
+        if (symbolData.premktHigh > 0 && entryPrice > symbolData.premktHigh) {
+            Firestore.logError(`entry price ${entryPrice} is above premarket high ${symbolData.premktHigh}`, logTags);
+            return 0;
+        }
         let maxLevelToShort = this.basePlan.aboveThisLevelNoMoreShort;
         if (maxLevelToShort > 0 && entryPrice > maxLevelToShort) {
             Firestore.logError(`entry price ${entryPrice} is above max level to short:${maxLevelToShort}`, logTags);

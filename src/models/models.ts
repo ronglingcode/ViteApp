@@ -180,6 +180,7 @@ export interface BreakoutTradeState {
     adjustedTargetDueToMaxPullback: boolean,
     exitDescription: string,
     closedOutsideRatio: number,
+    stopTightenPhase: 'idle' | 'needs_tighten' | 'done',
 };
 export interface StreamingAccountActivity {
     symbol: string,
@@ -266,6 +267,7 @@ export interface SymbolFundamental {
     symbol: string,
     marketCap: number,
     marketCapFloat: number,
+    sharesOutstanding: number,
 };
 export interface ChartWidgetHtmlContents {
     container: HTMLElement, // chartContainer
@@ -288,6 +290,7 @@ export interface ChartWidgetHtmlContents {
     level1QuoteSize: HTMLElement,
     level1QuoteLargeOrders: HTMLElement,
     timeAndSales: HTMLElement,
+    bookmapPanel: HTMLElement,
 };
 export interface AlgoElements {
     long: HTMLElement,
@@ -363,6 +366,7 @@ export interface SymbolData {
     camPivots: CamarillaPivots,
     allTimeHigh: number,
     previousDayCandle: Candle,
+    sharesOutstanding: number,
 };
 export const getDefaultCamPivots = (): CamarillaPivots => {
     let pivots: CamarillaPivots = {
@@ -1090,6 +1094,7 @@ export const getDefaultSymbolData = () => {
         },
         camPivots: getDefaultCamPivots(),
         allTimeHigh: 0,
+        sharesOutstanding: 0,
         previousDayCandle: {
             symbol: '',
             time: 0 as LightweightCharts.UTCTimestamp,

@@ -21,7 +21,7 @@ export const getStatusForVwapContinuationLongWithPremarketHigh = (symbol: string
     let premktHigh = symbolData.premktHigh;
     let currentPrice = candles[candles.length - 1].close;
     let currentVwap = vwaps[vwaps.length - 1].value;
-    console.log(`${maxCount}: ${currentPrice} ${premktHigh}`);
+    //console.log(`${maxCount}: ${currentPrice} ${premktHigh}`);
     // assume last candle is not closed yet
     if (currentPrice > premktHigh) {
         if (candles.length >= 3) {
@@ -69,7 +69,7 @@ export const getStatusForAboveWaterBreakout = (symbol: string,
     let premktHigh = symbolData.premktHigh;
     let currentPrice = candles[candles.length - 1].close;
     let currentVwap = vwaps[vwaps.length - 1].value;
-    console.log(`${maxCount}: ${currentPrice} ${premktHigh}`);
+    //console.log(`${maxCount}: ${currentPrice} ${premktHigh}`);
     // assume last candle is not closed yet
     if (currentPrice > inflectionLevel) {
         if (candles.length >= 3) {

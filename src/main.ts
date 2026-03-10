@@ -216,11 +216,30 @@ window.TradingApp.TOS.initialize().then(async () => {
             alert(`${symbol} market cap too low, only $ ${marketCap} M`);
             return;
         }
-        MarketData.getFullPriceHistory(symbol, Helper.isFutures(symbol), todayString).then((priceHistory) => {
+        let sharesOutstandingPromise = MarketData.getSharesOutstanding(symbol);
+        MarketData.getFullPriceHistory(symbol, Helper.isFutures(symbol), todayString).then(async (priceHistory) => {
             // populate current chart with today's 1-minute bars
             DB.initialize(symbol, priceHistory.today1MinuteBars, priceHistory.dailyBars);
             Chart.updateAccountUIStatusForSymbol(symbol);
             MarketData.setPreviousDayPremarketVolume(symbol, priceHistory.premarketDollarCollection);
+
+            // check implied market cap threshold
+            await sharesOutstandingPromise;
+            let impliedMarketCapInBillions = MarketData.getImpliedMarketCapInBillions(symbol);
+            if (impliedMarketCapInBillions > 0 && impliedMarketCapInBillions < GlobalSettings.impliedMarketCapThresholdInBillions) {
+                Firestore.logError(`${symbol} blocked: implied market cap $${impliedMarketCapInBillions}B, below $${GlobalSettings.impliedMarketCapThresholdInBillions}B threshold`);
+                Chart.hideChart(symbol);
+                return;
+            }
+
+            // check premarket volume threshold
+            let premarketSharesInMillions = priceHistory.premarketDollarCollection.lastDayShares / 1000000;
+            if (premarketSharesInMillions < GlobalSettings.premarketVolumeThresholdInMillions) {
+                Firestore.logError(`${symbol} blocked: premarket volume ${premarketSharesInMillions.toFixed(2)}M shares, below ${GlobalSettings.premarketVolumeThresholdInMillions}M threshold`);
+                Chart.hideChart(symbol);
+                return;
+            }
+
             const secondsSinceMarketOpen = 0;
             let allowEarlyEntry = Rules.shouldAllowEarlyEntry(symbol, secondsSinceMarketOpen);
             if (!allowEarlyEntry.allowed) {

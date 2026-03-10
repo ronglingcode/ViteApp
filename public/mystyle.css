@@ -176,6 +176,11 @@ span.algo {
     display: flex;
 }
 
+.bookmapPanel {
+    padding: 3px;
+    position: relative;
+}
+
 .sideBar {
     width: 130px;
     flex-direction: column;

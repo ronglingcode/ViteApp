@@ -16,6 +16,7 @@ import * as Broker from '../api/broker';
 import * as GlobalSettings from '../config/globalSettings';
 import * as UI from '../ui/ui';
 import * as BasicIndicators from '../indicators/basicIndicators';
+import * as BookmapManager from '../bookmap/bookmapManager';
 
 // Create a throttled version of cancelAllEntryOrders that executes once per second
 const throttledCancelAllEntryOrders = Helper.executeOncePerInterval(

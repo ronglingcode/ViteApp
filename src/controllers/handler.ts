@@ -18,6 +18,7 @@ import * as TradingState from '../models/tradingState';
 import * as Broker from '../api/broker';
 import * as AdjustExitsHandler from './adjustExitsHandler';
 import { VwapContinuationFailed } from '../tradebooks/singleKeyLevel/vwapContinuationFailed';
+import * as PartialStopDiscipline from './partialStopDisciplineController';
 
 export const cancelKeyPressed = async (symbol: string) => {
     let exitPairs = Models.getExitPairs(symbol);
@@ -241,8 +242,11 @@ export const numberPadPressed = async (symbol: string, keyCode: string) => {
     if (!allowed) {
         return;
     }
+    let isLong = Models.getPositionNetQuantity(symbol) > 0;
     marketOutExitPair(symbol, pair, logTags);
     AdjustExitsHandler.afterAdjustSingleExit(symbol, totalPairsCount);
+    // Delay to allow fill to arrive before checking quantity
+    setTimeout(() => PartialStopDiscipline.checkAndUpdatePhase(symbol, isLong), 2000);
 }
 const marketOutExitPair = async (symbol: string, pair: Models.ExitPair, logTags: Models.LogTags) => {
     let netQ = Models.getPositionNetQuantity(symbol);
@@ -355,6 +359,7 @@ export const adjustAllExits = async (symbol: string, newPrice: number, logTags: 
     }
     let positionIsLong = netQ > 0;
     OrderFlow.adjustExitPairsWithNewPrice(symbol, exitPairs, newPrice, isStopLeg, positionIsLong, logTags);
+    PartialStopDiscipline.checkAndUpdatePhase(symbol, positionIsLong);
 }
 export const setRiskLevel = (symbol: string) => {
     let crosshairPrice = Chart.getCrossHairPrice(symbol);
@@ -527,6 +532,12 @@ const reloadPartial = async (
         return;
     }
     if (!EntryRulesChecker.checkPartialEntry(symbol, isLong, quantity, entryPrice, stopOutPrice, logTags)) {
+        return;
+    }
+
+    if (PartialStopDiscipline.getPhase(symbol, isLong) === 'needs_tighten') {
+        Firestore.logError(`Cannot add to ${symbol}: tighten stop first`, logTags);
+        Helper.speak('tighten your stop before adding');
         return;
     }
 

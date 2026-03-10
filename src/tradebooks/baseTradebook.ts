@@ -82,6 +82,7 @@ export abstract class Tradebook {
         return this.enabled;
     }
 
+
     includeFirstNewHighEntry(): boolean {
         return false;
     }

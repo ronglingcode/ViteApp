@@ -8,6 +8,7 @@ import * as Chart from '../ui/chart';
 import * as ExitRulesCheckerNew from './exitRulesCheckerNew';
 import * as TraderFocus from './traderFocus';
 import * as QuestionPopup from '../ui/questionPopup';
+import * as PartialStopDiscipline from './partialStopDisciplineController';
 
 export const onAdjustExits = (symbol: string) => {
     let w = Models.getChartWidget(symbol);
@@ -70,6 +71,8 @@ export const adjustAllStopExitsWithoutRule = async (symbol: string, newPrice: nu
 
     OrderFlow.moveAllStopExitsToNewPrice(symbol, newUpdatedPrice, logTags);
     onAdjustExits(symbol);
+    let positionIsLong = Models.getPositionNetQuantity(symbol) > 0;
+    PartialStopDiscipline.checkAndUpdatePhase(symbol, positionIsLong);
 };
 
 export const tryAdjustSingleLimitExit = (symbol: string, positionIsLong: boolean, keyIndex: number,
@@ -84,6 +87,7 @@ export const tryAdjustSingleLimitExit = (symbol: string, positionIsLong: boolean
     }
     OrderFlow.adjustExitPairsWithNewPrice(symbol, [pair], newPrice, false, positionIsLong, logTags);
     afterAdjustSingleExit(symbol, totalPairsCount);
+    PartialStopDiscipline.checkAndUpdatePhase(symbol, positionIsLong);
 }
 
 
@@ -99,6 +103,7 @@ export const tryAdjustSingleStopExit = (symbol: string, positionIsLong: boolean,
     }
     OrderFlow.adjustExitPairsWithNewPrice(symbol, [pair], newPrice, true, positionIsLong, logTags);
     afterAdjustSingleExit(symbol, totalPairsCount);
+    PartialStopDiscipline.checkAndUpdatePhase(symbol, positionIsLong);
 }
 
 export const afterAdjustSingleExit = (symbol: string, totalPairsCount: number) => {
