@@ -21,6 +21,7 @@ import { GapGiveAndGo } from "./gapGiveAndGo";
 import { GapDownAndGoDown } from "./gapDownAndGoDown";
 import { GapDownAndGoUp } from "./gapDownAndGoUp";
 import { BookmapBigWallBreakout } from "./bookmapBigWallBreakout";
+import { BookmapBigWallBreakdownFailLong } from "./bookmapBigWallBreakdownFailLong";
 
 export const createAllTradebooks = (symbol: string) => {
     let plan = TradingPlans.getTradingPlans(symbol);
@@ -116,6 +117,10 @@ export const createAllTradebooks = (symbol: string) => {
     if (plan.short.bookmapBigWallBreakoutPlan) {
         let bmWallShort = new BookmapBigWallBreakout(symbol, false, plan.short.bookmapBigWallBreakoutPlan);
         tradebooksMap.set(bmWallShort.getID(), bmWallShort);
+    }
+    if (plan.long.bookmapBigWallBreakdownFailLongPlan) {
+        let bmBreakdownFailLong = new BookmapBigWallBreakdownFailLong(symbol, plan.long.bookmapBigWallBreakdownFailLongPlan);
+        tradebooksMap.set(bmBreakdownFailLong.getID(), bmBreakdownFailLong);
     }
     return tradebooksMap;
 }

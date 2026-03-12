@@ -1,0 +1,127 @@
+import { Tradebook } from './baseTradebook';
+import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
+import * as Chart from '../ui/chart';
+import * as Models from '../models/models';
+import * as Firestore from '../firestore';
+import * as TradebookUtil from './tradebookUtil';
+import * as Helper from '../utils/helper';
+import * as EntryRulesChecker from '../controllers/entryRulesChecker';
+
+/**
+ * Long-only tradebook: go long when a big wall breakdown fails (price reclaims above the wall).
+ */
+export class BookmapBigWallBreakdownFailLong extends Tradebook {
+    public static readonly bookmapBigWallBreakdownFailLong: string = 'BookmapBigWallBreakdownFailLong';
+    private basePlan: TradingPlansModels.BookmapBigWallBreakdownFailLongPlan;
+
+    public getID(): string {
+        return BookmapBigWallBreakdownFailLong.bookmapBigWallBreakdownFailLong;
+    }
+
+    constructor(symbol: string, basePlan: TradingPlansModels.BookmapBigWallBreakdownFailLongPlan) {
+        super(symbol, true, 'Long Bookmap Big Wall Breakdown Fail', 'BM Wall Fail');
+        this.basePlan = basePlan;
+        this.enableByDefault = true;
+    }
+
+    refreshLiveStats(): void {
+        let currentPrice = Models.getCurrentPrice(this.symbol);
+        let distance = Math.abs(currentPrice - this.basePlan.bigWallLevel);
+        let atr = Models.getAtr(this.symbol).average;
+        let distanceInAtr = (distance / atr * 100).toFixed(0);
+        let above = currentPrice > this.basePlan.bigWallLevel ? 'above' : 'below';
+        Helper.updateHtmlIfChanged(this.htmlStats, `wall: ${this.basePlan.bigWallLevel}, ${above}, dist: ${distanceInAtr}% atr`);
+    }
+
+    triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {
+        let symbol = this.symbol;
+        let logTagName = '_bookmap_big_wall_breakdown_fail_long';
+        let logTags = Models.generateLogTags(symbol, `${symbol}_${logTagName}`);
+
+        let entryPrice = Chart.getBreakoutEntryPrice(symbol, true, useMarketOrder, Models.getDefaultEntryParameters());
+
+        if (entryPrice < this.basePlan.bigWallLevel) {
+            Firestore.logError(`entry price ${entryPrice} is below big wall level ${this.basePlan.bigWallLevel}`, logTags);
+            return 0;
+        }
+
+        let stopOutPrice = Chart.getStopLossPrice(symbol, true, true, null);
+        let riskLevelPrice = Models.chooseRiskLevel(symbol, true, entryPrice, stopOutPrice, this.basePlan.defaultRiskLevels);
+
+        let allowedSize = EntryRulesChecker.checkBasicGlobalEntryRules(
+            symbol, true, entryPrice, stopOutPrice, useMarketOrder,
+            this.basePlan, false, logTags);
+
+        if (allowedSize === 0) {
+            Firestore.logError(`${symbol} not allowed entry`, logTags);
+            return 0;
+        }
+
+        let planCopy = JSON.parse(JSON.stringify(this.basePlan)) as TradingPlansModels.BasePlan;
+        this.submitEntryOrdersBase(
+            dryRun, useMarketOrder, entryPrice, stopOutPrice, riskLevelPrice, allowedSize, planCopy, logTags);
+
+        return allowedSize;
+    }
+
+    getTradeManagementInstructions(): Models.TradeManagementInstructions {
+        let instructions = this.getTradeManagementInstructionsForLong();
+        TradebookUtil.setlevelToAddInstructions(this.symbol, true, instructions);
+        TradebookUtil.setFinalTargetInstructions(this.symbol, true, instructions);
+
+        let conditionsToFail = ["price loses big wall level again"];
+        let result: Models.TradeManagementInstructions = {
+            mapData: instructions,
+            conditionsToFail: conditionsToFail,
+        };
+        return result;
+    }
+
+    getTradeManagementInstructionsForLong(): Map<string, string[]> {
+        return new Map<string, string[]>([
+            ['conditions to fail', [
+                'price loses big wall level, closed candle below or breakdown with volume',
+            ]],
+            ['conditions to trim', [
+                'deep pullback toward big wall level',
+            ]],
+            ['add or re-entry', [
+                'reclaim of big wall level after pullback',
+            ]],
+            ['partial targets', [
+                "10-30%: first push away from wall",
+                "30-60%: second leg",
+                "60-90%: extended move, 1+ ATR from wall",
+            ]]
+        ]);
+    }
+
+    refreshState(): void {
+    }
+
+    transitionToState(newState: any): void {
+    }
+
+    getTradebookDoc(): string {
+        return "";
+    }
+
+    getEntryMethods(): string[] {
+        return ['default'];
+    }
+
+    getEligibleEntryParameters(): Models.TradebookEntryParameters {
+        return {
+            useCurrentCandleHigh: false,
+            useFirstNewHigh: false,
+            useMarketOrderWithTightStop: false,
+        };
+    }
+
+    getTightStopLevels(): Models.DisplayLevel[] {
+        return [];
+    }
+
+    onNewTimeSalesData(): void {
+    }
+}

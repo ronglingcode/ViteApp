@@ -865,6 +865,10 @@ const drawRiskLevelForLong = (symbol: string, widget: Models.ChartWidget) => {
         defaultRiskLevels = longPlan.gapGiveAndGoPlan.defaultRiskLevels;
     } else if (longPlan.gapDownAndGoUpPlan) {
         defaultRiskLevels = longPlan.gapDownAndGoUpPlan.defaultRiskLevels;
+    } else if (longPlan.bookmapBigWallBreakoutPlan) {
+        defaultRiskLevels = longPlan.bookmapBigWallBreakoutPlan.defaultRiskLevels;
+    } else if (longPlan.bookmapBigWallBreakdownFailLongPlan) {
+        defaultRiskLevels = longPlan.bookmapBigWallBreakdownFailLongPlan.defaultRiskLevels;
     } else if (longPlan.reversalPlan && longPlan.reversalPlan.defaultRiskLevels) {
         defaultRiskLevels = longPlan.reversalPlan.defaultRiskLevels;
     }
