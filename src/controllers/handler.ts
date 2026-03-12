@@ -18,6 +18,7 @@ import * as TradingState from '../models/tradingState';
 import * as Broker from '../api/broker';
 import * as AdjustExitsHandler from './adjustExitsHandler';
 import { VwapContinuationFailed } from '../tradebooks/singleKeyLevel/vwapContinuationFailed';
+import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import * as PartialStopDiscipline from './partialStopDisciplineController';
 
 export const cancelKeyPressed = async (symbol: string) => {
@@ -533,6 +534,20 @@ const reloadPartial = async (
     }
     if (!EntryRulesChecker.checkPartialEntry(symbol, isLong, quantity, entryPrice, stopOutPrice, logTags)) {
         return;
+    }
+
+    let breakoutTradeState = TradingState.getBreakoutTradeState(symbol, isLong);
+    let tradebookID = breakoutTradeState.submitEntryResult.tradeBookID;
+    if (tradebookID) {
+        let activeTradebook = TradebooksManager.getTradebookByID(symbol, tradebookID);
+        if (activeTradebook) {
+            let addCheck = activeTradebook.getDisallowedReasonToAddPartial(symbol, logTags);
+            if (!addCheck.allowed) {
+                Firestore.logError(`Cannot add to ${symbol}: ${addCheck.reason}`, logTags);
+                Helper.speak(`warning state, no adds, tighten stop`);
+                return;
+            }
+        }
     }
 
     if (PartialStopDiscipline.getPhase(symbol, isLong) === 'needs_tighten') {

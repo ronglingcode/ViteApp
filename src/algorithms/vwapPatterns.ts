@@ -335,6 +335,23 @@ export const hasTwoConsecutiveCandlesAgainstVwap = (symbol: string, isLong: bool
     }
     return false;
 }
+
+export const hasMostRecentClosedCandleAgainstVwap = (symbol: string, isLong: boolean, timeframe: number) => {
+    let candles = Models.getCandlesSinceOpenForTimeframe(symbol, timeframe);
+    let vwaps = Models.getVwapsSinceOpenForTimeframe(symbol, timeframe);
+    if (candles.length < 2 || vwaps.length < 2) {
+        return false;
+    }
+    let maxCount = Math.min(candles.length, vwaps.length);
+    let lastClosedIndex = maxCount - 2;
+    if (lastClosedIndex < 0) {
+        return false;
+    }
+    let candle = candles[lastClosedIndex];
+    let vwap = vwaps[lastClosedIndex].value;
+    return isLong ? candle.close < vwap : candle.close > vwap;
+}
+
 export const getNumberOfCandlesClosedAgainstVwap = (symbol: string, isLong: boolean, timeframe: number) => {
     let candles = Models.getCandlesSinceOpenForTimeframe(symbol, timeframe);
     let vwaps = Models.getVwapsSinceOpenForTimeframe(symbol, timeframe);

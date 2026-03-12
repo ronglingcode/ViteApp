@@ -27,6 +27,7 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
     public static readonly vwapContinuationLong: string = 'VwapContinuationLong';
     public static readonly vwapContinuationShort: string = 'VwapContinuationShort';
     private highOfDayToBreakout: number = 0;
+    private vwapWarningActive: boolean = false;
     public getID(): string {
         return this.isLong ? VwapContinuation.vwapContinuationLong : VwapContinuation.vwapContinuationShort;
     }
@@ -42,6 +43,33 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
 
     }
 
+    private isVwapWarningActiveNow(): boolean {
+        return VwapPatterns.hasMostRecentClosedCandleAgainstVwap(this.symbol, this.isLong, 1);
+    }
+
+    private syncVwapWarningState(shouldSpeak: boolean): void {
+        let isWarning = this.isVwapWarningActiveNow();
+        if (this.vwapWarningActive === isWarning) {
+            return;
+        }
+        this.vwapWarningActive = isWarning;
+        if (isWarning && shouldSpeak && this.hasPositionForTradebook()) {
+            let msg = this.isLong
+                ? 'warning, last candle closed below vwap, no adds, tighten stop'
+                : 'warning, last candle closed above vwap, no adds, tighten stop';
+            Helper.speak(msg);
+        }
+    }
+
+    private getVwapWarningText(): string {
+        if (!this.vwapWarningActive) {
+            return '';
+        }
+        return this.isLong
+            ? 'warning: last M1 close below VWAP'
+            : 'warning: last M1 close above VWAP';
+    }
+
     /**
      * reversal near vwap, min distance to vwap
      */
@@ -52,7 +80,8 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         }
         let symbol = this.symbol;
         let isLong = this.isLong;
-        let candles = Models.getUndefinedCandlesSinceOpen(symbol);
+        this.syncVwapWarningState(false);
+        let candles = Models.getCandlesFromM1SinceOpen(symbol);
         let vwaps = Models.getVwapsSinceOpen(symbol);
         if (candles.length == 0) {
             let currentPrice = Models.getCurrentPrice(symbol);
@@ -73,6 +102,10 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         let hasRedToGreenText = LiveStats.getLiveStatsForReversalMove(this.isLong, hasRedToGreen);
         let liveStats = this.getCommonLiveStats();
         liveStats += `min dis2vwap: ${minDistanceToVwapText}, ${hasRedToGreenText}`;
+        let warningText = this.getVwapWarningText();
+        if (warningText.length > 0) {
+            liveStats += `, ${warningText}`;
+        }
         Helper.updateHtmlIfChanged(this.htmlStats, liveStats);
     }
 
@@ -92,6 +125,13 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         if (!entryMethod) {
             Firestore.logError(`${this.symbol} entry method is missing`, logTags);
             return 0;
+        }
+        this.syncVwapWarningState(false);
+        if (this.vwapWarningActive) {
+            let side = this.isLong ? 'long' : 'short';
+            Firestore.logError(`${this.symbol} warning state: most recent M1 candle closed on other side of vwap, no new ${side} entries`, logTags);
+            Helper.speak(`warning state, no new ${side} entries`);
+
         }
         let timeframe = Models.getTimeframeFromEntryMethod(entryMethod);
         let hasTwoCandlesAgainstVwap = VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(this.symbol, this.isLong, timeframe);
@@ -155,6 +195,7 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         if (!this.isEnabled()) {
             return;
         }
+        this.syncVwapWarningState(false);
         if (this.state === TradebookState.OBSERVING) {
             this.checkForPosition();
         } else if (this.state === TradebookState.MOMENTUM) {
@@ -228,7 +269,9 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         }
         TradebookUtil.setlevelToAddInstructions(this.symbol, this.isLong, instructions);
         TradebookUtil.setFinalTargetInstructions(this.symbol, this.isLong, instructions);
-        let conditionsToFail = this.isLong ? ["lose vwap"] : ["reclaim vwap"];
+        let conditionsToFail = this.isLong
+            ? ["lose vwap"]
+            : ["warning: most recent M1 close above vwap", "failed only if price cannot re-accept below vwap"];
         let result: Models.TradeManagementInstructions = {
             mapData: instructions,
             conditionsToFail: conditionsToFail,
@@ -271,8 +314,13 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
                 "make sure it didn't stay above vwap for too long",
                 "mark the most recent retest pop to vwap"
             ]], [
+            'warning state', [
+                "most recent M1 candle closes above vwap: no adds, no new entries",
+                "tighten stop while warning is active",
+                "warning clears only after a new candle closes back below vwap"
+            ]], [
             'conditions to fail', [
-                "reclaim vwap: a new candle (M1, M5, M15) close above vwap",
+                "reclaim vwap warning: a new candle (M1, M5, M15) close above vwap",
                 "reclaim vwap: pop to vwap and rejected, get above the rejection high"
             ]], [
             'conditions to trim', [
@@ -297,6 +345,21 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
     getTightStopLevels(): Models.DisplayLevel[] {
         let tightStopLevels = TradebookUtil.getTightStopLevelsForTrend(this.symbol, this.isLong);
         return tightStopLevels;
+    }
+
+    getDisallowedReasonToAddPartial(symbol: string, logTags: Models.LogTags): Models.CheckRulesResult {
+        this.syncVwapWarningState(false);
+        if (this.vwapWarningActive) {
+            let side = this.isLong ? 'below' : 'above';
+            return {
+                allowed: false,
+                reason: `${symbol} warning state: last M1 close ${side} vwap, no adds. Tighten stop first.`,
+            };
+        }
+        return {
+            allowed: true,
+            reason: 'warning not active',
+        };
     }
 
     getDisallowedReasonToAdjustSingleLimitOrder(
@@ -411,6 +474,7 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         ];
     }
     onNewCandleClose(): void {
+        this.syncVwapWarningState(true);
         this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M1);
         this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M5);
         this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M15);
@@ -418,6 +482,7 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
     }
 
     onNewTimeSalesData(): void {
+        this.syncVwapWarningState(false);
         this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M1);
         this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M5);
         this.updateEntryMethodButtonStatus(Models.TimeFrameEntryMethod.M15);
@@ -427,6 +492,11 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         let button = this.getButtonForLabel(buttonLabel);
         if (!button) {
             Firestore.logError(`${this.symbol} button not found for ${buttonLabel}`);
+            return;
+        }
+        this.syncVwapWarningState(false);
+        if (this.vwapWarningActive) {
+            TradebookUtils.setButtonStatus(button, "degraded");
             return;
         }
         let currentPrice = Models.getCurrentPrice(this.symbol);
