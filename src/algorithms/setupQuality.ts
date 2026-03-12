@@ -1,6 +1,9 @@
 import * as Models from '../models/models';
 const oneMillion = 1000 * 1000;
 export const getPremarketVolumeQuality = (symbol: string, premarketDollar: Models.PremarketDollarCollection) => {
+    if (premarketDollar.lastDayShares >= oneMillion * 0.9) {
+        return Models.PremarketVolumeQuality.Elevated;
+    }
     if (premarketDollar.lastDayDollar < 20 * oneMillion) {
         return Models.PremarketVolumeQuality.TooLow;
     }
@@ -12,9 +15,6 @@ export const getPremarketVolumeQuality = (symbol: string, premarketDollar: Model
         return getPremarketVolumeQualityForRetailFavorites(symbol, premarketDollar);
     }
     if (premarketDollar.lastDayDollar >= 999 * oneMillion) {
-        return Models.PremarketVolumeQuality.Elevated;
-    }
-    if (premarketDollar.lastDayShares >= oneMillion) {
         return Models.PremarketVolumeQuality.Elevated;
     }
     if (premarketDollar.rvol >= 2.4) {
