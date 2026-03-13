@@ -80,11 +80,6 @@ export class PremarketHighRejection extends Tradebook {
     }
 
     validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
-        let symbolData = Models.getSymbolData(this.symbol);
-        if (symbolData.premktHigh > 0 && entryPrice > symbolData.premktHigh) {
-            Firestore.logError(`entry price ${entryPrice} is above premarket high ${symbolData.premktHigh}`, logTags);
-            return 0;
-        }
         let maxLevelToShort = this.basePlan.aboveThisLevelNoMoreShort;
         if (maxLevelToShort > 0 && entryPrice > maxLevelToShort) {
             Firestore.logError(`entry price ${entryPrice} is above max level to short:${maxLevelToShort}`, logTags);
@@ -95,6 +90,12 @@ export class PremarketHighRejection extends Tradebook {
         if (minLevelToShort > 0) {
             if (entryPrice > currentVwap && entryPrice < minLevelToShort) {
                 Firestore.logError(`below this level only vwap continuation: entry price ${entryPrice} is above vwap:${currentVwap} and below min level to short:${minLevelToShort}`, logTags);
+                return 0;
+            }
+        }
+
+        if (this.familyName == Models.TradebookFamilyName.GapAndCrap) {
+            if (!EntryRulesChecker.allowEntryRulesForGapAndCrap(this.symbol, entryPrice, logTags)) {
                 return 0;
             }
         }
