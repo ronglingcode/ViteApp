@@ -322,15 +322,14 @@ export const startHistoricalFeed = async (symbol: string): Promise<void> => {
     activeFeeds.set(symbol, abortController);
 
     try {
-        // Get the last trading day (skip weekends)
+        // Fetch last trading day's full-depth data (T+1 delayed — free tier)
+        // Schwab live streaming handles today's order book data
         let yesterday = getLastTradingDay();
-        let dateStr = formatDate(yesterday);
+        let eastern = toEasternTime(yesterday);
+        let start = `${eastern.date}T04:00:00${eastern.offset}`;
+        let end = `${eastern.date}T20:00:00${eastern.offset}`;
 
-        // Fetch a 10-minute window around market open for testing
-        // Full day would be too much data; expand as needed
-        let start = `${dateStr}T09:30:00`;
-        let end = `${dateStr}T09:40:00`;
-
+        console.log(`[Databento] Requesting ${symbol}: ${start} → ${end}`);
         await fetchBookData(symbol, start, end, abortController.signal);
     } catch (error: any) {
         if (error.name === 'AbortError') {
@@ -367,9 +366,7 @@ export const stopAllFeeds = (): void => {
 /** Get the last trading day (skip weekends) */
 const getLastTradingDay = (): Date => {
     let date = new Date();
-    // Go back to yesterday
     date.setDate(date.getDate() - 1);
-    // Skip weekends
     let day = date.getDay();
     if (day === 0) date.setDate(date.getDate() - 2); // Sunday → Friday
     if (day === 6) date.setDate(date.getDate() - 1); // Saturday → Friday
@@ -382,4 +379,19 @@ const formatDate = (date: Date): string => {
     let mm = String(date.getMonth() + 1).padStart(2, '0');
     let dd = String(date.getDate()).padStart(2, '0');
     return `${yyyy}-${mm}-${dd}`;
+};
+
+/** Convert a Date to Eastern Time components with UTC offset */
+const toEasternTime = (date: Date): { date: string; time: string; offset: string } => {
+    let eastern = new Date(date.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+    let yyyy = eastern.getFullYear();
+    let mo = String(eastern.getMonth() + 1).padStart(2, '0');
+    let dd = String(eastern.getDate()).padStart(2, '0');
+    let hh = String(eastern.getHours()).padStart(2, '0');
+    let mm = String(eastern.getMinutes()).padStart(2, '0');
+    let ss = String(eastern.getSeconds()).padStart(2, '0');
+    // Determine if EDT (-04:00) or EST (-05:00) by comparing UTC and Eastern hours
+    let diff = (date.getUTCHours() - eastern.getHours() + 24) % 24;
+    let offset = diff === 4 ? '-04:00' : '-05:00';
+    return { date: `${yyyy}-${mo}-${dd}`, time: `${hh}:${mm}:${ss}`, offset };
 };
