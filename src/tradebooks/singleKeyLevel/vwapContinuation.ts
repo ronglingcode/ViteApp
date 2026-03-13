@@ -21,6 +21,7 @@ import * as ShortDocs from '../tradebookDocs/vwapContinuationShort';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
 import * as TradebookUtils from '../tradebookUtil';
 import * as Rules from '../../algorithms/rules';
+import * as EntryRulesChecker from '../../controllers/entryRulesChecker';
 
 export class VwapContinuation extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
@@ -35,6 +36,10 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan) {
         let tradebookName = isLong ? 'Long VWAP Continuation' : 'Short VWAP Continuation';
         let buttonLabel = isLong ? 'VWAP Cont' : 'VWAP Cont';
+        if (familyName == Models.TradebookFamilyName.GapAndCrap) {
+            tradebookName = 'Gap and Crap Short VWAP Cont';
+            buttonLabel = 'Gap&Crp VWAP Cont';
+        }
         super(familyName, symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel)
         this.init()
     }
@@ -186,6 +191,11 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
             return 0;
         }
 
+        if (this.familyName == Models.TradebookFamilyName.GapAndCrap) {
+            if (!EntryRulesChecker.allowEntryRulesForGapAndCrap(this.symbol, entryPrice, logTags)) {
+                return 0;
+            }
+        }
         let allowedSize = CommonRules.validateCommonEntryRules(
             this.symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
         return allowedSize;

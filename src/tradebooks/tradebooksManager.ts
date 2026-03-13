@@ -65,6 +65,20 @@ export const createAllTradebooks = (symbol: string) => {
 
         let openFlush = new OpenFlush('', symbol, false, keyLevel, shortPlan);
         tradebooksMap.set(openFlush.getID(), openFlush);
+
+        if (plan.short.gapAndCrapPlan) {
+            let gapAndCrap = new GapAndCrap('', symbol, false, plan.short.gapAndCrapPlan);
+            tradebooksMap.set(gapAndCrap.getID(), gapAndCrap);
+            let maxPrice = plan.short.gapAndCrapPlan.aboveThisLevelNoMoreShort;
+            let maxPriceKeyLevel: TradingPlansModels.LevelArea = {
+                high: maxPrice,
+                low: maxPrice
+            };
+            let gapAndCrapVwapContinuation = new VwapContinuation(Models.TradebookFamilyName.GapAndCrap, symbol, false, maxPriceKeyLevel, shortPlan);
+            tradebooksMap.set(gapAndCrapVwapContinuation.getID(), gapAndCrapVwapContinuation);
+
+
+        }
     }
     if (plan.long.vwapScalpPlan) {
         let vwapScalp = new VwapScalp('', symbol, true, plan.long.vwapScalpPlan);
@@ -90,10 +104,7 @@ export const createAllTradebooks = (symbol: string) => {
         let gapAndCrapAcceleration = new GapAndCrapAcceleration('', symbol, false, plan.short.gapAndCrapAccelerationPlan);
         tradebooksMap.set(gapAndCrapAcceleration.getID(), gapAndCrapAcceleration);
     }
-    if (plan.short.gapAndCrapPlan) {
-        let gapAndCrap = new GapAndCrap('', symbol, false, plan.short.gapAndCrapPlan);
-        tradebooksMap.set(gapAndCrap.getID(), gapAndCrap);
-    }
+
     if (plan.long.gapAndGoPlan) {
         let gapAndGo = new GapAndGo('', symbol, true, plan.long.gapAndGoPlan);
         tradebooksMap.set(gapAndGo.getID(), gapAndGo);
