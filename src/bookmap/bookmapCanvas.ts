@@ -1,4 +1,5 @@
 import type { OrderBookSnapshot, BookmapConfig } from './bookmapModels';
+import type { BidAskPoint } from './orderBookHistory';
 import { DEFAULT_BOOKMAP_CONFIG } from './bookmapModels';
 import { TradeClusterer } from './tradeClusterer';
 import { OrderBookHistory } from './orderBookHistory';
@@ -29,6 +30,7 @@ export class BookmapCanvas {
 
     // Layout constants
     private priceAxisWidth: number = 60;
+    private cobWidth: number = 80;
     private timeAxisHeight: number = 20;
     private bgColor: string = '#1a1a2e';
     private gridColor: string = '#333';
@@ -102,7 +104,7 @@ export class BookmapCanvas {
     // ============================================
 
     private get chartWidth(): number {
-        return (this.canvas.width / (window.devicePixelRatio || 1)) - this.priceAxisWidth;
+        return (this.canvas.width / (window.devicePixelRatio || 1)) - this.priceAxisWidth - this.cobWidth;
     }
 
     private get chartHeight(): number {
@@ -265,6 +267,7 @@ export class BookmapCanvas {
         if (this.config.heatmapEnabled) {
             this.bookHistory.addSnapshot(orderBook);
         }
+        this.bookHistory.addBidAskPoint(orderBook);
         this.needsRedraw = true;
     }
 
@@ -307,13 +310,15 @@ export class BookmapCanvas {
         }
 
         this.drawVolumeDots();
+        this.drawBidAskLines();
         this.drawCrosshair();
 
         this.ctx.restore();
 
-        // Draw axes
+        // Draw axes and sidebar
         this.drawPriceAxis(totalHeight);
         this.drawTimeAxis(totalWidth);
+        this.drawCOBHistogram(totalHeight);
     }
 
     private fitPriceToVisibleClusters(): void {
@@ -623,6 +628,149 @@ export class BookmapCanvas {
         }
 
         return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    // ============================================
+    // Bid/Ask Lines
+    // ============================================
+
+    private drawBidAskLines(): void {
+        let points = this.bookHistory.getBidAskPointsInRange(this.timeFrom, this.timeTo);
+        if (points.length < 2) return;
+
+        this.drawSteppedLine(points, 'bid', 'rgba(0, 200, 83, 0.9)');
+        this.drawSteppedLine(points, 'ask', 'rgba(255, 23, 68, 0.9)');
+    }
+
+    private drawSteppedLine(points: BidAskPoint[], side: 'bid' | 'ask', color: string): void {
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = 1.5;
+        this.ctx.beginPath();
+
+        let prevY: number | null = null;
+
+        for (let i = 0; i < points.length; i++) {
+            let price = side === 'bid' ? points[i].bestBid : points[i].bestAsk;
+            if (price === null) {
+                prevY = null;
+                continue;
+            }
+
+            let x = this.timeToX(points[i].timestamp);
+            let y = this.priceToY(price);
+
+            if (prevY === null) {
+                // Start of a new segment
+                this.ctx.moveTo(x, y);
+            } else {
+                // Stepped: horizontal at previous price to current x, then vertical to new price
+                this.ctx.lineTo(x, prevY);
+                this.ctx.lineTo(x, y);
+            }
+
+            prevY = y;
+        }
+
+        this.ctx.stroke();
+    }
+
+    // ============================================
+    // COB (Current Order Book) Histogram
+    // ============================================
+
+    private drawCOBHistogram(totalHeight: number): void {
+        let cobX = this.chartWidth + this.priceAxisWidth;
+
+        // Background
+        this.ctx.fillStyle = this.bgColor;
+        this.ctx.fillRect(cobX, 0, this.cobWidth, totalHeight);
+
+        // Left border
+        this.ctx.strokeStyle = '#444';
+        this.ctx.lineWidth = 1;
+        this.ctx.beginPath();
+        this.ctx.moveTo(cobX, 0);
+        this.ctx.lineTo(cobX, this.chartHeight);
+        this.ctx.stroke();
+
+        // Header label
+        this.ctx.fillStyle = this.textColor;
+        this.ctx.font = '9px monospace';
+        this.ctx.textAlign = 'center';
+
+        if (!this.orderBook) return;
+
+        // Aggregate levels into $0.10 price buckets
+        let bucketSize = 0.10;
+        let bidBuckets = new Map<number, number>(); // bucketPrice → totalSize
+        let askBuckets = new Map<number, number>();
+
+        for (let level of this.orderBook.bids) {
+            if (level.size <= 0) continue;
+            let bucket = Math.round(level.price / bucketSize) * bucketSize;
+            bidBuckets.set(bucket, (bidBuckets.get(bucket) || 0) + level.size);
+        }
+        for (let level of this.orderBook.asks) {
+            if (level.size <= 0) continue;
+            let bucket = Math.round(level.price / bucketSize) * bucketSize;
+            askBuckets.set(bucket, (askBuckets.get(bucket) || 0) + level.size);
+        }
+
+        // Compute threshold: median of all bucket sizes
+        let allBucketSizes: number[] = [];
+        for (let size of bidBuckets.values()) allBucketSizes.push(size);
+        for (let size of askBuckets.values()) allBucketSizes.push(size);
+        if (allBucketSizes.length === 0) return;
+
+        allBucketSizes.sort((a, b) => a - b);
+        let medianIdx = Math.floor(allBucketSizes.length * 0.5);
+        let threshold = allBucketSizes[medianIdx];
+
+        // Find max size for scaling bars
+        let maxSize = 0;
+        for (let size of bidBuckets.values()) {
+            if (size >= threshold && size > maxSize) maxSize = size;
+        }
+        for (let size of askBuckets.values()) {
+            if (size >= threshold && size > maxSize) maxSize = size;
+        }
+        if (maxSize === 0) return;
+
+        let priceRange = this.priceTo - this.priceFrom;
+        if (priceRange <= 0) return;
+        let rowHeight = Math.max(2, (this.chartHeight / priceRange) * bucketSize);
+        let barMaxWidth = this.cobWidth - 4; // 2px padding each side
+
+        // Draw bid buckets (green)
+        this.drawCOBBars(bidBuckets, threshold, maxSize, cobX, rowHeight, barMaxWidth, 'rgba(0, 200, 83, 0.7)');
+        // Draw ask buckets (red)
+        this.drawCOBBars(askBuckets, threshold, maxSize, cobX, rowHeight, barMaxWidth, 'rgba(255, 23, 68, 0.7)');
+    }
+
+    private drawCOBBars(
+        buckets: Map<number, number>, threshold: number, maxSize: number,
+        cobX: number, rowHeight: number, barMaxWidth: number, color: string
+    ): void {
+        for (let [price, size] of buckets) {
+            if (size < threshold) continue;
+
+            let y = this.priceToY(price);
+            if (y < -rowHeight || y > this.chartHeight + rowHeight) continue;
+
+            let barWidth = (size / maxSize) * barMaxWidth;
+
+            this.ctx.fillStyle = color;
+            this.ctx.fillRect(cobX + 2, y - rowHeight / 2, barWidth, rowHeight);
+
+            // Size label in lots (÷100)
+            let lots = Math.round(size / 100);
+            if (lots > 0) {
+                this.ctx.fillStyle = this.textColor;
+                this.ctx.font = '9px monospace';
+                this.ctx.textAlign = 'left';
+                this.ctx.fillText(String(lots), cobX + 4, y + 3);
+            }
+        }
     }
 
     // ============================================

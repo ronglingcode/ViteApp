@@ -17,6 +17,7 @@ Uses a **pure canvas chart** (no TradingView LWC) for continuous time axis rende
   - Auto-scroll to keep latest trades visible
   - Volume dot rendering with sqrt-scaled radius
   - Heatmap rendering for Level 2 order book (when enabled)
+  - Bid/ask stepped lines — green (best large bid) and red (best large ask) over time
 
 - `bookmapManager.ts` — Per-symbol instance management. Entry points:
   - `initialize(symbol, chartWidth)` — creates bookmap panel
@@ -39,9 +40,11 @@ Uses a **pure canvas chart** (no TradingView LWC) for continuous time axis rende
   - Subscribes to `NASDAQ_BOOK` and `LISTED_BOOK` streaming services
   - Parses raw book data into `OrderBookSnapshot` and feeds to bookmap manager
 
-- `orderBookHistory.ts` — Time-series storage for heatmap rendering
-  - Stores `BookSlice` entries (timestamp + Map<price, size>)
-  - Binary search for efficient range queries (`getSlicesInRange`)
+- `orderBookHistory.ts` — Time-series storage for heatmap and bid/ask lines
+  - Stores `BookSlice` entries (timestamp + Map<price, size>) for heatmap
+  - Stores `BidAskPoint` entries (timestamp + bestBid/bestAsk) for bid/ask lines
+  - Rolling 90th percentile threshold across recent snapshots filters out small orders
+  - Binary search for efficient range queries (`getSlicesInRange`, `getBidAskPointsInRange`)
   - Configurable max history size with automatic pruning
 
 - `../api/databento/bookData.ts` — Databento historical data (MBP-10 or MBO)
@@ -110,6 +113,20 @@ BookmapManager.initialize() → DatabentoBookData.startHistoricalFeed()
                               BookmapManager.onOrderBookUpdate() → same pipeline
 ```
 
+### Bid/Ask Lines (order book — same sources as heatmap)
+```
+OrderBookSnapshot (from Schwab live or Databento historical)
+        ↓
+BookmapManager.onOrderBookUpdate()
+        ↓
+OrderBookHistory.addBidAskPoint()
+  - feeds sizes into rolling buffer (last 5000 samples)
+  - recalculates 90th percentile threshold every 2s
+  - finds highest bid and lowest ask with size >= threshold
+        ↓
+BookmapCanvas.drawBidAskLines() → green (bid) and red (ask) stepped lines
+```
+
 ## Configuration
 
 In `src/config/globalSettings.ts`:
@@ -133,6 +150,51 @@ In `src/bookmap/bookmapModels.ts` (`DEFAULT_BOOKMAP_CONFIG`):
 - `heatmapLowerPercentile: 3` — percentile below which orders are not rendered
 - `heatmapRecalcIntervalMs: 2000` — how often dynamic thresholds are recalculated
 - `heatmapMaxHistory: 10000` — max snapshots to keep in `OrderBookHistory`
+
+## How Thresholds Work
+
+### Bid/Ask Line Threshold
+
+The bid/ask lines show only "large" bids and asks so the line stays stable. The threshold is **relative** — it adapts to each stock's typical order book depth automatically.
+
+**Algorithm** (`orderBookHistory.ts`):
+1. Every incoming `OrderBookSnapshot` feeds all bid/ask sizes into a **rolling buffer** (last 5000 samples across many snapshots).
+2. Every **2 seconds**, the buffer is sorted and the **90th percentile** value becomes the threshold. This means only the top 10% largest orders qualify.
+3. For each snapshot, the **highest-priced bid** and **lowest-priced ask** with `size >= threshold` are recorded as `BidAskPoint`.
+4. Points with no qualifying bid or ask get `null`, causing a gap in the line.
+
+The rolling buffer + periodic recalc means the threshold stays consistent across many updates rather than jumping per-snapshot. A stock with large typical order sizes (e.g. AAPL) will naturally get a higher threshold than a thinly-traded stock.
+
+**Constants** (hardcoded in `OrderBookHistory`):
+- `THRESHOLD_RECALC_MS = 2000` — recalculate every 2 seconds
+- `SIZE_BUFFER_MAX = 5000` — rolling window of recent order sizes
+- Percentile: 90th (top 10% of orders)
+
+### Volume Dot Clustering Threshold
+
+Volume dots aggregate individual trades into clusters by **time and price proximity**, then filter out small clusters.
+
+**Clustering** (`tradeClusterer.ts`):
+1. Each trade is bucketed by **time** (`timeBucketSeconds`, default **0.5s**) — trades within the same 500ms window land in the same bucket.
+2. Within each time bucket, trades are further bucketed by **price** (`priceBucketSize`, default **$0.01**) — trades at the same penny level are grouped together.
+3. The bucket key is `timeBucket|priceLevel`. All trades matching the same key accumulate into one `TradeCluster` (total size, trade count, net uptick/downtick direction).
+
+**Visibility filter**: Only clusters with `totalSize >= minClusterSize` (default **500 shares**) are rendered as dots. Smaller clusters are stored but hidden.
+
+**Dot sizing**: Visible dots use sqrt-scaled radius between `minDotRadius` (2px) and `maxDotRadius` (12px). A cluster at `maxSharesForScaling` (50,000 shares) gets the maximum radius.
+
+### Heatmap Limit Order Threshold
+
+The heatmap shows limit orders from the Level 2 order book as colored rectangles. The color intensity adapts dynamically to each stock's order book depth.
+
+**Algorithm** (`bookmapCanvas.ts` → `recalcHeatmapThresholds()`):
+1. Every **2 seconds** (`heatmapRecalcIntervalMs`), samples up to ~50 visible time slices from `OrderBookHistory`.
+2. Collects all order sizes from those slices, sorts them, and computes two percentile cutoffs:
+   - **Lower cutoff** at `heatmapLowerPercentile` (default **3rd percentile**) — orders below this size are **not rendered** at all (filters out noise).
+   - **Upper cutoff** at `heatmapUpperPercentile` (default **97th percentile**) — orders at or above this size get the **maximum color intensity** (bright red).
+3. Orders between the two cutoffs are mapped to a 7-stage color gradient: dark blue → blue → cyan → green → yellow → orange → bright red.
+
+This means the heatmap automatically adjusts its color contrast to each stock. A stock with huge order sizes won't appear all-red, and a thinly-traded stock won't appear all-dark.
 
 ## Layout
 
@@ -192,6 +254,15 @@ Chart heights are reduced when bookmap is enabled (see `chartSettings.ts` `*With
 - Emits full-depth `OrderBookSnapshot` at sampled intervals (same pipeline as MBP-10)
 - Set `databentoSchema = "mbo"` to use full depth, `"mbp-10"` for top 10 only
 - MBO generates significantly more data than MBP-10 (every individual order event)
+
+### Phase 6: Bid/Ask Stepped Lines (DONE)
+- Green (bid) and red (ask) stepped lines showing the best large bid/ask price over time
+- Uses a rolling 90th percentile threshold computed across recent order book snapshots (last 5000 size samples)
+- Threshold recalculated every 2 seconds for stability — avoids per-snapshot fluctuation
+- Only orders with size >= threshold qualify, so the line tracks significant price levels and ignores noise
+- Stepped rendering style (horizontal-then-vertical) matches official Bookmap tools
+- Drawn after volume dots and before crosshair in the render pipeline
+- Always enabled when bookmap is enabled — no separate config flag needed
 
 ### Data Depth
 - **Schwab live**: ~15 levels per side via `NASDAQ_BOOK` / `LISTED_BOOK` (full snapshots, not deltas)

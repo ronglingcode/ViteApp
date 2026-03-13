@@ -215,12 +215,13 @@ Trading profiles define broker, asset type, entry/exit rules:
 ## Local Development
 
 ### Prerequisites
-1. **Localhost proxy** must be running on port 3000 for broker API calls (CORS)
+1. **Localhost proxy** must be running on port 3000 for broker API calls (CORS). Launch it from `/Users/rongling/code/ProxyServer` with `node index` (or `npm start`).
 2. **Secrets in localStorage** — the app reads API keys from `localStorage` under the `tradingscripts.*` prefix. Run `scripts/injectSecrets.js` in the browser console to populate them, or paste the script contents directly. This file is gitignored.
 3. **Market hours** — charts only appear when watchlist symbols are populated from live market data feeds (Massive/Schwab). Outside market hours the UI shows the header but no charts.
 
 ### Testing with Preview
 When using Claude Code's preview server (`npm run dev` on port 5173):
+- Start the proxy server first: `node /Users/rongling/code/ProxyServer/index.js` (port 3000)
 - Inject secrets via `preview_eval` before reloading the page
 - The proxy server at `http://localhost:3000` must also be running for API calls to succeed
 - Schwab streaming (WebSocket) provides real-time quotes, order book data, and account activity
