@@ -15,7 +15,7 @@ export const checkMaxEntryThreshold: boolean = false;
 export const tradesPerSecondRollingWindowSeconds: number = 10; // Rolling window for tracking average trades per second
 
 // Bookmap features
-export const enableBookmap: boolean = false;
+export const enableBookmap: boolean = true;
 export const enableBookmapHeatmap: boolean = enableBookmap && true;
 export const enableBookDataLogging: boolean = enableBookmap && true;
 export const bookmapWidth: number = 150;
