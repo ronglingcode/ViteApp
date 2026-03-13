@@ -19,6 +19,6 @@ export const enableBookmap: boolean = true;
 export const enableBookmapHeatmap: boolean = enableBookmap && true;
 export const enableBookDataLogging: boolean = enableBookmap && true;
 export const bookmapWidth: number = 150;
-export const enableDatabentoBookData: boolean = enableBookmap && true;
+export const enableDatabentoBookData: boolean = enableBookmap && false;
 export const databentoDataset: string = "XNAS.ITCH";
 export const databentoSchema: string = "mbo"; // "mbo" for full depth, "mbp-10" for top 10 levels
