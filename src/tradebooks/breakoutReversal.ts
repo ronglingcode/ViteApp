@@ -15,12 +15,12 @@ export class BreakoutReversal extends Tradebook {
     private keyLevel: number = 0;
     private reversalPlan: TradingPlansModels.ReversalPlan;
     public getID(): string {
-        return this.isLong ? BreakoutReversal.reversalLong : BreakoutReversal.reversalShort;
+        return this.buildID(this.isLong ? BreakoutReversal.reversalLong : BreakoutReversal.reversalShort);
     }
-    constructor(symbol: string, isLong: boolean, reversalPlan: TradingPlansModels.ReversalPlan) {
+    constructor(familyName: string, symbol: string, isLong: boolean, reversalPlan: TradingPlansModels.ReversalPlan) {
         let tradebookName = isLong ? 'Long Reversal' : 'Short Reversal';
         let buttonLabel = isLong ? 'Reversal' : 'Reversal';
-        super(symbol, isLong, tradebookName, buttonLabel)
+        super(familyName, symbol, isLong, tradebookName, buttonLabel)
         this.keyLevel = reversalPlan.keyLevel;
         this.reversalPlan = reversalPlan;
         this.enableByDefault = true;

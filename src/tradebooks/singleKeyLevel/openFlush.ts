@@ -15,15 +15,15 @@ export class OpenFlush extends SingleKeyLevelTradebook {
     public static readonly openFlushLong: string = 'openFlushLong';
     public static readonly openFlushShort: string = 'openFlushShort';
     public getID(): string {
-        return this.isLong ? OpenFlush.openFlushLong : OpenFlush.openFlushShort;
+        return this.buildID(this.isLong ? OpenFlush.openFlushLong : OpenFlush.openFlushShort);
     }
 
-    constructor(symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
+    constructor(familyName: string, symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan
     ) {
         let tradebookName = isLong ? 'Long Open Flush' : 'Short Open Flush';
         let buttonLabel = 'Open Flush';
-        super(symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel)
+        super(familyName, symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel)
         this.init()
     }
 

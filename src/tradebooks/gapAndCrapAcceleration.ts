@@ -13,17 +13,17 @@ export class GapAndCrapAcceleration extends Tradebook {
     private gapAndCrapAccelerationPlan: TradingPlansModels.GapAndCrapAccelerationPlan;
 
     public getID(): string {
-        return GapAndCrapAcceleration.gapAndCrapAccelerationShort;
+        return this.buildID(GapAndCrapAcceleration.gapAndCrapAccelerationShort);
     }
 
-    constructor(symbol: string, isLong: boolean, plan: TradingPlansModels.GapAndCrapAccelerationPlan) {
+    constructor(familyName: string, symbol: string, isLong: boolean, plan: TradingPlansModels.GapAndCrapAccelerationPlan) {
         // This tradebook only supports short positions
         if (isLong) {
             throw new Error('GapAndCrapAcceleration tradebook only supports short positions');
         }
         let tradebookName = 'Gap and Crap Acceleration';
         let buttonLabel = 'G_crap Acc';
-        super(symbol, false, tradebookName, buttonLabel);
+        super(familyName, symbol, false, tradebookName, buttonLabel);
         this.gapAndCrapAccelerationPlan = plan;
         this.enableByDefault = false;
     }

@@ -17,9 +17,9 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
     public waitForClose: boolean = true;
     public allowCloseWithin: boolean = false;
-    constructor(symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
+    constructor(familyName: string, symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan, tradebookName: string, buttonLabel: string) {
-        super(symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel);
+        super(familyName, symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel);
     }
     refreshLiveStats(): void {
         if (!this.isEnabled() || !GlobalSettings.allowLiveStats) {

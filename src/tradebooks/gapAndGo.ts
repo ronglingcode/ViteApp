@@ -32,17 +32,17 @@ export class GapAndGo extends Tradebook {
     }
 
     public getID(): string {
-        return GapAndGo.gapAndGoLong;
+        return this.buildID(GapAndGo.gapAndGoLong);
     }
 
-    constructor(symbol: string, isLong: boolean, basePlan: TradingPlansModels.GapAndGoPlan) {
+    constructor(familyName: string, symbol: string, isLong: boolean, basePlan: TradingPlansModels.GapAndGoPlan) {
         // This tradebook only supports long positions
         if (!isLong) {
             throw new Error('GapAndGo tradebook only supports long positions');
         }
         let tradebookName = 'Long Gap and Go';
         let buttonLabel = 'Gap and Go';
-        super(symbol, true, tradebookName, buttonLabel);
+        super(familyName, symbol, true, tradebookName, buttonLabel);
         this.basePlan = basePlan;
         this.enableByDefault = true;
     }

@@ -32,17 +32,17 @@ export class GapAndCrap extends Tradebook {
     }
 
     public getID(): string {
-        return GapAndCrap.gapAndCrapShort;
+        return this.buildID(GapAndCrap.gapAndCrapShort);
     }
 
-    constructor(symbol: string, isLong: boolean, basePlan: TradingPlansModels.GapAndCrapPlan) {
+    constructor(familyName: string, symbol: string, isLong: boolean, basePlan: TradingPlansModels.GapAndCrapPlan) {
         // This tradebook only supports short positions
         if (isLong) {
             throw new Error('GapAndCrap tradebook only supports short positions');
         }
         let tradebookName = 'Short Gap and Crap';
         let buttonLabel = 'Gap and Crap';
-        super(symbol, false, tradebookName, buttonLabel);
+        super(familyName, symbol, false, tradebookName, buttonLabel);
         this.basePlan = basePlan;
         this.enableByDefault = true;
     }

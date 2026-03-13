@@ -6,9 +6,9 @@ export abstract class SingleKeyLevelTradebook extends Tradebook {
     public keyLevel: TradingPlansModels.LevelArea;
     public levelMomentumPlan: TradingPlansModels.LevelMomentumPlan;
 
-    constructor(symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
+    constructor(familyName: string, symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         plan: TradingPlansModels.LevelMomentumPlan, tradebookName: string, buttonLabel: string) {
-        super(symbol, isLong, tradebookName, buttonLabel);
+        super(familyName, symbol, isLong, tradebookName, buttonLabel);
         this.keyLevel = keyLevel;
         this.levelMomentumPlan = plan;
         if (this.levelMomentumPlan.planConfigs.sizingCount) {

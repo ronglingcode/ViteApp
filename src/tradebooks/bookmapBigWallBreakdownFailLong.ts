@@ -15,11 +15,11 @@ export class BookmapBigWallBreakdownFailLong extends Tradebook {
     private basePlan: TradingPlansModels.BookmapBigWallBreakdownFailLongPlan;
 
     public getID(): string {
-        return BookmapBigWallBreakdownFailLong.bookmapBigWallBreakdownFailLong;
+        return this.buildID(BookmapBigWallBreakdownFailLong.bookmapBigWallBreakdownFailLong);
     }
 
-    constructor(symbol: string, basePlan: TradingPlansModels.BookmapBigWallBreakdownFailLongPlan) {
-        super(symbol, true, 'Long Bookmap Big Wall Breakdown Fail', 'BM Wall Fail');
+    constructor(familyName: string, symbol: string, basePlan: TradingPlansModels.BookmapBigWallBreakdownFailLongPlan) {
+        super(familyName, symbol, true, 'Long Bookmap Big Wall Breakdown Fail', 'BM Wall Fail');
         this.basePlan = basePlan;
         this.enableByDefault = true;
     }

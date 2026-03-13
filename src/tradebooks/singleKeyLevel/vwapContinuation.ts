@@ -29,13 +29,13 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
     private highOfDayToBreakout: number = 0;
     private vwapWarningActive: boolean = false;
     public getID(): string {
-        return this.isLong ? VwapContinuation.vwapContinuationLong : VwapContinuation.vwapContinuationShort;
+        return this.buildID(this.isLong ? VwapContinuation.vwapContinuationLong : VwapContinuation.vwapContinuationShort);
     }
-    constructor(symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
+    constructor(familyName: string, symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan) {
         let tradebookName = isLong ? 'Long VWAP Continuation' : 'Short VWAP Continuation';
         let buttonLabel = isLong ? 'VWAP Cont' : 'VWAP Cont';
-        super(symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel)
+        super(familyName, symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel)
         this.init()
     }
 

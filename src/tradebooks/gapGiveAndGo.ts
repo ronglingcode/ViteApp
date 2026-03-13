@@ -30,16 +30,16 @@ export class GapGiveAndGo extends Tradebook {
     }
 
     public getID(): string {
-        return GapGiveAndGo.gapGiveAndGoLong;
+        return this.buildID(GapGiveAndGo.gapGiveAndGoLong);
     }
 
-    constructor(symbol: string, isLong: boolean, basePlan: TradingPlansModels.GapGiveAndGoPlan) {
+    constructor(familyName: string, symbol: string, isLong: boolean, basePlan: TradingPlansModels.GapGiveAndGoPlan) {
         if (!isLong) {
             throw new Error('GapGiveAndGo tradebook only supports long positions');
         }
         let tradebookName = 'Long Gap Give and Go';
         let buttonLabel = 'Gap Give and Go';
-        super(symbol, true, tradebookName, buttonLabel);
+        super(familyName, symbol, true, tradebookName, buttonLabel);
         this.basePlan = basePlan;
         this.enableByDefault = true;
     }

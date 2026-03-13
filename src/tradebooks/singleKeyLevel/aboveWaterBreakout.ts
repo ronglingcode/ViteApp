@@ -16,7 +16,7 @@ export class AboveWaterBreakout extends BaseBreakoutTradebook {
     public static readonly aboveWaterBreakout: string = 'aboveWaterBreakout';
     public static readonly belowWaterBreakdown: string = 'belowWaterBreakdown';
     public getID(): string {
-        return this.isLong ? AboveWaterBreakout.aboveWaterBreakout : AboveWaterBreakout.belowWaterBreakdown;
+        return this.buildID(this.isLong ? AboveWaterBreakout.aboveWaterBreakout : AboveWaterBreakout.belowWaterBreakdown);
     }
 
     public updateConfig(config: TradingPlansModels.TradebooksConfig) {
@@ -37,11 +37,11 @@ export class AboveWaterBreakout extends BaseBreakoutTradebook {
         }
 
     }
-    constructor(symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
+    constructor(familyName: string, symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan) {
         let tradebookName = isLong ? 'Long Above Water Breakout' : 'Short Below Water Breakdown';
         let buttonLabel = isLong ? 'Abv Wtr' : 'Blw Wtr';
-        super(symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel);
+        super(familyName, symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel);
     }
 
     getEligibleEntryParameters(): Models.TradebookEntryParameters {

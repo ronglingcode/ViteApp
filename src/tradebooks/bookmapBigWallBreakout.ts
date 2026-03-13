@@ -13,13 +13,13 @@ export class BookmapBigWallBreakout extends Tradebook {
     private basePlan: TradingPlansModels.BookmapBigWallBreakoutPlan;
 
     public getID(): string {
-        return this.isLong ? BookmapBigWallBreakout.bookmapBigWallBreakoutLong : BookmapBigWallBreakout.bookmapBigWallBreakoutShort;
+        return this.buildID(this.isLong ? BookmapBigWallBreakout.bookmapBigWallBreakoutLong : BookmapBigWallBreakout.bookmapBigWallBreakoutShort);
     }
 
-    constructor(symbol: string, isLong: boolean, basePlan: TradingPlansModels.BookmapBigWallBreakoutPlan) {
+    constructor(familyName: string, symbol: string, isLong: boolean, basePlan: TradingPlansModels.BookmapBigWallBreakoutPlan) {
         let tradebookName = isLong ? 'Long Bookmap Big Wall Breakout' : 'Short Bookmap Big Wall Breakdown';
         let buttonLabel = isLong ? 'BM Wall' : 'BM Wall';
-        super(symbol, isLong, tradebookName, buttonLabel);
+        super(familyName, symbol, isLong, tradebookName, buttonLabel);
         this.basePlan = basePlan;
         this.enableByDefault = true;
     }

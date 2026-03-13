@@ -31,95 +31,95 @@ export const createAllTradebooks = (symbol: string) => {
 
     let tradebooksMap = new Map<string, Tradebook>();
     if (longPlan) {
-        let longOpenDrive = new OpenDrive(symbol, true, keyLevel, longPlan);
+        let longOpenDrive = new OpenDrive('', symbol, true, keyLevel, longPlan);
         tradebooksMap.set(longOpenDrive.getID(), longOpenDrive);
 
-        let longAboveWaterBreakout = new AboveWaterBreakout(symbol, true, keyLevel, longPlan);
+        let longAboveWaterBreakout = new AboveWaterBreakout('', symbol, true, keyLevel, longPlan);
         tradebooksMap.set(longAboveWaterBreakout.getID(), longAboveWaterBreakout);
 
 
-        let longEmergingStrengthBreakout = new EmergingStrengthBreakout(symbol, true, keyLevel, longPlan);
+        let longEmergingStrengthBreakout = new EmergingStrengthBreakout('', symbol, true, keyLevel, longPlan);
         tradebooksMap.set(longEmergingStrengthBreakout.getID(), longEmergingStrengthBreakout);
 
-        let longVwapContinuation = new VwapContinuation(symbol, true, keyLevel, longPlan);
+        let longVwapContinuation = new VwapContinuation('', symbol, true, keyLevel, longPlan);
         tradebooksMap.set(longVwapContinuation.getID(), longVwapContinuation);
 
-        let longVwapPushdownFailed = new VwapContinuationFailed(symbol, true, keyLevel, longPlan);
+        let longVwapPushdownFailed = new VwapContinuationFailed('', symbol, true, keyLevel, longPlan);
         tradebooksMap.set(longVwapPushdownFailed.getID(), longVwapPushdownFailed);
     }
     if (shortPlan) {
-        let shortOpenDrive = new OpenDrive(symbol, false, keyLevel, shortPlan);
+        let shortOpenDrive = new OpenDrive('', symbol, false, keyLevel, shortPlan);
         tradebooksMap.set(shortOpenDrive.getID(), shortOpenDrive);
 
-        let shortBelowWaterBreakdown = new AboveWaterBreakout(symbol, false, keyLevel, shortPlan);
+        let shortBelowWaterBreakdown = new AboveWaterBreakout('', symbol, false, keyLevel, shortPlan);
         tradebooksMap.set(shortBelowWaterBreakdown.getID(), shortBelowWaterBreakdown);
 
-        let shortEmergingWeaknessBreakdown = new EmergingStrengthBreakout(symbol, false, keyLevel, shortPlan);
+        let shortEmergingWeaknessBreakdown = new EmergingStrengthBreakout('', symbol, false, keyLevel, shortPlan);
         tradebooksMap.set(shortEmergingWeaknessBreakdown.getID(), shortEmergingWeaknessBreakdown);
 
-        let shortVwapContinuation = new VwapContinuation(symbol, false, keyLevel, shortPlan);
+        let shortVwapContinuation = new VwapContinuation('', symbol, false, keyLevel, shortPlan);
         tradebooksMap.set(shortVwapContinuation.getID(), shortVwapContinuation);
 
-        let shortVwapPushdownFailed = new VwapContinuationFailed(symbol, false, keyLevel, shortPlan);
+        let shortVwapPushdownFailed = new VwapContinuationFailed('', symbol, false, keyLevel, shortPlan);
         tradebooksMap.set(shortVwapPushdownFailed.getID(), shortVwapPushdownFailed);
 
-        let openFlush = new OpenFlush(symbol, false, keyLevel, shortPlan);
+        let openFlush = new OpenFlush('', symbol, false, keyLevel, shortPlan);
         tradebooksMap.set(openFlush.getID(), openFlush);
     }
     if (plan.long.vwapScalpPlan) {
-        let vwapScalp = new VwapScalp(symbol, true, plan.long.vwapScalpPlan);
+        let vwapScalp = new VwapScalp('', symbol, true, plan.long.vwapScalpPlan);
         tradebooksMap.set(vwapScalp.getID(), vwapScalp);
     }
     if (plan.short.vwapScalpPlan) {
-        let vwapScalp = new VwapScalp(symbol, false, plan.short.vwapScalpPlan);
+        let vwapScalp = new VwapScalp('', symbol, false, plan.short.vwapScalpPlan);
         tradebooksMap.set(vwapScalp.getID(), vwapScalp);
     }
     if (plan.long.reversalPlan) {
-        let reversal = new BreakoutReversal(symbol, true, plan.long.reversalPlan);
+        let reversal = new BreakoutReversal('', symbol, true, plan.long.reversalPlan);
         tradebooksMap.set(reversal.getID(), reversal);
     }
     if (plan.short.reversalPlan) {
-        let reversal = new BreakoutReversal(symbol, false, plan.short.reversalPlan);
+        let reversal = new BreakoutReversal('', symbol, false, plan.short.reversalPlan);
         tradebooksMap.set(reversal.getID(), reversal);
     }
     if (plan.long.allTimeHighVwapContinuationPlan) {
-        let allTimeHighVwapContinuation = new AllTimeHighVwapContinuation(symbol, true, plan.long.allTimeHighVwapContinuationPlan);
+        let allTimeHighVwapContinuation = new AllTimeHighVwapContinuation('', symbol, true, plan.long.allTimeHighVwapContinuationPlan);
         tradebooksMap.set(allTimeHighVwapContinuation.getID(), allTimeHighVwapContinuation);
     }
     if (plan.short.gapAndCrapAccelerationPlan) {
-        let gapAndCrapAcceleration = new GapAndCrapAcceleration(symbol, false, plan.short.gapAndCrapAccelerationPlan);
+        let gapAndCrapAcceleration = new GapAndCrapAcceleration('', symbol, false, plan.short.gapAndCrapAccelerationPlan);
         tradebooksMap.set(gapAndCrapAcceleration.getID(), gapAndCrapAcceleration);
     }
     if (plan.short.gapAndCrapPlan) {
-        let gapAndCrap = new GapAndCrap(symbol, false, plan.short.gapAndCrapPlan);
+        let gapAndCrap = new GapAndCrap('', symbol, false, plan.short.gapAndCrapPlan);
         tradebooksMap.set(gapAndCrap.getID(), gapAndCrap);
     }
     if (plan.long.gapAndGoPlan) {
-        let gapAndGo = new GapAndGo(symbol, true, plan.long.gapAndGoPlan);
+        let gapAndGo = new GapAndGo('', symbol, true, plan.long.gapAndGoPlan);
         tradebooksMap.set(gapAndGo.getID(), gapAndGo);
     }
     if (plan.long.gapGiveAndGoPlan) {
-        let gapGiveAndGo = new GapGiveAndGo(symbol, true, plan.long.gapGiveAndGoPlan);
+        let gapGiveAndGo = new GapGiveAndGo('', symbol, true, plan.long.gapGiveAndGoPlan);
         tradebooksMap.set(gapGiveAndGo.getID(), gapGiveAndGo);
     }
     if (plan.short.gapDownAndGoDownPlan) {
-        let gapDownAndGoDown = new GapDownAndGoDown(symbol, false, plan.short.gapDownAndGoDownPlan);
+        let gapDownAndGoDown = new GapDownAndGoDown('', symbol, false, plan.short.gapDownAndGoDownPlan);
         tradebooksMap.set(gapDownAndGoDown.getID(), gapDownAndGoDown);
     }
     if (plan.long.gapDownAndGoUpPlan) {
-        let gapDownAndGoUp = new GapDownAndGoUp(symbol, true, plan.long.gapDownAndGoUpPlan);
+        let gapDownAndGoUp = new GapDownAndGoUp('', symbol, true, plan.long.gapDownAndGoUpPlan);
         tradebooksMap.set(gapDownAndGoUp.getID(), gapDownAndGoUp);
     }
     if (plan.long.bookmapBigWallBreakoutPlan) {
-        let bmWallLong = new BookmapBigWallBreakout(symbol, true, plan.long.bookmapBigWallBreakoutPlan);
+        let bmWallLong = new BookmapBigWallBreakout('', symbol, true, plan.long.bookmapBigWallBreakoutPlan);
         tradebooksMap.set(bmWallLong.getID(), bmWallLong);
     }
     if (plan.short.bookmapBigWallBreakoutPlan) {
-        let bmWallShort = new BookmapBigWallBreakout(symbol, false, plan.short.bookmapBigWallBreakoutPlan);
+        let bmWallShort = new BookmapBigWallBreakout('', symbol, false, plan.short.bookmapBigWallBreakoutPlan);
         tradebooksMap.set(bmWallShort.getID(), bmWallShort);
     }
     if (plan.long.bookmapBigWallBreakdownFailLongPlan) {
-        let bmBreakdownFailLong = new BookmapBigWallBreakdownFailLong(symbol, plan.long.bookmapBigWallBreakdownFailLongPlan);
+        let bmBreakdownFailLong = new BookmapBigWallBreakdownFailLong('', symbol, plan.long.bookmapBigWallBreakdownFailLongPlan);
         tradebooksMap.set(bmBreakdownFailLong.getID(), bmBreakdownFailLong);
     }
     return tradebooksMap;
@@ -328,24 +328,24 @@ export const createTradebooksFromOpenPrice = (symbol: string) => {
     if (keyLevel.high == lastVwap) {
         if (openPrice > keyLevel.high) {
             if (longPlan) {
-                tradebooks.push(new OpenDrive(symbol, true, keyLevel, longPlan));
+                tradebooks.push(new OpenDrive('', symbol, true, keyLevel, longPlan));
             }
             if (shortPlan) {
-                tradebooks.push(new AboveWaterBreakout(symbol, false, keyLevel, shortPlan));
+                tradebooks.push(new AboveWaterBreakout('', symbol, false, keyLevel, shortPlan));
             }
         } else if (openPrice < keyLevel.high) {
             if (longPlan) {
-                tradebooks.push(new AboveWaterBreakout(symbol, true, keyLevel, longPlan));
+                tradebooks.push(new AboveWaterBreakout('', symbol, true, keyLevel, longPlan));
             }
             if (shortPlan) {
-                tradebooks.push(new OpenDrive(symbol, false, keyLevel, shortPlan));
+                tradebooks.push(new OpenDrive('', symbol, false, keyLevel, shortPlan));
             }
         } else {
             if (longPlan) {
-                tradebooks.push(new OpenDrive(symbol, true, keyLevel, longPlan));
+                tradebooks.push(new OpenDrive('', symbol, true, keyLevel, longPlan));
             }
             if (shortPlan) {
-                tradebooks.push(new OpenDrive(symbol, false, keyLevel, shortPlan));
+                tradebooks.push(new OpenDrive('', symbol, false, keyLevel, shortPlan));
             }
         }
         return tradebooks;
@@ -355,28 +355,28 @@ export const createTradebooksFromOpenPrice = (symbol: string) => {
     /* #region Key level is above vwap */
     if (openPrice >= keyLevel.high && keyLevel.high > lastVwap) {
         if (longPlan) {
-            tradebooks.push(new OpenDrive(symbol, true, keyLevel, longPlan));
+            tradebooks.push(new OpenDrive('', symbol, true, keyLevel, longPlan));
         }
         if (shortPlan) {
-            tradebooks.push(new VwapContinuationFailed(symbol, false, keyLevel, shortPlan));
+            tradebooks.push(new VwapContinuationFailed('', symbol, false, keyLevel, shortPlan));
         }
     }
     if (keyLevel.high > openPrice && openPrice > lastVwap) {
         if (longPlan) {
-            tradebooks.push(new AboveWaterBreakout(symbol, true, keyLevel, longPlan));
+            tradebooks.push(new AboveWaterBreakout('', symbol, true, keyLevel, longPlan));
         }
         if (shortPlan) {
-            tradebooks.push(new VwapContinuationFailed(symbol, false, keyLevel, shortPlan));
-            tradebooks.push(new OpenFlush(symbol, false, keyLevel, shortPlan));
+            tradebooks.push(new VwapContinuationFailed('', symbol, false, keyLevel, shortPlan));
+            tradebooks.push(new OpenFlush('', symbol, false, keyLevel, shortPlan));
 
         }
     }
     if (keyLevel.high > lastVwap && lastVwap >= openPrice) {
         if (longPlan) {
-            tradebooks.push(new EmergingStrengthBreakout(symbol, true, keyLevel, longPlan));
+            tradebooks.push(new EmergingStrengthBreakout('', symbol, true, keyLevel, longPlan));
         }
         if (shortPlan) {
-            tradebooks.push(new VwapContinuation(symbol, false, keyLevel, shortPlan));
+            tradebooks.push(new VwapContinuation('', symbol, false, keyLevel, shortPlan));
         }
     }
     /* #endregion */
@@ -384,26 +384,26 @@ export const createTradebooksFromOpenPrice = (symbol: string) => {
     /* #region Key level is below vwap */
     if (openPrice >= lastVwap && lastVwap > keyLevel.high) {
         if (longPlan) {
-            tradebooks.push(new VwapContinuation(symbol, true, keyLevel, longPlan));
+            tradebooks.push(new VwapContinuation('', symbol, true, keyLevel, longPlan));
         }
         if (shortPlan) {
-            tradebooks.push(new EmergingStrengthBreakout(symbol, false, keyLevel, shortPlan));
+            tradebooks.push(new EmergingStrengthBreakout('', symbol, false, keyLevel, shortPlan));
         }
     }
     if (lastVwap > openPrice && openPrice > keyLevel.high) {
         if (longPlan) {
-            tradebooks.push(new VwapContinuationFailed(symbol, true, keyLevel, longPlan));
+            tradebooks.push(new VwapContinuationFailed('', symbol, true, keyLevel, longPlan));
         }
         if (shortPlan) {
-            tradebooks.push(new AboveWaterBreakout(symbol, false, keyLevel, shortPlan));
+            tradebooks.push(new AboveWaterBreakout('', symbol, false, keyLevel, shortPlan));
         }
     }
     if (lastVwap > keyLevel.high && keyLevel.high >= openPrice) {
         if (longPlan) {
-            tradebooks.push(new VwapContinuationFailed(symbol, true, keyLevel, longPlan));
+            tradebooks.push(new VwapContinuationFailed('', symbol, true, keyLevel, longPlan));
         }
         if (shortPlan) {
-            tradebooks.push(new OpenDrive(symbol, false, keyLevel, shortPlan));
+            tradebooks.push(new OpenDrive('', symbol, false, keyLevel, shortPlan));
         }
     }
     /* #endregion */
