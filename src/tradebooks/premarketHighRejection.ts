@@ -8,7 +8,7 @@ import * as Helper from '../utils/helper';
 import * as Rules from '../algorithms/rules';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 
-export class GapAndCrap extends Tradebook {
+export class PremarketHighRejection extends Tradebook {
     public static readonly gapAndCrapShort: string = 'GapAndCrapShort';
     private basePlan: TradingPlansModels.GapAndCrapPlan;
 
@@ -32,13 +32,13 @@ export class GapAndCrap extends Tradebook {
     }
 
     public getID(): string {
-        return this.buildID(GapAndCrap.gapAndCrapShort);
+        return this.buildID(PremarketHighRejection.gapAndCrapShort);
     }
 
     constructor(familyName: string, symbol: string, isLong: boolean, basePlan: TradingPlansModels.GapAndCrapPlan) {
         // This tradebook only supports short positions
         if (isLong) {
-            throw new Error('GapAndCrap tradebook only supports short positions');
+            throw new Error('PremarketHighRejection tradebook only supports short positions');
         }
         let tradebookName = 'Short Gap and Crap';
         let buttonLabel = 'Gap and Crap';

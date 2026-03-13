@@ -15,7 +15,7 @@ import { AllTimeHighVwapContinuation } from "./allTimeHighVwapContinuation";
 import { GapAndCrapAcceleration } from "./gapAndCrapAcceleration";
 import * as Helper from "../utils/helper";
 import * as Firestore from "../firestore";
-import { GapAndCrap } from "./gapAndCrap";
+import { PremarketHighRejection } from "./premarketHighRejection";
 import { GapAndGo } from "./gapAndGo";
 import { GapGiveAndGo } from "./gapGiveAndGo";
 import { GapDownAndGoDown } from "./gapDownAndGoDown";
@@ -67,7 +67,7 @@ export const createAllTradebooks = (symbol: string) => {
         tradebooksMap.set(openFlush.getID(), openFlush);
 
         if (plan.short.gapAndCrapPlan) {
-            let gapAndCrap = new GapAndCrap('', symbol, false, plan.short.gapAndCrapPlan);
+            let gapAndCrap = new PremarketHighRejection('', symbol, false, plan.short.gapAndCrapPlan);
             tradebooksMap.set(gapAndCrap.getID(), gapAndCrap);
             let maxPrice = plan.short.gapAndCrapPlan.aboveThisLevelNoMoreShort;
             let maxPriceKeyLevel: TradingPlansModels.LevelArea = {
@@ -77,7 +77,8 @@ export const createAllTradebooks = (symbol: string) => {
             let gapAndCrapVwapContinuation = new VwapContinuation(Models.TradebookFamilyName.GapAndCrap, symbol, false, maxPriceKeyLevel, shortPlan);
             tradebooksMap.set(gapAndCrapVwapContinuation.getID(), gapAndCrapVwapContinuation);
 
-
+            let premarketHighRejectionShort = new PremarketHighRejection(Models.TradebookFamilyName.GapAndCrap, symbol, false, plan.short.gapAndCrapPlan);
+            tradebooksMap.set(premarketHighRejectionShort.getID(), premarketHighRejectionShort);
         }
     }
     if (plan.long.vwapScalpPlan) {

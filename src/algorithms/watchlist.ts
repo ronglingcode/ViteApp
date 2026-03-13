@@ -9,7 +9,7 @@ import * as Rules from './rules';
 import { disableNetwork } from 'firebase/firestore';
 import * as googleDocsApi from '../api/googleDocs/googleDocsApi';
 import { populateBestIdeas } from '../controllers/traderFocus';
-import { GapAndCrap } from '../tradebooks/gapAndCrap';
+import { PremarketHighRejection } from '../tradebooks/premarketHighRejection';
 import { GapAndGo } from '../tradebooks/gapAndGo';
 import { GapGiveAndGo } from '../tradebooks/gapGiveAndGo';
 import { GapDownAndGoDown } from '../tradebooks/gapDownAndGoDown';
@@ -247,7 +247,7 @@ const verifyTradingPlansForSingleDirection = (symbol: string, plan: TradingPlans
     }
     let hasBestTradebook = false;
     if (plan.gapAndCrapPlan) {
-        if (!GapAndCrap.hasAtLeastOneReasonSet(plan.gapAndCrapPlan, symbol)) {
+        if (!PremarketHighRejection.hasAtLeastOneReasonSet(plan.gapAndCrapPlan, symbol)) {
             return false;
         }
         hasBestTradebook = true;
