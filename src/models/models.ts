@@ -1347,6 +1347,9 @@ export const getHighLowBreakoutEntryStopPrice = (symbol: string, isLong: boolean
 export const getCurrentVwap = (symbol: string) => {
     let symbolData = getSymbolData(symbol);
     let vwap = symbolData.m1Vwaps;
+    if (!vwap || vwap.length == 0) {
+        return 0;
+    }
     let currentVwap = vwap[vwap.length - 1].value;
     return currentVwap;
 };
