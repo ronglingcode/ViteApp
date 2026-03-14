@@ -7,7 +7,6 @@
 const BOOKMAP_WS_URL = "ws://localhost:8765";
 const RECONNECT_DELAY_MS = 3000;
 const ORDERBOOK_INTERVAL_MS = 1000;
-const ORDERBOOK_LEVELS = 20;
 
 let websocket: WebSocket | null = null;
 
@@ -59,8 +58,6 @@ const subscribeToOrderbook = () => {
         websocket.send(JSON.stringify({
             type: "subscribe",
             channel: "orderbook",
-            intervalMs: ORDERBOOK_INTERVAL_MS,
-            levels: ORDERBOOK_LEVELS,
         }));
     }
 };
