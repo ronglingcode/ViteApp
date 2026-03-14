@@ -37,6 +37,7 @@ import * as KeyboardHandler from './controllers/keyboardHandler';
 import * as AlpacaStreaming from './api/alpaca/streaming';
 import * as ScwabStreaming from './api/schwab/streaming';
 import * as MassiveStreaming from './api/massive/streaming';
+import * as BookmapSocket from './bookmap/bookmapSocket';
 import * as MassiveApi from './api/massive/api';
 import * as DB from './data/db';
 import * as Agent from './ai/agent';
@@ -201,6 +202,9 @@ window.TradingApp.TOS.initialize().then(async () => {
     AlpacaStreaming.createWebSocket();
     ScwabStreaming.createWebSocket();
     MassiveStreaming.createWebSocket();
+    if (GlobalSettings.enableBookmapSocket) {
+        BookmapSocket.createWebSocket();
+    }
     let today = new Date();
     let todayString = TimeHelper.formatDateToYYYYMMDD(today);
 

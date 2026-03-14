@@ -22,3 +22,4 @@ export const bookmapWidth: number = 150;
 export const enableDatabentoBookData: boolean = enableBookmap && false;
 export const databentoDataset: string = "XNAS.ITCH";
 export const databentoSchema: string = "mbo"; // "mbo" for full depth, "mbp-10" for top 10 levels
+export const enableBookmapSocket: boolean = true;
