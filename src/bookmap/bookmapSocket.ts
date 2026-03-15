@@ -4,6 +4,12 @@
  * order book snapshots, heartbeats, and breakout signals.
  */
 
+import { processOrderbookSnapshot } from "./largeOrderTracker";
+import * as Firestore from "../firestore";
+import * as Helper from "../utils/helper";
+import * as Models from "../models/models";
+declare let window: Models.MyWindow;
+
 const BOOKMAP_WS_URL = "ws://localhost:8765";
 const RECONNECT_DELAY_MS = 3000;
 const ORDERBOOK_INTERVAL_MS = 1000;
@@ -24,13 +30,25 @@ export const createWebSocket = () => {
         let type = data.type;
 
         if (type === "heartbeat") {
-            console.log(`[BookmapSocket] Heartbeat: price=${data.price}, timestamp=${data.timestamp}`);
+            // price tracked via heartbeat if needed later
         } else if (type === "breakout") {
-            console.log(`[BookmapSocket] BREAKOUT: level=${data.breakoutLevel}, swingLow=${data.swingLow}, timestamp=${data.timestamp}`);
+            console.log(`[BookmapSocket] BREAKOUT [${data.symbol}]: level=${data.breakoutLevel}, swingLow=${data.swingLow}, timestamp=${data.timestamp}`);
         } else if (type === "orderbook") {
-            console.log(`[BookmapSocket] Orderbook: ${data.bids.length} bids, ${data.asks.length} asks, timestamp=${data.timestamp}`);
-            console.log(`[BookmapSocket]   Best bid: ${data.bids[0]?.[0]} @ ${data.bids[0]?.[1]}`);
-            console.log(`[BookmapSocket]   Best ask: ${data.asks[0]?.[0]} @ ${data.asks[0]?.[1]}`);
+            const symbol = data.symbol || "???";
+            console.log(`[BookmapSocket] Orderbook [${symbol}]: ${data.largeBids.length} largeBids, ${data.largeAsks.length} largeAsks`);
+            let atr = 0;
+            try { atr = Models.getAtr(symbol).average; } catch (e) { /* no plan loaded yet */ }
+            const { appeared, disappeared } = processOrderbookSnapshot(data, atr);
+
+            for (const order of appeared) {
+                Firestore.logInfo(`NEW large ${order.side} wall [${symbol}]: $${order.price} x ${order.size}`, { symbol });
+            }
+            for (const order of disappeared) {
+                Firestore.logInfo(`GONE large ${order.side} wall [${symbol}]: $${order.price} x ${order.size}`, { symbol });
+            }
+            if (appeared.length > 0 || disappeared.length > 0) {
+                Helper.speak("large order update");
+            }
         } else if (type === "subscribed") {
             console.log(`[BookmapSocket] Subscribed to ${data.channel} (interval=${data.intervalMs}ms, levels=${data.levels})`);
         } else if (type === "unsubscribed") {
