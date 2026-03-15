@@ -26,6 +26,7 @@ export const handlePriceSelect = (event: PriceSelectEvent) => {
 
     const key = keyCode.toLowerCase();
 
+
     if (key === "cmd" || key === "ctrl" || key === "control" || key === "meta") {
         setStopLossFromBookmap(symbol, price);
     } else if (key === "b") {
@@ -34,7 +35,7 @@ export const handlePriceSelect = (event: PriceSelectEvent) => {
         setSellLimitFromBookmap(symbol, price);
     } else {
         console.log(`[BookmapActions] Unhandled keyCode: ${keyCode}`);
-        Helper.speak(`${symbol} price ${price}`);
+
     }
 };
 

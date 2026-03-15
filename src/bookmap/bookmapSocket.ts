@@ -15,6 +15,13 @@ const BOOKMAP_WS_URL = "ws://localhost:8765";
 const RECONNECT_DELAY_MS = 3000;
 const ORDERBOOK_INTERVAL_MS = 1000;
 
+/** Normalize symbol e.g. "ADBE:NASDAQ:STOCKS@BMD" -> "ADBE" */
+const normalizeSymbol = (raw: string): string => {
+    if (!raw) return "???";
+    const first = raw.split(":")[0];
+    return first || raw;
+};
+
 let websocket: WebSocket | null = null;
 
 export const createWebSocket = () => {
@@ -29,13 +36,15 @@ export const createWebSocket = () => {
     websocket.onmessage = function (messageEvent) {
         let data = JSON.parse(messageEvent.data);
         let type = data.type;
+        let symbol = normalizeSymbol(data.symbol || "");
+        let newPrice = Helper.roundPrice(symbol, data.price || 0);
+
 
         if (type === "heartbeat") {
             // price tracked via heartbeat if needed later
         } else if (type === "breakout") {
-            console.log(`[BookmapSocket] BREAKOUT [${data.symbol}]: level=${data.breakoutLevel}, swingLow=${data.swingLow}, timestamp=${data.timestamp}`);
+            console.log(`[BookmapSocket] BREAKOUT [${symbol}]: level=${data.breakoutLevel}, swingLow=${data.swingLow}, timestamp=${data.timestamp}`);
         } else if (type === "orderbook") {
-            const symbol = data.symbol || "???";
             //console.log(`[BookmapSocket] Orderbook [${symbol}]: ${data.largeBids.length} largeBids, ${data.largeAsks.length} largeAsks`);
             let atr = 0;
             try { atr = Models.getAtr(symbol).average; } catch (e) { /* no plan loaded yet */ }
@@ -52,8 +61,8 @@ export const createWebSocket = () => {
             }
         } else if (type === "priceSelect") {
             handlePriceSelect({
-                symbol: data.symbol || "???",
-                price: data.price,
+                symbol,
+                price: newPrice,
                 keyCode: data.keyCode || "cmd",
                 timestamp: data.timestamp,
             });
