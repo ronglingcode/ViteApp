@@ -35,20 +35,25 @@ export const createWebSocket = () => {
             console.log(`[BookmapSocket] BREAKOUT [${data.symbol}]: level=${data.breakoutLevel}, swingLow=${data.swingLow}, timestamp=${data.timestamp}`);
         } else if (type === "orderbook") {
             const symbol = data.symbol || "???";
-            console.log(`[BookmapSocket] Orderbook [${symbol}]: ${data.largeBids.length} largeBids, ${data.largeAsks.length} largeAsks`);
+            //console.log(`[BookmapSocket] Orderbook [${symbol}]: ${data.largeBids.length} largeBids, ${data.largeAsks.length} largeAsks`);
             let atr = 0;
             try { atr = Models.getAtr(symbol).average; } catch (e) { /* no plan loaded yet */ }
             const { appeared, disappeared } = processOrderbookSnapshot(data, atr);
 
             for (const order of appeared) {
-                Firestore.logInfo(`NEW large ${order.side} wall [${symbol}]: $${order.price} x ${order.size}`, { symbol });
+                //Firestore.logInfo(`NEW large ${order.side} wall [${symbol}]: $${order.price} x ${order.size}`, { symbol });
             }
             for (const order of disappeared) {
-                Firestore.logInfo(`GONE large ${order.side} wall [${symbol}]: $${order.price} x ${order.size}`, { symbol });
+                //Firestore.logInfo(`GONE large ${order.side} wall [${symbol}]: $${order.price} x ${order.size}`, { symbol });
             }
             if (appeared.length > 0 || disappeared.length > 0) {
-                Helper.speak("large order update");
+                //  Helper.speak("large order update");
             }
+        } else if (type === "priceSelect") {
+            const symbol = data.symbol || "???";
+            console.log(`[BookmapSocket] Price selected [${symbol}]: $${data.price}`);
+            Firestore.logInfo(`Price selected: $${data.price}`, { symbol });
+            Helper.speak(`${symbol} price ${data.price}`);
         } else if (type === "subscribed") {
             console.log(`[BookmapSocket] Subscribed to ${data.channel} (interval=${data.intervalMs}ms, levels=${data.levels})`);
         } else if (type === "unsubscribed") {
