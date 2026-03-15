@@ -51,8 +51,9 @@ export const createWebSocket = () => {
             }
         } else if (type === "priceSelect") {
             const symbol = data.symbol || "???";
-            console.log(`[BookmapSocket] Price selected [${symbol}]: $${data.price}`);
-            Firestore.logInfo(`Price selected: $${data.price}`, { symbol });
+            const keyCode = data.keyCode || "cmd";
+            console.log(`[BookmapSocket] Price selected [${symbol}]: $${data.price} keyCode=${keyCode}`);
+            Firestore.logInfo(`Price selected (${keyCode}): $${data.price}`, { symbol });
             Helper.speak(`${symbol} price ${data.price}`);
         } else if (type === "subscribed") {
             console.log(`[BookmapSocket] Subscribed to ${data.channel} (interval=${data.intervalMs}ms, levels=${data.levels})`);
