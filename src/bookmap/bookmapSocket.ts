@@ -1,10 +1,11 @@
 /**
- * WebSocket client for the Bookmap Wall Breakout Detector plugin.
+ * WebSocket client for the Bookmap Active Trader plugin.
  * Connects to the local WebSocket server and subscribes to
  * order book snapshots, heartbeats, and breakout signals.
  */
 
 import { processOrderbookSnapshot } from "./largeOrderTracker";
+import { handlePriceSelect } from "./bookmapActions";
 import * as Firestore from "../firestore";
 import * as Helper from "../utils/helper";
 import * as Models from "../models/models";
@@ -50,11 +51,12 @@ export const createWebSocket = () => {
                 //  Helper.speak("large order update");
             }
         } else if (type === "priceSelect") {
-            const symbol = data.symbol || "???";
-            const keyCode = data.keyCode || "cmd";
-            console.log(`[BookmapSocket] Price selected [${symbol}]: $${data.price} keyCode=${keyCode}`);
-            Firestore.logInfo(`Price selected (${keyCode}): $${data.price}`, { symbol });
-            Helper.speak(`${symbol} price ${data.price}`);
+            handlePriceSelect({
+                symbol: data.symbol || "???",
+                price: data.price,
+                keyCode: data.keyCode || "cmd",
+                timestamp: data.timestamp,
+            });
         } else if (type === "subscribed") {
             console.log(`[BookmapSocket] Subscribed to ${data.channel} (interval=${data.intervalMs}ms, levels=${data.levels})`);
         } else if (type === "unsubscribed") {
