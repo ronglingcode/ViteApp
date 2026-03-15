@@ -22,10 +22,7 @@ export interface PriceSelectEvent {
 export const handlePriceSelect = (event: PriceSelectEvent) => {
     const { symbol, price, keyCode } = event;
     console.log(`[BookmapActions] Price selected [${symbol}]: $${price} keyCode=${keyCode}`);
-    Firestore.logInfo(`Price selected (${keyCode}): $${price}`, { symbol });
-
     const key = keyCode.toLowerCase();
-
 
     if (key === "cmd" || key === "ctrl" || key === "control" || key === "meta") {
         setStopLossFromBookmap(symbol, price);
@@ -34,8 +31,7 @@ export const handlePriceSelect = (event: PriceSelectEvent) => {
     } else if (key === "s") {
         setSellLimitFromBookmap(symbol, price);
     } else {
-        console.log(`[BookmapActions] Unhandled keyCode: ${keyCode}`);
-
+        console.log(`[BookmapActions] unhandled Price selected [${symbol}]: $${price} keyCode=${keyCode}`);
     }
 };
 
