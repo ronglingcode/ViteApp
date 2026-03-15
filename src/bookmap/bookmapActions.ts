@@ -5,6 +5,8 @@
 
 import * as Firestore from "../firestore";
 import * as Helper from "../utils/helper";
+import * as OrderFlow from "../controllers/orderFlow";
+import * as Models from "../models/models";
 
 export interface PriceSelectEvent {
     symbol: string;
@@ -37,22 +39,25 @@ export const handlePriceSelect = (event: PriceSelectEvent) => {
 };
 
 /** Cmd+Click or Ctrl+Click: set stop loss at the selected price. */
-const setStopLossFromBookmap = (symbol: string, price: number) => {
-    console.log(`[BookmapActions] Set stop loss [${symbol}]: $${price}`);
-    Helper.speak(`stop loss ${price}`);
-    // TODO: implement stop loss logic
+const setStopLossFromBookmap = (symbol: string, newPrice: number) => {
+    let logTags = Models.generateLogTags(symbol, `set_stop_loss_from_bookmap`);
+    Firestore.logInfo(`[Bookmap] Set stop loss: $${newPrice}`, logTags);
+    let positionIsLong = Models.getPositionNetQuantity(symbol) > 0;
+    let exitPairs = Models.getExitPairs(symbol);
+    for (let i = 0; i < exitPairs.length / 2; i++) {
+        let pair = exitPairs[i];
+        OrderFlow.adjustExitPairsWithNewPrice(symbol, [pair], newPrice, true, positionIsLong, logTags);
+    }
 };
 
 /** B+Click: set buy limit order at the selected price. */
 const setBuyLimitFromBookmap = (symbol: string, price: number) => {
     console.log(`[BookmapActions] Buy limit [${symbol}]: $${price}`);
-    Helper.speak(`buy limit ${price}`);
     // TODO: implement buy limit logic
 };
 
 /** S+Click: set sell limit order at the selected price. */
 const setSellLimitFromBookmap = (symbol: string, price: number) => {
     console.log(`[BookmapActions] Sell limit [${symbol}]: $${price}`);
-    Helper.speak(`sell limit ${price}`);
     // TODO: implement sell limit logic
 };
