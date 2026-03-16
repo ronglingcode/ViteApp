@@ -35,8 +35,10 @@ export const createWebSocket = () => {
 
     websocket.onmessage = function (messageEvent) {
         let data = JSON.parse(messageEvent.data);
-        console.log(data);
         let type = data.type;
+        if (type !== "orderbook") {
+            console.log(data);
+        }
         let symbol = normalizeSymbol(data.symbol || "");
         let newPrice = Helper.roundPrice(symbol, data.price || 0);
 
