@@ -38,7 +38,7 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         let buttonLabel = isLong ? 'VWAP Cont' : 'VWAP Cont';
         if (familyName == Models.TradebookFamilyName.GapAndCrap) {
             tradebookName = 'Gap and Crap Short VWAP Cont';
-            buttonLabel = 'Gap&Crp VWAP Cont';
+            buttonLabel = `${Models.TradebookFamilyName.GapAndCrap} VWAP Cont`;
         }
         super(familyName, symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel)
         this.init()
