@@ -41,7 +41,10 @@ export class PremarketHighRejection extends Tradebook {
             throw new Error('PremarketHighRejection tradebook only supports short positions');
         }
         let tradebookName = 'Short Gap and Crap';
-        let buttonLabel = 'Gap and Crap';
+        let buttonLabel = "pm high reject";
+        if (familyName && familyName.length > 0) {
+            buttonLabel = `${familyName} ${buttonLabel}`;
+        }
         super(familyName, symbol, false, tradebookName, buttonLabel);
         this.basePlan = basePlan;
         this.enableByDefault = true;
