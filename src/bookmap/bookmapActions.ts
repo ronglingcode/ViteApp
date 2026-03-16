@@ -6,6 +6,7 @@
 import * as Firestore from "../firestore";
 import * as Helper from "../utils/helper";
 import * as OrderFlow from "../controllers/orderFlow";
+import * as Handler from "../controllers/handler";
 import * as Models from "../models/models";
 
 export interface PriceSelectEvent {
@@ -22,8 +23,11 @@ export interface PriceSelectEvent {
 export const handlePriceSelect = (event: PriceSelectEvent) => {
     const { symbol, price, keyCode } = event;
     console.log(`[BookmapActions] Price selected [${symbol}]: $${price} keyCode=${keyCode}`);
-    const key = keyCode.toLowerCase();
-    const altDigit = parseAltDigitHotkey(key);
+    const rawKey = keyCode.toLowerCase().trim();
+    // Normalize "1+alt" -> "1" so plugin can send either format.
+    const key = rawKey.replace(/\+alt$/, '');
+    const digit = parseDigitHotkey(key);
+    let newPrice = price;
 
     if (key === "cmd" || key === "ctrl" || key === "control" || key === "meta") {
         setStopLossFromBookmap(symbol, price);
@@ -31,16 +35,32 @@ export const handlePriceSelect = (event: PriceSelectEvent) => {
         setBuyLimitFromBookmap(symbol, price);
     } else if (key === "s") {
         setSellLimitFromBookmap(symbol, price);
-    } else if (altDigit !== null) {
-        adjustSingleExitFromBookmap(symbol, price, altDigit);
+    } else if (key === "g") {
+        let logTags = Models.generateLogTags(symbol, `${symbol}-bookmap-g`);
+        let positionIsLong = Models.getPositionNetQuantity(symbol) > 0;
+        let isStopLeg = OrderFlow.isStopLeg(symbol, newPrice);
+        let exitPairs = Models.getExitPairs(symbol);
+        for (let i = 0; i < exitPairs.length / 2; i++) {
+            let pair = exitPairs[i];
+            OrderFlow.adjustExitPairsWithNewPrice(symbol, [pair], newPrice, isStopLeg, positionIsLong, logTags);
+        }
+    } else if (key === "t") {
+        let logTags = Models.generateLogTags(symbol, `${symbol}-bookmap-t`);
+        Handler.adjustAllExits(symbol, newPrice, logTags);
+    } else if (digit !== null) {
+        adjustSingleExitFromBookmap(symbol, price, digit);
     } else {
         console.log(`[BookmapActions] unhandled Price selected [${symbol}]: $${price} keyCode=${keyCode}`);
     }
 };
 
-const parseAltDigitHotkey = (key: string): number | null => {
-    // Accept formats like "0+alt" .. "9+alt" (from plugin) and "alt+0" .. "alt+9"
-    let m = key.match(/^([0-9])\+alt$/) || key.match(/^alt\+([0-9])$/);
+const parseDigitHotkey = (key: string): number | null => {
+    // After normalization, accept plain digits "0" .. "9".
+    if (/^[0-9]$/.test(key)) {
+        return parseInt(key, 10);
+    }
+    // Also accept "alt+0" .. "alt+9" if it ever shows up.
+    let m = key.match(/^alt\+([0-9])$/);
     if (!m) return null;
     let digit = parseInt(m[1], 10);
     return Number.isFinite(digit) ? digit : null;
