@@ -2230,7 +2230,7 @@ export const getDefaultRiskLevels = (symbol: string, defaultRiskLevels: string[]
 }
 
 export enum TradebookFamilyName {
-    GapAndCrap = 'GapAndCrap',
-    GapAndGo = 'GapAndGo',
-    GapGiveAndGo = 'GapGiveAndGo',
+    GapAndCrap = 'Gap & Crap',
+    GapAndGo = 'Gap & Go',
+    GapGiveAndGo = 'Gap Give & Go',
 }
