@@ -23,6 +23,7 @@ export const handlePriceSelect = (event: PriceSelectEvent) => {
     const { symbol, price, keyCode } = event;
     console.log(`[BookmapActions] Price selected [${symbol}]: $${price} keyCode=${keyCode}`);
     const key = keyCode.toLowerCase();
+    const altDigit = parseAltDigitHotkey(key);
 
     if (key === "cmd" || key === "ctrl" || key === "control" || key === "meta") {
         setStopLossFromBookmap(symbol, price);
@@ -30,9 +31,43 @@ export const handlePriceSelect = (event: PriceSelectEvent) => {
         setBuyLimitFromBookmap(symbol, price);
     } else if (key === "s") {
         setSellLimitFromBookmap(symbol, price);
+    } else if (altDigit !== null) {
+        adjustSingleExitFromBookmap(symbol, price, altDigit);
     } else {
         console.log(`[BookmapActions] unhandled Price selected [${symbol}]: $${price} keyCode=${keyCode}`);
     }
+};
+
+const parseAltDigitHotkey = (key: string): number | null => {
+    // Accept formats like "0+alt" .. "9+alt" (from plugin) and "alt+0" .. "alt+9"
+    let m = key.match(/^([0-9])\+alt$/) || key.match(/^alt\+([0-9])$/);
+    if (!m) return null;
+    let digit = parseInt(m[1], 10);
+    return Number.isFinite(digit) ? digit : null;
+};
+
+const adjustSingleExitFromBookmap = (symbol: string, newPrice: number, digit: number) => {
+    let logTags = Models.generateLogTags(symbol, `${symbol}-bookmap-alt-${digit}`);
+    let widget = Models.getChartWidget(symbol);
+    if (!widget || !widget.exitOrderPairs || widget.exitOrderPairs.length <= 0) {
+        return;
+    }
+
+    // Match keyboard behavior: 1->first pair ... 9->ninth pair, 0->tenth pair
+    let number = digit === 0 ? 10 : digit;
+    let index = number - 1;
+    if (index < 0 || widget.exitOrderPairs.length <= index) {
+        Firestore.logError(`exit pair index out of range for ${symbol}: digit=${digit}, pairs=${widget.exitOrderPairs.length}`, logTags);
+        return;
+    }
+
+    let pair = widget.exitOrderPairs[index];
+
+    Firestore.logInfo(`[Bookmap] Adjust exit pair ${number}: $${newPrice}`, logTags);
+
+    let positionIsLong = Models.getPositionNetQuantity(symbol) > 0;
+    let useStopLeg = OrderFlow.isStopLeg(symbol, newPrice);
+    OrderFlow.adjustExitPairsWithNewPrice(symbol, [pair], newPrice, useStopLeg, positionIsLong, logTags);
 };
 
 /** Cmd+Click or Ctrl+Click: set stop loss at the selected price. */
