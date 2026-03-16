@@ -67,8 +67,6 @@ export const createAllTradebooks = (symbol: string) => {
         tradebooksMap.set(openFlush.getID(), openFlush);
 
         if (plan.short.gapAndCrapPlan) {
-            let gapAndCrap = new PremarketHighRejection('', symbol, false, plan.short.gapAndCrapPlan);
-            tradebooksMap.set(gapAndCrap.getID(), gapAndCrap);
             let maxPrice = plan.short.gapAndCrapPlan.aboveThisLevelNoMoreShort;
             let maxPriceKeyLevel: TradingPlansModels.LevelArea = {
                 high: maxPrice,
