@@ -73,6 +73,7 @@ export const createAllTradebooks = (symbol: string) => {
                 low: maxPrice
             };
             let gapAndCrapVwapContinuation = new VwapContinuation(Models.TradebookFamilyName.GapAndCrap, symbol, false, maxPriceKeyLevel, shortPlan);
+            gapAndCrapVwapContinuation.enableByDefault = true;
             tradebooksMap.set(gapAndCrapVwapContinuation.getID(), gapAndCrapVwapContinuation);
 
             let premarketHighRejectionShort = new PremarketHighRejection(Models.TradebookFamilyName.GapAndCrap, symbol, false, plan.short.gapAndCrapPlan);
