@@ -68,6 +68,7 @@ const parseDigitHotkey = (key: string): number | null => {
 
 const adjustSingleExitFromBookmap = (symbol: string, newPrice: number, digit: number) => {
     let logTags = Models.generateLogTags(symbol, `${symbol}-bookmap-alt-${digit}`);
+    Firestore.logInfo("adjustSingleExitFromBookmap", logTags);
     let widget = Models.getChartWidget(symbol);
     if (!widget || !widget.exitOrderPairs || widget.exitOrderPairs.length <= 0) {
         return;
