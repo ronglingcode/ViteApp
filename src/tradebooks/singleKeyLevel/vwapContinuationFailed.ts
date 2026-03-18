@@ -36,7 +36,11 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
     constructor(familyName: string, symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan) {
         let tradebookName = isLong ? 'Long VWAP Bounce Failed' : 'Short VWAP Pushdown Failed';
-        let buttonLabel = isLong ? 'Vwap Fail' : 'Vwap Fail';
+        let buttonLabel = isLong ? 'Vwap Pushdown Fail' : 'Vwap Bounce Fail';
+        if (familyName == Models.TradebookFamilyName.GapAndCrap) {
+            tradebookName = 'Gap and Crap Short VWAP Bounce Fail';
+            buttonLabel = `${Models.TradebookFamilyName.GapAndCrap} VWAP Bounce Fail`;
+        }
         super(familyName, symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel);
         this.init();
     }
