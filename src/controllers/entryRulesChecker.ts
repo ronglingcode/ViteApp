@@ -251,8 +251,7 @@ export const conditionallyHasReversalBarSinceOpen = (symbol: string,
 }
 
 export const allowEntryRulesForGapAndCrap = (symbol: string, entryPrice: number, logTags: Models.LogTags) => {
-    let seconds = Helper.getSecondsSinceMarketOpen(new Date());
-    if (seconds > 5 * 60) {
+    if (Rules.isGapAndCrapNewTradeExceedShotClock()) {
         Firestore.logError(`only allow entry in the 1st 5 minutes for gap and crap`, logTags);
         return false;
     }

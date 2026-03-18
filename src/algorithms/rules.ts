@@ -681,3 +681,26 @@ export const shouldAllowEarlyEntry = (symbol: string, secondsSinceMarketOpen: nu
     }
     return result;
 }
+
+export const isNewTradeAfterStopOut = (symbol: string, isLong: boolean): boolean => {
+    let quantity = Models.getPositionNetQuantity(symbol);
+    if (quantity != 0) {
+        return false;
+    }
+    let prevState = TradingState.getBreakoutTradeState(symbol, isLong);
+    if (!prevState) {
+        return false;
+    }
+    let initialStop = prevState.stopLossPrice;
+    let symbolData = Models.getSymbolData(symbol);
+    if (isLong) {
+        return (symbolData.lowOfDay < initialStop);
+    } else {
+        return (symbolData.highOfDay > initialStop);
+    }
+}
+
+export const isGapAndCrapNewTradeExceedShotClock = () => {
+    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
+    return secondsSinceMarketOpen > 5 * 60;
+}

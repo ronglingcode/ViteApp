@@ -366,6 +366,15 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
                 reason: `${symbol} warning state: last M1 close ${side} vwap, no adds. Tighten stop first.`,
             };
         }
+        if (this.familyName == Models.TradebookFamilyName.GapAndCrap) {
+            let addAsNewTrade = Rules.isNewTradeAfterStopOut(symbol, this.isLong);
+            if (addAsNewTrade && Rules.isGapAndCrapNewTradeExceedShotClock()) {
+                return {
+                    allowed: false,
+                    reason: "gap and crap new trade exceeds shot clock",
+                };
+            }
+        }
         return {
             allowed: true,
             reason: 'warning not active',

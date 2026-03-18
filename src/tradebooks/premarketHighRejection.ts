@@ -142,6 +142,22 @@ export class PremarketHighRejection extends Tradebook {
         return true; // TODO: Implement enable/disable logic
     }
 
+    getDisallowedReasonToAddPartial(symbol: string, logTags: Models.LogTags): Models.CheckRulesResult {
+        if (this.familyName == Models.TradebookFamilyName.GapAndCrap) {
+            let addAsNewTrade = Rules.isNewTradeAfterStopOut(symbol, this.isLong);
+            if (addAsNewTrade && Rules.isGapAndCrapNewTradeExceedShotClock()) {
+                return {
+                    allowed: false,
+                    reason: "gap and crap new trade exceeds shot clock",
+                };
+            }
+        }
+        return {
+            allowed: true,
+            reason: "allowed",
+        };
+    }
+
     getTightStopLevels(): Models.DisplayLevel[] {
         let tightStopLevels = TradebookUtil.getTightStopLevelsForTrend(this.symbol, false);
         return tightStopLevels;
