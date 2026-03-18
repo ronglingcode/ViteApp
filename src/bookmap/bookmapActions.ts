@@ -22,12 +22,12 @@ export interface PriceSelectEvent {
  */
 export const handlePriceSelect = (event: PriceSelectEvent) => {
     const { symbol, price, keyCode } = event;
-    console.log(`[BookmapActions] Price selected [${symbol}]: $${price} keyCode=${keyCode}`);
     const rawKey = keyCode.toLowerCase().trim();
     // Normalize "1+alt" -> "1" so plugin can send either format.
     const key = rawKey.replace(/\+alt$/, '');
     const digit = parseDigitHotkey(key);
     let newPrice = price;
+    console.log(`[Bookmap Processed] Price selected [${symbol}]: $${price}, rawKey=${keyCode} keyCode=${key}`);
 
     if (key === "cmd" || key === "ctrl" || key === "control" || key === "meta") {
         setStopLossFromBookmap(symbol, price);
