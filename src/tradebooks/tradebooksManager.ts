@@ -72,12 +72,17 @@ export const createAllTradebooks = (symbol: string) => {
                 high: maxPrice,
                 low: maxPrice
             };
-            let gapAndCrapVwapContinuation = new VwapContinuation(Models.TradebookFamilyName.GapAndCrap, symbol, false, maxPriceKeyLevel, shortPlan);
+            let gapAndCrapIsLong = false;
+            let gapAndCrapVwapContinuation = new VwapContinuation(Models.TradebookFamilyName.GapAndCrap, symbol, gapAndCrapIsLong, maxPriceKeyLevel, shortPlan);
             gapAndCrapVwapContinuation.enableByDefault = true;
             tradebooksMap.set(gapAndCrapVwapContinuation.getID(), gapAndCrapVwapContinuation);
 
-            let premarketHighRejectionShort = new PremarketHighRejection(Models.TradebookFamilyName.GapAndCrap, symbol, false, plan.short.gapAndCrapPlan);
+            let premarketHighRejectionShort = new PremarketHighRejection(Models.TradebookFamilyName.GapAndCrap, symbol, gapAndCrapIsLong, plan.short.gapAndCrapPlan);
             tradebooksMap.set(premarketHighRejectionShort.getID(), premarketHighRejectionShort);
+
+            let gapAndCrapVwapBounceFail = new VwapContinuationFailed(Models.TradebookFamilyName.GapAndCrap, symbol, gapAndCrapIsLong, maxPriceKeyLevel, shortPlan);
+            gapAndCrapVwapBounceFail.enableByDefault = true;
+            tradebooksMap.set(gapAndCrapVwapBounceFail.getID(), gapAndCrapVwapBounceFail);
         }
     }
     if (plan.long.vwapScalpPlan) {
