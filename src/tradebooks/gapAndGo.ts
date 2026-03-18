@@ -86,6 +86,11 @@ export class GapAndGo extends Tradebook {
             Firestore.logError(`entry price ${entryPrice} is below min daily support ${minSupport}`, logTags);
             return 0;
         }
+        let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
+        if (secondsSinceMarketOpen > 15 * 60) {
+            Firestore.logError(`only allowed for first 15 minutes`, logTags);
+            return 0;
+        }
         let openPrice = Models.getOpenPrice(this.symbol);
         let openVwap = Models.getLastVwapBeforeOpen(this.symbol);
         // if open below vwap, once it gets above it, it cannot close 2 candles below vwap to lose momentum
