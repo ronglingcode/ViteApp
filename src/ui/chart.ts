@@ -1594,6 +1594,7 @@ export const drawMomentumLevels = (widget: Models.ChartWidget) => {
 
 export const drawCamPivots = (symbolData: Models.SymbolData, allCharts: Models.TimeFrameChart[], widget: Models.ChartWidget) => {
     let pivots = symbolData.camPivots;
+    console.log(`[drawCamPivots] ${widget.symbol}: pivots R3=${pivots.R3} R4=${pivots.R4} S3=${pivots.S3} S4=${pivots.S4}, charts=${allCharts.length}`);
     allCharts.forEach(chart => {
         // Clear previous cam pivot lines
         for (let i = 0; chart.camPivotLevels.length > i; i++) {
@@ -1611,6 +1612,7 @@ export const drawCamPivots = (symbolData: Models.SymbolData, allCharts: Models.T
                 chart.camPivotLevels.push(l);
             }
         }
+        console.log(`[drawCamPivots] ${widget.symbol}: drew ${chart.camPivotLevels.length} pivot lines on timeframe chart`);
     });
 }
 
