@@ -135,6 +135,7 @@ export interface SingleDirectionPlans {
     gapDownAndGoUpPlan?: GapDownAndGoUpPlan,
     bookmapBigWallBreakoutPlan?: BookmapBigWallBreakoutPlan,
     bookmapBigWallBreakdownFailLongPlan?: BookmapBigWallBreakdownFailLongPlan,
+    camExtremeMomentumPlan?: CamExtremeMomentumPlan,
     /* used strategies end */
 
     levelBreakout?: LevelBreakoutPlan,
@@ -270,6 +271,9 @@ export interface BookmapBigWallBreakoutPlan extends BasePlan {
 }
 export interface BookmapBigWallBreakdownFailLongPlan extends BasePlan {
     bigWallLevel: number,
+    defaultRiskLevels: string[],
+}
+export interface CamExtremeMomentumPlan extends BasePlan {
     defaultRiskLevels: string[],
 }
 export interface AlgoPlan extends BasePlan {

@@ -22,6 +22,7 @@ import { GapDownAndGoDown } from "./gapDownAndGoDown";
 import { GapDownAndGoUp } from "./gapDownAndGoUp";
 import { BookmapBigWallBreakout } from "./bookmapBigWallBreakout";
 import { BookmapBigWallBreakdownFailLong } from "./bookmapBigWallBreakdownFailLong";
+import { CamExtremeMomentum } from "./camExtremeMomentum";
 
 export const createAllTradebooks = (symbol: string) => {
     let plan = TradingPlans.getTradingPlans(symbol);
@@ -137,6 +138,14 @@ export const createAllTradebooks = (symbol: string) => {
     if (plan.long.bookmapBigWallBreakdownFailLongPlan) {
         let bmBreakdownFailLong = new BookmapBigWallBreakdownFailLong('', symbol, plan.long.bookmapBigWallBreakdownFailLongPlan);
         tradebooksMap.set(bmBreakdownFailLong.getID(), bmBreakdownFailLong);
+    }
+    if (plan.long.camExtremeMomentumPlan) {
+        let camLong = new CamExtremeMomentum('', symbol, true, plan.long.camExtremeMomentumPlan);
+        tradebooksMap.set(camLong.getID(), camLong);
+    }
+    if (plan.short.camExtremeMomentumPlan) {
+        let camShort = new CamExtremeMomentum('', symbol, false, plan.short.camExtremeMomentumPlan);
+        tradebooksMap.set(camShort.getID(), camShort);
     }
     return tradebooksMap;
 }
