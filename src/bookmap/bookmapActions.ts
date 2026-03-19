@@ -27,7 +27,7 @@ export const handlePriceSelect = (event: PriceSelectEvent) => {
     const key = rawKey.replace(/\+alt$/, '');
     const digit = parseDigitHotkey(key);
     let newPrice = price;
-    console.log(`[Bookmap Processed] Price selected [${symbol}]: $${price}, rawKey=${keyCode} keyCode=${key}`);
+    Firestore.logInfo(`[Bookmap Processed] Price selected [${symbol}]: $${price}, rawKey=${keyCode} keyCode=${key}`);
 
     if (key === "cmd" || key === "ctrl" || key === "control" || key === "meta") {
         setStopLossFromBookmap(symbol, price);
