@@ -2233,4 +2233,5 @@ export enum TradebookFamilyName {
     GapAndCrap = 'Gap & Crap',
     GapAndGo = 'Gap & Go',
     GapGiveAndGo = 'Gap Give & Go',
+    GapDownAndGoDown = 'Gap Down & Go Down',
 }

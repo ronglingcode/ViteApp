@@ -85,6 +85,7 @@ export const createAllTradebooks = (symbol: string) => {
             gapAndCrapVwapBounceFail.enableByDefault = true;
             tradebooksMap.set(gapAndCrapVwapBounceFail.getID(), gapAndCrapVwapBounceFail);
         }
+
     }
     if (plan.long.vwapScalpPlan) {
         let vwapScalp = new VwapScalp('', symbol, true, plan.long.vwapScalpPlan);
@@ -122,6 +123,15 @@ export const createAllTradebooks = (symbol: string) => {
     if (plan.short.gapDownAndGoDownPlan) {
         let gapDownAndGoDown = new GapDownAndGoDown('', symbol, false, plan.short.gapDownAndGoDownPlan);
         tradebooksMap.set(gapDownAndGoDown.getID(), gapDownAndGoDown);
+        let maxPriceKeyLevel: TradingPlansModels.LevelArea = {
+            high: plan.short.gapDownAndGoDownPlan.buyersTrappedBelowThisLevel || 0,
+            low: plan.short.gapDownAndGoDownPlan.buyersTrappedBelowThisLevel || 0
+        };
+        if (shortPlan) {
+            let gapDownAndGoDownVwapBounceFail = new VwapContinuationFailed(Models.TradebookFamilyName.GapDownAndGoDown, symbol, false, maxPriceKeyLevel, shortPlan);
+            gapDownAndGoDownVwapBounceFail.enableByDefault = true;
+            tradebooksMap.set(gapDownAndGoDownVwapBounceFail.getID(), gapDownAndGoDownVwapBounceFail);
+        }
     }
     if (plan.long.gapDownAndGoUpPlan) {
         let gapDownAndGoUp = new GapDownAndGoUp('', symbol, true, plan.long.gapDownAndGoUpPlan);
