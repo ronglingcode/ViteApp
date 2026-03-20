@@ -45,6 +45,7 @@ export const handlePriceSelect = (event: PriceSelectEvent) => {
             OrderFlow.adjustExitPairsWithNewPrice(symbol, [pair], newPrice, isStopLeg, positionIsLong, logTags);
         }
     } else if (key === "t") {
+        console.log("trying bookmap actions for t");
         let logTags = Models.generateLogTags(symbol, `${symbol}-bookmap-t`);
         Handler.adjustAllExits(symbol, newPrice, logTags);
     } else if (digit !== null) {
