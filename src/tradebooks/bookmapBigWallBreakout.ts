@@ -10,50 +10,30 @@ import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 export class BookmapBigWallBreakout extends Tradebook {
     public static readonly bookmapBigWallBreakoutLong: string = 'BookmapBigWallBreakoutLong';
     public static readonly bookmapBigWallBreakoutShort: string = 'BookmapBigWallBreakoutShort';
-    private basePlan: TradingPlansModels.BookmapBigWallBreakoutPlan;
+    private basePlan: TradingPlansModels.BasePlan;
 
     public getID(): string {
         return this.buildID(this.isLong ? BookmapBigWallBreakout.bookmapBigWallBreakoutLong : BookmapBigWallBreakout.bookmapBigWallBreakoutShort);
     }
 
-    constructor(familyName: string, symbol: string, isLong: boolean, basePlan: TradingPlansModels.BookmapBigWallBreakoutPlan) {
+    constructor(familyName: string, symbol: string, isLong: boolean, basePlan: TradingPlansModels.BasePlan) {
         let tradebookName = isLong ? 'Long Bookmap Big Wall Breakout' : 'Short Bookmap Big Wall Breakdown';
-        let buttonLabel = isLong ? 'BM Wall' : 'BM Wall';
+        let buttonLabel = "bookmap";
+        if (familyName && familyName.length > 0) {
+            buttonLabel = `${familyName} ${buttonLabel}`;
+        }
         super(familyName, symbol, isLong, tradebookName, buttonLabel);
         this.basePlan = basePlan;
         this.enableByDefault = true;
     }
 
     refreshLiveStats(): void {
-        let currentPrice = Models.getCurrentPrice(this.symbol);
-        let distance = Math.abs(currentPrice - this.basePlan.bigWallLevel);
-        let atr = Models.getAtr(this.symbol).average;
-        let distanceInAtr = (distance / atr * 100).toFixed(0);
-        let side = this.isLong ? 'above' : 'below';
-        let priceRelation = (this.isLong && currentPrice > this.basePlan.bigWallLevel) ||
-            (!this.isLong && currentPrice < this.basePlan.bigWallLevel) ? side : `not ${side}`;
-        Helper.updateHtmlIfChanged(this.htmlStats, `wall: ${this.basePlan.bigWallLevel}, ${priceRelation}, dist: ${distanceInAtr}% atr`);
     }
 
-    triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {
+    triggerEntryCommon(dryRun: boolean, useMarketOrder: boolean, entryPrice: number, stopOutPrice: number, logTags: Models.LogTags): number {
         let symbol = this.symbol;
         let isLong = this.isLong;
-        let logTagName = isLong ? '_bookmap_big_wall_breakout' : '_bookmap_big_wall_breakdown';
-        let logTags = Models.generateLogTags(symbol, `${symbol}_${logTagName}`);
-
-        let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
-
-        if (isLong && entryPrice < this.basePlan.bigWallLevel) {
-            Firestore.logError(`entry price ${entryPrice} is below big wall level ${this.basePlan.bigWallLevel}`, logTags);
-            return 0;
-        }
-        if (!isLong && entryPrice > this.basePlan.bigWallLevel) {
-            Firestore.logError(`entry price ${entryPrice} is above big wall level ${this.basePlan.bigWallLevel}`, logTags);
-            return 0;
-        }
-
-        let stopOutPrice = Chart.getStopLossPrice(symbol, isLong, true, null);
-        let riskLevelPrice = Models.chooseRiskLevel(symbol, isLong, entryPrice, stopOutPrice, this.basePlan.defaultRiskLevels);
+        let riskLevelPrice = stopOutPrice;
 
         let allowedSize = EntryRulesChecker.checkBasicGlobalEntryRules(
             symbol, isLong, entryPrice, stopOutPrice, useMarketOrder,
@@ -63,16 +43,46 @@ export class BookmapBigWallBreakout extends Tradebook {
             Firestore.logError(`${symbol} not allowed entry`, logTags);
             return 0;
         }
-
+        allowedSize = allowedSize / 4;
         let planCopy = JSON.parse(JSON.stringify(this.basePlan)) as TradingPlansModels.BasePlan;
         this.submitEntryOrdersBase(
             dryRun, useMarketOrder, entryPrice, stopOutPrice, riskLevelPrice, allowedSize, planCopy, logTags);
 
-        setTimeout(() => {
-            Helper.speak("mark your stop loss level on the chart");
-        }, 3000);
-
         return allowedSize;
+    }
+
+    triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {
+        let symbol = this.symbol;
+        let isLong = this.isLong;
+        let logTagName = isLong ? '_bookmap_big_wall_breakout' : '_bookmap_big_wall_breakdown';
+        let logTags = Models.generateLogTags(symbol, `${symbol}_${logTagName}`);
+
+        let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
+        let stopOutPrice = Chart.getCustomStopLossPrice(symbol, isLong);
+        if (stopOutPrice == 0) {
+            Firestore.logError(`no custom stop loss`, logTags);
+            return 0;
+        }
+        return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, logTags);
+
+    }
+
+    triggerEntryFromBookmap(useMarketOrder: boolean, stopOutPrice: number): number {
+        let symbol = this.symbol;
+        let isLong = this.isLong;
+        let logTagName = isLong ? '_bookmap_big_wall_breakout' : '_bookmap_big_wall_breakdown';
+        let logTags = Models.generateLogTags(symbol, `${symbol}_${logTagName}`);
+        let symbolData = Models.getSymbolData(symbol);
+        let entryPrice = Models.getCurrentPrice(symbol);
+        if (!useMarketOrder) {
+            if (isLong) {
+                entryPrice = symbolData.highOfDay;
+            } else {
+                entryPrice = symbolData.lowOfDay;
+            }
+        }
+        return this.triggerEntryCommon(false, useMarketOrder, entryPrice, stopOutPrice, logTags);
+
     }
 
     getTradeManagementInstructions(): Models.TradeManagementInstructions {

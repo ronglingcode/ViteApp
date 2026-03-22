@@ -432,6 +432,19 @@ const setupQuantityBar = (symbol: string, quantityElements: Models.QuantityEleme
     }
 };
 
+export const getCustomStopLossPrice = (symbol: string, isLong: boolean) => {
+    let p = 0;
+    let widget = Models.getChartWidget(symbol);
+    if (!widget)
+        return 0;
+    if (widget.stopLossPriceLine) {
+        p = widget.stopLossPriceLine.options().price;
+        if (p != 0)
+            return roundStopLossPrice(symbol, isLong, p);
+    }
+    return 0;
+}
+
 /**
  * First check any drawn stop level if allow chart drawing, 
  * then use any preset stop level passed in,
