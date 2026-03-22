@@ -66,24 +66,33 @@ export const createAllTradebooks = (symbol: string) => {
 
         let openFlush = new OpenFlush('', symbol, false, keyLevel, shortPlan);
         tradebooksMap.set(openFlush.getID(), openFlush);
-
+        let scopeIsLong = false;
         if (plan.short.gapAndCrapPlan) {
             let maxPrice = plan.short.gapAndCrapPlan.aboveThisLevelNoMoreShort;
             let maxPriceKeyLevel: TradingPlansModels.LevelArea = {
                 high: maxPrice,
                 low: maxPrice
             };
-            let gapAndCrapIsLong = false;
-            let gapAndCrapVwapContinuation = new VwapContinuation(Models.TradebookFamilyName.GapAndCrap, symbol, gapAndCrapIsLong, maxPriceKeyLevel, shortPlan);
+
+            let gapAndCrapVwapContinuation = new VwapContinuation(Models.TradebookFamilyName.GapAndCrap, symbol, scopeIsLong, maxPriceKeyLevel, shortPlan);
             gapAndCrapVwapContinuation.enableByDefault = true;
             tradebooksMap.set(gapAndCrapVwapContinuation.getID(), gapAndCrapVwapContinuation);
 
-            let premarketHighRejectionShort = new PremarketHighRejection(Models.TradebookFamilyName.GapAndCrap, symbol, gapAndCrapIsLong, plan.short.gapAndCrapPlan);
+            let premarketHighRejectionShort = new PremarketHighRejection(Models.TradebookFamilyName.GapAndCrap, symbol, scopeIsLong, plan.short.gapAndCrapPlan);
             tradebooksMap.set(premarketHighRejectionShort.getID(), premarketHighRejectionShort);
 
-            let gapAndCrapVwapBounceFail = new VwapContinuationFailed(Models.TradebookFamilyName.GapAndCrap, symbol, gapAndCrapIsLong, maxPriceKeyLevel, shortPlan);
+            let gapAndCrapVwapBounceFail = new VwapContinuationFailed(Models.TradebookFamilyName.GapAndCrap, symbol, scopeIsLong, maxPriceKeyLevel, shortPlan);
             gapAndCrapVwapBounceFail.enableByDefault = true;
             tradebooksMap.set(gapAndCrapVwapBounceFail.getID(), gapAndCrapVwapBounceFail);
+
+            let gapAndCrapBookmapBigWallBreakdown = new BookmapBigWallBreakout(
+                Models.TradebookFamilyName.GapAndCrap, symbol, scopeIsLong, shortPlan);
+            tradebooksMap.set(gapAndCrapBookmapBigWallBreakdown.getID(), gapAndCrapBookmapBigWallBreakdown);
+        }
+        if (plan.short.gapDownAndGoDownPlan) {
+            let gapDownAndGoDownBookmapBigWallBreakdown = new BookmapBigWallBreakout(
+                Models.TradebookFamilyName.GapDownAndGoDown, symbol, scopeIsLong, plan.short.gapDownAndGoDownPlan);
+            tradebooksMap.set(gapDownAndGoDownBookmapBigWallBreakdown.getID(), gapDownAndGoDownBookmapBigWallBreakdown);
         }
 
     }
@@ -137,14 +146,7 @@ export const createAllTradebooks = (symbol: string) => {
         let gapDownAndGoUp = new GapDownAndGoUp('', symbol, true, plan.long.gapDownAndGoUpPlan);
         tradebooksMap.set(gapDownAndGoUp.getID(), gapDownAndGoUp);
     }
-    if (plan.long.bookmapBigWallBreakoutPlan) {
-        let bmWallLong = new BookmapBigWallBreakout('', symbol, true, plan.long.bookmapBigWallBreakoutPlan);
-        tradebooksMap.set(bmWallLong.getID(), bmWallLong);
-    }
-    if (plan.short.bookmapBigWallBreakoutPlan) {
-        let bmWallShort = new BookmapBigWallBreakout('', symbol, false, plan.short.bookmapBigWallBreakoutPlan);
-        tradebooksMap.set(bmWallShort.getID(), bmWallShort);
-    }
+
     if (plan.long.bookmapBigWallBreakdownFailLongPlan) {
         let bmBreakdownFailLong = new BookmapBigWallBreakdownFailLong('', symbol, plan.long.bookmapBigWallBreakdownFailLongPlan);
         tradebooksMap.set(bmBreakdownFailLong.getID(), bmBreakdownFailLong);

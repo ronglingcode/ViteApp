@@ -35,6 +35,12 @@ export class BookmapBigWallBreakout extends Tradebook {
         let isLong = this.isLong;
         let riskLevelPrice = stopOutPrice;
 
+        if (this.familyName === Models.TradebookFamilyName.GapAndCrap) {
+            if (!EntryRulesChecker.allowEntryRulesForGapAndCrap(symbol, entryPrice, logTags)) {
+                return 0;
+            }
+        }
+
         let allowedSize = EntryRulesChecker.checkBasicGlobalEntryRules(
             symbol, isLong, entryPrice, stopOutPrice, useMarketOrder,
             this.basePlan, false, logTags);

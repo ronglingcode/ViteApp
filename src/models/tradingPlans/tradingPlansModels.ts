@@ -133,7 +133,6 @@ export interface SingleDirectionPlans {
     gapGiveAndGoPlan?: GapGiveAndGoPlan,
     gapDownAndGoDownPlan?: GapDownAndGoDownPlan,
     gapDownAndGoUpPlan?: GapDownAndGoUpPlan,
-    bookmapBigWallBreakoutPlan?: BookmapBigWallBreakoutPlan,
     bookmapBigWallBreakdownFailLongPlan?: BookmapBigWallBreakdownFailLongPlan,
     camExtremeMomentumPlan?: CamExtremeMomentumPlan,
     /* used strategies end */
@@ -264,10 +263,6 @@ export interface GapDownAndGoUpPlan extends BasePlan {
     nearAboveKeyEventLevel?: number,
     defaultRiskLevels: string[],
 
-}
-export interface BookmapBigWallBreakoutPlan extends BasePlan {
-    bigWallLevel: number,
-    defaultRiskLevels: string[],
 }
 export interface BookmapBigWallBreakdownFailLongPlan extends BasePlan {
     bigWallLevel: number,
