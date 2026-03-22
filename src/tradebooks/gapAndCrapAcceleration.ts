@@ -7,6 +7,7 @@ import * as TradebookUtil from './tradebookUtil';
 import * as Helper from '../utils/helper';
 import * as Rules from '../algorithms/rules';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
+import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 
 export class GapAndCrapAcceleration extends Tradebook {
     public static readonly gapAndCrapAccelerationShort: string = 'G_crap Acc';
@@ -40,7 +41,7 @@ export class GapAndCrapAcceleration extends Tradebook {
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
         let symbolData = Models.getSymbolData(symbol);
         let stopOutPrice = symbolData.highOfDay;
-        let riskLevelPrice = Models.chooseRiskLevel(symbol, isLong, entryPrice, stopOutPrice, this.gapAndCrapAccelerationPlan.defaultRiskLevels);
+        let riskLevelPrice = Models.chooseRiskLevel(symbol, isLong, entryPrice, stopOutPrice, TradingPlans.getAnalysisDefaultRiskLevels(this.symbol));
         let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
 
         if (allowedSize === 0) {

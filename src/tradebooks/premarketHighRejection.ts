@@ -7,6 +7,7 @@ import * as TradebookUtil from './tradebookUtil';
 import * as Helper from '../utils/helper';
 import * as Rules from '../algorithms/rules';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
+import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 
 export class PremarketHighRejection extends Tradebook {
     public static readonly gapAndCrapShort: string = 'GapAndCrapShort';
@@ -54,7 +55,7 @@ export class PremarketHighRejection extends Tradebook {
         let entryPrice = Models.getCurrentPrice(this.symbol);
         let symbolData = Models.getSymbolData(this.symbol);
         let stopOutPrice = symbolData.highOfDay;
-        let riskLevel = Models.chooseRiskLevel(this.symbol, this.isLong, entryPrice, stopOutPrice, this.basePlan.defaultRiskLevels);
+        let riskLevel = Models.chooseRiskLevel(this.symbol, this.isLong, entryPrice, stopOutPrice, TradingPlans.getAnalysisDefaultRiskLevels(this.symbol));
         Helper.updateHtmlIfChanged(this.htmlStats, `risk level: ${riskLevel}`);
     }
 
@@ -66,7 +67,7 @@ export class PremarketHighRejection extends Tradebook {
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
         let symbolData = Models.getSymbolData(symbol);
         let stopOutPrice = symbolData.highOfDay;
-        let riskLevelPrice = Models.chooseRiskLevel(symbol, isLong, entryPrice, stopOutPrice, this.basePlan.defaultRiskLevels);
+        let riskLevelPrice = Models.chooseRiskLevel(symbol, isLong, entryPrice, stopOutPrice, TradingPlans.getAnalysisDefaultRiskLevels(this.symbol));
         let entryMethod = parameters.entryMethod;
         if (entryMethod === 'HOD') {
             riskLevelPrice = symbolData.highOfDay;

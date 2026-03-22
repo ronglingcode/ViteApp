@@ -5,6 +5,7 @@ import * as Models from '../models/models';
 import * as Firestore from '../firestore';
 import * as TradebookUtil from './tradebookUtil';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
+import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as Helper from '../utils/helper';
 
 export class GapDownAndGoUp extends Tradebook {
@@ -43,7 +44,7 @@ export class GapDownAndGoUp extends Tradebook {
         let entryPrice = Models.getCurrentPrice(this.symbol);
         let symbolData = Models.getSymbolData(this.symbol);
         let stopOutPrice = symbolData.lowOfDay;
-        let riskLevel = Models.chooseRiskLevel(this.symbol, this.isLong, entryPrice, stopOutPrice, this.basePlan.defaultRiskLevels);
+        let riskLevel = Models.chooseRiskLevel(this.symbol, this.isLong, entryPrice, stopOutPrice, TradingPlans.getAnalysisDefaultRiskLevels(this.symbol));
         Helper.updateHtmlIfChanged(this.htmlStats, `risk level: ${riskLevel}`);
     }
 
@@ -55,7 +56,7 @@ export class GapDownAndGoUp extends Tradebook {
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
         let symbolData = Models.getSymbolData(symbol);
         let stopOutPrice = symbolData.lowOfDay;
-        let riskLevelPrice = Models.chooseRiskLevel(symbol, isLong, entryPrice, stopOutPrice, this.basePlan.defaultRiskLevels);
+        let riskLevelPrice = Models.chooseRiskLevel(symbol, isLong, entryPrice, stopOutPrice, TradingPlans.getAnalysisDefaultRiskLevels(this.symbol));
         let entryMethod = parameters.entryMethod;
         if (entryMethod === 'LOD') {
             riskLevelPrice = symbolData.lowOfDay;

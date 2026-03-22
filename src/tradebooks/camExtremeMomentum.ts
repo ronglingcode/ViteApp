@@ -6,6 +6,7 @@ import * as Firestore from '../firestore';
 import * as TradebookUtil from './tradebookUtil';
 import * as Helper from '../utils/helper';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
+import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 
 export class CamExtremeMomentum extends Tradebook {
     public static readonly camExtremeMomentumLong: string = 'CamExtremeMomentumLong';
@@ -36,7 +37,7 @@ export class CamExtremeMomentum extends Tradebook {
         let currentPrice = Models.getCurrentPrice(this.symbol);
         let entryPrice = currentPrice;
         let stopOutPrice = this.isLong ? camPivots.R5 : camPivots.S5;
-        let riskLevel = Models.chooseRiskLevel(this.symbol, this.isLong, entryPrice, stopOutPrice, this.basePlan.defaultRiskLevels);
+        let riskLevel = Models.chooseRiskLevel(this.symbol, this.isLong, entryPrice, stopOutPrice, TradingPlans.getAnalysisDefaultRiskLevels(this.symbol));
         let label = this.isLong ? 'R6' : 'S6';
         Helper.updateHtmlIfChanged(this.htmlStats,
             `${label}: ${pivotLevel}, open: ${openPrice ?? '?'}, risk: ${riskLevel}`);
@@ -52,7 +53,7 @@ export class CamExtremeMomentum extends Tradebook {
         let symbolData = Models.getSymbolData(symbol);
         let camPivots = symbolData.camPivots;
         let stopOutPrice = isLong ? camPivots.R5 : camPivots.S5;
-        let riskLevelPrice = Models.chooseRiskLevel(symbol, isLong, entryPrice, stopOutPrice, this.basePlan.defaultRiskLevels);
+        let riskLevelPrice = Models.chooseRiskLevel(symbol, isLong, entryPrice, stopOutPrice, TradingPlans.getAnalysisDefaultRiskLevels(this.symbol));
 
         let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, logTags);
 

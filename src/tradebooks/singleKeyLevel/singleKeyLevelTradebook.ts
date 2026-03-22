@@ -2,6 +2,7 @@ import { Tradebook } from '../baseTradebook';
 import type * as TradingPlansModels from '../../models/tradingPlans/tradingPlansModels';
 import * as Models from '../../models/models';
 import * as Helper from '../../utils/helper';
+import * as TradingPlans from '../../models/tradingPlans/tradingPlans';
 export abstract class SingleKeyLevelTradebook extends Tradebook {
     public keyLevel: TradingPlansModels.LevelArea;
     public levelMomentumPlan: TradingPlansModels.LevelMomentumPlan;
@@ -27,7 +28,7 @@ export abstract class SingleKeyLevelTradebook extends Tradebook {
     protected submitEntryOrders(dryRun: boolean,
         useMarketOrder: boolean, entryPrice: number, stopOutPrice: number, allowedSize: number, entryMethod: string, logTags: Models.LogTags): void {
         let planCopy = JSON.parse(JSON.stringify(this.levelMomentumPlan)) as TradingPlansModels.LevelMomentumPlan;
-        let riskLevelPrice = Models.chooseRiskLevel(this.symbol, this.isLong, entryPrice, stopOutPrice, this.levelMomentumPlan.defaultRiskLevels);
+        let riskLevelPrice = Models.chooseRiskLevel(this.symbol, this.isLong, entryPrice, stopOutPrice, TradingPlans.getAnalysisDefaultRiskLevels(this.symbol));
         this.submitEntryOrdersBase(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskLevelPrice, allowedSize, planCopy, logTags);
     }
 

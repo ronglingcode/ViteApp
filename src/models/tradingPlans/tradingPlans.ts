@@ -86,7 +86,12 @@ export const getTradingPlans = (symbol: string) => {
     }
 
     return window.HybridApp.TradingPlans[0];
-}
+};
+
+/** Risk level labels for chooseRiskLevel; lives on plan.analysis (not on each BasePlan). */
+export const getAnalysisDefaultRiskLevels = (symbol: string): string[] | undefined => {
+    return getTradingPlans(symbol).analysis.defaultRiskLevels;
+};
 export const fetchConfigData = async () => {
     let data = await Firestore.fetchConfigData();
     let stockSelections: string[] = [];

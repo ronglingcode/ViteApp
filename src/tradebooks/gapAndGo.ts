@@ -7,6 +7,7 @@ import * as TradebookUtil from './tradebookUtil';
 import * as Helper from '../utils/helper';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as VwapPatterns from '../algorithms/vwapPatterns';
+import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 
 export class GapAndGo extends Tradebook {
     public static readonly gapAndGoLong: string = 'GapAndGoLong';
@@ -51,7 +52,7 @@ export class GapAndGo extends Tradebook {
         let entryPrice = Models.getCurrentPrice(this.symbol);
         let symbolData = Models.getSymbolData(this.symbol);
         let stopOutPrice = symbolData.lowOfDay;
-        let riskLevel = Models.chooseRiskLevel(this.symbol, this.isLong, entryPrice, stopOutPrice, this.basePlan.defaultRiskLevels);
+        let riskLevel = Models.chooseRiskLevel(this.symbol, this.isLong, entryPrice, stopOutPrice, TradingPlans.getAnalysisDefaultRiskLevels(this.symbol));
         Helper.updateHtmlIfChanged(this.htmlStats, `risk level: ${riskLevel}`);
     }
 
@@ -65,7 +66,7 @@ export class GapAndGo extends Tradebook {
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
         let symbolData = Models.getSymbolData(symbol);
         let stopOutPrice = symbolData.lowOfDay;
-        let riskLevelPrice = Models.chooseRiskLevel(symbol, isLong, entryPrice, stopOutPrice, this.basePlan.defaultRiskLevels);
+        let riskLevelPrice = Models.chooseRiskLevel(symbol, isLong, entryPrice, stopOutPrice, TradingPlans.getAnalysisDefaultRiskLevels(this.symbol));
         if (entryMethod === 'LOD') {
             riskLevelPrice = symbolData.lowOfDay;
         }

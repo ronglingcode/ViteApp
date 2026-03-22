@@ -6,6 +6,7 @@ import * as Firestore from '../firestore';
 import * as TradebookUtil from './tradebookUtil';
 import * as Helper from '../utils/helper';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
+import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 
 /**
  * Long-only tradebook: go long when a big wall breakdown fails (price reclaims above the wall).
@@ -46,7 +47,7 @@ export class BookmapBigWallBreakdownFailLong extends Tradebook {
         }
 
         let stopOutPrice = Chart.getStopLossPrice(symbol, true, true, null);
-        let riskLevelPrice = Models.chooseRiskLevel(symbol, true, entryPrice, stopOutPrice, this.basePlan.defaultRiskLevels);
+        let riskLevelPrice = Models.chooseRiskLevel(symbol, true, entryPrice, stopOutPrice, TradingPlans.getAnalysisDefaultRiskLevels(symbol));
 
         let allowedSize = EntryRulesChecker.checkBasicGlobalEntryRules(
             symbol, true, entryPrice, stopOutPrice, useMarketOrder,

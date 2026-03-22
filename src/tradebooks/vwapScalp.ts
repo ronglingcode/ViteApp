@@ -10,6 +10,7 @@ import * as VwapPatterns from '../algorithms/vwapPatterns';
 import * as TradebookUtils from './tradebookUtil';
 import * as Rules from '../algorithms/rules';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
+import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 
 export class VwapScalp extends Tradebook {
     public static readonly vwapScalpLong: string = 'VwapScalpLong';
@@ -52,7 +53,7 @@ export class VwapScalp extends Tradebook {
 
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
         let stopOutPrice = Chart.getStopLossPrice(symbol, isLong, true, null);
-        let riskLevelPrice = Models.chooseRiskLevel(symbol, isLong, entryPrice, stopOutPrice, this.vwapScalpPlan.defaultRiskLevels);
+        let riskLevelPrice = Models.chooseRiskLevel(symbol, isLong, entryPrice, stopOutPrice, TradingPlans.getAnalysisDefaultRiskLevels(this.symbol));
         let allowedSize = this.validateEntry(entryPrice, stopOutPrice, useMarketOrder, timeframe, logTags);
         if (allowedSize === 0) {
             Firestore.logError(`not allowed entry`, logTags);
