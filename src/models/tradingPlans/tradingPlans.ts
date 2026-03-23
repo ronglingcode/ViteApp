@@ -89,7 +89,7 @@ export const getTradingPlans = (symbol: string) => {
 };
 
 /** Risk level labels for chooseRiskLevel; lives on plan.analysis (not on each BasePlan). */
-export const getAnalysisDefaultRiskLevels = (symbol: string): string[] | undefined => {
+export const getAnalysisDefaultRiskLevels = (symbol: string): string[] => {
     return getTradingPlans(symbol).analysis.defaultRiskLevels;
 };
 export const fetchConfigData = async () => {
@@ -104,9 +104,6 @@ export const fetchConfigData = async () => {
     };
     if (data) {
         tradingPlans = data.plans as TradingPlansModels.TradingPlans[];
-        tradingPlans.forEach(tp => {
-            populateTradingPlan(tp);
-        });
         stockSelections = data.stockSelections as string[];
         activeProfileName = data.activeProfileName;
         tradingSettings = data.tradingSettings;
@@ -121,9 +118,6 @@ export const fetchConfigData = async () => {
     };
 }
 
-const populateTradingPlan = (plan: TradingPlansModels.TradingPlans) => {
-
-}
 export const getTradingSettings = () => {
     return window.HybridApp.TradingData.tradingSettings;
 }

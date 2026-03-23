@@ -36,7 +36,7 @@ export interface Analysis {
     watchAreas: number[],
     noTradeZones: LevelArea[],
     /** Default risk level labels for chooseRiskLevel (moved from BasePlan). */
-    defaultRiskLevels?: string[],
+    defaultRiskLevels: string[],
 }
 export interface ZoneNearEdge {
     zoneIsFar: boolean,
