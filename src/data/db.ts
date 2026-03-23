@@ -234,8 +234,6 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyC
     allCharts[0].ma5Series?.setData(symbolData.m1ma5);
     allCharts[0].ma9Series?.setData(symbolData.m1ma9);
 
-    Chart.drawLevelsAfterChartInitialize(widget);
-
     if (symbolData.openRange) {
         setDataForOpenPrice(widget, symbolData.OpenRangeLineSeriesData);
     }
@@ -255,6 +253,7 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyC
     }
     BasicIndicators.updateIndicators(symbol, symbolData, dailyCandles);
     Chart.onPriceHistoryLoaded(symbol);
+    Chart.drawLevelsAfterChartInitialize(widget);
 };
 export const updateFromTimeSaleForHigherTimeFrame = (
     symbol: string, widget: Models.ChartWidget, timesale: Models.TimeSale, timeframe: number, newVwapValue: number) => {
