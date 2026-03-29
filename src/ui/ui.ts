@@ -3,7 +3,13 @@ import * as Chart from './chart';
 import * as Config from '../config/config';
 import * as TimeHelper from '../utils/timeHelper';
 import * as Firestore from '../firestore';
+import * as Helper from '../utils/helper';
 declare let window: Models.MyWindow;
+
+/** True while clock diff is in the red zone; used to speak only on transition into bad sync. */
+let clockSyncWarningSpoken = false;
+
+const CLOCK_SYNC_SPEAK_REPEAT_MS = 2800;
 
 export let currentChartReviewIndex: number = -1;
 
@@ -123,12 +129,19 @@ export const updateClock = (timeAndSalesTime: Date) => {
 
     let clockText = `Local: ${localTimeString} Market: ${marketTimeString} Diff: ${timeDiffString}s`;
 
-    // If difference is larger than 0.5 seconds, show in red and log warning
+    // If difference is larger than 0.5 seconds, show in red and speak 3 times until sync recovers
     if (timeDiffSeconds > 0.5) {
         clock.style.color = 'red';
-        //Firestore.logError(`Clock sync issue: diff ${timeDiffString}s`);
+        if (!clockSyncWarningSpoken) {
+            clockSyncWarningSpoken = true;
+            let msg = `warning, local clock out of sync with market time by ${timeDiffString} seconds`;
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => Helper.speak(msg), i * CLOCK_SYNC_SPEAK_REPEAT_MS);
+            }
+        }
     } else {
         clock.style.color = '';
+        clockSyncWarningSpoken = false;
     }
 
     clock.textContent = clockText;
