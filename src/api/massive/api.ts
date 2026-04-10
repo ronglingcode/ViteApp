@@ -91,7 +91,7 @@ export const getDailyCandlesForLastNDays = async (
     const host = 'https://api.massive.com';
 
     // Calculate start date
-    const end = new Date(endDateExcluded);
+    const end = new Date(endDateExcluded + 'T00:00:00');
     end.setDate(end.getDate() - 1);
     const start = new Date(end);
     start.setDate(start.getDate() - nDays - 1);
