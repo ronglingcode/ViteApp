@@ -38,7 +38,7 @@ export const handlePriceSelect = (event: PriceSelectEvent) => {
 
     if (key === "cmd" || key === "ctrl" || key === "control" || key === "meta") {
         setStopLossFromBookmap(symbol, price);
-    } else if (key === "m") {
+    } else if (key === "b") {
         bookmapEntry(symbol, true, price);
     } else if (key === "s") {
         bookmapEntry(symbol, false, price);

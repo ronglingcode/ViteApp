@@ -167,7 +167,7 @@ if (testPopButton) {
     });
 }
 
-Firestore.addToLogView('version 1.361', 'Info');
+Firestore.addToLogView('version 1.362', 'Info');
 
 let now = new Date();
 
