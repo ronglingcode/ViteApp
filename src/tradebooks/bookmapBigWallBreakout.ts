@@ -78,17 +78,9 @@ export class BookmapBigWallBreakout extends Tradebook {
         let isLong = this.isLong;
         let logTagName = isLong ? '_bookmap_big_wall_breakout' : '_bookmap_big_wall_breakdown';
         let logTags = Models.generateLogTags(symbol, `${symbol}_${logTagName}`);
-        let symbolData = Models.getSymbolData(symbol);
-        let entryPrice = Models.getCurrentPrice(symbol);
-        if (!useMarketOrder) {
-            if (isLong) {
-                entryPrice = symbolData.highOfDay;
-            } else {
-                entryPrice = symbolData.lowOfDay;
-            }
-        }
-        return this.triggerEntryCommon(false, useMarketOrder, entryPrice, stopOutPrice, logTags);
+        let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
 
+        return this.triggerEntryCommon(false, useMarketOrder, entryPrice, stopOutPrice, logTags);
     }
 
     getTradeManagementInstructions(): Models.TradeManagementInstructions {
