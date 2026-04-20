@@ -56,6 +56,11 @@ export const getMillisecondsSinceMarketOpen = (jsDate: Date) => {
 export const getSecondsToMarketOpen = (jsDate: Date) => {
     return (getMarketOpenTime().getTime() - jsDate.getTime()) / 1000;
 };
+
+export const isInActiveHoursOfMarket = (jsDate: Date = new Date()): boolean => {
+    const minutesSinceOpen = getMinutesSinceMarketOpen(jsDate);
+    return minutesSinceOpen >= 0 && minutesSinceOpen < 120;
+};
 export const roundToCents = (price: number) => {
     return Math.round(price * 100) / 100;
 };
@@ -213,7 +218,7 @@ export const isMarketOpenTime = (jsDatdeObj: Date, currentDay: Date) => {
 
 export const speak = (message: string) => {
     let minutes = getMinutesSinceMarketOpen(new Date());
-    if (minutes <  85) {
+    if (minutes < 85) {
         var msg = new SpeechSynthesisUtterance();
         msg.text = message;
         window.speechSynthesis.speak(msg);
