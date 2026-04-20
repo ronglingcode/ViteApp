@@ -10,6 +10,7 @@ import * as Handler from "../controllers/handler";
 import * as Models from "../models/models";
 import { BookmapBigWallBreakout } from "../tradebooks/bookmapBigWallBreakout";
 import { BookmapBigWallBreakdownFailLong } from "../tradebooks/bookmapBigWallBreakdownFailLong";
+import { PremarketHighRejection } from "../tradebooks/premarketHighRejection";
 import * as TradebooksManager from "../tradebooks/tradebooksManager";
 
 export interface PriceSelectEvent {
@@ -32,7 +33,7 @@ export const handlePriceSelect = (event: PriceSelectEvent) => {
     let newPrice = price;
     Firestore.logInfo(`[Bookmap Processed] Price selected [${symbol}]: $${price}, rawKey=${keyCode} keyCode=${key}`);
     if (!Helper.isInActiveHoursOfMarket()) {
-        return;
+        //return;
     }
 
     if (key === "cmd" || key === "ctrl" || key === "control" || key === "meta") {
@@ -64,6 +65,39 @@ export const handlePriceSelect = (event: PriceSelectEvent) => {
 const bookmapEntry = (symbol: string, useMarketOrder: boolean, stopLossPrice: number) => {
     let currentPrice = Models.getCurrentPrice(symbol);
     let isLong = stopLossPrice < currentPrice;
+    const logTags = Models.generateLogTags(symbol, `${symbol}-bookmap-entry`);
+
+    if (isLong) {
+        const tradebookId = `${Models.TradebookFamilyName.GapAndGo}-${BookmapBigWallBreakout.bookmapBigWallBreakoutLong}`;
+        const tradebook = TradebooksManager.getTradebookByID(symbol, tradebookId);
+        if (!tradebook) {
+            Firestore.logError(`[BookmapActions] BookmapBigWallBreakout long tradebook not found for ${symbol} (id: ${tradebookId})`, logTags);
+            return;
+        }
+        if (!(tradebook instanceof BookmapBigWallBreakout) || !tradebook.isLong) {
+            Firestore.logError(`[BookmapActions] tradebook ${tradebookId} is not a long BookmapBigWallBreakout`, logTags);
+            return;
+        }
+        if (!tradebook.isEnabled()) {
+            Firestore.logError(`[BookmapActions] BookmapBigWallBreakout long tradebook disabled for ${symbol}`, logTags);
+            return;
+        }
+        Firestore.logInfo(`[BookmapActions] bookmapEntry long: ${tradebookId} stop=$${stopLossPrice}`, logTags);
+        tradebook.triggerEntryFromBookmap(useMarketOrder, stopLossPrice);
+    } else {
+        const tradebookId = `${Models.TradebookFamilyName.GapAndCrap}-${PremarketHighRejection.gapAndCrapShort}`;
+        const tradebook = TradebooksManager.getTradebookByID(symbol, tradebookId);
+        if (!tradebook) {
+            Firestore.logError(`[BookmapActions] GapAndCrap tradebook not found for ${symbol} (id: ${tradebookId})`, logTags);
+            return;
+        }
+        if (!tradebook.isEnabled()) {
+            Firestore.logError(`[BookmapActions] GapAndCrap tradebook disabled for ${symbol}`, logTags);
+            return;
+        }
+        Firestore.logInfo(`[BookmapActions] bookmapEntry short: ${tradebookId} stop=$${stopLossPrice}`, logTags);
+        tradebook.startEntry(useMarketOrder, false, Models.getDefaultEntryParameters());
+    }
 }
 
 const parseDigitHotkey = (key: string): number | null => {
@@ -121,39 +155,6 @@ const BOOKMAP_BIG_WALL_LONG_TRADEBOOK_IDS: string[] = [
     `${Models.TradebookFamilyName.GapDownAndGoUp}-${BookmapBigWallBreakout.bookmapBigWallBreakoutLong}`,
 ];
 
-/** B+Click: trigger the long bookmap tradebook by ID (same pattern as bookmapShort). */
-const entryAsMarketOrder = (symbol: string, price: number) => {
-    const logTags = Models.generateLogTags(symbol, `${symbol}-bookmap-buy`);
-    for (const tradebookId of BOOKMAP_BIG_WALL_LONG_TRADEBOOK_IDS) {
-        const tradebook = TradebooksManager.getTradebookByID(symbol, tradebookId);
-        if (!tradebook) {
-            continue;
-        }
-        const isLongBookmap =
-            (tradebook instanceof BookmapBigWallBreakout && tradebook.isLong)
-        if (!isLongBookmap) {
-            Firestore.logError(
-                `[BookmapActions] tradebook ${tradebookId} is not a long bookmap tradebook`,
-                logTags
-            );
-            continue;
-        }
-        if (!tradebook.isEnabled()) {
-            Firestore.logError(
-                `[BookmapActions] tradebook disabled: ${tradebookId}`,
-                logTags
-            );
-            continue;
-        }
-        Firestore.logInfo(`[BookmapActions] trigger ${tradebookId} stop=$${price}`, logTags);
-        tradebook.triggerEntryFromBookmap(true, price);
-        return;
-    }
-    Firestore.logError(
-        `[BookmapActions] no long bookmap tradebook found by id for ${symbol} (tried: ${BOOKMAP_BIG_WALL_LONG_TRADEBOOK_IDS.join(", ")})`,
-        logTags
-    );
-};
 
 /** Same composite IDs as Tradebook.buildID(familyName, BookmapBigWallBreakoutShort). */
 const BOOKMAP_BIG_WALL_SHORT_TRADEBOOK_IDS: string[] = [
@@ -161,34 +162,3 @@ const BOOKMAP_BIG_WALL_SHORT_TRADEBOOK_IDS: string[] = [
     `${Models.TradebookFamilyName.GapDownAndGoDown}-${BookmapBigWallBreakout.bookmapBigWallBreakoutShort}`,
 ];
 
-/** S+Click: trigger the short Bookmap big-wall tradebook by ID (limit entry at LOD, stop at selected price). */
-const entryAsStopOrder = (symbol: string, price: number) => {
-    const logTags = Models.generateLogTags(symbol, `${symbol}-bookmap-short`);
-    for (const tradebookId of BOOKMAP_BIG_WALL_SHORT_TRADEBOOK_IDS) {
-        const tradebook = TradebooksManager.getTradebookByID(symbol, tradebookId);
-        if (!tradebook) {
-            continue;
-        }
-        if (!(tradebook instanceof BookmapBigWallBreakout) || tradebook.isLong) {
-            Firestore.logError(
-                `[BookmapActions] tradebook ${tradebookId} is not BookmapBigWallBreakout short`,
-                logTags
-            );
-            continue;
-        }
-        if (!tradebook.isEnabled()) {
-            Firestore.logError(
-                `[BookmapActions] tradebook disabled: ${tradebookId}`,
-                logTags
-            );
-            continue;
-        }
-        Firestore.logInfo(`[BookmapActions] trigger ${tradebookId} stop=$${price}`, logTags);
-        tradebook.triggerEntryFromBookmap(true, price);
-        return;
-    }
-    Firestore.logError(
-        `[BookmapActions] no short bookmap tradebook found by id for ${symbol} (tried: ${BOOKMAP_BIG_WALL_SHORT_TRADEBOOK_IDS.join(", ")})`,
-        logTags
-    );
-};
