@@ -37,10 +37,10 @@ export const handlePriceSelect = (event: PriceSelectEvent) => {
 
     if (key === "cmd" || key === "ctrl" || key === "control" || key === "meta") {
         setStopLossFromBookmap(symbol, price);
-    } else if (key === "b") {
-        bookmapBuy(symbol, price);
+    } else if (key === "m") {
+        bookmapEntry(symbol, true, price);
     } else if (key === "s") {
-        bookmapShort(symbol, price);
+        bookmapEntry(symbol, false, price);
     } else if (key === "g") {
         let logTags = Models.generateLogTags(symbol, `${symbol}-bookmap-g`);
         let positionIsLong = Models.getPositionNetQuantity(symbol) > 0;
@@ -60,6 +60,11 @@ export const handlePriceSelect = (event: PriceSelectEvent) => {
         console.log(`[BookmapActions] unhandled Price selected [${symbol}]: $${price} keyCode=${keyCode}`);
     }
 };
+
+const bookmapEntry = (symbol: string, useMarketOrder: boolean, stopLossPrice: number) => {
+    let currentPrice = Models.getCurrentPrice(symbol);
+    let isLong = stopLossPrice < currentPrice;
+}
 
 const parseDigitHotkey = (key: string): number | null => {
     // After normalization, accept plain digits "0" .. "9".
@@ -117,7 +122,7 @@ const BOOKMAP_BIG_WALL_LONG_TRADEBOOK_IDS: string[] = [
 ];
 
 /** B+Click: trigger the long bookmap tradebook by ID (same pattern as bookmapShort). */
-const bookmapBuy = (symbol: string, price: number) => {
+const entryAsMarketOrder = (symbol: string, price: number) => {
     const logTags = Models.generateLogTags(symbol, `${symbol}-bookmap-buy`);
     for (const tradebookId of BOOKMAP_BIG_WALL_LONG_TRADEBOOK_IDS) {
         const tradebook = TradebooksManager.getTradebookByID(symbol, tradebookId);
@@ -157,7 +162,7 @@ const BOOKMAP_BIG_WALL_SHORT_TRADEBOOK_IDS: string[] = [
 ];
 
 /** S+Click: trigger the short Bookmap big-wall tradebook by ID (limit entry at LOD, stop at selected price). */
-const bookmapShort = (symbol: string, price: number) => {
+const entryAsStopOrder = (symbol: string, price: number) => {
     const logTags = Models.generateLogTags(symbol, `${symbol}-bookmap-short`);
     for (const tradebookId of BOOKMAP_BIG_WALL_SHORT_TRADEBOOK_IDS) {
         const tradebook = TradebooksManager.getTradebookByID(symbol, tradebookId);
