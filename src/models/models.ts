@@ -125,6 +125,7 @@ export interface TradingData {
 export interface UIState {
     activeSymbol: string,
     activeTabIndex: number,
+    cursorOnChart: boolean,
 };
 export interface TradingState {
     date: string,

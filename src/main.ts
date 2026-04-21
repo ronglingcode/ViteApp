@@ -261,6 +261,9 @@ window.TradingApp.TOS.initialize().then(async () => {
 
 let htmlBody = document.getElementsByTagName("body")[0];
 htmlBody.addEventListener("keydown", async function (keyboardEvent) {
+    if (!window.HybridApp.UIState.cursorOnChart) {
+        return;
+    }
     let code = keyboardEvent.code;
     let shiftKey = keyboardEvent.shiftKey;
     KeyboardHandler.handleKeyPressed(code, shiftKey);
