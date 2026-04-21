@@ -129,7 +129,6 @@ export interface SingleDirectionPlans {
     vwapBounceFailPlan?: VwapBounceFailPlan,
     vwapScalpPlan?: VwapScalpPlan,
     allTimeHighVwapContinuationPlan?: AllTimeHighVwapContinuationPlan,
-    gapAndCrapAccelerationPlan?: GapAndCrapAccelerationPlan,
     gapAndCrapPlan?: GapAndCrapPlan,
     gapAndGoPlan?: GapAndGoPlan,
     gapGiveAndGoPlan?: GapGiveAndGoPlan,
@@ -155,9 +154,6 @@ export interface VwapScalpPlan extends BasePlan {
 }
 export interface AllTimeHighVwapContinuationPlan extends BasePlan {
     allTimeHigh: number,
-}
-export interface GapAndCrapAccelerationPlan extends BasePlan {
-    accelerationLevel: number,
 }
 export interface keyLevels {
     otherLevels?: number[];

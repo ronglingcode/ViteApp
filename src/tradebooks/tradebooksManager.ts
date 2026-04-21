@@ -12,7 +12,6 @@ import * as TradingState from "../models/tradingState";
 import { VwapScalp } from "./vwapScalp";
 import { BreakoutReversal } from "./breakoutReversal";
 import { AllTimeHighVwapContinuation } from "./allTimeHighVwapContinuation";
-import { GapAndCrapAcceleration } from "./gapAndCrapAcceleration";
 import * as Helper from "../utils/helper";
 import * as Firestore from "../firestore";
 import { PremarketHighRejection } from "./premarketHighRejection";
@@ -116,11 +115,6 @@ export const createAllTradebooks = (symbol: string) => {
         let allTimeHighVwapContinuation = new AllTimeHighVwapContinuation('', symbol, true, plan.long.allTimeHighVwapContinuationPlan);
         tradebooksMap.set(allTimeHighVwapContinuation.getID(), allTimeHighVwapContinuation);
     }
-    if (plan.short.gapAndCrapAccelerationPlan) {
-        let gapAndCrapAcceleration = new GapAndCrapAcceleration('', symbol, false, plan.short.gapAndCrapAccelerationPlan);
-        tradebooksMap.set(gapAndCrapAcceleration.getID(), gapAndCrapAcceleration);
-    }
-
     if (plan.long.gapAndGoPlan) {
         let gapAndGo = new GapAndGo('', symbol, true, plan.long.gapAndGoPlan);
         tradebooksMap.set(gapAndGo.getID(), gapAndGo);
