@@ -12,6 +12,7 @@ import { BookmapBigWallBreakout } from "../tradebooks/bookmapBigWallBreakout";
 import { BookmapBigWallBreakdownFailLong } from "../tradebooks/bookmapBigWallBreakdownFailLong";
 import { PremarketHighRejection } from "../tradebooks/premarketHighRejection";
 import * as TradebooksManager from "../tradebooks/tradebooksManager";
+import * as Chart from "../ui/chart";
 
 export interface PriceSelectEvent {
     symbol: string;
@@ -38,6 +39,8 @@ export const handlePriceSelect = (event: PriceSelectEvent) => {
 
     if (key === "cmd" || key === "ctrl" || key === "control" || key === "meta") {
         setStopLossFromBookmap(symbol, price);
+    } else if (key === "e") {
+        Chart.drawEntry(symbol, price);
     } else if (key === "b") {
         bookmapEntry(symbol, true, price);
     } else if (key === "s") {
