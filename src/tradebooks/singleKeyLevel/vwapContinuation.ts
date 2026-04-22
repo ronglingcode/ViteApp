@@ -357,7 +357,7 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         return tightStopLevels;
     }
 
-    getDisallowedReasonToAddPartial(symbol: string, logTags: Models.LogTags): Models.CheckRulesResult {
+    getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
         this.syncVwapWarningState(false);
         if (this.vwapWarningActive) {
             let side = this.isLong ? 'below' : 'above';
@@ -367,13 +367,10 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
             };
         }
         if (this.familyName == Models.TradebookFamilyName.GapAndCrap) {
-            let addAsNewTrade = Rules.isNewTradeAfterStopOut(symbol, this.isLong);
-            if (addAsNewTrade && Rules.isGapAndCrapNewTradeExceedShotClock()) {
-                return {
-                    allowed: false,
-                    reason: "gap and crap new trade exceeds shot clock",
-                };
-            }
+            return {
+                allowed: false,
+                reason: "gap and crap add only allow vwap bounce fail",
+            };
         }
         return {
             allowed: true,

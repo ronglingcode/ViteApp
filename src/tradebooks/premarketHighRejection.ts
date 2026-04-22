@@ -143,13 +143,18 @@ export class PremarketHighRejection extends Tradebook {
         return true; // TODO: Implement enable/disable logic
     }
 
-    getDisallowedReasonToAddPartial(symbol: string, logTags: Models.LogTags): Models.CheckRulesResult {
+    getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
         if (this.familyName == Models.TradebookFamilyName.GapAndCrap) {
-            let addAsNewTrade = Rules.isNewTradeAfterStopOut(symbol, this.isLong);
-            if (addAsNewTrade && Rules.isGapAndCrapNewTradeExceedShotClock()) {
+            let vwap = Models.getCurrentVwap(symbol);
+            if (entryPrice > vwap) {
                 return {
                     allowed: false,
-                    reason: "gap and crap new trade exceeds shot clock",
+                    reason: "gap and crap add only allow vwap bounce fail",
+                };
+            } else {
+                return {
+                    allowed: true,
+                    reason: "price is below vwap, allow add",
                 };
             }
         }

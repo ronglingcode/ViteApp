@@ -541,7 +541,7 @@ const reloadPartial = async (
     if (tradebookID) {
         let activeTradebook = TradebooksManager.getTradebookByID(symbol, tradebookID);
         if (activeTradebook) {
-            let addCheck = activeTradebook.getDisallowedReasonToAddPartial(symbol, logTags);
+            let addCheck = activeTradebook.getAllowedReasonToAddPartial(symbol, entryPrice, logTags);
             if (!addCheck.allowed) {
                 Firestore.logError(`Cannot add to ${symbol}: ${addCheck.reason}`, logTags);
                 Helper.speak(`warning state, no adds, tighten stop`);

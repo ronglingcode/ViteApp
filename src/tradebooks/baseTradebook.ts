@@ -137,11 +137,11 @@ export abstract class Tradebook {
         };
         return result;
     }
-    getDisallowedReasonToAddPartial(symbol: string, logTags: Models.LogTags): Models.CheckRulesResult {
+    getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
         Firestore.logInfo(`base tradebook add rules`, logTags);
         let result: Models.CheckRulesResult = {
-            allowed: true,
-            reason: "base tradebook",
+            allowed: false,
+            reason: "base tradebook default disallow adds",
         };
         return result;
     }
