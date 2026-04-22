@@ -3,7 +3,6 @@ window.HybridApp = {
     UIState: {
         activeSymbol: '',
         activeTabIndex: -1,
-        cursorOnChart: false
     },
     Secrets: {
         tdameritrade: {},

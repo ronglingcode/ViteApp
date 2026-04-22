@@ -183,7 +183,6 @@ export const createChartWidget = (tabIndex: number, watchlistItem: Models.Watchl
                 element.classList.add("active");
                 window.HybridApp.UIState.activeSymbol = myWidget.stock.symbol;
                 window.HybridApp.UIState.activeTabIndex = myWidget.tabIndex;
-                window.HybridApp.UIState.cursorOnChart = true;
                 myWidget.htmlContents.container.focus();
                 // Update flowchart display when symbol changes
                 if (window.HybridApp.UI && window.HybridApp.UI.Flowchart && window.HybridApp.UI.Flowchart.updateFlowchartDisplay) {
@@ -196,7 +195,9 @@ export const createChartWidget = (tabIndex: number, watchlistItem: Models.Watchl
     });
 
     myWidget.htmlContents.container.addEventListener('mouseleave', function () {
-        window.HybridApp.UIState.cursorOnChart = false;
+        window.HybridApp.UIState.activeTabIndex = -1;
+        const element = document.getElementById("chartContainer" + myWidget.tabIndex);
+        if (element) element.classList.remove("active");
     });
 
     myWidget.htmlContents.container.addEventListener("blur", function (event) {

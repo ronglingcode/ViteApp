@@ -261,7 +261,8 @@ window.TradingApp.TOS.initialize().then(async () => {
 
 let htmlBody = document.getElementsByTagName("body")[0];
 htmlBody.addEventListener("keydown", async function (keyboardEvent) {
-    if (!window.HybridApp.UIState.cursorOnChart) {
+    if (window.HybridApp.UIState.activeTabIndex === -1) {
+        Firestore.logError("no active tab, skip key press");
         return;
     }
     let code = keyboardEvent.code;
