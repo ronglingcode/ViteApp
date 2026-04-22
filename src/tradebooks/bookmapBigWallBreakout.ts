@@ -83,6 +83,23 @@ export class BookmapBigWallBreakout extends Tradebook {
         return this.triggerEntryCommon(false, useMarketOrder, entryPrice, stopOutPrice, logTags);
     }
 
+    getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
+        if (this.familyName == Models.TradebookFamilyName.GapAndGo) {
+            let symbolData = Models.getSymbolData(symbol);
+            let premarketHigh = symbolData.premktHigh;
+            if (entryPrice >= premarketHigh) {
+                return {
+                    allowed: true,
+                    reason: "price is above premarket high, allow add",
+                };
+            }
+        }
+        return {
+            allowed: false,
+            reason: "default is no add",
+        };
+    }
+
     getTradeManagementInstructions(): Models.TradeManagementInstructions {
         let instructions: Map<string, string[]>;
         if (this.isLong) {

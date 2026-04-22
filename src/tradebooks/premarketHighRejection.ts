@@ -146,12 +146,7 @@ export class PremarketHighRejection extends Tradebook {
     getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
         if (this.familyName == Models.TradebookFamilyName.GapAndCrap) {
             let vwap = Models.getCurrentVwap(symbol);
-            if (entryPrice > vwap) {
-                return {
-                    allowed: false,
-                    reason: "gap and crap add only allow vwap bounce fail",
-                };
-            } else {
+            if (entryPrice < vwap) {
                 return {
                     allowed: true,
                     reason: "price is below vwap, allow add",
@@ -159,8 +154,8 @@ export class PremarketHighRejection extends Tradebook {
             }
         }
         return {
-            allowed: true,
-            reason: "allowed",
+            allowed: false,
+            reason: "default is no add",
         };
     }
 
