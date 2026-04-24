@@ -358,6 +358,20 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
     }
 
     getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
+        if (this.familyName == Models.TradebookFamilyName.GapAndCrap) {
+            let currentVwap = Models.getCurrentVwap(symbol);
+            if (entryPrice < currentVwap) {
+                return {
+                    allowed: true,
+                    reason: "allow add below vwap",
+                };
+            } else {
+                return {
+                    allowed: false,
+                    reason: "gap and crap add only allow below vwap",
+                };
+            }
+        }
         this.syncVwapWarningState(false);
         if (this.vwapWarningActive) {
             let side = this.isLong ? 'below' : 'above';
@@ -366,12 +380,7 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
                 reason: `${symbol} warning state: last M1 close ${side} vwap, no adds. Tighten stop first.`,
             };
         }
-        if (this.familyName == Models.TradebookFamilyName.GapAndCrap) {
-            return {
-                allowed: false,
-                reason: "gap and crap add only allow vwap bounce fail",
-            };
-        }
+
         return {
             allowed: true,
             reason: 'warning not active',
