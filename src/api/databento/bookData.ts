@@ -244,7 +244,7 @@ const fetchNdjsonLines = async (
         return [];
     }
 
-    let proxyUrl = `${GlobalSettings.losthostWithPort}/databento/v0/timeseries.get_range`;
+    let proxyUrl = `${GlobalSettings.localhostWithPort}/databento/v0/timeseries.get_range`;
 
     let requestBody = {
         dataset: GlobalSettings.databentoDataset,

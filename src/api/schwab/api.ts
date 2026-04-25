@@ -32,7 +32,7 @@ export const testReplaceOrder = () => {
     }
 }
 export const getAuthApiHost = () => {
-    let local = `${GlobalSettings.losthostWithPort}/schwabApi`;
+    let local = `${GlobalSettings.localhostWithPort}/schwabApi`;
     let host = window.location.hostname;
     if (host == 'localhost') {
         return API_HOST
@@ -42,7 +42,7 @@ export const getAuthApiHost = () => {
 }
 export const getTraderApiHost = () => {
     let host = window.location.hostname;
-    let local = `${GlobalSettings.losthostWithPort}/schwabApi`;
+    let local = `${GlobalSettings.localhostWithPort}/schwabApi`;
     if (host == 'localhost') {
         return local;//TRADER_API_HOST;
     } else {

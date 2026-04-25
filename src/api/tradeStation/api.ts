@@ -9,7 +9,7 @@ declare let window: Models.MyWindow;
 
 export const getAuthUrl = () => {
     let authUrl = 'https://signin.tradestation.com/oauth/token';
-    let localauthUrl = `${GlobalSettings.losthostWithPort}/tradeStationApi/oauth/token`;
+    let localauthUrl = `${GlobalSettings.localhostWithPort}/tradeStationApi/oauth/token`;
     let current = window.location.hostname;
     if (current == 'localhost') {
         return authUrl;

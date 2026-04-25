@@ -14,7 +14,7 @@ export const saveLevelOneQuote = async (symbol: string,
     };
 
     try {
-        const response = await fetch(`${GlobalSettings.losthostWithPort}/save/level1quote`, {
+        const response = await fetch(`${GlobalSettings.localhostWithPort}/save/level1quote`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -40,7 +40,7 @@ export const saveAgentResponse = async (symbol: string, response: string) => {
         response: response,
     };
     try {
-        const response = await fetch(`${GlobalSettings.losthostWithPort}/save/agentresponse`, {
+        const response = await fetch(`${GlobalSettings.localhostWithPort}/save/agentresponse`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
