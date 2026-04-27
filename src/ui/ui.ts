@@ -9,8 +9,6 @@ declare let window: Models.MyWindow;
 /** True while clock diff is in the red zone; used to speak only on transition into bad sync. */
 let clockSyncWarningSpoken = false;
 
-const CLOCK_SYNC_SPEAK_REPEAT_MS = 2800;
-
 export let currentChartReviewIndex: number = -1;
 
 export const addToNetwork = (source: string) => {
@@ -129,15 +127,14 @@ export const updateClock = (timeAndSalesTime: Date) => {
 
     let clockText = `Local: ${localTimeString} Market: ${marketTimeString} Diff: ${timeDiffString}s`;
 
-    // If difference is larger than 0.5 seconds, show in red and speak 3 times until sync recovers
-    if (timeDiffSeconds > 0.5) {
+    // If difference is larger than 0.5 seconds, show in red
+    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
+    if (timeDiffSeconds > 0.5 && secondsSinceMarketOpen < 15) {
         clock.style.color = 'red';
         if (!clockSyncWarningSpoken) {
             clockSyncWarningSpoken = true;
             let msg = `warning, local clock out of sync with market time by ${timeDiffString} seconds`;
-            for (let i = 0; i < 3; i++) {
-                setTimeout(() => Helper.speak(msg), i * CLOCK_SYNC_SPEAK_REPEAT_MS);
-            }
+            setTimeout(() => Helper.speak(msg), 1000);
         }
     } else {
         clock.style.color = '';
