@@ -116,8 +116,6 @@ export const createAllTradebooks = (symbol: string) => {
         tradebooksMap.set(allTimeHighVwapContinuation.getID(), allTimeHighVwapContinuation);
     }
     if (plan.long.gapAndGoPlan) {
-        let gapAndGo = new GapAndGo('', symbol, true, plan.long.gapAndGoPlan);
-        tradebooksMap.set(gapAndGo.getID(), gapAndGo);
         let gapAndGoBookmapBigWallBreakout = new BookmapBigWallBreakout(
             Models.TradebookFamilyName.GapAndGo, symbol, true, plan.long.gapAndGoPlan);
         tradebooksMap.set(gapAndGoBookmapBigWallBreakout.getID(), gapAndGoBookmapBigWallBreakout);
