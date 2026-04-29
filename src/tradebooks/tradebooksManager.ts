@@ -15,7 +15,6 @@ import { AllTimeHighVwapContinuation } from "./allTimeHighVwapContinuation";
 import * as Helper from "../utils/helper";
 import * as Firestore from "../firestore";
 import { PremarketHighRejection } from "./premarketHighRejection";
-import { GapAndGo } from "./gapAndGo";
 import { GapGiveAndGo } from "./gapGiveAndGo";
 import { GapDownAndGoDown } from "./gapDownAndGoDown";
 import { GapDownAndGoUp } from "./gapDownAndGoUp";
