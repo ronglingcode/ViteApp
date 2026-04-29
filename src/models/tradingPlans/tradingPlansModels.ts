@@ -209,6 +209,8 @@ export interface GapGiveAndGoPlan extends BasePlan {
     allTimeHigh?: number,
 }
 export interface GapAndGoPlan extends BasePlan {
+    /** Required: if true, no entry when session open is below VWAP at the open. */
+    mustOpenAboveVwap: boolean,
     /** the min support on daily chart, below it, we cannot long */
     support: LevelArea,
     /** the high from recent pullback */

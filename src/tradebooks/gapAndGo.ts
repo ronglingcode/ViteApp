@@ -13,10 +13,6 @@ export class GapAndGo extends Tradebook {
     public static readonly gapAndGoLong: string = 'GapAndGoLong';
     private basePlan: TradingPlansModels.GapAndGoPlan;
 
-    /**
-     * Returns true if at least one reason is set on the gap-and-go plan.
-     * Otherwise logs error and returns false.
-     */
     public static hasAtLeastOneReasonSet(plan: TradingPlansModels.GapAndGoPlan, symbol: string): boolean {
         const hasOne =
             !!plan.recentPullback ||
@@ -82,6 +78,18 @@ export class GapAndGo extends Tradebook {
     }
 
     validateEntry(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
+        let openPrice = Models.getOpenPrice(this.symbol);
+        let openVwap = Models.getLastVwapBeforeOpen(this.symbol);
+        if (this.basePlan.mustOpenAboveVwap) {
+            if (openPrice == null || openVwap == null) {
+                Firestore.logError(`mustOpenAboveVwap: need open price and VWAP at open`, logTags);
+                return 0;
+            }
+            if (openPrice < openVwap) {
+                Firestore.logError(`mustOpenAboveVwap: open ${openPrice} below VWAP at open ${openVwap}`, logTags);
+                return 0;
+            }
+        }
         let minSupport = this.basePlan.support.low;
         if (entryPrice < minSupport) {
             Firestore.logError(`entry price ${entryPrice} is below min daily support ${minSupport}`, logTags);
@@ -92,8 +100,6 @@ export class GapAndGo extends Tradebook {
             Firestore.logError(`only allowed for first 15 minutes`, logTags);
             return 0;
         }
-        let openPrice = Models.getOpenPrice(this.symbol);
-        let openVwap = Models.getLastVwapBeforeOpen(this.symbol);
         // if open below vwap, once it gets above it, it cannot close 2 candles below vwap to lose momentum
         if (openPrice && openVwap && openPrice < openVwap) {
             let hasReclaimedVwap = false;

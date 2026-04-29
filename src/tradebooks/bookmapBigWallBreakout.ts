@@ -41,6 +41,22 @@ export class BookmapBigWallBreakout extends Tradebook {
             }
         }
 
+        if (this.familyName === Models.TradebookFamilyName.GapAndGo) {
+            let gapPlan = this.basePlan as TradingPlansModels.GapAndGoPlan;
+            if (gapPlan.mustOpenAboveVwap) {
+                let openPrice = Models.getOpenPrice(symbol);
+                let openVwap = Models.getLastVwapBeforeOpen(symbol);
+                if (openPrice == null || openVwap == null) {
+                    Firestore.logError(`mustOpenAboveVwap: need open price and VWAP at open`, logTags);
+                    return 0;
+                }
+                if (openPrice < openVwap) {
+                    Firestore.logError(`mustOpenAboveVwap: open ${openPrice} below VWAP at open ${openVwap}`, logTags);
+                    return 0;
+                }
+            }
+        }
+
         let allowedSize = EntryRulesChecker.checkBasicGlobalEntryRules(
             symbol, isLong, entryPrice, stopOutPrice, useMarketOrder,
             this.basePlan, false, logTags);
