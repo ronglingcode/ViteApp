@@ -134,14 +134,6 @@ export class VwapScalp extends Tradebook {
         }
     }
 
-    refreshState(): void {
-        // TODO: Implement state refresh logic
-    }
-
-    transitionToState(newState: any): void {
-        // TODO: Implement state transition logic
-    }
-
     isEnabled(): boolean {
         return true; // TODO: Implement enable/disable logic
     }

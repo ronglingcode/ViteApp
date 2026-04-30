@@ -64,12 +64,6 @@ export class BookmapBigWallBreakdownFailLong extends Tradebook {
         return allowedSize;
     }
 
-    refreshState(): void {
-    }
-
-    transitionToState(newState: any): void {
-    }
-
     getTradebookDoc(): string {
         return "";
     }

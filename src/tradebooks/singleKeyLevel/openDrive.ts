@@ -9,7 +9,6 @@ import * as Helper from '../../utils/helper';
 import * as EntryThresholdValidator from '../../utils/entryThresholdValidator';
 import * as AutoTrader from '../../algorithms/autoTrader';
 import * as LiveStats from '../../ui/liveStats';
-import type { TradebookState } from '../tradebookStates';
 import * as TradebookUtil from '../tradebookUtil';
 import * as ExitRulesCheckerNew from '../../controllers/exitRulesCheckerNew';
 import * as Patterns from '../../algorithms/patterns';
@@ -130,13 +129,6 @@ export class OpenDrive extends SingleKeyLevelTradebook {
         let allowedSize = CommonRules.validateCommonEntryRules(
             this.symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
         return allowedSize * reduceRatio;
-    }
-    refreshState(): void {
-        // Empty implementation - subclasses can override
-    }
-
-    transitionToState(newState: TradebookState): void {
-        // Empty implementation - subclasses can override
     }
 
     getTightStopLevels(): Models.DisplayLevel[] {

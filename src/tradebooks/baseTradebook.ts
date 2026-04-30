@@ -1,6 +1,5 @@
 import * as Firestore from '../firestore';
 import * as Models from '../models/models';
-import { TradebookState } from './tradebookStates';
 import * as Helper from '../utils/helper';
 import * as TradingState from '../models/tradingState';
 import * as EntryHandler from '../controllers/entryHandler';
@@ -14,7 +13,6 @@ export abstract class Tradebook {
     protected htmlContainer: HTMLElement | null = null;
     protected buttonLinked = false;
     protected enabled: boolean = false;
-    protected state: TradebookState = TradebookState.OBSERVING;
     public sizingCount: number = 10;
     public enableByDefault: boolean = false;
     constructor(
@@ -34,8 +32,6 @@ export abstract class Tradebook {
     }
     abstract getTradebookDoc(): string;
     abstract refreshLiveStats(): void;
-    abstract refreshState(): void;
-    abstract transitionToState(newState: TradebookState): void;
     abstract getEntryMethods(): string[];
 
     getCommonLiveStats(): string {

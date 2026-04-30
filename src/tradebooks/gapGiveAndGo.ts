@@ -141,14 +141,6 @@ export class GapGiveAndGo extends Tradebook {
         };
     }
 
-    refreshState(): void {
-        // TODO: Implement state refresh logic if needed
-    }
-
-    transitionToState(newState: any): void {
-        // TODO: Implement state transition logic if needed
-    }
-
     getCommonLiveStats(): string {
         return super.getCommonLiveStats();
     }

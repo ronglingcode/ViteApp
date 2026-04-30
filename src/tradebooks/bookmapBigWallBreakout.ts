@@ -114,12 +114,6 @@ export class BookmapBigWallBreakout extends Tradebook {
         };
     }
 
-    refreshState(): void {
-    }
-
-    transitionToState(newState: any): void {
-    }
-
     getTradebookDoc(): string {
         return "";
     }

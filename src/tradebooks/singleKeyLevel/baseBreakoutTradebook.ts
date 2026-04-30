@@ -10,7 +10,6 @@ import * as Patterns from '../../algorithms/patterns';
 import * as TradingPlans from '../../models/tradingPlans/tradingPlans';
 import * as ExitRulesCheckerNew from '../../controllers/exitRulesCheckerNew';
 import * as Calculator from '../../utils/calculator';
-import { TradebookState, TradebookStateHelper } from '../tradebookStates';
 import * as GlobalSettings from '../../config/globalSettings';
 
 export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
@@ -36,9 +35,8 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
         let currentVwap = Models.getCurrentVwap(symbol);
         let distanceFromKeyLevelToVwap = Math.abs(this.getKeyLevel() - currentVwap);
         let distanceFromKeyLevelToVwapInAtrPercentageString = Calculator.getPercentageString(distanceFromKeyLevelToVwap, atr, 0);
-        let stateDescription = TradebookStateHelper.getStateDescription(this.state);
         let liveStats = this.getCommonLiveStats();
-        liveStats += `state: ${stateDescription}, level to vwap: ${distanceFromKeyLevelToVwapInAtrPercentageString} atr, closed outside: ${hasClosedOutside}`;
+        liveStats += `level to vwap: ${distanceFromKeyLevelToVwapInAtrPercentageString} atr, closed outside: ${hasClosedOutside}`;
         Helper.updateHtmlIfChanged(this.htmlStats, liveStats);
     }
     /**
@@ -389,62 +387,6 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
         }
 
         return result;
-    }
-
-    transitionToState(newState: TradebookState): void {
-        if (this.state === newState) {
-            return;
-        }
-        this.state = newState;
-        // there's a bug, it can keep going between momentum and failed state
-        // so disable for now
-        /*
-        if (newState === TradebookState.MOMENTUM) {
-            Helper.speak(`${this.symbol} partial small during momentum`);
-        } else if (newState === TradebookState.PULLBACK) {
-            Helper.speak(`${this.symbol} check the depth of pullback`);
-        } else if (newState === TradebookState.FAILED) {
-            let pullbackName = this.isLong ? "bounce" : "dip";
-            Helper.speak(`${this.symbol} get out on a ${pullbackName}`);
-        }*/
-    }
-
-    refreshState(): void {
-        if (!this.isEnabled()) {
-            return;
-        }
-        if (this.state === TradebookState.OBSERVING) {
-            this.checkForPosition();
-        } else if (this.state === TradebookState.MOMENTUM) {
-            this.checkForPullback();
-        } else if (this.state === TradebookState.PULLBACK) {
-            this.checkForPullback();
-        } else if (this.state === TradebookState.FAILED) {
-            this.checkForPosition();
-        }
-    }
-    checkForPosition(): void {
-        if (this.hasPositionForTradebook()) {
-            this.transitionToState(TradebookState.MOMENTUM);
-        } else {
-            this.transitionToState(TradebookState.OBSERVING);
-        }
-    }
-    checkForPullback(): void {
-        if (!this.hasPositionForTradebook()) {
-            this.transitionToState(TradebookState.OBSERVING);
-        }
-        let lostKeyLevel = Patterns.hasLostKeyLevel(this.symbol, this.isLong, this.getKeyLevel());
-        if (lostKeyLevel) {
-            this.transitionToState(TradebookState.FAILED);
-            return;
-        }
-        let pullbackStatus = Patterns.getFirstPullbackStatus(this.symbol);
-        if (pullbackStatus.status == "in progress") {
-            this.transitionToState(TradebookState.PULLBACK);
-        } else if (pullbackStatus.status == "recovered") {
-            this.transitionToState(TradebookState.MOMENTUM);
-        }
     }
 
     getEntryMethods(): string[] {

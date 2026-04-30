@@ -139,10 +139,6 @@ export class GapAndCrapBookmapBreakdown extends Tradebook {
         };
     }
 
-    refreshState(): void {}
-
-    transitionToState(newState: any): void {}
-
     getTradebookDoc(): string {
         return '';
     }

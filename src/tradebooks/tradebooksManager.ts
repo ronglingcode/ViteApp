@@ -459,7 +459,6 @@ export const refreshTradebooksStatusForSymbol = (symbol: string) => {
     let tradebooksMap = widget.tradebooks;
     tradebooksMap.forEach(tradebook => {
         tradebook.refreshLiveStats();
-        tradebook.refreshState();
     });
 }
 

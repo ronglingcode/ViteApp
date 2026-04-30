@@ -6,7 +6,6 @@ import * as Firestore from '../../firestore';
 import * as Models from '../../models/models';
 import * as Helper from '../../utils/helper';
 import * as Patterns from '../../algorithms/patterns';
-import type { TradebookState } from '../tradebookStates';
 import * as OrderFlow from '../../controllers/orderFlow';
 import * as GlobalSettings from '../../config/globalSettings';
 
@@ -42,14 +41,6 @@ export class OpenFlush extends SingleKeyLevelTradebook {
         let liveStats = this.getCommonLiveStats();
         liveStats += `vwap from open: ${openExtensionFromVwapInAtr} atr, premkt b/o: ${hasPremarketBreakout}`;
         Helper.updateHtmlIfChanged(this.htmlStats, liveStats);
-    }
-
-    refreshState(): void {
-        // Empty implementation - subclasses can override
-    }
-
-    transitionToState(newState: TradebookState): void {
-        // Empty implementation - subclasses can override
     }
 
     triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {

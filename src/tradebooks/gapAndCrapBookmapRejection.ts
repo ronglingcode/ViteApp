@@ -4,7 +4,6 @@ import * as Chart from '../ui/chart';
 import * as Models from '../models/models';
 import * as Firestore from '../firestore';
 import { runGapAndCrapBookmapShortEntryPipeline } from './gapAndCrapBookmapShortCommon';
-import type { TradebookState } from './tradebookStates';
 
 /** Gap & crap short-only bookmap rejection — standalone tradebook (not a BookmapBigWallBreakout subtype). */
 export class GapAndCrapBookmapRejection extends Tradebook {
@@ -77,10 +76,6 @@ export class GapAndCrapBookmapRejection extends Tradebook {
             reason: 'default is no add',
         };
     }
-
-    refreshState(): void {}
-
-    transitionToState(newState: TradebookState): void {}
 
     getTradebookDoc(): string {
         return '';

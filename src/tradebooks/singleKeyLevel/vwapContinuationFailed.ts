@@ -5,7 +5,6 @@ import * as Chart from '../../ui/chart';
 import * as Firestore from '../../firestore';
 import * as Models from '../../models/models';
 import * as Helper from '../../utils/helper';
-import { TradebookState } from '../tradebookStates';
 import * as Patterns from '../../algorithms/patterns';
 import * as TradingPlans from '../../models/tradingPlans/tradingPlans';
 import * as Calculator from '../../utils/calculator';
@@ -26,8 +25,6 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
     public static readonly longVwapPushDownFailed: string = 'LongVwapPushdownFailed';
     public static readonly shortVwapBounceFailed: string = 'ShortVwapBounceFailed';
     public waitForClose: boolean = true;
-    public legCounter: number = 0;
-    public lowOfDayToBreak: number = 0;
     public disableExitRules: boolean = false;
     public getID(): string {
         return this.buildID(this.isLong ? VwapContinuationFailed.longVwapPushDownFailed : VwapContinuationFailed.shortVwapBounceFailed);
@@ -41,7 +38,6 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
             buttonLabel = `${Models.TradebookFamilyName.GapAndCrap} VWAP Bounce Fail`;
         }
         super(familyName, symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel);
-        this.init();
     }
 
     public updateConfig(config: TradingPlansModels.TradebooksConfig): void {
@@ -62,10 +58,6 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
         }
     }
 
-    private init(): void {
-        this.legCounter = 0;
-    }
-
     refreshLiveStats(): void {
         if (!this.isEnabled() || !GlobalSettings.allowLiveStats) {
             Helper.updateHtmlIfChanged(this.htmlStats, '');
@@ -78,9 +70,8 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
         let currentVwap = Models.getCurrentVwap(symbol);
         let distanceFromKeyLevelToVwap = Math.abs(this.getKeyLevel() - currentVwap);
         let distanceFromKeyLevelToVwapInAtrPercentageString = Calculator.getPercentageString(distanceFromKeyLevelToVwap, atr, 0);
-        let stateDescription = this.stateToString();
         let liveStats = this.getCommonLiveStats();
-        liveStats += `state: ${stateDescription}, level to vwap: ${distanceFromKeyLevelToVwapInAtrPercentageString} atr`;
+        liveStats += `level to vwap: ${distanceFromKeyLevelToVwapInAtrPercentageString} atr`;
         Helper.updateHtmlIfChanged(this.htmlStats, liveStats);
     }
 
@@ -194,137 +185,6 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
         return allowedSize;
     }
 
-    private stateToString(): string {
-        if (this.state === TradebookState.OBSERVING) {
-            return 'observing';
-        } else if (this.state === TradebookState.LOST_VWAP) {
-            return this.isLong ? 'vwap pushdown failed' : 'vwap bounce failed';
-        } else if (this.state === TradebookState.BOUNCE) {
-            return this.isLong ? 'vwap pullback to vwap' : 'bounce to vwap';
-        } else if (this.state === TradebookState.RECLAIMED_VWAP) {
-            return this.isLong ? 'pushed down below vwap' : 'bounced above vwap';
-        } else if (this.state === TradebookState.LEG_DOWN) {
-            let legText = this.isLong ? 'leg up' : 'leg down';
-            return `${legText} ${this.legCounter}`;
-        }
-        return 'unknown';
-    }
-
-    refreshState(): void {
-        if (!this.isEnabled()) {
-            return;
-        }
-
-        if (this.state === TradebookState.OBSERVING) {
-            this.checkForPosition();
-        } else if (this.state === TradebookState.LOST_VWAP) {
-            this.checkWhenLostVwap();
-        } else if (this.state === TradebookState.BOUNCE) {
-            this.checkWhenBounce();
-        } else if (this.state === TradebookState.RECLAIMED_VWAP) {
-            this.checkForPosition();
-        } else if (this.state === TradebookState.LEG_DOWN) {
-            this.checkWhenLegDown();
-        }
-    }
-
-    transitionToState(newState: TradebookState): void {
-        if (this.state === newState) {
-            return;
-        }
-        this.state = newState;
-        let symbolData = Models.getSymbolData(this.symbol);
-        if (newState === TradebookState.LOST_VWAP) {
-            this.legCounter = 0;
-            this.lowOfDayToBreak = this.isLong ? symbolData.highOfDay : symbolData.lowOfDay;
-            Helper.speak(`expect future bounce, scale out 10-30%`);
-        } else if (newState === TradebookState.LEG_DOWN) {
-            this.legCounter++;
-            Helper.speak(`expect future bounce, scale out 10-30%`);
-        } else if (newState === TradebookState.RECLAIMED_VWAP) {
-            Helper.speak(`exit the trade`);
-        } else if (newState === TradebookState.BOUNCE) {
-            this.lowOfDayToBreak = this.isLong ? symbolData.highOfDay : symbolData.lowOfDay;
-            Helper.speak(`evaluate bounce height, look for recycle shares`);
-        }
-    }
-    checkForPosition(): void {
-        if (this.hasPositionForTradebook()) {
-            this.transitionToState(TradebookState.LOST_VWAP);
-        } else {
-            this.transitionToState(TradebookState.OBSERVING);
-        }
-    }
-    checkWhenBounce(): void {
-        if (!this.hasPositionForTradebook()) {
-            this.transitionToState(TradebookState.OBSERVING);
-        }
-        let candles = Models.getUndefinedCandlesSinceOpen(this.symbol);
-        if (candles.length < 2) {
-            return;
-        }
-        let lastCandle = candles[candles.length - 1];
-        let previousCandle = candles[candles.length - 2];
-        let currentVwap = Models.getCurrentVwap(this.symbol);
-        let reclaimedVwap = (!this.isLong && previousCandle.close > currentVwap) || (this.isLong && previousCandle.close < currentVwap);
-        let isNewHigh = (!this.isLong && lastCandle.high > previousCandle.high) || (this.isLong && lastCandle.low < previousCandle.low);
-        if (isNewHigh && reclaimedVwap) {
-            this.transitionToState(TradebookState.RECLAIMED_VWAP);
-            return;
-        }
-        let symbolData = Models.getSymbolData(this.symbol);
-        let lowOfDay = this.isLong ? symbolData.highOfDay : symbolData.lowOfDay;
-        if ((!this.isLong && lowOfDay < this.lowOfDayToBreak) || (this.isLong && lowOfDay > this.lowOfDayToBreak)) {
-            this.transitionToState(TradebookState.LEG_DOWN);
-            return;
-        }
-    }
-    checkWhenLostVwap(): void {
-        if (!this.hasPositionForTradebook()) {
-            this.transitionToState(TradebookState.OBSERVING);
-        }
-        let candles = Models.getUndefinedCandlesSinceOpen(this.symbol);
-        if (candles.length < 2) {
-            return;
-        }
-        let lastCandle = candles[candles.length - 1];
-        let previousCandle = candles[candles.length - 2];
-        let currentVwap = Models.getCurrentVwap(this.symbol);
-        let reclaimedVwap = (!this.isLong && previousCandle.close > currentVwap) || (this.isLong && previousCandle.close < currentVwap);
-        let isNewHigh = (!this.isLong && lastCandle.high > previousCandle.high) || (this.isLong && lastCandle.low < previousCandle.low);
-        if (isNewHigh) {
-            if (reclaimedVwap) {
-                this.transitionToState(TradebookState.RECLAIMED_VWAP);
-            } else {
-                this.transitionToState(TradebookState.BOUNCE);
-            }
-            return;
-        }
-        let symbolData = Models.getSymbolData(this.symbol);
-        let lowOfDay = this.isLong ? symbolData.highOfDay : symbolData.lowOfDay;
-        if ((!this.isLong && lowOfDay < this.lowOfDayToBreak) ||
-            (this.isLong && lowOfDay > this.lowOfDayToBreak)) {
-            this.transitionToState(TradebookState.LEG_DOWN);
-            return;
-        }
-    }
-    checkWhenLegDown(): void {
-        if (!this.hasPositionForTradebook()) {
-            this.transitionToState(TradebookState.OBSERVING);
-        }
-        let candles = Models.getUndefinedCandlesSinceOpen(this.symbol);
-        if (candles.length < 2) {
-            return;
-        }
-        let lastCandle = candles[candles.length - 1];
-        let previousCandle = candles[candles.length - 2];
-        let isNewHigh = (!this.isLong && lastCandle.high > previousCandle.high) || (this.isLong && lastCandle.low < previousCandle.low);
-        if (isNewHigh) {
-            this.transitionToState(TradebookState.BOUNCE);
-            return;
-        }
-    }
-
     getDisallowedReasonToAdjustSingleLimitOrder(
         symbol: string, keyIndex: number, order: Models.OrderModel,
         pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
@@ -347,16 +207,6 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
         }
         if (Patterns.isPriceWorseThanVwap(symbol, this.isLong, newPrice)) {
             result.reason = "lose vwap";
-            result.allowed = true;
-            return result;
-        }
-        if (this.legCounter == 2 && keyIndex <= 5) {
-            result.reason = "leg 2";
-            result.allowed = true;
-            return result;
-        }
-        if (this.legCounter >= 3) {
-            result.reason = "leg 3+";
             result.allowed = true;
             return result;
         }
@@ -388,16 +238,6 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
             result.allowed = true;
             return result;
         }
-        if (this.legCounter == 2 && keyIndex <= 6) {
-            result.reason = "leg 2";
-            result.allowed = true;
-            return result;
-        }
-        if (this.legCounter >= 3) {
-            result.reason = "leg 3+";
-            result.allowed = true;
-            return result;
-        }
 
         return result;
     }
@@ -422,16 +262,6 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
         }
         if (Patterns.isPriceWorseThanVwap(symbol, this.isLong, currentPrice)) {
             result.reason = "lose vwap";
-            result.allowed = true;
-            return result;
-        }
-        if (this.legCounter == 2 && keyIndex <= 6) {
-            result.reason = "leg 2";
-            result.allowed = true;
-            return result;
-        }
-        if (this.legCounter >= 3) {
-            result.reason = "leg 3+";
             result.allowed = true;
             return result;
         }

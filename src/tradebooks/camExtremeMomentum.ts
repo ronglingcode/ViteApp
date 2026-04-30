@@ -127,12 +127,6 @@ export class CamExtremeMomentum extends Tradebook {
         };
     }
 
-    refreshState(): void {
-    }
-
-    transitionToState(newState: any): void {
-    }
-
     getTightStopLevels(): Models.DisplayLevel[] {
         return TradebookUtil.getTightStopLevelsForTrend(this.symbol, this.isLong);
     }

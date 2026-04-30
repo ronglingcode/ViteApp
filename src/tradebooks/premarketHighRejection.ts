@@ -131,14 +131,6 @@ export class PremarketHighRejection extends Tradebook {
         };
     }
 
-    refreshState(): void {
-        // TODO: Implement state refresh logic if needed
-    }
-
-    transitionToState(newState: any): void {
-        // TODO: Implement state transition logic if needed
-    }
-
     isEnabled(): boolean {
         return true; // TODO: Implement enable/disable logic
     }

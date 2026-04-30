@@ -127,20 +127,12 @@ export class BreakoutReversal extends Tradebook {
         // TODO: Implement live stats refresh
     }
 
-    refreshState(): void {
-        // TODO: Implement state refresh
-    }
-
     isEnabled(): boolean {
         return true; // TODO: Implement enable/disable logic
     }
 
     getCommonLiveStats(): string {
         return ''; // TODO: Implement common live stats
-    }
-
-    transitionToState(newState: any): void {
-        // TODO: Implement state transition logic
     }
 
     /** Minimal doc method for now — returns empty string. */

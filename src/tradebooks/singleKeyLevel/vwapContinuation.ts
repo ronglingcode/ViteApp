@@ -11,7 +11,6 @@ import * as Helper from '../../utils/helper';
 import * as Patterns from '../../algorithms/patterns';
 import * as AutoTrader from '../../algorithms/autoTrader';
 import * as LiveStats from '../../ui/liveStats';
-import { TradebookState } from '../tradebookStates';
 import * as TradebooksManager from '../tradebooksManager';
 import * as TradebookUtil from '../tradebookUtil';
 import * as ExitRulesCheckerNew from '../../controllers/exitRulesCheckerNew';
@@ -27,7 +26,6 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
     public static readonly vwapContinuationLong: string = 'VwapContinuationLong';
     public static readonly vwapContinuationShort: string = 'VwapContinuationShort';
-    private highOfDayToBreakout: number = 0;
     private vwapWarningActive: boolean = false;
     public getID(): string {
         return this.buildID(this.isLong ? VwapContinuation.vwapContinuationLong : VwapContinuation.vwapContinuationShort);
@@ -199,76 +197,6 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         let allowedSize = CommonRules.validateCommonEntryRules(
             this.symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
         return allowedSize;
-    }
-
-    refreshState(): void {
-        if (!this.isEnabled()) {
-            return;
-        }
-        this.syncVwapWarningState(false);
-        if (this.state === TradebookState.OBSERVING) {
-            this.checkForPosition();
-        } else if (this.state === TradebookState.MOMENTUM) {
-            this.checkDuringMomentum();
-        } else if (this.state === TradebookState.PULLBACK) {
-            this.checkDuringPullback();
-        } else if (this.state === TradebookState.FAILED) {
-            this.checkForPosition();
-        }
-    }
-
-    transitionToState(newState: TradebookState): void {
-        if (this.state === newState) {
-            return;
-        }
-        this.state = newState;
-        let symbolData = Models.getSymbolData(this.symbol);
-        if (newState === TradebookState.MOMENTUM) {
-            Helper.speak(`partial small during momentum`);
-        } else if (newState === TradebookState.PULLBACK) {
-            this.highOfDayToBreakout = this.isLong ? symbolData.highOfDay : symbolData.lowOfDay;
-            Helper.speak(`check the depth of pullback`);
-        } else if (newState === TradebookState.FAILED) {
-            Helper.speak(`consider exiting`);
-        }
-    }
-    checkForPosition(): void {
-        if (this.hasPositionForTradebook()) {
-            this.transitionToState(TradebookState.MOMENTUM);
-        } else {
-            this.transitionToState(TradebookState.OBSERVING);
-        }
-    }
-    checkDuringMomentum(): void {
-        let candles = Models.getUndefinedCandlesSinceOpen(this.symbol);
-        if (candles.length < 2) {
-            return;
-        }
-        let currentCandle = candles[candles.length - 1];
-        let previousCandle = candles[candles.length - 2];
-        if ((this.isLong && currentCandle.low < previousCandle.low) || (!this.isLong && currentCandle.high > previousCandle.high)) {
-            this.transitionToState(TradebookState.PULLBACK);
-        }
-    }
-    checkDuringPullback(): void {
-        let lostKeyLevel = Patterns.hasLostKeyLevel(this.symbol, this.isLong, this.getKeyLevel());
-        if (lostKeyLevel) {
-            this.transitionToState(TradebookState.FAILED);
-            return;
-        }
-        let symbolData = Models.getSymbolData(this.symbol);
-        if ((this.isLong && symbolData.highOfDay > this.highOfDayToBreakout) || (!this.isLong && symbolData.lowOfDay < this.highOfDayToBreakout)) {
-            this.transitionToState(TradebookState.MOMENTUM);
-            return;
-        }
-        let currentVwap = Models.getCurrentVwap(this.symbol);
-        let candles = Models.getM1ClosedCandlesSinceOpen(this.symbol);
-        let lastClosedCandle = candles[candles.length - 1];
-        let closePrice = lastClosedCandle.close;
-        if ((this.isLong && closePrice < currentVwap) || (!this.isLong && closePrice > currentVwap)) {
-            this.transitionToState(TradebookState.FAILED);
-            return;
-        }
     }
 
     getTightStopLevels(): Models.DisplayLevel[] {
