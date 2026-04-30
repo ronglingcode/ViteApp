@@ -139,61 +139,6 @@ export class OpenDrive extends SingleKeyLevelTradebook {
         // Empty implementation - subclasses can override
     }
 
-    getTradeManagementInstructions(): Models.TradeManagementInstructions {
-        let instructions = new Map<string, string[]>();
-        if (this.isLong) {
-            instructions = this.getTradeManagementInstructionsForLong();
-        } else {
-            instructions = this.getTradeManagementInstructionsForShort();
-        }
-        TradebookUtil.setlevelToAddInstructions(this.symbol, this.isLong, instructions);
-        TradebookUtil.setFinalTargetInstructions(this.symbol, this.isLong, instructions);
-        let conditionsToFail = this.isLong ? ["incremental new low"] : ["incremental new high"];
-        let result: Models.TradeManagementInstructions = {
-            mapData: instructions,
-            conditionsToFail: conditionsToFail,
-        }
-        return result;
-    }
-    getTradeManagementInstructionsForLong(): Map<string, string[]> {
-        const instructions = new Map<string, string[]>([[
-            'conditions to trim', [
-                '80%: break below entry signal candle (M1, M5, M15)',
-                '50%: M1 new low before 9:35 AM',
-                '10-30%: M5/M15 new low',
-            ]], [
-            'add or re-entry', [
-                'reclaim of previous exit levels',
-                'after vwap cross above key level, pullback to vwap holds',
-            ]], [
-            'partial targets', [
-                "10-30%: 1 minute push, 1st leg up",
-                "30-60%: 5 minute push, 2nd leg up",
-                "60-90%: 15 minute push, 3rd leg up, 1+ ATR",
-            ]]
-        ]);
-        return instructions;
-    }
-    getTradeManagementInstructionsForShort(): Map<string, string[]> {
-        const instructions = new Map<string, string[]>([[
-            'conditions to trim', [
-                '80%: break above entry signal candle (M1, M5, M15)',
-                '50%: M1 new high before 9:35 AM',
-                '10-30%: M5/M15 new high',
-            ]], [
-            'add or re-entry', [
-                'reclaim of previous exit levels',
-                'after vwap cross below key level, pullback to vwap holds',
-            ]], [
-            'partial targets', [
-                "10-30%: 1 minute drop, 1st leg down",
-                "30-60%: 5 minute drop, 2nd leg down",
-                "60-90%: 15 minute drop, 3rd leg down, 1+ ATR",
-            ]]
-        ]);
-        return instructions;
-    }
-
     getTightStopLevels(): Models.DisplayLevel[] {
         let tightStopLevels = TradebookUtil.getTightStopLevelsForTrend(this.symbol, this.isLong);
         return tightStopLevels;

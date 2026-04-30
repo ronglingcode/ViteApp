@@ -36,7 +36,6 @@ export abstract class Tradebook {
     abstract refreshLiveStats(): void;
     abstract refreshState(): void;
     abstract transitionToState(newState: TradebookState): void;
-    abstract getTradeManagementInstructions(): Models.TradeManagementInstructions;
     abstract getEntryMethods(): string[];
 
     getCommonLiveStats(): string {

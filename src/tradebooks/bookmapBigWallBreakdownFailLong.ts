@@ -3,7 +3,6 @@ import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansMod
 import * as Chart from '../ui/chart';
 import * as Models from '../models/models';
 import * as Firestore from '../firestore';
-import * as TradebookUtil from './tradebookUtil';
 import * as Helper from '../utils/helper';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
@@ -63,38 +62,6 @@ export class BookmapBigWallBreakdownFailLong extends Tradebook {
             dryRun, useMarketOrder, entryPrice, stopOutPrice, riskLevelPrice, allowedSize, planCopy, logTags);
 
         return allowedSize;
-    }
-
-    getTradeManagementInstructions(): Models.TradeManagementInstructions {
-        let instructions = this.getTradeManagementInstructionsForLong();
-        TradebookUtil.setlevelToAddInstructions(this.symbol, true, instructions);
-        TradebookUtil.setFinalTargetInstructions(this.symbol, true, instructions);
-
-        let conditionsToFail = ["price loses big wall level again"];
-        let result: Models.TradeManagementInstructions = {
-            mapData: instructions,
-            conditionsToFail: conditionsToFail,
-        };
-        return result;
-    }
-
-    getTradeManagementInstructionsForLong(): Map<string, string[]> {
-        return new Map<string, string[]>([
-            ['conditions to fail', [
-                'price loses big wall level, closed candle below or breakdown with volume',
-            ]],
-            ['conditions to trim', [
-                'deep pullback toward big wall level',
-            ]],
-            ['add or re-entry', [
-                'reclaim of big wall level after pullback',
-            ]],
-            ['partial targets', [
-                "10-30%: first push away from wall",
-                "30-60%: second leg",
-                "60-90%: extended move, 1+ ATR from wall",
-            ]]
-        ]);
     }
 
     refreshState(): void {

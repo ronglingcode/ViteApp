@@ -168,44 +168,6 @@ export class PremarketHighRejection extends Tradebook {
         return "";
     }
 
-    getTradeManagementInstructions(): Models.TradeManagementInstructions {
-        let instructions = this.getTradeManagementInstructionsForShort();
-        TradebookUtil.setlevelToAddInstructions(this.symbol, false, instructions);
-        TradebookUtil.setFinalTargetInstructions(this.symbol, false, instructions);
-
-        let conditionsToFail = ["new high of day, lose gap reversal momentum"];
-
-        let result: Models.TradeManagementInstructions = {
-            mapData: instructions,
-            conditionsToFail: conditionsToFail,
-        };
-        return result;
-    }
-
-    getTradeManagementInstructionsForShort(): Map<string, string[]> {
-        const instructions = new Map<string, string[]>([
-            ['conditions to fail', [
-                'new high of day breakout',
-                'reclaim open price (gap fill fails)',
-            ]],
-            ['conditions to trim', [
-                'first new high after initial fade',
-                'M5 reversal candle',
-            ]],
-            ['add or re-entry', [
-                'add on open price rejection if weak',
-                'add on VWAP rejection',
-            ]],
-            ['partial targets', [
-                "25-40%: first leg fade toward previous close",
-                "40-60%: approach previous day close",
-                "60-80%: reclaim previous day close",
-                "80-100%: extended target beyond previous close",
-            ]]
-        ]);
-        return instructions;
-    }
-
     onNewTimeSalesData(): void {
 
     }

@@ -3,7 +3,6 @@ import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansMod
 import * as Chart from '../ui/chart';
 import * as Models from '../models/models';
 import * as Firestore from '../firestore';
-import * as TradebookUtil from './tradebookUtil';
 import * as LongDocs from './tradebookDocs/breakdownReversalLong';
 import * as ShortDocs from './tradebookDocs/breakdownReversalLong';
 import * as FalseBreakout from '../patterns/falseBreakout';
@@ -144,58 +143,6 @@ export class BreakoutReversal extends Tradebook {
         // TODO: Implement state transition logic
     }
 
-    getTradeManagementInstructions(): Models.TradeManagementInstructions {
-        let instructions = new Map<string, string[]>();
-        if (this.isLong) {
-            instructions = this.getTradeManagementInstructionsForLong();
-        } else {
-            instructions = this.getTradeManagementInstructionsForShort();
-        }
-        TradebookUtil.setlevelToAddInstructions(this.symbol, this.isLong, instructions);
-        TradebookUtil.setFinalTargetInstructions(this.symbol, this.isLong, instructions);
-        let conditionsToFail = this.isLong ? ["lose level"] : ["reclaim level"];
-        let result: Models.TradeManagementInstructions = {
-            mapData: instructions,
-            conditionsToFail: conditionsToFail,
-        }
-        return result;
-    }
-
-    getTradeManagementInstructionsForLong(): Map<string, string[]> {
-        const instructions = new Map<string, string[]>([[
-            'conditions to fail', [
-                "low of day",
-            ]], [
-            'conditions to trim', [
-                "decide how much and whether to trim on first new low below vwap",
-            ]], [
-            'add or re-entry', [
-                "vwap pushdown fail, add back previous partials",
-            ]], [
-            'partial targets', [
-                "about 50%: push to vwap",
-            ]]
-        ]);
-        return instructions;
-    }
-
-    getTradeManagementInstructionsForShort(): Map<string, string[]> {
-        const instructions = new Map<string, string[]>([[
-            'conditions to fail', [
-                "high of day",
-            ]], [
-            'conditions to trim', [
-                "decide how much and whether to trim on first new high above vwap",
-            ]], [
-            'add or re-entry', [
-                "vwap bounce fail, add back previous partials",
-            ]], [
-            'partial targets', [
-                "about 50%: dip to vwap",
-            ]]
-        ]);
-        return instructions;
-    }
     /** Minimal doc method for now — returns empty string. */
     getTradebookDoc(): string {
         if (this.isLong) {

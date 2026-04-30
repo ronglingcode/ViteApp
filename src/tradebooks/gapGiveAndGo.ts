@@ -162,44 +162,6 @@ export class GapGiveAndGo extends Tradebook {
         return "";
     }
 
-    getTradeManagementInstructions(): Models.TradeManagementInstructions {
-        let instructions = this.getTradeManagementInstructionsForLong();
-        TradebookUtil.setlevelToAddInstructions(this.symbol, true, instructions);
-        TradebookUtil.setFinalTargetInstructions(this.symbol, true, instructions);
-
-        let conditionsToFail = ["new low of day, lose gap continuation momentum"];
-
-        let result: Models.TradeManagementInstructions = {
-            mapData: instructions,
-            conditionsToFail: conditionsToFail,
-        };
-        return result;
-    }
-
-    getTradeManagementInstructionsForLong(): Map<string, string[]> {
-        const instructions = new Map<string, string[]>([
-            ['conditions to fail', [
-                'new low of day breakdown',
-                'reclaim open price (gap fill fails)',
-            ]],
-            ['conditions to trim', [
-                'first new low after initial push',
-                'M5 reversal candle',
-            ]],
-            ['add or re-entry', [
-                'add on open price rejection if strong',
-                'add on VWAP rejection',
-            ]],
-            ['partial targets', [
-                "25-40%: first leg push toward previous close",
-                "40-60%: approach previous day close",
-                "60-80%: reclaim previous day close",
-                "80-100%: extended target beyond previous close",
-            ]]
-        ]);
-        return instructions;
-    }
-
     onNewTimeSalesData(): void {
 
     }

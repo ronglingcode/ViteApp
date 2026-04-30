@@ -68,13 +68,6 @@ export const getTradebookFromPosition = (symbol: string) => {
     }
     return null;
 }
-export const getTradeManagementFromPosition = (symbol: string) => {
-    let tradebook = getTradebookFromPosition(symbol);
-    if (!tradebook) {
-        return new Map<string, string[]>();
-    }
-    return tradebook.getTradeManagementInstructions();
-}
 export const populateTradeManagementForPosition = (position: Models.Position, root: HTMLElement) => {
     let symbol = position.symbol;
     if (position.netQuantity === 0) {
@@ -99,9 +92,6 @@ export const populateTradeManagementForTradebook = (symbol: string, isLong: bool
     container.className = "ticker";
     root.appendChild(container);
 
-
-    let instructions = tradebook.getTradeManagementInstructions().mapData;
-
     let tickerTitle = document.createElement("div");
     tickerTitle.className = "ticker-title";
     container.appendChild(tickerTitle);
@@ -109,16 +99,6 @@ export const populateTradeManagementForTradebook = (symbol: string, isLong: bool
     UI.addOneLineDiv(tickerTitle, symbol, "");
     let tagClassName = isLong ? "tag tag-long" : "tag tag-short";
     UI.addOneLineSpan(tickerTitle, tradebook.name, tagClassName);
-    instructions.forEach((instruction, sectionName) => {
-        UI.addOneLineDiv(container, sectionName, "subtitle");
-        let ul = document.createElement("ul");
-        for (let i = 0; i < instruction.length; i++) {
-            let li = document.createElement("li");
-            li.textContent = instruction[i];
-            ul.appendChild(li);
-        }
-        container.appendChild(ul);
-    });
 }
 export const test = () => {
     let traderFocusInstructionsContent = document.getElementById("traderFocusInstructionsContent");

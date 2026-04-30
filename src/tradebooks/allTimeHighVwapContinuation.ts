@@ -3,7 +3,6 @@ import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansMod
 import * as Firestore from '../firestore';
 import * as Models from '../models/models';
 import * as Chart from '../ui/chart';
-import * as TradebookUtil from './tradebookUtil';
 import * as Helper from '../utils/helper';
 import * as VwapPatterns from '../algorithms/vwapPatterns';
 import * as TradebookUtils from './tradebookUtil';
@@ -141,46 +140,12 @@ export class AllTimeHighVwapContinuation extends Tradebook {
     }
 
     getTightStopLevels(): Models.DisplayLevel[] {
-        let tightStopLevels = TradebookUtil.getTightStopLevelsForTrend(this.symbol, true);
+        let tightStopLevels = TradebookUtils.getTightStopLevelsForTrend(this.symbol, true);
         return tightStopLevels;
     }
 
     getTradebookDoc(): string {
         return "";
-    }
-
-    getTradeManagementInstructions(): Models.TradeManagementInstructions {
-        let instructions = this.getTradeManagementInstructionsForLong();
-        TradebookUtil.setlevelToAddInstructions(this.symbol, true, instructions);
-        TradebookUtil.setFinalTargetInstructions(this.symbol, true, instructions);
-        let conditionsToFail = ["lose vwap", "lose all-time high"];
-        let result: Models.TradeManagementInstructions = {
-            mapData: instructions,
-            conditionsToFail: conditionsToFail,
-        }
-        return result;
-    }
-
-    getTradeManagementInstructionsForLong(): Map<string, string[]> {
-        const instructions = new Map<string, string[]>([[
-            'conditions to fail', [
-                'lose vwap, low of day breakdown',
-                'lose all-time high level',
-            ]], [
-            'conditions to trim', [
-                'first new low on M1, M5, M15',
-                'close below all-time high',
-            ]], [
-            'add or re-entry', [
-                'none, just scalp',
-            ]], [
-            'partial targets', [
-                "10-30%: 1 minute push, 1st leg up",
-                "30-60%: 5 minute push, 2nd leg up",
-                "60-90%: 15 minute push, 3rd leg up, 1+ ATR",
-            ]]
-        ]);
-        return instructions;
     }
 
     onNewTimeSalesData(): void {

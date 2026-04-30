@@ -141,65 +141,6 @@ export class CamExtremeMomentum extends Tradebook {
         return "";
     }
 
-    getTradeManagementInstructions(): Models.TradeManagementInstructions {
-        let instructions = this.isLong
-            ? this.getTradeManagementInstructionsForLong()
-            : this.getTradeManagementInstructionsForShort();
-        TradebookUtil.setlevelToAddInstructions(this.symbol, this.isLong, instructions);
-        TradebookUtil.setFinalTargetInstructions(this.symbol, this.isLong, instructions);
-
-        let conditionsToFail = this.isLong
-            ? ["price breaks back below R6, lose extreme momentum"]
-            : ["price breaks back above S6, lose extreme momentum"];
-
-        return {
-            mapData: instructions,
-            conditionsToFail: conditionsToFail,
-        };
-    }
-
-    getTradeManagementInstructionsForLong(): Map<string, string[]> {
-        return new Map<string, string[]>([
-            ['conditions to fail', [
-                'price closes back below R6',
-                'loses momentum above R6',
-            ]],
-            ['conditions to trim', [
-                'first pullback after initial push',
-                'M5 reversal candle',
-            ]],
-            ['add or re-entry', [
-                'add on R6 retest hold',
-            ]],
-            ['partial targets', [
-                "25-50%: first push extension",
-                "50-75%: extended move",
-                "75-100%: trail remainder",
-            ]]
-        ]);
-    }
-
-    getTradeManagementInstructionsForShort(): Map<string, string[]> {
-        return new Map<string, string[]>([
-            ['conditions to fail', [
-                'price closes back above S6',
-                'loses momentum below S6',
-            ]],
-            ['conditions to trim', [
-                'first bounce after initial push down',
-                'M5 reversal candle',
-            ]],
-            ['add or re-entry', [
-                'add on S6 retest rejection',
-            ]],
-            ['partial targets', [
-                "25-50%: first push extension",
-                "50-75%: extended move",
-                "75-100%: trail remainder",
-            ]]
-        ]);
-    }
-
     onNewTimeSalesData(): void {
     }
 

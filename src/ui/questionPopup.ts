@@ -20,10 +20,8 @@ export const show = (symbol: string) => {
 
     let tradebookName = tradebook.name;
     let questionHtml = popupWindow.getElementsByClassName("question")[0];
-    questionHtml.textContent = `${tradebookName}: conditions to fail:`;
-    let tradeManagement = tradebook.getTradeManagementInstructions();
-    let conditionsToFail = tradeManagement.conditionsToFail;
-    chartWidget.chartState.hiddenAnswer = conditionsToFail[0];
+    questionHtml.textContent = `${tradebookName}:`;
+    chartWidget.chartState.hiddenAnswer = '';
     popupWindow.style.display = 'block';
 
     let charts = Models.getChartsHtmlInAllTimeframes(symbol);

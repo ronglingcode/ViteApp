@@ -160,61 +160,6 @@ export class VwapScalp extends Tradebook {
         return "";
     }
 
-    getTradeManagementInstructions(): Models.TradeManagementInstructions {
-        let instructions = new Map<string, string[]>();
-        if (this.isLong) {
-            instructions = this.getTradeManagementInstructionsForLong();
-        } else {
-            instructions = this.getTradeManagementInstructionsForShort();
-        }
-        TradebookUtil.setlevelToAddInstructions(this.symbol, this.isLong, instructions);
-        TradebookUtil.setFinalTargetInstructions(this.symbol, this.isLong, instructions);
-        let conditionsToFail = this.isLong ? ["lose vwap"] : ["reclaim vwap"];
-        let result: Models.TradeManagementInstructions = {
-            mapData: instructions,
-            conditionsToFail: conditionsToFail,
-        }
-        return result;
-    }
-    getTradeManagementInstructionsForLong(): Map<string, string[]> {
-        const instructions = new Map<string, string[]>([[
-            'conditions to fail', [
-                'lose vwap, low of day breakdown',
-            ]], [
-            'conditions to trim', [
-                'first new low on M1, M5, M15',
-            ]], [
-            'add or re-entry', [
-                'none, just scalp',
-            ]], [
-            'partial targets', [
-                "10-30%: 1 minute push, 1st leg up",
-                "30-60%: 5 minute push, 2nd leg up",
-                "60-90%: 15 minute push, 3rd leg up, 1+ ATR",
-            ]]
-        ]);
-        return instructions;
-    }
-
-    getTradeManagementInstructionsForShort(): Map<string, string[]> {
-        const instructions = new Map<string, string[]>([[
-            'conditions to fail', [
-                'reclaim of vwap, high of day breakout',
-            ]], [
-            'conditions to trim', [
-                'first new high on M1, M5, M15',
-            ]], [
-            'add or re-entry', [
-                'none, just scalp',
-            ]], [
-            'partial targets', [
-                "10-30%: 1 minute drop, 1st leg down",
-                "30-60%: 5 minute drop, 2nd leg down",
-                "60-90%: 15 minute drop, 3rd leg down, 1+ ATR",
-            ]]
-        ]);
-        return instructions;
-    }
     onNewTimeSalesData(): void {
         // do nothing
         let candles = Models.getCandlesFromM1SinceOpen(this.symbol);

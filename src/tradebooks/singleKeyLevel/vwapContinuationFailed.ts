@@ -11,7 +11,6 @@ import * as TradingPlans from '../../models/tradingPlans/tradingPlans';
 import * as Calculator from '../../utils/calculator';
 import * as ExitRulesCheckerNew from '../../controllers/exitRulesCheckerNew';
 import * as Rules from '../../algorithms/rules';
-import * as TradebookUtil from '../tradebookUtil';
 import * as GlobalSettings from '../../config/globalSettings';
 import * as LongDocs from '../tradebookDocs/vwapPushdownFail';
 import * as ShortDocs from '../tradebookDocs/vwapBounceFail';
@@ -438,67 +437,6 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
         }
 
         return result;
-    }
-
-    getTradeManagementInstructions(): Models.TradeManagementInstructions {
-        let instructions = new Map<string, string[]>();
-        if (this.isLong) {
-            instructions = this.getTradeManagementInstructionsForLong();
-        } else {
-            instructions = this.getTradeManagementInstructionsForShort();
-        }
-        TradebookUtil.setlevelToAddInstructions(this.symbol, this.isLong, instructions);
-        TradebookUtil.setFinalTargetInstructions(this.symbol, this.isLong, instructions);
-        let conditionsToFail = this.isLong ? ["lose vwap"] : ["reclaim vwap"];
-        let result: Models.TradeManagementInstructions = {
-            mapData: instructions,
-            conditionsToFail: conditionsToFail,
-        }
-        return result;
-    }
-    getTradeManagementInstructionsForLong(): Map<string, string[]> {
-        const instructions = new Map<string, string[]>([[
-            'conditions to fail', [
-                'lose vwap: a new candle (M1,5,15) close below vwap then makes a new low',
-                'lose vwap: dip to vwap and bounced, then gets below bounce low',
-            ]], [
-            'conditions to trim', [
-                '50%: the next level above holds',
-                '10-30%: M5/M15 new low',
-                'deep pullback, partial some during 50% bounce or near double top',
-            ]], [
-            'add or re-entry', [
-                'reclaim of previous exit levels',
-            ]], [
-            'partial targets', [
-                "10-30%: 1 minute push, 1st leg up",
-                "30-60%: 5 minute push, 2nd leg up",
-                "60-90%: 15 minute push, 3rd leg up, 1+ ATR",
-            ]]
-        ]);
-        return instructions;
-    }
-    getTradeManagementInstructionsForShort(): Map<string, string[]> {
-        const instructions = new Map<string, string[]>([[
-            'conditions to fail', [
-                'reclaim vwap: a new candle (M1,5,15) close above vwap then makes a new high',
-                'reclaim vwap: pop to vwap and rejected, then gets above rejection high',
-            ]], [
-            'conditions to trim', [
-                '50%: the next level below holds',
-                '10-30%: M5/M15 new high',
-                'deep pullback, partial some during 50% pushdown or near double bottom',
-            ]], [
-            'add or re-entry', [
-                'reclaim of previous exit levels',
-            ]], [
-            'partial targets', [
-                "10-30%: 1 minute drop, 1st leg down",
-                "30-60%: 5 minute drop, 2nd leg down",
-                "60-90%: 15 minute drop, 3rd leg down, 1+ ATR",
-            ]]
-        ]);
-        return instructions;
     }
 
     getEligibleEntryParameters(): Models.TradebookEntryParameters {

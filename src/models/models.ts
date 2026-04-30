@@ -398,10 +398,6 @@ export interface TimeAndSalesPerSecond {
     second: number,  // Unix timestamp in seconds
     count: number,
 }
-export interface TradeManagementInstructions {
-    mapData: Map<string, string[]>,
-    conditionsToFail: string[]
-}
 export const getCurrentSpread = (symbol: string) => {
     let symbolData = getSymbolData(symbol);
     return symbolData.askPrice - symbolData.bidPrice;

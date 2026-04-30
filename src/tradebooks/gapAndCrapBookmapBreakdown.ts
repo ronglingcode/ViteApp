@@ -3,12 +3,11 @@ import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansMod
 import * as Chart from '../ui/chart';
 import * as Models from '../models/models';
 import * as Firestore from '../firestore';
-import * as TradebookUtil from './tradebookUtil';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 
 /**
  * Gap & crap short bookmap breakdown — parallels {@link BookmapBigWallBreakout} for family GapAndCrap, isLong false:
- * same entry pipeline, logs, adds policy, and trade-management copy as that bookmap tradebook.
+ * same entry pipeline, logs, and adds policy as that bookmap tradebook.
  */
 export class GapAndCrapBookmapBreakdown extends Tradebook {
     public static readonly gapAndCrapBookmapBreakdownId: string = 'GapAndCrapBookmapBreakdown';
@@ -138,62 +137,6 @@ export class GapAndCrapBookmapBreakdown extends Tradebook {
             allowed: false,
             reason: 'default is no add',
         };
-    }
-
-    getTradeManagementInstructions(): Models.TradeManagementInstructions {
-        let instructions: Map<string, string[]>;
-        if (this.isLong) {
-            instructions = this.getTradeManagementInstructionsForLong();
-        } else {
-            instructions = this.getTradeManagementInstructionsForShort();
-        }
-        TradebookUtil.setlevelToAddInstructions(this.symbol, this.isLong, instructions);
-        TradebookUtil.setFinalTargetInstructions(this.symbol, this.isLong, instructions);
-
-        let conditionsToFail = this.isLong ? ['lose big wall level'] : ['reclaim big wall level'];
-        let result: Models.TradeManagementInstructions = {
-            mapData: instructions,
-            conditionsToFail: conditionsToFail,
-        };
-        return result;
-    }
-
-    getTradeManagementInstructionsForLong(): Map<string, string[]> {
-        return new Map<string, string[]>([
-            [
-                'conditions to fail',
-                ['price loses big wall level, closed candle below or breakdown with volume'],
-            ],
-            ['conditions to trim', ['deep pullback toward big wall level']],
-            ['add or re-entry', ['reclaim of big wall level after pullback']],
-            [
-                'partial targets',
-                [
-                    '10-30%: first push away from wall',
-                    '30-60%: second leg',
-                    '60-90%: extended move, 1+ ATR from wall',
-                ],
-            ],
-        ]);
-    }
-
-    getTradeManagementInstructionsForShort(): Map<string, string[]> {
-        return new Map<string, string[]>([
-            [
-                'conditions to fail',
-                ['price reclaims big wall level, closed candle above or breakout with volume'],
-            ],
-            ['conditions to trim', ['deep bounce toward big wall level']],
-            ['add or re-entry', ['rejection at big wall level after bounce']],
-            [
-                'partial targets',
-                [
-                    '10-30%: first drop away from wall',
-                    '30-60%: second leg down',
-                    '60-90%: extended move, 1+ ATR from wall',
-                ],
-            ],
-        ]);
     }
 
     refreshState(): void {}

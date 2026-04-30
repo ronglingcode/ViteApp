@@ -7,7 +7,6 @@ import * as Models from '../../models/models';
 import * as Helper from '../../utils/helper';
 import * as Patterns from '../../algorithms/patterns';
 import type { TradebookState } from '../tradebookStates';
-import * as TradebookUtil from '../tradebookUtil';
 import * as OrderFlow from '../../controllers/orderFlow';
 import * as GlobalSettings from '../../config/globalSettings';
 
@@ -117,56 +116,6 @@ export class OpenFlush extends SingleKeyLevelTradebook {
         let allowedSize = CommonRules.validateCommonEntryRules(
             this.symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder, this.keyLevel, this.levelMomentumPlan, true, false, logTags);
         return allowedSize;
-    }
-    getTradeManagementInstructions(): Models.TradeManagementInstructions {
-        let instructions = new Map<string, string[]>();
-        if (this.isLong) {
-            instructions = this.getTradeManagementInstructionsForLong();
-        } else {
-            instructions = this.getTradeManagementInstructionsForShort();
-        }
-        TradebookUtil.setlevelToAddInstructions(this.symbol, this.isLong, instructions);
-        TradebookUtil.setFinalTargetInstructions(this.symbol, this.isLong, instructions);
-        let result: Models.TradeManagementInstructions = {
-            mapData: instructions,
-            conditionsToFail: ["high of day"],
-        }
-        return result;
-    }
-    getTradeManagementInstructionsForLong(): Map<string, string[]> {
-        const instructions = new Map<string, string[]>([[
-            'conditions to fail', [
-                "low of day",
-            ]], [
-            'conditions to trim', [
-                "decide how much and whether to trim on first new low below vwap",
-            ]], [
-            'add or re-entry', [
-                "vwap pushdown fail, add back previous partials",
-            ]], [
-            'partial targets', [
-                "about 50%: push to vwap",
-            ]]
-        ]);
-        return instructions;
-    }
-
-    getTradeManagementInstructionsForShort(): Map<string, string[]> {
-        const instructions = new Map<string, string[]>([[
-            'conditions to fail', [
-                "high of day",
-            ]], [
-            'conditions to trim', [
-                "decide how much and whether to trim on first new high above vwap",
-            ]], [
-            'add or re-entry', [
-                "vwap bounce fail, add back previous partials",
-            ]], [
-            'partial targets', [
-                "about 50%: dip to vwap",
-            ]]
-        ]);
-        return instructions;
     }
 
     getEntryMethods(): string[] {
