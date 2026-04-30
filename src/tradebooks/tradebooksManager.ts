@@ -19,6 +19,8 @@ import { GapGiveAndGo } from "./gapGiveAndGo";
 import { GapDownAndGoDown } from "./gapDownAndGoDown";
 import { GapDownAndGoUp } from "./gapDownAndGoUp";
 import { BookmapBigWallBreakout } from "./bookmapBigWallBreakout";
+import { GapAndCrapBookmapBreakdown } from "./gapAndCrapBookmapBreakdown";
+import { GapAndCrapBookmapRejection } from "./gapAndCrapBookmapRejection";
 import { BookmapBigWallBreakdownFailLong } from "./bookmapBigWallBreakdownFailLong";
 import { CamExtremeMomentum } from "./camExtremeMomentum";
 
@@ -83,9 +85,11 @@ export const createAllTradebooks = (symbol: string) => {
             gapAndCrapVwapBounceFail.enableByDefault = true;
             tradebooksMap.set(gapAndCrapVwapBounceFail.getID(), gapAndCrapVwapBounceFail);
 
-            let gapAndCrapBookmapBigWallBreakdown = new BookmapBigWallBreakout(
-                Models.TradebookFamilyName.GapAndCrap, symbol, scopeIsLong, shortPlan);
-            tradebooksMap.set(gapAndCrapBookmapBigWallBreakdown.getID(), gapAndCrapBookmapBigWallBreakdown);
+            let gapAndCrapBookmapBreakdown = new GapAndCrapBookmapBreakdown(symbol, shortPlan);
+            tradebooksMap.set(gapAndCrapBookmapBreakdown.getID(), gapAndCrapBookmapBreakdown);
+
+            let gapAndCrapBookmapRejection = new GapAndCrapBookmapRejection(symbol, shortPlan);
+            tradebooksMap.set(gapAndCrapBookmapRejection.getID(), gapAndCrapBookmapRejection);
         }
         if (plan.short.gapDownAndGoDownPlan) {
             let gapDownAndGoDownBookmapBigWallBreakdown = new BookmapBigWallBreakout(
