@@ -921,13 +921,6 @@ const drawTradeManagementInChart = (symbol: string, position: Models.Position | 
     if (!tradebook) {
         return;
     }
-    let tighstopLevels = tradebook.getTightStopLevels();
-    tighstopLevels.forEach(level => {
-        allCharts.forEach(chart => {
-            let line = createPriceLine(chart.candleSeries, level.level, level.title, "purple", null, false, "solid");
-            chart.tradeManagementLevels.push(line);
-        });
-    });
     // draw final target
     let finalTargets = TradingPlans.calculateTargets(symbol, isLong);
     TradingPlans.populateTargetsLabels(symbol, finalTargets);

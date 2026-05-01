@@ -131,11 +131,6 @@ export class AllTimeHighVwapContinuation extends Tradebook {
         return ''; // TODO: Implement common live stats
     }
 
-    getTightStopLevels(): Models.DisplayLevel[] {
-        let tightStopLevels = TradebookUtils.getTightStopLevelsForTrend(this.symbol, true);
-        return tightStopLevels;
-    }
-
     getTradebookDoc(): string {
         return "";
     }

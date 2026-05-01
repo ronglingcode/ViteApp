@@ -127,9 +127,5 @@ export class GapAndCrapBookmapBreakdown extends Tradebook {
         };
     }
 
-    getTightStopLevels(): Models.DisplayLevel[] {
-        return [];
-    }
-
     onNewTimeSalesData(): void { }
 }

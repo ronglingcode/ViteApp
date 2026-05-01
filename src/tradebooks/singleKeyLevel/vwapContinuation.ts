@@ -12,7 +12,7 @@ import * as Patterns from '../../algorithms/patterns';
 import * as AutoTrader from '../../algorithms/autoTrader';
 import * as LiveStats from '../../ui/liveStats';
 import * as TradebooksManager from '../tradebooksManager';
-import * as TradebookUtil from '../tradebookUtil';
+
 import * as ExitRulesCheckerNew from '../../controllers/exitRulesCheckerNew';
 import * as GlobalSettings from '../../config/globalSettings';
 import * as LongDocs from '../tradebookDocs/vwapContinuationLong';
@@ -197,11 +197,6 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
         let allowedSize = CommonRules.validateCommonEntryRules(
             this.symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
         return allowedSize;
-    }
-
-    getTightStopLevels(): Models.DisplayLevel[] {
-        let tightStopLevels = TradebookUtil.getTightStopLevelsForTrend(this.symbol, this.isLong);
-        return tightStopLevels;
     }
 
     getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {

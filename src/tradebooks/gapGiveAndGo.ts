@@ -3,7 +3,7 @@ import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansMod
 import * as Chart from '../ui/chart';
 import * as Models from '../models/models';
 import * as Firestore from '../firestore';
-import * as TradebookUtil from './tradebookUtil';
+
 import * as Helper from '../utils/helper';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
@@ -143,11 +143,6 @@ export class GapGiveAndGo extends Tradebook {
 
     getCommonLiveStats(): string {
         return super.getCommonLiveStats();
-    }
-
-    getTightStopLevels(): Models.DisplayLevel[] {
-        let tightStopLevels = TradebookUtil.getTightStopLevelsForTrend(this.symbol, true);
-        return tightStopLevels;
     }
 
     getTradebookDoc(): string {

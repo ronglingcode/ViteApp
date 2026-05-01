@@ -74,9 +74,5 @@ export class GapAndCrapBookmapRejection extends Tradebook {
         };
     }
 
-    getTightStopLevels(): Models.DisplayLevel[] {
-        return [];
-    }
-
     onNewTimeSalesData(): void { }
 }

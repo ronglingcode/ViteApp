@@ -3,7 +3,7 @@ import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansMod
 import * as Chart from '../ui/chart';
 import * as Models from '../models/models';
 import * as Firestore from '../firestore';
-import * as TradebookUtil from './tradebookUtil';
+
 import * as Helper from '../utils/helper';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
@@ -125,10 +125,6 @@ export class CamExtremeMomentum extends Tradebook {
             useFirstNewHigh: false,
             useMarketOrderWithTightStop: false,
         };
-    }
-
-    getTightStopLevels(): Models.DisplayLevel[] {
-        return TradebookUtil.getTightStopLevelsForTrend(this.symbol, this.isLong);
     }
 
     getTradebookDoc(): string {

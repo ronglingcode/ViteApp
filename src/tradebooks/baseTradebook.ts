@@ -178,9 +178,6 @@ export abstract class Tradebook {
         }
     }
 
-    getTightStopLevels(): Models.DisplayLevel[] {
-        return [];
-    }
     onNewTimeSalesData(): void {
         // do nothing
     }

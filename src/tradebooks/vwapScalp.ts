@@ -3,7 +3,7 @@ import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansMod
 import * as Firestore from '../firestore';
 import * as Models from '../models/models';
 import * as Chart from '../ui/chart';
-import * as TradebookUtil from './tradebookUtil';
+
 import * as Helper from '../utils/helper';
 import * as GlobalSettings from '../config/globalSettings';
 import * as VwapPatterns from '../algorithms/vwapPatterns';
@@ -140,11 +140,6 @@ export class VwapScalp extends Tradebook {
 
     getCommonLiveStats(): string {
         return ''; // TODO: Implement common live stats
-    }
-
-    getTightStopLevels(): Models.DisplayLevel[] {
-        let tightStopLevels = TradebookUtil.getTightStopLevelsForTrend(this.symbol, this.isLong);
-        return tightStopLevels;
     }
 
     /** Minimal doc method for now — returns empty string. */

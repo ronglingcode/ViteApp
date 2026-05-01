@@ -80,10 +80,6 @@ export class BookmapBigWallBreakdownFailLong extends Tradebook {
         };
     }
 
-    getTightStopLevels(): Models.DisplayLevel[] {
-        return [];
-    }
-
     onNewTimeSalesData(): void {
     }
 }
