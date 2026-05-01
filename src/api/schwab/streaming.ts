@@ -9,7 +9,6 @@ import * as LevelOneQuote from '../../models/levelOneQuote';
 import * as Firestore from '../../firestore';
 import * as GlobalSettings from '../../config/globalSettings';
 import * as TimeHelper from '../../utils/timeHelper';
-import * as SchwabBookData from '../../bookmap/schwabBookData';
 declare let window: Models.MyWindow;
 
 
@@ -38,9 +37,6 @@ export const createWebSocket = async () => {
                         subscribeLevelOneQuotes(websocket);
                         subscribeActivity(websocket);
                         subscribeChartUpdates(websocket);
-                        if (GlobalSettings.enableBookmapHeatmap) {
-                            SchwabBookData.subscribeBookData(websocket);
-                        }
                     }
                 }
                 else if (service === "LEVELONE_EQUITIES") {
@@ -84,8 +80,6 @@ export const createWebSocket = async () => {
                             //console.log(c);
                         });
                     }
-                } else if (service === "NASDAQ_BOOK" || service === "LISTED_BOOK") {
-                    SchwabBookData.handleBookData(service, element);
                 } else {
                     console.log('unknown service');
                     console.log(element);

@@ -290,7 +290,6 @@ export interface ChartWidgetHtmlContents {
     level1QuoteSize: HTMLElement,
     level1QuoteLargeOrders: HTMLElement,
     timeAndSales: HTMLElement,
-    bookmapPanel: HTMLElement,
 };
 export interface AlgoElements {
     long: HTMLElement,

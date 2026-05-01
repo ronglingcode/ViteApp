@@ -1,5 +1,4 @@
 import * as LightweightCharts from 'sunrise-tv-lightweight-charts';
-import * as GlobalSettings from '../config/globalSettings';
 export const defaultRed = 'rgb(255,82,82)';
 export const defaultGreen = 'rgb(38,166,154)';
 export const lightGreen = '#90EE90';
@@ -25,23 +24,6 @@ export const halfChartSize = {
     height: 500,
 };
 
-// Reduced heights when bookmap is shown below
-export const bigChartSizeWithBookmap = {
-    width: 650,
-    height: 550,
-};
-export const focusChartSizeWithBookmap = {
-    width: 455,
-    height: 250,
-};
-export const quarterChartSizeWithBookmap = {
-    width: 330,
-    height: 100,
-};
-export const halfChartSizeWithBookmap = {
-    width: 500,
-    height: 200,
-};
 export const chartSettings = {
     width: focusChartSize.width,
     height: focusChartSize.height,
@@ -104,18 +86,17 @@ export const getPopupChartSettings = () => {
     return settings;
 };
 export const getChartSettings = (tabIndex: number, totalCount: number) => {
-    let bm = GlobalSettings.enableBookmap;
-    let width = bm ? focusChartSizeWithBookmap.width : focusChartSize.width;
-    let height = bm ? focusChartSizeWithBookmap.height : focusChartSize.height;
+    let width = focusChartSize.width;
+    let height = focusChartSize.height;
     if (totalCount === 1) {
-        width = bm ? bigChartSizeWithBookmap.width : bigChartSize.width;
-        height = bm ? bigChartSizeWithBookmap.height : bigChartSize.height;
+        width = bigChartSize.width;
+        height = bigChartSize.height;
     } else if (totalCount == 2) {
-        width = bm ? halfChartSizeWithBookmap.width : halfChartSize.width;
-        height = bm ? halfChartSizeWithBookmap.height : halfChartSize.height;
+        width = halfChartSize.width;
+        height = halfChartSize.height;
     } else if (totalCount > 2) {
-        width = bm ? quarterChartSizeWithBookmap.width : quarterChartSize.width;
-        height = bm ? quarterChartSizeWithBookmap.height : quarterChartSize.height;
+        width = quarterChartSize.width;
+        height = quarterChartSize.height;
     }
     // always return 1/3 of the screen as 3 stock width
     return {
@@ -277,45 +258,6 @@ export const openRangeLineSettings: any = {
     autoscaleInfoProvider: () => null
 };
 
-export const bookmapHeight: number = 400;
-
-export const getBookmapChartSettings = (height: number, width: number) => {
-    return {
-        width: width,
-        height: height,
-        layout: {
-            background: { color: '#1a1a2e' },
-            textColor: '#aaa',
-        },
-        grid: {
-            horzLines: { color: '#333', visible: true },
-            vertLines: { visible: false },
-        },
-        crosshair: {
-            mode: 0,
-            vertLine: { style: 0 },
-            horzLine: { style: 0 },
-        },
-        rightPriceScale: { borderColor: '#444' },
-        timeScale: {
-            borderColor: '#444',
-            timeVisible: true,
-            visible: true,
-            rightOffset: 10,
-            barSpacing: 10,
-        },
-    };
-};
-
-export const bookmapInvisibleCandleSettings = {
-    upColor: 'transparent',
-    downColor: 'transparent',
-    wickUpColor: 'transparent',
-    wickDownColor: 'transparent',
-    borderVisible: false,
-    lastValueVisible: false,
-    priceLineVisible: false,
-};
 
 export const camPivotLevels = [
     { key: "R4", color: "#90EE90", lineWidth: 2 }, // Light Green

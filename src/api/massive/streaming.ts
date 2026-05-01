@@ -10,7 +10,6 @@ import * as Firestore from '../../firestore';
 import * as GlobalSettings from '../../config/globalSettings';
 import * as TimeHelper from '../../utils/timeHelper';
 import * as UI from '../../ui/ui';
-import * as BookmapManager from '../../bookmap/bookmapManager';
 declare let window: Models.MyWindow;
 
 
@@ -139,7 +138,6 @@ export const handleTimeAndSalesData = (data: any) => {
     let updated = DB.tryUpdateMaxTimeSaleTimestamp(record, 'm');
     Chart.addToTimeAndSales(record.symbol, 'massiveFeed', shouldFilter, record);
     if (!shouldFilter && record.lastPrice && record.lastSize && record.tradeTime) {
-        BookmapManager.onTrade(record.symbol, record.lastPrice, record.lastSize, record.tradeTime);
     }
     if (shouldFilter) {
         return;

@@ -24,7 +24,6 @@ import * as TimeHelper from '../utils/timeHelper';
 import * as TraderFocus from '../controllers/traderFocus';
 import * as QuestionPopup from './questionPopup';
 import * as GlobalSettings from '../config/globalSettings';
-import * as BookmapManager from '../bookmap/bookmapManager';
 declare let window: Models.MyWindow;
 
 export const setup = () => {
@@ -41,7 +40,6 @@ export const setup = () => {
         }
         Models.setChartWidget(symbol, chart);
         let chartDims = ChartSettings.getChartSettings(i, watchlist.length);
-        BookmapManager.initialize(symbol, chartDims.width);
     }
 };
 export const onPriceHistoryLoaded = (symbol: string) => {
@@ -302,7 +300,6 @@ const getHtmlContentsAndTradebooks = (symbol: string, tabIndex: number) => {
         level1QuoteSize: level1QuoteSize,
         level1QuoteLargeOrders: level1QuoteLargeOrders,
         timeAndSales: timeAndSales,
-        bookmapPanel: document.getElementById("bookmap" + tabIndex) as HTMLElement,
     };
     //widget.htmlContents.quantityBar = widget.htmlContents.container.getElementsByClassName("quantityBar")[0];
     //widget.htmlContents.quantityInput = widget.htmlContents.quantityBar.getElementsByTagName("input")[0];
@@ -377,7 +374,6 @@ export const showChartForTimeframe = (symbol: string, timeframe: number) => {
         charts[3].style.display = 'block';
         buttons[3].style.backgroundColor = 'lightblue';
     }
-    BookmapManager.onTimeframeChange(symbol, timeframe);
 }
 
 const setupExitButtons = (symbol: string, container: HTMLElement) => {
