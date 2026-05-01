@@ -116,15 +116,3 @@ export const massive = () => {
         apiKey: data.apiKey,
     }
 };
-
-export const databento = () => {
-    let td = localStorage.getItem('tradingscripts.databento');
-    if (td == null) {
-        console.error(`no databento secrets in local storage`)
-        td = '{}';
-    }
-    let data = JSON.parse(td);
-    return {
-        apiKey: data.apiKey,
-    }
-};
