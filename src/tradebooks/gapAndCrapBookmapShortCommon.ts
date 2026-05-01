@@ -13,6 +13,7 @@ export function runGapAndCrapBookmapShortEntryPipeline(
     useMarketOrder: boolean,
     entryPrice: number,
     stopOutPrice: number,
+    riskMultipler: number,
     logTags: Models.LogTags
 ): number {
     let riskLevelPrice = stopOutPrice;
@@ -34,7 +35,7 @@ export function runGapAndCrapBookmapShortEntryPipeline(
         Firestore.logError(`${symbol} not allowed entry`, logTags);
         return 0;
     }
-    allowedSize = allowedSize / 4;
+    allowedSize = allowedSize * riskMultipler;
     let planCopy = JSON.parse(JSON.stringify(basePlan)) as TradingPlansModels.BasePlan;
     tradebook.submitEntryOrdersBase(
         dryRun,

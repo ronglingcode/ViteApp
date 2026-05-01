@@ -4,6 +4,7 @@ import * as Chart from '../ui/chart';
 import * as Models from '../models/models';
 import * as Firestore from '../firestore';
 import { runGapAndCrapBookmapShortEntryPipeline } from './gapAndCrapBookmapShortCommon';
+import * as GapAndCrapAlgo from '../algorithms/gapAndCrapAlgo';
 
 /** Gap & crap short-only bookmap rejection — standalone tradebook (not a BookmapBigWallBreakout subtype). */
 export class GapAndCrapBookmapRejection extends Tradebook {
@@ -23,7 +24,7 @@ export class GapAndCrapBookmapRejection extends Tradebook {
         return this.buildID(GapAndCrapBookmapRejection.gapAndCrapBookmapRejectionId);
     }
 
-    refreshLiveStats(): void {}
+    refreshLiveStats(): void { }
 
     triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {
         let symbol = this.symbol;
@@ -31,13 +32,15 @@ export class GapAndCrapBookmapRejection extends Tradebook {
             symbol,
             `${symbol}_${GapAndCrapBookmapRejection.entryLogSuffix}`
         );
-
-        let entryPrice = Chart.getBreakoutEntryPrice(symbol, false, useMarketOrder, Models.getDefaultEntryParameters());
-        let stopOutPrice = Chart.getCustomStopLossPrice(symbol, false);
-        if (stopOutPrice == 0) {
-            Firestore.logError(`no custom stop loss`, logTags);
-            return 0;
+        let riskMultipler = 0.15;
+        if (parameters.entryMethod === 'wall reject 0.25R') {
+            riskMultipler = 0.25;
         }
+        let isLong = false;
+        let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
+        let symbolData = Models.getSymbolData(symbol);
+        let stopOutPrice = symbolData.highOfDay;
+
         return runGapAndCrapBookmapShortEntryPipeline(
             this,
             symbol,
@@ -46,35 +49,13 @@ export class GapAndCrapBookmapRejection extends Tradebook {
             useMarketOrder,
             entryPrice,
             stopOutPrice,
-            logTags
-        );
-    }
-
-    triggerEntryFromBookmap(useMarketOrder: boolean, stopOutPrice: number): number {
-        let symbol = this.symbol;
-        let logTags = Models.generateLogTags(
-            symbol,
-            `${symbol}_${GapAndCrapBookmapRejection.entryLogSuffix}`
-        );
-        let entryPrice = Chart.getBreakoutEntryPrice(symbol, false, useMarketOrder, Models.getDefaultEntryParameters());
-
-        return runGapAndCrapBookmapShortEntryPipeline(
-            this,
-            symbol,
-            this.basePlan,
-            false,
-            useMarketOrder,
-            entryPrice,
-            stopOutPrice,
+            riskMultipler,
             logTags
         );
     }
 
     getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
-        return {
-            allowed: false,
-            reason: 'default is no add',
-        };
+        return GapAndCrapAlgo.getAllowedReasonToAddPartial(symbol, entryPrice, logTags);
     }
 
     getTradebookDoc(): string {
@@ -82,7 +63,7 @@ export class GapAndCrapBookmapRejection extends Tradebook {
     }
 
     getEntryMethods(): string[] {
-        return ['default'];
+        return ['wall reject 0.15R', 'wall reject 0.25R'];
     }
 
     getEligibleEntryParameters(): Models.TradebookEntryParameters {
@@ -97,5 +78,5 @@ export class GapAndCrapBookmapRejection extends Tradebook {
         return [];
     }
 
-    onNewTimeSalesData(): void {}
+    onNewTimeSalesData(): void { }
 }

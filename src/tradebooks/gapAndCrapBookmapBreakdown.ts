@@ -4,6 +4,7 @@ import * as Chart from '../ui/chart';
 import * as Models from '../models/models';
 import * as Firestore from '../firestore';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
+import * as GapAndCrapAlgo from '../algorithms/gapAndCrapAlgo';
 
 /**
  * Gap & crap short bookmap breakdown — parallels {@link BookmapBigWallBreakout} for family GapAndCrap, isLong false:
@@ -31,7 +32,7 @@ export class GapAndCrapBookmapBreakdown extends Tradebook {
         return this.buildID(GapAndCrapBookmapBreakdown.gapAndCrapBookmapBreakdownId);
     }
 
-    refreshLiveStats(): void {}
+    refreshLiveStats(): void { }
 
     triggerEntryCommon(
         dryRun: boolean,
@@ -47,22 +48,6 @@ export class GapAndCrapBookmapBreakdown extends Tradebook {
         if (this.familyName === Models.TradebookFamilyName.GapAndCrap) {
             if (!EntryRulesChecker.allowEntryRulesForGapAndCrap(symbol, entryPrice, logTags)) {
                 return 0;
-            }
-        }
-
-        if (this.familyName === Models.TradebookFamilyName.GapAndGo) {
-            let gapPlan = this.basePlan as TradingPlansModels.GapAndGoPlan;
-            if (gapPlan.mustOpenAboveVwap) {
-                let openPrice = Models.getOpenPrice(symbol);
-                let openVwap = Models.getLastVwapBeforeOpen(symbol);
-                if (openPrice == null || openVwap == null) {
-                    Firestore.logError(`mustOpenAboveVwap: need open price and VWAP at open`, logTags);
-                    return 0;
-                }
-                if (openPrice < openVwap) {
-                    Firestore.logError(`mustOpenAboveVwap: open ${openPrice} below VWAP at open ${openVwap}`, logTags);
-                    return 0;
-                }
             }
         }
 
@@ -123,20 +108,7 @@ export class GapAndCrapBookmapBreakdown extends Tradebook {
     }
 
     getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
-        if (this.familyName == Models.TradebookFamilyName.GapAndGo) {
-            let symbolData = Models.getSymbolData(symbol);
-            let premarketHigh = symbolData.premktHigh;
-            if (entryPrice >= premarketHigh) {
-                return {
-                    allowed: true,
-                    reason: 'price is above premarket high, allow add',
-                };
-            }
-        }
-        return {
-            allowed: false,
-            reason: 'default is no add',
-        };
+        return GapAndCrapAlgo.getAllowedReasonToAddPartial(symbol, entryPrice, logTags);
     }
 
     getTradebookDoc(): string {
@@ -159,5 +131,5 @@ export class GapAndCrapBookmapBreakdown extends Tradebook {
         return [];
     }
 
-    onNewTimeSalesData(): void {}
+    onNewTimeSalesData(): void { }
 }
