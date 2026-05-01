@@ -17,7 +17,6 @@ export const tradesPerSecondRollingWindowSeconds: number = 10; // Rolling window
 // Bookmap features
 export const enableBookmap: boolean = false;
 export const enableBookmapHeatmap: boolean = enableBookmap && true;
-export const enableBookDataLogging: boolean = enableBookmap && true;
 export const bookmapWidth: number = 150;
 export const enableDatabentoBookData: boolean = enableBookmap && false;
 export const databentoDataset: string = "XNAS.ITCH";

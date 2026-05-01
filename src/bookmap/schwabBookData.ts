@@ -2,11 +2,7 @@ import * as Models from '../models/models';
 import * as BookmapManager from './bookmapManager';
 import type { OrderBookLevel, OrderBookSnapshot } from './bookmapModels';
 import * as Firestore from '../firestore';
-import * as GlobalSettings from '../config/globalSettings';
 declare let window: Models.MyWindow;
-
-/** Phase 1: log raw book data to understand format */
-let logRawBookData: boolean = GlobalSettings.enableBookDataLogging;
 
 /**
  * Subscribe to Schwab NASDAQ_BOOK and LISTED_BOOK streaming.
@@ -55,11 +51,6 @@ export const subscribeBookData = (webSocket: WebSocket): void => {
  *   content[]."3" = asks array: [{ "0": price, "1": totalVolume, "2": numAsks, "3": exchanges[] }]
  */
 export const handleBookData = (service: string, element: any): void => {
-    if (logRawBookData) {
-        console.log(`[BookData] Service: ${service}`);
-        console.log(element);
-    }
-
     let contents = element.content;
     if (!contents) return;
 
@@ -115,6 +106,3 @@ const parseBookDataToSnapshot = (data: any): OrderBookSnapshot | null => {
     return { bids, asks, lastUpdate: bookTime };
 };
 
-export const setLogRawBookData = (enabled: boolean): void => {
-    logRawBookData = enabled;
-};

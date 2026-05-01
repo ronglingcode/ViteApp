@@ -38,7 +38,7 @@ export const createWebSocket = async () => {
                         subscribeLevelOneQuotes(websocket);
                         subscribeActivity(websocket);
                         subscribeChartUpdates(websocket);
-                        if (GlobalSettings.enableBookmapHeatmap || GlobalSettings.enableBookDataLogging) {
+                        if (GlobalSettings.enableBookmapHeatmap) {
                             SchwabBookData.subscribeBookData(websocket);
                         }
                     }

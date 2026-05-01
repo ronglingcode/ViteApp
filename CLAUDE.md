@@ -191,7 +191,6 @@ Key flags:
 - `enableAiAgent`: tied to left pane feature flag
 - `enableBookmap`: master toggle for bookmap panel — all sub-features gate on this
 - `enableBookmapHeatmap`: enables 2D time-history heatmap rendering (requires `enableBookmap`)
-- `enableBookDataLogging`: logs raw Schwab book data to console (requires `enableBookmap`)
 - `enableDatabentoBookData`: fetches historical MBP-10 data from Databento (requires `enableBookmap`)
 - `databentoDataset`: Databento dataset identifier (default: `"XNAS.ITCH"` for Nasdaq TotalView)
 
