@@ -60,6 +60,9 @@ export class GapAndGoBookmapOfferWallBreakout extends Tradebook {
     }
 
     triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {
+        Firestore.logError("only trigger from bookmap");
+        return 0;
+        /*
         let symbol = this.symbol;
         let logTags = Models.generateLogTags(symbol, `${symbol}_bookmap_offer_wall_breakout`);
 
@@ -70,6 +73,7 @@ export class GapAndGoBookmapOfferWallBreakout extends Tradebook {
             return 0;
         }
         return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, logTags);
+        */
     }
 
     triggerEntryFromBookmap(useMarketOrder: boolean, stopOutPrice: number): number {
