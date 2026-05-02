@@ -10,7 +10,7 @@ import { disableNetwork } from 'firebase/firestore';
 import * as googleDocsApi from '../api/googleDocs/googleDocsApi';
 import { populateBestIdeas } from '../controllers/traderFocus';
 import { PremarketHighRejection } from '../tradebooks/premarketHighRejection';
-import { GapAndGo } from '../tradebooks/gapAndGo';
+import * as GapAndGoAlgo from './gapAndGoAlgo';
 import { GapGiveAndGo } from '../tradebooks/gapGiveAndGo';
 import { GapDownAndGoDown } from '../tradebooks/gapDownAndGoDown';
 import { GapDownAndGoUp } from '../tradebooks/gapDownAndGoUp';
@@ -253,7 +253,7 @@ const verifyTradingPlansForSingleDirection = (symbol: string, plan: TradingPlans
         hasBestTradebook = true;
     }
     if (plan.gapAndGoPlan) {
-        if (!GapAndGo.hasAtLeastOneReasonSet(plan.gapAndGoPlan, symbol)) {
+        if (!GapAndGoAlgo.hasAtLeastOneReasonSet(plan.gapAndGoPlan, symbol)) {
             return false;
         }
         hasBestTradebook = true;
