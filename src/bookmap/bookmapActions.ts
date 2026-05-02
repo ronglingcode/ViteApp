@@ -8,7 +8,7 @@ import * as Helper from "../utils/helper";
 import * as OrderFlow from "../controllers/orderFlow";
 import * as Handler from "../controllers/handler";
 import * as Models from "../models/models";
-import { BookmapBigWallBreakout } from "../tradebooks/bookmapBigWallBreakout";
+import { GapAndGoBookmapOfferWallBreakout } from "../tradebooks/gapAndGoBookmapOfferWallBreakout";
 import { BookmapBigWallBreakdownFailLong } from "../tradebooks/bookmapBigWallBreakdownFailLong";
 import { PremarketHighRejection } from "../tradebooks/premarketHighRejection";
 import * as TradebooksManager from "../tradebooks/tradebooksManager";
@@ -71,14 +71,14 @@ const bookmapEntry = (symbol: string, useMarketOrder: boolean, stopLossPrice: nu
     const logTags = Models.generateLogTags(symbol, `${symbol}-bookmap-entry`);
 
     if (isLong) {
-        const tradebookId = `${Models.TradebookFamilyName.GapAndGo}-${BookmapBigWallBreakout.bookmapBigWallBreakoutLong}`;
+        const tradebookId = `${Models.TradebookFamilyName.GapAndGo}-${GapAndGoBookmapOfferWallBreakout.id}`;
         const tradebook = TradebooksManager.getTradebookByID(symbol, tradebookId);
         if (!tradebook) {
-            Firestore.logError(`[BookmapActions] BookmapBigWallBreakout long tradebook not found for ${symbol} (id: ${tradebookId})`, logTags);
+            Firestore.logError(`[BookmapActions] GapAndGoBookmapOfferWallBreakout tradebook not found for ${symbol} (id: ${tradebookId})`, logTags);
             return;
         }
-        if (!(tradebook instanceof BookmapBigWallBreakout) || !tradebook.isLong) {
-            Firestore.logError(`[BookmapActions] tradebook ${tradebookId} is not a long BookmapBigWallBreakout`, logTags);
+        if (!(tradebook instanceof GapAndGoBookmapOfferWallBreakout)) {
+            Firestore.logError(`[BookmapActions] tradebook ${tradebookId} is not a GapAndGoBookmapOfferWallBreakout`, logTags);
             return;
         }
         if (!tradebook.isEnabled()) {
@@ -152,16 +152,4 @@ const setStopLossFromBookmap = (symbol: string, newPrice: number) => {
     }
 };
 
-/** Same composite IDs as Tradebook.buildID for long bookmap strategies. */
-const BOOKMAP_BIG_WALL_LONG_TRADEBOOK_IDS: string[] = [
-    `${Models.TradebookFamilyName.GapAndGo}-${BookmapBigWallBreakout.bookmapBigWallBreakoutLong}`,
-    `${Models.TradebookFamilyName.GapDownAndGoUp}-${BookmapBigWallBreakout.bookmapBigWallBreakoutLong}`,
-];
-
-
-/** Same composite IDs as Tradebook.buildID(familyName, BookmapBigWallBreakoutShort). */
-const BOOKMAP_BIG_WALL_SHORT_TRADEBOOK_IDS: string[] = [
-    `${Models.TradebookFamilyName.GapAndCrap}-${BookmapBigWallBreakout.bookmapBigWallBreakoutShort}`,
-    `${Models.TradebookFamilyName.GapDownAndGoDown}-${BookmapBigWallBreakout.bookmapBigWallBreakoutShort}`,
-];
 

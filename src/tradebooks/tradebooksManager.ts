@@ -18,8 +18,9 @@ import { PremarketHighRejection } from "./premarketHighRejection";
 import { GapGiveAndGo } from "./gapGiveAndGo";
 import { GapDownAndGoDown } from "./gapDownAndGoDown";
 import { GapDownAndGoUp } from "./gapDownAndGoUp";
-import { BookmapBigWallBreakout } from "./bookmapBigWallBreakout";
-import { GapAndCrapBookmapBreakdown } from "./gapAndCrapBookmapBreakdown";
+import { GapAndGoBookmapOfferWallBreakout } from "./gapAndGoBookmapOfferWallBreakout";
+import { GapDownAndGoDownBookmapBidWallBreakdown } from "./gapDownAndGoDownBookmapBidWallBreakdown";
+import { GapAndCrapBookmapBidWallBreakdown } from "./gapAndCrapBookmapBidWallBreakdown";
 import { GapAndCrapBookmapRejection } from "./gapAndCrapBookmapRejection";
 import { BookmapBigWallBreakdownFailLong } from "./bookmapBigWallBreakdownFailLong";
 import { CamExtremeMomentum } from "./camExtremeMomentum";
@@ -85,16 +86,15 @@ export const createAllTradebooks = (symbol: string) => {
             gapAndCrapVwapBounceFail.enableByDefault = true;
             tradebooksMap.set(gapAndCrapVwapBounceFail.getID(), gapAndCrapVwapBounceFail);
 
-            let gapAndCrapBookmapBreakdown = new GapAndCrapBookmapBreakdown(symbol, shortPlan);
-            tradebooksMap.set(gapAndCrapBookmapBreakdown.getID(), gapAndCrapBookmapBreakdown);
+            let gapAndCrapBookmapBidWallBreakdown = new GapAndCrapBookmapBidWallBreakdown(symbol, shortPlan);
+            tradebooksMap.set(gapAndCrapBookmapBidWallBreakdown.getID(), gapAndCrapBookmapBidWallBreakdown);
 
             let gapAndCrapBookmapRejection = new GapAndCrapBookmapRejection(symbol, shortPlan);
             tradebooksMap.set(gapAndCrapBookmapRejection.getID(), gapAndCrapBookmapRejection);
         }
         if (plan.short.gapDownAndGoDownPlan) {
-            let gapDownAndGoDownBookmapBigWallBreakdown = new BookmapBigWallBreakout(
-                Models.TradebookFamilyName.GapDownAndGoDown, symbol, scopeIsLong, plan.short.gapDownAndGoDownPlan);
-            tradebooksMap.set(gapDownAndGoDownBookmapBigWallBreakdown.getID(), gapDownAndGoDownBookmapBigWallBreakdown);
+            let gapDownAndGoDownBookmapBidWallBreakdown = new GapDownAndGoDownBookmapBidWallBreakdown(symbol, plan.short.gapDownAndGoDownPlan);
+            tradebooksMap.set(gapDownAndGoDownBookmapBidWallBreakdown.getID(), gapDownAndGoDownBookmapBidWallBreakdown);
         }
 
     }
@@ -119,9 +119,8 @@ export const createAllTradebooks = (symbol: string) => {
         tradebooksMap.set(allTimeHighVwapContinuation.getID(), allTimeHighVwapContinuation);
     }
     if (plan.long.gapAndGoPlan) {
-        let gapAndGoBookmapBigWallBreakout = new BookmapBigWallBreakout(
-            Models.TradebookFamilyName.GapAndGo, symbol, true, plan.long.gapAndGoPlan);
-        tradebooksMap.set(gapAndGoBookmapBigWallBreakout.getID(), gapAndGoBookmapBigWallBreakout);
+        let gapAndGoBookmapOfferWallBreakout = new GapAndGoBookmapOfferWallBreakout(symbol, plan.long.gapAndGoPlan);
+        tradebooksMap.set(gapAndGoBookmapOfferWallBreakout.getID(), gapAndGoBookmapOfferWallBreakout);
     }
     if (plan.long.gapGiveAndGoPlan) {
         let gapGiveAndGo = new GapGiveAndGo('', symbol, true, plan.long.gapGiveAndGoPlan);

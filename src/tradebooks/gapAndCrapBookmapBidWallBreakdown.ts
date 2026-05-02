@@ -6,30 +6,19 @@ import * as Firestore from '../firestore';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as GapAndCrapAlgo from '../algorithms/gapAndCrapAlgo';
 
-/**
- * Gap & crap short bookmap breakdown — parallels {@link BookmapBigWallBreakout} for family GapAndCrap, isLong false:
- * same entry pipeline, logs, and adds policy as that bookmap tradebook.
- */
-export class GapAndCrapBookmapBreakdown extends Tradebook {
-    public static readonly gapAndCrapBookmapBreakdownId: string = 'GapAndCrapBookmapBreakdown';
-
+export class GapAndCrapBookmapBidWallBreakdown extends Tradebook {
+    public static readonly id: string = 'GapAndCrapBookmapBidWallBreakdown';
     private basePlan: TradingPlansModels.BasePlan;
 
     constructor(symbol: string, basePlan: TradingPlansModels.BasePlan) {
         let familyName = Models.TradebookFamilyName.GapAndCrap;
-        let isLong = false;
-        let tradebookName = 'Short Bookmap Big Wall Breakdown';
-        let buttonLabel = 'bookmap';
-        if (familyName && familyName.length > 0) {
-            buttonLabel = `${familyName} ${buttonLabel}`;
-        }
-        super(familyName, symbol, isLong, tradebookName, buttonLabel);
+        super(familyName, symbol, false, 'Short Gap & Crap Bookmap Bid Wall Breakdown', `${familyName} bookmap`);
         this.basePlan = basePlan;
         this.enableByDefault = true;
     }
 
     getID(): string {
-        return this.buildID(GapAndCrapBookmapBreakdown.gapAndCrapBookmapBreakdownId);
+        return this.buildID(GapAndCrapBookmapBidWallBreakdown.id);
     }
 
     refreshLiveStats(): void { }
@@ -42,25 +31,14 @@ export class GapAndCrapBookmapBreakdown extends Tradebook {
         logTags: Models.LogTags
     ): number {
         let symbol = this.symbol;
-        let isLong = this.isLong;
-        let riskLevelPrice = stopOutPrice;
 
-        if (this.familyName === Models.TradebookFamilyName.GapAndCrap) {
-            if (!EntryRulesChecker.allowEntryRulesForGapAndCrap(symbol, entryPrice, logTags)) {
-                return 0;
-            }
+        if (!EntryRulesChecker.allowEntryRulesForGapAndCrap(symbol, entryPrice, logTags)) {
+            return 0;
         }
 
         let allowedSize = EntryRulesChecker.checkBasicGlobalEntryRules(
-            symbol,
-            isLong,
-            entryPrice,
-            stopOutPrice,
-            useMarketOrder,
-            this.basePlan,
-            false,
-            logTags
-        );
+            symbol, false, entryPrice, stopOutPrice, useMarketOrder,
+            this.basePlan, false, logTags);
 
         if (allowedSize === 0) {
             Firestore.logError(`${symbol} not allowed entry`, logTags);
@@ -69,27 +47,17 @@ export class GapAndCrapBookmapBreakdown extends Tradebook {
         allowedSize = allowedSize / 4;
         let planCopy = JSON.parse(JSON.stringify(this.basePlan)) as TradingPlansModels.BasePlan;
         this.submitEntryOrdersBase(
-            dryRun,
-            useMarketOrder,
-            entryPrice,
-            stopOutPrice,
-            riskLevelPrice,
-            allowedSize,
-            planCopy,
-            logTags
-        );
+            dryRun, useMarketOrder, entryPrice, stopOutPrice, stopOutPrice, allowedSize, planCopy, logTags);
 
         return allowedSize;
     }
 
     triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {
         let symbol = this.symbol;
-        let isLong = this.isLong;
-        let logTagName = isLong ? '_bookmap_big_wall_breakout' : '_bookmap_big_wall_breakdown';
-        let logTags = Models.generateLogTags(symbol, `${symbol}_${logTagName}`);
+        let logTags = Models.generateLogTags(symbol, `${symbol}_bookmap_bid_wall_breakdown`);
 
-        let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
-        let stopOutPrice = Chart.getCustomStopLossPrice(symbol, isLong);
+        let entryPrice = Chart.getBreakoutEntryPrice(symbol, false, useMarketOrder, Models.getDefaultEntryParameters());
+        let stopOutPrice = Chart.getCustomStopLossPrice(symbol, false);
         if (stopOutPrice == 0) {
             Firestore.logError(`no custom stop loss`, logTags);
             return 0;
@@ -99,10 +67,8 @@ export class GapAndCrapBookmapBreakdown extends Tradebook {
 
     triggerEntryFromBookmap(useMarketOrder: boolean, stopOutPrice: number): number {
         let symbol = this.symbol;
-        let isLong = this.isLong;
-        let logTagName = isLong ? '_bookmap_big_wall_breakout' : '_bookmap_big_wall_breakdown';
-        let logTags = Models.generateLogTags(symbol, `${symbol}_${logTagName}`);
-        let entryPrice = Chart.getBreakoutEntryPrice(symbol, isLong, useMarketOrder, Models.getDefaultEntryParameters());
+        let logTags = Models.generateLogTags(symbol, `${symbol}_bookmap_bid_wall_breakdown`);
+        let entryPrice = Chart.getBreakoutEntryPrice(symbol, false, useMarketOrder, Models.getDefaultEntryParameters());
 
         return this.triggerEntryCommon(false, useMarketOrder, entryPrice, stopOutPrice, logTags);
     }
