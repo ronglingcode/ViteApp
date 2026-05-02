@@ -135,7 +135,6 @@ export interface SingleDirectionPlans {
     gapDownAndGoDownPlan?: GapDownAndGoDownPlan,
     gapDownAndGoUpPlan?: GapDownAndGoUpPlan,
     bookmapBigWallBreakdownFailLongPlan?: BookmapBigWallBreakdownFailLongPlan,
-    camExtremeMomentumPlan?: CamExtremeMomentumPlan,
     /* used strategies end */
 
     levelBreakout?: LevelBreakoutPlan,
@@ -259,8 +258,6 @@ export interface GapDownAndGoUpPlan extends BasePlan {
 }
 export interface BookmapBigWallBreakdownFailLongPlan extends BasePlan {
     bigWallLevel: number,
-}
-export interface CamExtremeMomentumPlan extends BasePlan {
 }
 export interface AlgoPlan extends BasePlan {
     expirationInSeconds: number,
