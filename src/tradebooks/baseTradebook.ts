@@ -16,7 +16,6 @@ export abstract class Tradebook {
     public sizingCount: number = 10;
     public enableByDefault: boolean = false;
     constructor(
-        public readonly familyName: string,
         public readonly symbol: string,
         public readonly isLong: boolean,
         public readonly name: string,
@@ -28,7 +27,7 @@ export abstract class Tradebook {
     abstract triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number;
     abstract getID(): string;
     protected buildID(baseID: string): string {
-        return this.familyName ? `${this.familyName}-${baseID}` : baseID;
+        return baseID;
     }
     abstract getTradebookDoc(): string;
     abstract refreshLiveStats(): void;

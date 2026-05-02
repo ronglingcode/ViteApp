@@ -11,14 +11,13 @@ export class GapAndCrapBookmapBidWallBreakdown extends Tradebook {
     private basePlan: TradingPlansModels.BasePlan;
 
     constructor(symbol: string, basePlan: TradingPlansModels.BasePlan) {
-        let familyName = Models.TradebookFamilyName.GapAndCrap;
-        super(familyName, symbol, false, 'Short Gap & Crap Bookmap Bid Wall Breakdown', `${familyName} bookmap`);
+        super(symbol, false, 'Short Gap & Crap Bookmap Bid Wall Breakdown', `${Models.TradebookFamilyName.GapAndCrap} bookmap`);
         this.basePlan = basePlan;
         this.enableByDefault = true;
     }
 
     getID(): string {
-        return this.buildID(GapAndCrapBookmapBidWallBreakdown.id);
+        return GapAndCrapBookmapBidWallBreakdown.id;
     }
 
     refreshLiveStats(): void { }

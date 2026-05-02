@@ -24,20 +24,26 @@ enum EntryMethod {
 export class VwapContinuationFailed extends SingleKeyLevelTradebook {
     public static readonly longVwapPushDownFailed: string = 'LongVwapPushdownFailed';
     public static readonly shortVwapBounceFailed: string = 'ShortVwapBounceFailed';
+    public static readonly gapAndCrapShortVwapBounceFailed: string = 'GapAndCrap-ShortVwapBounceFailed';
+    public static readonly gapDownAndGoDownShortVwapBounceFailed: string = 'GapDownAndGoDown-ShortVwapBounceFailed';
     public waitForClose: boolean = true;
     public disableExitRules: boolean = false;
+    private readonly shortId: string;
     public getID(): string {
-        return this.buildID(this.isLong ? VwapContinuationFailed.longVwapPushDownFailed : VwapContinuationFailed.shortVwapBounceFailed);
+        return this.isLong ? VwapContinuationFailed.longVwapPushDownFailed : this.shortId;
     }
-    constructor(familyName: string, symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
+    constructor(isGapAndCrap: boolean, symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan) {
         let tradebookName = isLong ? 'Long VWAP Bounce Failed' : 'Short VWAP Pushdown Failed';
         let buttonLabel = isLong ? 'Vwap Pushdown Fail' : 'Vwap Bounce Fail';
-        if (familyName == Models.TradebookFamilyName.GapAndCrap) {
+        if (isGapAndCrap) {
             tradebookName = 'Gap and Crap Short VWAP Bounce Fail';
             buttonLabel = `${Models.TradebookFamilyName.GapAndCrap} VWAP Bounce Fail`;
         }
-        super(familyName, symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel);
+        super(symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel);
+        this.shortId = isGapAndCrap
+            ? VwapContinuationFailed.gapAndCrapShortVwapBounceFailed
+            : VwapContinuationFailed.gapDownAndGoDownShortVwapBounceFailed;
     }
 
     public updateConfig(config: TradingPlansModels.TradebooksConfig): void {

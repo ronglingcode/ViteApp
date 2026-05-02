@@ -20,10 +20,10 @@ export class VwapScalp extends Tradebook {
     public getID(): string {
         return this.buildID(this.isLong ? VwapScalp.vwapScalpLong : VwapScalp.vwapScalpShort);
     }
-    constructor(familyName: string, symbol: string, isLong: boolean, vwapScalpPlan: TradingPlansModels.VwapScalpPlan) {
+    constructor(symbol: string, isLong: boolean, vwapScalpPlan: TradingPlansModels.VwapScalpPlan) {
         let tradebookName = isLong ? 'Long VWAP Scalp' : 'Short VWAP Scalp';
         let buttonLabel = isLong ? 'VWAP Scalp' : 'VWAP Scalp';
-        super(familyName, symbol, isLong, tradebookName, buttonLabel);
+        super(symbol, isLong, tradebookName, buttonLabel);
         this.vwapScalpPlan = vwapScalpPlan;
         this.enableByDefault = false;
         this.maxEntry = 0;

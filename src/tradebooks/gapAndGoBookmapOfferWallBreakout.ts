@@ -10,14 +10,13 @@ export class GapAndGoBookmapOfferWallBreakout extends Tradebook {
     private basePlan: TradingPlansModels.GapAndGoPlan;
 
     constructor(symbol: string, basePlan: TradingPlansModels.GapAndGoPlan) {
-        let familyName = Models.TradebookFamilyName.GapAndGo;
-        super(familyName, symbol, true, 'Long Gap & Go Bookmap Offer Wall Breakout', `${familyName} bookmap`);
+        super(symbol, true, 'Long Gap & Go Bookmap Offer Wall Breakout', `${Models.TradebookFamilyName.GapAndGo} bookmap`);
         this.basePlan = basePlan;
         this.enableByDefault = true;
     }
 
     getID(): string {
-        return this.buildID(GapAndGoBookmapOfferWallBreakout.id);
+        return GapAndGoBookmapOfferWallBreakout.id;
     }
 
     refreshLiveStats(): void { }

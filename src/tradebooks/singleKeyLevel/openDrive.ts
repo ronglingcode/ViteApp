@@ -25,12 +25,12 @@ export class OpenDrive extends SingleKeyLevelTradebook {
     public getID(): string {
         return this.buildID(this.isLong ? OpenDrive.openDriveLong : OpenDrive.openDriveShort);
     }
-    constructor(familyName: string, symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
+    constructor(symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan
     ) {
         let tradebookName = isLong ? 'Long Open Drive' : 'Short Open Drive';
         let buttonLabel = 'Open Drive';
-        super(familyName, symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel)
+        super(symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel)
         this.init()
     }
 

@@ -30,15 +30,11 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
     public getID(): string {
         return this.buildID(this.isLong ? VwapContinuation.vwapContinuationLong : VwapContinuation.vwapContinuationShort);
     }
-    constructor(familyName: string, symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
+    constructor(symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan) {
-        let tradebookName = isLong ? 'Long VWAP Continuation' : 'Short VWAP Continuation';
-        let buttonLabel = isLong ? 'VWAP Cont' : 'VWAP Cont';
-        if (familyName == Models.TradebookFamilyName.GapAndCrap) {
-            tradebookName = 'Gap and Crap Short VWAP Cont';
-            buttonLabel = `${Models.TradebookFamilyName.GapAndCrap} VWAP Cont`;
-        }
-        super(familyName, symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel)
+        let tradebookName = isLong ? 'Long VWAP Continuation' : 'Gap and Crap Short VWAP Cont';
+        let buttonLabel = isLong ? 'VWAP Cont' : `${Models.TradebookFamilyName.GapAndCrap} VWAP Cont`;
+        super(symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel)
         this.init()
     }
 
@@ -189,10 +185,8 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
             return 0;
         }
 
-        if (this.familyName == Models.TradebookFamilyName.GapAndCrap) {
-            if (!EntryRulesChecker.allowEntryRulesForGapAndCrap(this.symbol, entryPrice, logTags)) {
-                return 0;
-            }
+        if (!EntryRulesChecker.allowEntryRulesForGapAndCrap(this.symbol, entryPrice, logTags)) {
+            return 0;
         }
         let allowedSize = CommonRules.validateCommonEntryRules(
             this.symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder, this.keyLevel, this.levelMomentumPlan, false, true, logTags);
@@ -200,33 +194,18 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
     }
 
     getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
-        if (this.familyName == Models.TradebookFamilyName.GapAndCrap) {
-            let currentVwap = Models.getCurrentVwap(symbol);
-            if (entryPrice < currentVwap) {
-                return {
-                    allowed: true,
-                    reason: "allow add below vwap",
-                };
-            } else {
-                return {
-                    allowed: false,
-                    reason: "gap and crap add only allow below vwap",
-                };
-            }
-        }
-        this.syncVwapWarningState(false);
-        if (this.vwapWarningActive) {
-            let side = this.isLong ? 'below' : 'above';
+        let currentVwap = Models.getCurrentVwap(symbol);
+        if (entryPrice < currentVwap) {
+            return {
+                allowed: true,
+                reason: "allow add below vwap",
+            };
+        } else {
             return {
                 allowed: false,
-                reason: `${symbol} warning state: last M1 close ${side} vwap, no adds. Tighten stop first.`,
+                reason: "gap and crap add only allow below vwap",
             };
         }
-
-        return {
-            allowed: true,
-            reason: 'warning not active',
-        };
     }
 
     getDisallowedReasonToAdjustSingleLimitOrder(

@@ -16,12 +16,12 @@ export class OpenFlush extends SingleKeyLevelTradebook {
         return this.buildID(this.isLong ? OpenFlush.openFlushLong : OpenFlush.openFlushShort);
     }
 
-    constructor(familyName: string, symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
+    constructor(symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan
     ) {
         let tradebookName = isLong ? 'Long Open Flush' : 'Short Open Flush';
         let buttonLabel = 'Open Flush';
-        super(familyName, symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel)
+        super(symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel)
         this.init()
     }
 

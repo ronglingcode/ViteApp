@@ -33,11 +33,11 @@ export const createAllTradebooks = (symbol: string) => {
         };
 
         if (shortPlan) {
-            let gapAndCrapVwapContinuation = new VwapContinuation(Models.TradebookFamilyName.GapAndCrap, symbol, scopeIsLong, maxPriceKeyLevel, shortPlan);
+            let gapAndCrapVwapContinuation = new VwapContinuation(symbol, scopeIsLong, maxPriceKeyLevel, shortPlan);
             gapAndCrapVwapContinuation.enableByDefault = true;
             tradebooksMap.set(gapAndCrapVwapContinuation.getID(), gapAndCrapVwapContinuation);
 
-            let gapAndCrapVwapBounceFail = new VwapContinuationFailed(Models.TradebookFamilyName.GapAndCrap, symbol, scopeIsLong, maxPriceKeyLevel, shortPlan);
+            let gapAndCrapVwapBounceFail = new VwapContinuationFailed(true, symbol, scopeIsLong, maxPriceKeyLevel, shortPlan);
             gapAndCrapVwapBounceFail.enableByDefault = true;
             tradebooksMap.set(gapAndCrapVwapBounceFail.getID(), gapAndCrapVwapBounceFail);
 
@@ -48,12 +48,12 @@ export const createAllTradebooks = (symbol: string) => {
             tradebooksMap.set(gapAndCrapBookmapRejection.getID(), gapAndCrapBookmapRejection);
         }
 
-        let premarketHighRejectionShort = new PremarketHighRejection(Models.TradebookFamilyName.GapAndCrap, symbol, scopeIsLong, plan.short.gapAndCrapPlan);
+        let premarketHighRejectionShort = new PremarketHighRejection(symbol, scopeIsLong, plan.short.gapAndCrapPlan);
         tradebooksMap.set(premarketHighRejectionShort.getID(), premarketHighRejectionShort);
     }
 
     if (plan.short.gapDownAndGoDownPlan) {
-        let gapDownAndGoDown = new GapDownAndGoDown('', symbol, false, plan.short.gapDownAndGoDownPlan);
+        let gapDownAndGoDown = new GapDownAndGoDown(symbol, false, plan.short.gapDownAndGoDownPlan);
         tradebooksMap.set(gapDownAndGoDown.getID(), gapDownAndGoDown);
 
         let maxPriceKeyLevel: TradingPlansModels.LevelArea = {
@@ -61,7 +61,7 @@ export const createAllTradebooks = (symbol: string) => {
             low: plan.short.gapDownAndGoDownPlan.buyersTrappedBelowThisLevel || 0
         };
         if (shortPlan) {
-            let gapDownAndGoDownVwapBounceFail = new VwapContinuationFailed(Models.TradebookFamilyName.GapDownAndGoDown, symbol, false, maxPriceKeyLevel, shortPlan);
+            let gapDownAndGoDownVwapBounceFail = new VwapContinuationFailed(false, symbol, false, maxPriceKeyLevel, shortPlan);
             gapDownAndGoDownVwapBounceFail.enableByDefault = true;
             tradebooksMap.set(gapDownAndGoDownVwapBounceFail.getID(), gapDownAndGoDownVwapBounceFail);
         }
@@ -71,7 +71,7 @@ export const createAllTradebooks = (symbol: string) => {
     }
 
     if (plan.long.gapDownAndGoUpPlan) {
-        let gapDownAndGoUp = new GapDownAndGoUp('', symbol, true, plan.long.gapDownAndGoUpPlan);
+        let gapDownAndGoUp = new GapDownAndGoUp(symbol, true, plan.long.gapDownAndGoUpPlan);
         tradebooksMap.set(gapDownAndGoUp.getID(), gapDownAndGoUp);
     }
 

@@ -32,11 +32,11 @@ export class EmergingStrengthBreakout extends BaseBreakoutTradebook {
         }
 
     }
-    constructor(familyName: string, symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
+    constructor(symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan) {
         let tradebookName = isLong ? 'Long Emerging Strength Breakout' : 'Short Emerging Strength Breakdown';
         let buttonLabel = 'Emerging';
-        super(familyName, symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel);
+        super(symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel);
     }
     getEligibleEntryParameters(): Models.TradebookEntryParameters {
         return {

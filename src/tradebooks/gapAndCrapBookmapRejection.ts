@@ -14,14 +14,13 @@ export class GapAndCrapBookmapRejection extends Tradebook {
     private static readonly entryLogSuffix = '_gap_and_crap_bookmap_rejection';
 
     constructor(symbol: string, basePlan: TradingPlansModels.BasePlan) {
-        let fn = Models.TradebookFamilyName.GapAndCrap;
-        super(fn, symbol, false, 'Short Gap & Crap Bookmap Rejection', `${fn} bookmap rejection`);
+        super(symbol, false, 'Short Gap & Crap Bookmap Rejection', `${Models.TradebookFamilyName.GapAndCrap} bookmap rejection`);
         this.basePlan = basePlan;
         this.enableByDefault = true;
     }
 
     getID(): string {
-        return this.buildID(GapAndCrapBookmapRejection.gapAndCrapBookmapRejectionId);
+        return GapAndCrapBookmapRejection.gapAndCrapBookmapRejectionId;
     }
 
     refreshLiveStats(): void { }

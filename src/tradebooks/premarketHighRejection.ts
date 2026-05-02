@@ -36,17 +36,14 @@ export class PremarketHighRejection extends Tradebook {
         return this.buildID(PremarketHighRejection.gapAndCrapShort);
     }
 
-    constructor(familyName: string, symbol: string, isLong: boolean, basePlan: TradingPlansModels.GapAndCrapPlan) {
+    constructor(symbol: string, isLong: boolean, basePlan: TradingPlansModels.GapAndCrapPlan) {
         // This tradebook only supports short positions
         if (isLong) {
             throw new Error('PremarketHighRejection tradebook only supports short positions');
         }
         let tradebookName = 'Short Gap and Crap';
-        let buttonLabel = "pm high reject";
-        if (familyName && familyName.length > 0) {
-            buttonLabel = `${familyName} ${buttonLabel}`;
-        }
-        super(familyName, symbol, false, tradebookName, buttonLabel);
+        let buttonLabel = `${Models.TradebookFamilyName.GapAndCrap} pm high reject`;
+        super(symbol, false, tradebookName, buttonLabel);
         this.basePlan = basePlan;
         this.enableByDefault = true;
     }
@@ -98,10 +95,8 @@ export class PremarketHighRejection extends Tradebook {
             }
         }
 
-        if (this.familyName == Models.TradebookFamilyName.GapAndCrap) {
-            if (!EntryRulesChecker.allowEntryRulesForGapAndCrap(this.symbol, entryPrice, logTags)) {
-                return 0;
-            }
+        if (!EntryRulesChecker.allowEntryRulesForGapAndCrap(this.symbol, entryPrice, logTags)) {
+            return 0;
         }
 
         // Use basic global entry rules
@@ -136,14 +131,12 @@ export class PremarketHighRejection extends Tradebook {
     }
 
     getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
-        if (this.familyName == Models.TradebookFamilyName.GapAndCrap) {
-            let vwap = Models.getCurrentVwap(symbol);
-            if (entryPrice < vwap) {
-                return {
-                    allowed: true,
-                    reason: "price is below vwap, allow add",
-                };
-            }
+        let vwap = Models.getCurrentVwap(symbol);
+        if (entryPrice < vwap) {
+            return {
+                allowed: true,
+                reason: "price is below vwap, allow add",
+            };
         }
         return {
             allowed: false,

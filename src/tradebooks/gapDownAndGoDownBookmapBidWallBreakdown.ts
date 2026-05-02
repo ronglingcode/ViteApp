@@ -10,14 +10,13 @@ export class GapDownAndGoDownBookmapBidWallBreakdown extends Tradebook {
     private basePlan: TradingPlansModels.GapDownAndGoDownPlan;
 
     constructor(symbol: string, basePlan: TradingPlansModels.GapDownAndGoDownPlan) {
-        let familyName = Models.TradebookFamilyName.GapDownAndGoDown;
-        super(familyName, symbol, false, 'Short Gap Down & Go Down Bookmap Bid Wall Breakdown', `${familyName} bookmap`);
+        super(symbol, false, 'Short Gap Down & Go Down Bookmap Bid Wall Breakdown', `${Models.TradebookFamilyName.GapDownAndGoDown} bookmap`);
         this.basePlan = basePlan;
         this.enableByDefault = true;
     }
 
     getID(): string {
-        return this.buildID(GapDownAndGoDownBookmapBidWallBreakdown.id);
+        return GapDownAndGoDownBookmapBidWallBreakdown.id;
     }
 
     refreshLiveStats(): void { }

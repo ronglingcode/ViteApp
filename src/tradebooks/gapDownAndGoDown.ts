@@ -33,13 +33,13 @@ export class GapDownAndGoDown extends Tradebook {
         return this.buildID(GapDownAndGoDown.gapDownAndGoDownShort);
     }
 
-    constructor(familyName: string, symbol: string, isLong: boolean, basePlan: TradingPlansModels.GapDownAndGoDownPlan) {
+    constructor(symbol: string, isLong: boolean, basePlan: TradingPlansModels.GapDownAndGoDownPlan) {
         if (isLong) {
             throw new Error('GapDownAndGoDown tradebook only supports short positions');
         }
         let tradebookName = 'Short Gap Down and Go Down';
         let buttonLabel = 'Gap Down Go Down';
-        super(familyName, symbol, false, tradebookName, buttonLabel);
+        super(symbol, false, tradebookName, buttonLabel);
         this.basePlan = basePlan;
         this.enableByDefault = true;
     }

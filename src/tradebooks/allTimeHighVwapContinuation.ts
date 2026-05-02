@@ -18,14 +18,14 @@ export class AllTimeHighVwapContinuation extends Tradebook {
         return this.buildID(AllTimeHighVwapContinuation.allTimeHighVwapContinuationLong);
     }
 
-    constructor(familyName: string, symbol: string, isLong: boolean, plan: TradingPlansModels.AllTimeHighVwapContinuationPlan) {
+    constructor(symbol: string, isLong: boolean, plan: TradingPlansModels.AllTimeHighVwapContinuationPlan) {
         // This tradebook only supports long positions
         if (!isLong) {
             throw new Error('AllTimeHighVwapContinuation tradebook only supports long positions');
         }
         let tradebookName = 'ATH VWAP Cont';
         let buttonLabel = 'ATH VWAP Cont';
-        super(familyName, symbol, true, tradebookName, buttonLabel);
+        super(symbol, true, tradebookName, buttonLabel);
         this.allTimeHighVwapContinuationPlan = plan;
         this.enableByDefault = false;
     }
