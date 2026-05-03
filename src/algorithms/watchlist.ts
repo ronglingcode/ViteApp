@@ -13,7 +13,7 @@ import * as GapAndGoAlgo from './gapAndGoAlgo';
 import * as GapAndCrapAlgo from './gapAndCrapAlgo';
 import { GapGiveAndGo } from '../tradebooks/gapGiveAndGo';
 import { GapDownAndGoDown } from '../tradebooks/gapDownAndGoDown';
-import { GapDownAndGoUp } from '../tradebooks/gapDownAndGoUp';
+import * as GapDownAndGoUpAlgo from './gapDownAndGoUpAlgo';
 
 declare let window: Models.MyWindow;
 
@@ -272,7 +272,7 @@ const verifyTradingPlansForSingleDirection = (symbol: string, plan: TradingPlans
         hasBestTradebook = true;
     }
     if (plan.gapDownAndGoUpPlan) {
-        if (!GapDownAndGoUp.hasAtLeastOneReasonSet(plan.gapDownAndGoUpPlan, symbol)) {
+        if (!GapDownAndGoUpAlgo.hasAtLeastOneReasonSet(plan.gapDownAndGoUpPlan, symbol)) {
             return false;
         }
         hasBestTradebook = true;
