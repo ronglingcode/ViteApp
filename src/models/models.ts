@@ -70,7 +70,6 @@ export interface MyWindow extends Window {
             Chart: any,
             UI: any,
             QuestionPopup: any,
-            Flowchart: any,
         },
         UIState: UIState,
         Utils: {
