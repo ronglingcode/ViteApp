@@ -10,12 +10,13 @@ import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 /**
  * Long-only tradebook: go long when a big wall breakdown fails (price reclaims above the wall).
  */
+import { TradebookID } from './tradebookIds';
+
 export class BookmapBigWallBreakdownFailLong extends Tradebook {
-    public static readonly bookmapBigWallBreakdownFailLong: string = 'BookmapBigWallBreakdownFailLong';
     private basePlan: TradingPlansModels.BookmapBigWallBreakdownFailLongPlan;
 
     public getID(): string {
-        return this.buildID(BookmapBigWallBreakdownFailLong.bookmapBigWallBreakdownFailLong);
+        return this.buildID(TradebookID.BookmapBigWallBreakdownFailLong);
     }
 
     constructor(symbol: string, basePlan: TradingPlansModels.BookmapBigWallBreakdownFailLongPlan) {

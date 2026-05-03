@@ -8,8 +8,9 @@ import * as Helper from '../utils/helper';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 
+import { TradebookID } from './tradebookIds';
+
 export class GapGiveAndGo extends Tradebook {
-    public static readonly gapGiveAndGoLong: string = 'GapGiveAndGoLong';
     private basePlan: TradingPlansModels.GapGiveAndGoPlan;
 
     /**
@@ -31,7 +32,7 @@ export class GapGiveAndGo extends Tradebook {
     }
 
     public getID(): string {
-        return this.buildID(GapGiveAndGo.gapGiveAndGoLong);
+        return this.buildID(TradebookID.GapGiveAndGoLong);
     }
 
     constructor(symbol: string, isLong: boolean, basePlan: TradingPlansModels.GapGiveAndGoPlan) {

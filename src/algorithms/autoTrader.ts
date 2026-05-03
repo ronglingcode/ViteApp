@@ -18,7 +18,7 @@ import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import * as VwapPatterns from './vwapPatterns';
 import * as Agent from '../ai/agent';
-import { VwapContinuationFailed } from '../tradebooks/singleKeyLevel/vwapContinuationFailed';
+import { TradebookID } from '../tradebooks/tradebookIds';
 
 declare let window: Models.MyWindow;
 
@@ -360,7 +360,7 @@ export const onMinuteClosed = (
         let tradebooks = widget.tradebooks;
         for (let tradebookMapEntryPair of tradebooks) {
             let tradebook = tradebookMapEntryPair[1];
-            if (tradebook.getID() === VwapContinuationFailed.shortVwapBounceFailed && tradebook.isEnabled()) {
+            if (tradebook.getID() === TradebookID.ShortVwapBounceFailed && tradebook.isEnabled()) {
                 let status = VwapPatterns.getStatusForVwapBounceFail(symbol);
                 Firestore.logInfo(`${symbol} vwap bounce fail status: ${status}`);
                 break;

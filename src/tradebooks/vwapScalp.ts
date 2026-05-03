@@ -12,13 +12,13 @@ import * as Rules from '../algorithms/rules';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 
+import { TradebookID } from './tradebookIds';
+
 export class VwapScalp extends Tradebook {
-    public static readonly vwapScalpLong: string = 'VwapScalpLong';
-    public static readonly vwapScalpShort: string = 'VwapScalpShort';
     private vwapScalpPlan: TradingPlansModels.VwapScalpPlan;
     private maxEntry: number = 0;
     public getID(): string {
-        return this.buildID(this.isLong ? VwapScalp.vwapScalpLong : VwapScalp.vwapScalpShort);
+        return this.buildID(this.isLong ? TradebookID.VwapScalpLong : TradebookID.VwapScalpShort);
     }
     constructor(symbol: string, isLong: boolean, vwapScalpPlan: TradingPlansModels.VwapScalpPlan) {
         let tradebookName = isLong ? 'Long VWAP Scalp' : 'Short VWAP Scalp';

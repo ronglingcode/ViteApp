@@ -8,11 +8,11 @@ import * as Patterns from '../../algorithms/patterns';
 import * as TradebookUtils from '../tradebookUtil';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
 
+import { TradebookID } from '../tradebookIds';
+
 export class EmergingStrengthBreakout extends BaseBreakoutTradebook {
-    public static readonly emergingStrengthBreakoutLong: string = 'EmergingStrengthBreakoutLong';
-    public static readonly emergingWeaknessBreakdownShort: string = 'EmergingWeaknessBreakdownShort';
     public getID(): string {
-        return this.buildID(this.isLong ? EmergingStrengthBreakout.emergingStrengthBreakoutLong : EmergingStrengthBreakout.emergingWeaknessBreakdownShort);
+        return this.buildID(this.isLong ? TradebookID.EmergingStrengthBreakoutLong : TradebookID.EmergingWeaknessBreakdownShort);
     }
     public updateConfig(config: TradingPlansModels.TradebooksConfig) {
         if (this.isLong) {

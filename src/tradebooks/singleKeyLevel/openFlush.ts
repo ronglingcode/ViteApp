@@ -9,11 +9,11 @@ import * as Patterns from '../../algorithms/patterns';
 import * as OrderFlow from '../../controllers/orderFlow';
 import * as GlobalSettings from '../../config/globalSettings';
 
+import { TradebookID } from '../tradebookIds';
+
 export class OpenFlush extends SingleKeyLevelTradebook {
-    public static readonly openFlushLong: string = 'openFlushLong';
-    public static readonly openFlushShort: string = 'openFlushShort';
     public getID(): string {
-        return this.buildID(this.isLong ? OpenFlush.openFlushLong : OpenFlush.openFlushShort);
+        return this.buildID(this.isLong ? TradebookID.OpenFlushLong : TradebookID.OpenFlushShort);
     }
 
     constructor(symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,

@@ -17,7 +17,7 @@ import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as TradingState from '../models/tradingState';
 import * as Broker from '../api/broker';
 import * as AdjustExitsHandler from './adjustExitsHandler';
-import { VwapContinuationFailed } from '../tradebooks/singleKeyLevel/vwapContinuationFailed';
+import { TradebookID } from '../tradebooks/tradebookIds';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import * as PartialStopDiscipline from './partialStopDisciplineController';
 
@@ -457,7 +457,7 @@ export const vwapBounceFail = async (symbol: string, shiftKey: boolean) => {
         return;
     }
     for (let tradebook of tradebooks) {
-        if (tradebook.getID() == VwapContinuationFailed.shortVwapBounceFailed) {
+        if (tradebook.getID() == TradebookID.ShortVwapBounceFailed) {
             tradebook.startEntry(shiftKey, false, Models.getDefaultEntryParameters());
             return;
         }

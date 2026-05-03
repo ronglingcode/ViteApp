@@ -4,7 +4,7 @@ import * as Chart from '../ui/chart';
 import * as AutoTrader from '../algorithms/autoTrader';
 import * as Firestore from '../firestore';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
-import * as AboveWaterBreakout from '../tradebooks/singleKeyLevel/aboveWaterBreakout';
+import { TradebookID } from '../tradebooks/tradebookIds';
 export const show = (symbol: string) => {
     let chartWidget = Models.getChartWidget(symbol);
     if (!chartWidget)
@@ -14,7 +14,7 @@ export const show = (symbol: string) => {
     let tradebook = TraderFocus.getTradebookFromPosition(symbol);
     if (!tradebook)
         return;
-    if (tradebook.getID() == AboveWaterBreakout.AboveWaterBreakout.aboveWaterBreakout) {
+    if (tradebook.getID() == TradebookID.AboveWaterBreakout) {
         return;
     }
 

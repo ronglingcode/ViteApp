@@ -22,13 +22,13 @@ import * as TradebookUtils from '../tradebookUtil';
 import * as Rules from '../../algorithms/rules';
 import * as EntryRulesChecker from '../../controllers/entryRulesChecker';
 
+import { TradebookID } from '../tradebookIds';
+
 export class VwapContinuation extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
-    public static readonly vwapContinuationLong: string = 'VwapContinuationLong';
-    public static readonly vwapContinuationShort: string = 'VwapContinuationShort';
     private vwapWarningActive: boolean = false;
     public getID(): string {
-        return this.buildID(this.isLong ? VwapContinuation.vwapContinuationLong : VwapContinuation.vwapContinuationShort);
+        return this.buildID(this.isLong ? TradebookID.VwapContinuationLong : TradebookID.VwapContinuationShort);
     }
     constructor(symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan) {

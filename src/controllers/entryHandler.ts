@@ -12,7 +12,7 @@ import * as Patterns from '../algorithms/patterns';
 import * as AdjustExitsHandler from './adjustExitsHandler';
 import * as Broker from '../api/broker';
 import * as Calculator from '../utils/calculator';
-import { OpenFlush } from '../tradebooks/singleKeyLevel/openFlush';
+import { TradebookID } from '../tradebooks/tradebookIds';
 
 
 export const getLogTagsForEntryAction = (symbol: string, isLong: boolean, entryType: string) => {
@@ -121,7 +121,7 @@ export const marketEntryWithoutRules = (symbol: string, isLong: boolean,
 
 export const clickOpenChasePlan = (symbol: string, shiftKey: boolean) => {
     let tradebooksMap = Models.getTradebooks(symbol);
-    let openFlushTradebook = tradebooksMap.get(OpenFlush.openFlushShort);
+    let openFlushTradebook = tradebooksMap.get(TradebookID.OpenFlushShort);
     if (openFlushTradebook) {
         openFlushTradebook.startEntry(shiftKey, false, Models.getDefaultEntryParameters());
     } else {

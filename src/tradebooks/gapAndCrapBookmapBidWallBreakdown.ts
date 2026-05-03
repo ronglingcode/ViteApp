@@ -6,8 +6,9 @@ import * as Firestore from '../firestore';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as GapAndCrapAlgo from '../algorithms/gapAndCrapAlgo';
 
+import { TradebookID } from './tradebookIds';
+
 export class GapAndCrapBookmapBidWallBreakdown extends Tradebook {
-    public static readonly id: string = 'GapAndCrapBookmapBidWallBreakdown';
     private basePlan: TradingPlansModels.BasePlan;
 
     constructor(symbol: string, basePlan: TradingPlansModels.BasePlan) {
@@ -17,7 +18,7 @@ export class GapAndCrapBookmapBidWallBreakdown extends Tradebook {
     }
 
     getID(): string {
-        return GapAndCrapBookmapBidWallBreakdown.id;
+        return TradebookID.GapAndCrapBookmapBidWallBreakdown;
     }
 
     refreshLiveStats(): void { }

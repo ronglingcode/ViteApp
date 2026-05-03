@@ -4,9 +4,9 @@ import * as Chart from '../ui/chart';
 import * as Models from '../models/models';
 import * as Firestore from '../firestore';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
+import { TradebookID } from './tradebookIds';
 
 export class GapAndGoBookmapOfferWallBreakout extends Tradebook {
-    public static readonly id: string = 'GapAndGoBookmapOfferWallBreakout';
     private basePlan: TradingPlansModels.GapAndGoPlan;
 
     constructor(symbol: string, basePlan: TradingPlansModels.GapAndGoPlan) {
@@ -16,7 +16,7 @@ export class GapAndGoBookmapOfferWallBreakout extends Tradebook {
     }
 
     getID(): string {
-        return GapAndGoBookmapOfferWallBreakout.id;
+        return TradebookID.GapAndGoBookmapOfferWallBreakout;
     }
 
     refreshLiveStats(): void { }

@@ -10,12 +10,13 @@ import * as Rules from '../algorithms/rules';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 
+import { TradebookID } from './tradebookIds';
+
 export class AllTimeHighVwapContinuation extends Tradebook {
-    public static readonly allTimeHighVwapContinuationLong: string = 'ATHVwapCont';
     private allTimeHighVwapContinuationPlan: TradingPlansModels.AllTimeHighVwapContinuationPlan;
 
     public getID(): string {
-        return this.buildID(AllTimeHighVwapContinuation.allTimeHighVwapContinuationLong);
+        return this.buildID(TradebookID.ATHVwapCont);
     }
 
     constructor(symbol: string, isLong: boolean, plan: TradingPlansModels.AllTimeHighVwapContinuationPlan) {

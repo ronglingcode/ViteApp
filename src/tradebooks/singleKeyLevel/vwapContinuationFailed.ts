@@ -14,6 +14,7 @@ import * as GlobalSettings from '../../config/globalSettings';
 import * as LongDocs from '../tradebookDocs/vwapPushdownFail';
 import * as ShortDocs from '../tradebookDocs/vwapBounceFail';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
+import { TradebookID } from '../tradebookIds';
 enum EntryMethod {
     ClosedCandle = 'Closed Candle',
     LiveCandle = 'Live Candle',
@@ -22,15 +23,11 @@ enum EntryMethod {
     M30NewHighLow = 'M30 NewHighLow',
 }
 export class VwapContinuationFailed extends SingleKeyLevelTradebook {
-    public static readonly longVwapPushDownFailed: string = 'LongVwapPushdownFailed';
-    public static readonly shortVwapBounceFailed: string = 'ShortVwapBounceFailed';
-    public static readonly gapAndCrapShortVwapBounceFailed: string = 'GapAndCrap-ShortVwapBounceFailed';
-    public static readonly gapDownAndGoDownShortVwapBounceFailed: string = 'GapDownAndGoDown-ShortVwapBounceFailed';
     public waitForClose: boolean = true;
     public disableExitRules: boolean = false;
-    private readonly shortId: string;
+    private readonly shortId: TradebookID;
     public getID(): string {
-        return this.isLong ? VwapContinuationFailed.longVwapPushDownFailed : this.shortId;
+        return this.isLong ? TradebookID.LongVwapPushdownFailed : this.shortId;
     }
     constructor(isGapAndCrap: boolean, symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan) {
@@ -42,8 +39,8 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
         }
         super(symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel);
         this.shortId = isGapAndCrap
-            ? VwapContinuationFailed.gapAndCrapShortVwapBounceFailed
-            : VwapContinuationFailed.gapDownAndGoDownShortVwapBounceFailed;
+            ? TradebookID.GapAndCrapShortVwapBounceFailed
+            : TradebookID.GapDownAndGoDownShortVwapBounceFailed;
     }
 
     public updateConfig(config: TradingPlansModels.TradebooksConfig): void {

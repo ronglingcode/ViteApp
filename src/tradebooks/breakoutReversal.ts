@@ -9,13 +9,13 @@ import * as FalseBreakout from '../patterns/falseBreakout';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 
+import { TradebookID } from './tradebookIds';
+
 export class BreakoutReversal extends Tradebook {
-    public static readonly reversalLong: string = 'ReversalLong';
-    public static readonly reversalShort: string = 'ReversalShort';
     private keyLevel: number = 0;
     private reversalPlan: TradingPlansModels.ReversalPlan;
     public getID(): string {
-        return this.buildID(this.isLong ? BreakoutReversal.reversalLong : BreakoutReversal.reversalShort);
+        return this.buildID(this.isLong ? TradebookID.ReversalLong : TradebookID.ReversalShort);
     }
     constructor(symbol: string, isLong: boolean, reversalPlan: TradingPlansModels.ReversalPlan) {
         let tradebookName = isLong ? 'Long Reversal' : 'Short Reversal';

@@ -9,8 +9,9 @@ import * as Rules from '../algorithms/rules';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 
+import { TradebookID } from './tradebookIds';
+
 export class PremarketHighRejection extends Tradebook {
-    public static readonly gapAndCrapShort: string = 'GapAndCrapShort';
     private basePlan: TradingPlansModels.GapAndCrapPlan;
 
     /**
@@ -33,7 +34,7 @@ export class PremarketHighRejection extends Tradebook {
     }
 
     public getID(): string {
-        return this.buildID(PremarketHighRejection.gapAndCrapShort);
+        return this.buildID(TradebookID.GapAndCrapShort);
     }
 
     constructor(symbol: string, isLong: boolean, basePlan: TradingPlansModels.GapAndCrapPlan) {

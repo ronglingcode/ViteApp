@@ -9,8 +9,7 @@ import * as OrderFlow from "../controllers/orderFlow";
 import * as Handler from "../controllers/handler";
 import * as Models from "../models/models";
 import { GapAndGoBookmapOfferWallBreakout } from "../tradebooks/gapAndGoBookmapOfferWallBreakout";
-import { BookmapBigWallBreakdownFailLong } from "../tradebooks/bookmapBigWallBreakdownFailLong";
-import { PremarketHighRejection } from "../tradebooks/premarketHighRejection";
+import { TradebookID } from "../tradebooks/tradebookIds";
 import * as TradebooksManager from "../tradebooks/tradebooksManager";
 import * as Chart from "../ui/chart";
 
@@ -71,7 +70,7 @@ const bookmapEntry = (symbol: string, useMarketOrder: boolean, stopLossPrice: nu
     const logTags = Models.generateLogTags(symbol, `${symbol}-bookmap-entry`);
 
     if (isLong) {
-        const tradebookId = `${Models.TradebookFamilyName.GapAndGo}-${GapAndGoBookmapOfferWallBreakout.id}`;
+        const tradebookId = `${Models.TradebookFamilyName.GapAndGo}-${TradebookID.GapAndGoBookmapOfferWallBreakout}`;
         const tradebook = TradebooksManager.getTradebookByID(symbol, tradebookId);
         if (!tradebook) {
             Firestore.logError(`[BookmapActions] GapAndGoBookmapOfferWallBreakout tradebook not found for ${symbol} (id: ${tradebookId})`, logTags);
@@ -88,7 +87,7 @@ const bookmapEntry = (symbol: string, useMarketOrder: boolean, stopLossPrice: nu
         Firestore.logInfo(`[BookmapActions] bookmapEntry long: ${tradebookId} stop=$${stopLossPrice}`, logTags);
         tradebook.triggerEntryFromBookmap(useMarketOrder, stopLossPrice);
     } else {
-        const tradebookId = `${Models.TradebookFamilyName.GapAndCrap}-${PremarketHighRejection.gapAndCrapShort}`;
+        const tradebookId = `${Models.TradebookFamilyName.GapAndCrap}-${TradebookID.GapAndCrapShort}`;
         const tradebook = TradebooksManager.getTradebookByID(symbol, tradebookId);
         if (!tradebook) {
             Firestore.logError(`[BookmapActions] GapAndCrap tradebook not found for ${symbol} (id: ${tradebookId})`, logTags);

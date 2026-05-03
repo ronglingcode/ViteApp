@@ -11,11 +11,11 @@ import * as ShortDocs from '../tradebookDocs/belowWaterBreakdown';
 import * as TradebookUtils from '../tradebookUtil';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
 
+import { TradebookID } from '../tradebookIds';
+
 export class AboveWaterBreakout extends BaseBreakoutTradebook {
-    public static readonly aboveWaterBreakout: string = 'aboveWaterBreakout';
-    public static readonly belowWaterBreakdown: string = 'belowWaterBreakdown';
     public getID(): string {
-        return this.buildID(this.isLong ? AboveWaterBreakout.aboveWaterBreakout : AboveWaterBreakout.belowWaterBreakdown);
+        return this.buildID(this.isLong ? TradebookID.AboveWaterBreakout : TradebookID.BelowWaterBreakdown);
     }
 
     public updateConfig(config: TradingPlansModels.TradebooksConfig) {

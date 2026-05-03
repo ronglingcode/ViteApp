@@ -7,8 +7,9 @@ import { runGapAndCrapBookmapShortEntryPipeline } from './gapAndCrapBookmapShort
 import * as GapAndCrapAlgo from '../algorithms/gapAndCrapAlgo';
 
 /** Gap & crap short-only bookmap rejection — standalone tradebook (not a BookmapBigWallBreakout subtype). */
+import { TradebookID } from './tradebookIds';
+
 export class GapAndCrapBookmapRejection extends Tradebook {
-    public static readonly gapAndCrapBookmapRejectionId: string = 'GapAndCrapBookmapRejection';
 
     private basePlan: TradingPlansModels.BasePlan;
     private static readonly entryLogSuffix = '_gap_and_crap_bookmap_rejection';
@@ -20,7 +21,7 @@ export class GapAndCrapBookmapRejection extends Tradebook {
     }
 
     getID(): string {
-        return GapAndCrapBookmapRejection.gapAndCrapBookmapRejectionId;
+        return TradebookID.GapAndCrapBookmapRejection;
     }
 
     refreshLiveStats(): void { }

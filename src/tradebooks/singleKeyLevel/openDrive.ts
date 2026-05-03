@@ -18,12 +18,12 @@ import * as ShortDocs from '../tradebookDocs/openDriveShort';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
 import * as TradebookUtils from '../tradebookUtil';
 
+import { TradebookID } from '../tradebookIds';
+
 export class OpenDrive extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
-    public static readonly openDriveLong: string = 'openDriveLong';
-    public static readonly openDriveShort: string = 'openDriveShort';
     public getID(): string {
-        return this.buildID(this.isLong ? OpenDrive.openDriveLong : OpenDrive.openDriveShort);
+        return this.buildID(this.isLong ? TradebookID.OpenDriveLong : TradebookID.OpenDriveShort);
     }
     constructor(symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan
