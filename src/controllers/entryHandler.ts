@@ -1,15 +1,10 @@
-import * as Chart from '../ui/chart';
 import * as Models from '../models/models';
 import * as Helper from '../utils/helper';
 import * as Firestore from '../firestore';
 import * as OrderFlow from './orderFlow';
 import * as TradingState from '../models/tradingState';
-import * as EntryRulesChecker from './entryRulesChecker';
 import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
-import * as Strategies from '../algorithms/strategies';
 
-import * as Patterns from '../algorithms/patterns';
-import * as AdjustExitsHandler from './adjustExitsHandler';
 import * as Broker from '../api/broker';
 import * as Calculator from '../utils/calculator';
 

@@ -2,7 +2,6 @@ import * as Helper from '../utils/helper';
 import * as Models from '../models/models';
 import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as TradingState from '../models/tradingState';
-import * as Firestore from '../firestore';
 import * as MinimumTarget from './minimumTarget';
 import * as GlobalSettings from '../config/globalSettings';
 export interface ProfitTargetByPercentage {

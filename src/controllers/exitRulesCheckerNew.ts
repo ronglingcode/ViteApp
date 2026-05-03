@@ -1,15 +1,12 @@
 import * as Models from "../models/models";
-import * as VolumeMonitor from "./volumeMonitor";
 import * as Rules from "../algorithms/rules";
 import * as Firestore from "../firestore";
 import * as RiskManager from "../algorithms/riskManager";
 import * as TradingState from "../models/tradingState";
 import * as TradebooksManager from "../tradebooks/tradebooksManager";
 import * as TakeProfit from "../algorithms/takeProfit";
-import * as ExitRulesCheckerSimple from './exitRulesCheckerSimple';
 import * as Helper from "../utils/helper";
 import * as TradingPlans from "../models/tradingPlans/tradingPlans";
-import * as Patterns from "../algorithms/patterns";
 import * as GlobalSettings from '../config/globalSettings';
 
 export const isAllowedForAllOrdersForAllTradebooks = (symbol: string, isLong: boolean, isMarketOrder: boolean, newPrice: number, logTags: Models.LogTags) => {

@@ -11,7 +11,6 @@ import * as Firestore from '../firestore';
 import * as GlobalSettings from '../config/globalSettings';
 import * as Calculator from '../utils/calculator';
 import * as SetupQuality from '../algorithms/setupQuality';
-import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 
 declare let window: Models.MyWindow;
 

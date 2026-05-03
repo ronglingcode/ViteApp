@@ -6,7 +6,6 @@ import * as Firestore from '../../firestore';
 import * as Models from '../../models/models';
 import * as EntryRulesChecker from '../../controllers/entryRulesChecker';
 import * as Helper from '../../utils/helper';
-import * as EntryThresholdValidator from '../../utils/entryThresholdValidator';
 import * as AutoTrader from '../../algorithms/autoTrader';
 import * as LiveStats from '../../ui/liveStats';
 

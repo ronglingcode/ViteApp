@@ -3,7 +3,6 @@ import * as TraderFocus from '../controllers/traderFocus';
 import * as Chart from '../ui/chart';
 import * as AutoTrader from '../algorithms/autoTrader';
 import * as Firestore from '../firestore';
-import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import { TradebookID } from '../tradebooks/tradebookIds';
 export const show = (symbol: string) => {
     let chartWidget = Models.getChartWidget(symbol);

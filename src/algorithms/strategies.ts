@@ -1,5 +1,4 @@
 import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
-import * as TakeProfit from '../algorithms/takeProfit';
 
 const R2Target: TradingPlansModels.ExitTargets = {
     initialTargets: {

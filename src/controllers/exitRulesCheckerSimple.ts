@@ -1,16 +1,11 @@
 import * as Models from '../models/models';
 import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as Rules from '../algorithms/rules';
-import * as Patterns from '../algorithms/patterns';
 import * as RiskManager from '../algorithms/riskManager';
 import * as TakeProfit from '../algorithms/takeProfit';
-import * as MinimumTarget from '../algorithms/minimumTarget';
 import * as Firestore from '../firestore';
 import * as TradingState from '../models/tradingState';
-import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as Helper from '../utils/helper';
-import { checkCommonAdjustStops } from './exitRulesChecker';
-import * as VolumeMonitor from './volumeMonitor';
 import * as TraderFocus from './traderFocus';
 
 export const isAllowedForAll = (symbol: string, logTags: Models.LogTags) => {

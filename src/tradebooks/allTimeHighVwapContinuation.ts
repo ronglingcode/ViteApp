@@ -3,7 +3,6 @@ import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansMod
 import * as Firestore from '../firestore';
 import * as Models from '../models/models';
 import * as Chart from '../ui/chart';
-import * as Helper from '../utils/helper';
 import * as VwapPatterns from '../algorithms/vwapPatterns';
 import * as TradebookUtils from './tradebookUtil';
 import * as Rules from '../algorithms/rules';

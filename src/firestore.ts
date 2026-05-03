@@ -1,7 +1,6 @@
 import * as firebase from 'firebase/app'
 import * as gbase from "firebase/firestore"
 import * as secret from './config/secret'
-import * as Config from './config/config';
 import * as Helper from './utils/helper';
 import type * as Models from './models/models';
 declare let window: Models.MyWindow;

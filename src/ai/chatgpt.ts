@@ -3,7 +3,6 @@
  * OpenAI API documentation: https://platform.openai.com/docs/api-reference/chat
  */
 
-import { tradebookText as vwapContinuationText } from '../tradebooksText/vwapContinuation';
 import * as Secrets from '../config/secret';
 
 const getApiKey = (): string => {

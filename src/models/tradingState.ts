@@ -2,7 +2,6 @@ import * as Firestore from '../firestore';
 import * as Config from '../config/config';
 import * as Models from './models';
 import * as AutoTrader from '../algorithms/autoTrader';
-import * as TakeProfit from '../algorithms/takeProfit'
 import * as TradingPlansModels from './tradingPlans/tradingPlansModels';
 import * as UI from '../ui/ui';
 import { Timestamp } from 'firebase/firestore';

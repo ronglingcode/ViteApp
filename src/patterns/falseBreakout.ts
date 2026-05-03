@@ -1,5 +1,4 @@
 import * as Models from '../models/models';
-import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 
 /**
  * If 1-minute candle closed above, the next 2 candles closed below, then it is a confirmed false breakout.

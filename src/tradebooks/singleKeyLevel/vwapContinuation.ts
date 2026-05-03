@@ -10,7 +10,6 @@ import * as Helper from '../../utils/helper';
 import * as Patterns from '../../algorithms/patterns';
 import * as AutoTrader from '../../algorithms/autoTrader';
 import * as LiveStats from '../../ui/liveStats';
-import * as TradebooksManager from '../tradebooksManager';
 
 import * as ExitRulesCheckerNew from '../../controllers/exitRulesCheckerNew';
 import * as GlobalSettings from '../../config/globalSettings';

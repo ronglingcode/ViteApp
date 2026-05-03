@@ -1,4 +1,3 @@
-import * as LightweightCharts from 'sunrise-tv-lightweight-charts';
 export const defaultRed = 'rgb(255,82,82)';
 export const defaultGreen = 'rgb(38,166,154)';
 export const lightGreen = '#90EE90';

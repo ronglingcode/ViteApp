@@ -8,8 +8,6 @@ import * as EntryHandler from './entryHandler';
 import * as Broker from '../api/broker';
 import * as Firestore from '../firestore';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
-import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
-import * as AutoTrader from '../algorithms/autoTrader';
 
 export const handleKeyPressed = (code: string, shiftKey: boolean) => {
     let uiState = Models.getUIState();

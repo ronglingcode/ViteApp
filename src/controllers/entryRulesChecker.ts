@@ -1,4 +1,3 @@
-import * as Config from '../config/config';
 import * as Rules from '../algorithms/rules';
 import * as RiskManager from '../algorithms/riskManager';
 import * as Patterns from '../algorithms/patterns';
@@ -9,7 +8,6 @@ import * as Models from '../models/models';
 import * as TradingState from '../models/tradingState';
 import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
-import * as SetupQuality from '../algorithms/setupQuality';
 import * as VwapPatterns from '../algorithms/vwapPatterns';
 declare let window: Models.MyWindow;
 

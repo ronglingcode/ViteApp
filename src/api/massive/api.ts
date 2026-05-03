@@ -1,4 +1,3 @@
-import * as Firestore from '../../firestore';
 import * as Secret from '../../config/secret';
 import * as Models from '../../models/models';
 import * as TimeHelper from '../../utils/timeHelper';

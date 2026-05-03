@@ -2,10 +2,8 @@ import { BaseBreakoutTradebook } from './baseBreakoutTradebook'
 import type * as TradingPlansModels from '../../models/tradingPlans/tradingPlansModels'
 import * as Chart from '../../ui/chart';
 import * as Models from '../../models/models';
-import * as Helper from '../../utils/helper';
 import * as Patterns from '../../algorithms/patterns';
 import * as Firestore from '../../firestore';
-import * as OrderFlow from '../../controllers/orderFlow';
 import * as TradebookUtils from '../tradebookUtil';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
 

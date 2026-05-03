@@ -2,7 +2,6 @@ import * as Models from "../models/models";
 import * as TradingPlans from "../models/tradingPlans/tradingPlans";
 import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import type { Tradebook } from "./baseTradebook";
-import { VwapContinuation } from "./singleKeyLevel/vwapContinuation"
 import { VwapContinuationFailed } from "./singleKeyLevel/vwapContinuationFailed";
 import * as Helper from "../utils/helper";
 import { GapDownAndGoDown } from "./gapDownAndGoDown";

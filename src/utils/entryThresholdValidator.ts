@@ -1,7 +1,6 @@
 import * as Models from '../models/models';
 import * as Firestore from '../firestore';
 import * as Helper from './helper';
-import * as DB from '../data/db';
 
 export interface ThresholdValidatorConfig {
     symbol: string;

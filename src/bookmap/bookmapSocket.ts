@@ -6,7 +6,6 @@
 
 import { processOrderbookSnapshot } from "./largeOrderTracker";
 import { handlePriceSelect } from "./bookmapActions";
-import * as Firestore from "../firestore";
 import * as Helper from "../utils/helper";
 import * as Models from "../models/models";
 declare let window: Models.MyWindow;

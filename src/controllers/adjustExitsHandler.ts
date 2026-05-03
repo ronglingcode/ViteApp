@@ -2,12 +2,9 @@ import * as Models from '../models/models';
 import * as Helper from '../utils/helper';
 import * as Calculator from '../utils/calculator';
 import * as Firestore from '../firestore';
-import * as ExitRulesChecker from './exitRulesChecker';
 import * as OrderFlow from './orderFlow';
 import * as Chart from '../ui/chart';
 import * as ExitRulesCheckerNew from './exitRulesCheckerNew';
-import * as TraderFocus from './traderFocus';
-import * as QuestionPopup from '../ui/questionPopup';
 import * as PartialStopDiscipline from './partialStopDisciplineController';
 
 export const onAdjustExits = (symbol: string) => {

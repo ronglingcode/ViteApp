@@ -1,12 +1,9 @@
 import * as Models from '../models/models';
 import * as Helper from '../utils/helper';
 import * as Patterns from './patterns';
-import * as AutoTrader from './autoTrader';
 import * as Config from '../config/config';
 import * as RiskManager from '../algorithms/riskManager';
-import * as TakeProfit from '../algorithms/takeProfit';
 import * as Watchlist from '../algorithms/watchlist';
-import * as Chart from '../ui/chart';
 import * as Firestore from '../firestore';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as TradingState from '../models/tradingState';

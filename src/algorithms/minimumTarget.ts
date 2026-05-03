@@ -1,7 +1,6 @@
 import * as Helper from '../utils/helper';
 import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as Models from '../models/models';
-import * as Firestore from '../firestore';
 
 export const defaultMinimumTargets: TradingPlansModels.ExitTargetsSet = {
     rrr: [0.85, 0.85, 0.9, 1.5, 1.8, 1.8, 1.8, 1.8, 2.4, 2.8],

@@ -1,4 +1,3 @@
-import * as webRequest from './utils/webRequest';
 import * as TimeHelper from './utils/timeHelper';
 import * as Broker from './api/broker';
 import * as SchwabApi from './api/schwab/api';

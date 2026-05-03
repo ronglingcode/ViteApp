@@ -1,11 +1,9 @@
 import * as DB from '../data/db';
 import * as AlpacaStreaming from '../api/alpaca/streaming';
 import * as Chart from '../ui/chart';
-import * as Models from '../models/models';
 import * as Firestore from '../firestore';
 import * as Broker from '../api/broker';
 import * as GlobalSettings from '../config/globalSettings';
-import * as UI from '../ui/ui';
 // https://polygon.io/glossary/conditions-indicators
 export const conditionsNotUpdateHighLow = [
     "W", "C", "T", "U", "M", "Q", "N", "H", "I", "V", "7"

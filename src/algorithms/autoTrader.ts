@@ -1,16 +1,9 @@
 import * as Helper from '../utils/helper';
-import * as Rules from './rules';
 import * as Chart from '../ui/chart';
 import * as Models from '../models/models';
 import * as Firestore from '../firestore';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as TradingState from '../models/tradingState';
-import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
-import * as EntryHandler from '../controllers/entryHandler';
-import * as Handler from '../controllers/handler';
-import * as Broker from '../api/broker';
-import * as MarketData from '../api/marketData';
-import * as Vwap from '../algorithms/vwap';
 import * as Patterns from '../algorithms/patterns';
 import * as OrderFlow from '../controllers/orderFlow';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';

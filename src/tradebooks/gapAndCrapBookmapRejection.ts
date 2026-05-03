@@ -2,7 +2,6 @@ import { Tradebook } from './baseTradebook';
 import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as Chart from '../ui/chart';
 import * as Models from '../models/models';
-import * as Firestore from '../firestore';
 import { runGapAndCrapBookmapShortEntryPipeline } from './gapAndCrapBookmapShortCommon';
 import * as GapAndCrapAlgo from '../algorithms/gapAndCrapAlgo';
 

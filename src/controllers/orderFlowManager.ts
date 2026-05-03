@@ -1,6 +1,4 @@
-import { RollingWindow } from "./rollingWindow";
 import { SimpleRollingWindow } from "./simpleRollingWindow";
-import * as Firestore from '../firestore';
 import * as Models from '../models/models';
 import * as DB from '../data/db';
 

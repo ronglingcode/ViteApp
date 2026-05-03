@@ -2,7 +2,6 @@ import * as Models from '../models/models';
 import * as Chart from './chart';
 import * as Config from '../config/config';
 import * as TimeHelper from '../utils/timeHelper';
-import * as Firestore from '../firestore';
 import * as Helper from '../utils/helper';
 declare let window: Models.MyWindow;
 
