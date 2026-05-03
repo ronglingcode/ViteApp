@@ -77,10 +77,6 @@ export class GapAndCrapBookmapBidWallBreakdown extends Tradebook {
         return GapAndCrapAlgo.getAllowedReasonToAddPartial(symbol, entryPrice, logTags);
     }
 
-    getTradebookDoc(): string {
-        return '';
-    }
-
     getEntryMethods(): string[] {
         return ['default'];
     }

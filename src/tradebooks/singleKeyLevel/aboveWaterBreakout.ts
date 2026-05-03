@@ -6,8 +6,6 @@ import * as Helper from '../../utils/helper';
 import * as Patterns from '../../algorithms/patterns';
 import * as Firestore from '../../firestore';
 import * as OrderFlow from '../../controllers/orderFlow';
-import * as LongDocs from '../tradebookDocs/aboveWaterBreakout';
-import * as ShortDocs from '../tradebookDocs/belowWaterBreakdown';
 import * as TradebookUtils from '../tradebookUtil';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
 
@@ -123,14 +121,6 @@ export class AboveWaterBreakout extends BaseBreakoutTradebook {
             return this.triggerNoCloseBullFlagBeyondLevel(useMarketOrder, dryRun, parameters, logTags);
         } else {
             return this.triggerNoCloseBearFlagWithinLevel(useMarketOrder, dryRun, parameters, logTags);
-        }
-    }
-
-    getTradebookDoc(): string {
-        if (this.isLong) {
-            return LongDocs.tradebookText;
-        } else {
-            return ShortDocs.tradebookText;
         }
     }
 

@@ -99,10 +99,6 @@ export class GapAndGoBookmapOfferWallBreakout extends Tradebook {
         };
     }
 
-    getTradebookDoc(): string {
-        return '';
-    }
-
     getEntryMethods(): string[] {
         return ['default'];
     }

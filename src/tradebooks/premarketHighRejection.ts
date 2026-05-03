@@ -145,10 +145,6 @@ export class PremarketHighRejection extends Tradebook {
         };
     }
 
-    getTradebookDoc(): string {
-        return "";
-    }
-
     onNewTimeSalesData(): void {
 
     }

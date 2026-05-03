@@ -126,10 +126,6 @@ export class GapDownAndGoUp extends Tradebook {
         return super.getCommonLiveStats();
     }
 
-    getTradebookDoc(): string {
-        return "";
-    }
-
     onNewTimeSalesData(): void {
     }
 

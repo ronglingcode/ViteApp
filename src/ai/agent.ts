@@ -5,14 +5,12 @@
 
 import * as Chatgpt from './chatgpt';
 import * as TradingState from '../models/tradingState';
-import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import * as GoogleDocsApi from '../api/googleDocs/googleDocsApi';
 import * as Models from '../models/models';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as Helper from '../utils/helper';
 import * as TimeHelper from '../utils/timeHelper';
 import * as ProxyServer from '../api/proxyServer';
-import * as LevelToAdd from '../tradebooks/tradebookDocs/levelToAdd';
 import * as MarketDataFeatures from './marketDataFeatures';
 import * as Chart from '../ui/chart';
 import * as GlobalSettings from '../config/globalSettings';
@@ -153,23 +151,9 @@ let config: ChatGPTConfig = {
  * @returns Analysis and management suggestions
  */
 export const analyzeTradeEntry = async (symbol: string, isLong: boolean, netQuantity: number): Promise<string> => {
-    // Get tradebook text based on strategy
     let state = TradingState.getBreakoutTradeState(symbol, isLong);
     if (!state) {
         return "no trade state";
-    }
-    let tradebookId = state.submitEntryResult.tradeBookID;
-    if (!tradebookId) {
-        return "no tradebook id";
-    }
-    let tradebook = TradebooksManager.getTradebookByID(symbol, tradebookId);
-    if (!tradebook) {
-        return "no tradebook";
-    }
-
-    let tradebookText = tradebook.getTradebookDoc();
-    if (!tradebookText) {
-        return "no tradebook doc";
     }
 
     let googleDocContent = window.HybridApp.TradingData.googleDocContent;
@@ -179,18 +163,11 @@ export const analyzeTradeEntry = async (symbol: string, isLong: boolean, netQuan
         return "no detailed plan";
     }
 
-    let plan = TradingPlans.getTradingPlansForSingleDirection(symbol, isLong);
-    let levelToAdd = plan.firstTargetToAdd;
     let direction = isLong ? 'long' : 'short';
 
-    const systemPrompt = `You are a professional day trading assistant. 
-    You will analyze live trades based on a specific trading strategy (tradebook) and provide actionable feedback.
+    const systemPrompt = `You are a professional day trading assistant.
+    You will analyze live trades and provide actionable feedback.
     You will be asked each time a new 1-minute candle closes while I have an open position.
-
-Here is the trading strategy being used:
-${tradebookText}
-
-${LevelToAdd.getText(isLong, levelToAdd)}
 
 Here is my analysis and trading plans I prepared for stock ${symbol}:
 ${detailedPlan.notes}

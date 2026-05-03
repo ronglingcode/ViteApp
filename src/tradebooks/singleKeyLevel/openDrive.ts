@@ -13,8 +13,6 @@ import * as LiveStats from '../../ui/liveStats';
 import * as ExitRulesCheckerNew from '../../controllers/exitRulesCheckerNew';
 import * as Patterns from '../../algorithms/patterns';
 import * as GlobalSettings from '../../config/globalSettings';
-import * as LongDocs from '../tradebookDocs/openDriveLong';
-import * as ShortDocs from '../tradebookDocs/openDriveShort';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
 import * as TradebookUtils from '../tradebookUtil';
 
@@ -327,14 +325,6 @@ export class OpenDrive extends SingleKeyLevelTradebook {
         };
         return result;
     }
-    getTradebookDoc(): string {
-        if (this.isLong) {
-            return LongDocs.tradebookText;
-        } else {
-            return ShortDocs.tradebookText;
-        }
-    }
-
     getEntryMethods(): string[] {
         return [Models.TimeFrameEntryMethod.M1, Models.TimeFrameEntryMethod.M5, Models.TimeFrameEntryMethod.M15, Models.TimeFrameEntryMethod.M30];
     }

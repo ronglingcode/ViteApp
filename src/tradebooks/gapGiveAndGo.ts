@@ -146,10 +146,6 @@ export class GapGiveAndGo extends Tradebook {
         return super.getCommonLiveStats();
     }
 
-    getTradebookDoc(): string {
-        return "";
-    }
-
     onNewTimeSalesData(): void {
 
     }

@@ -74,10 +74,6 @@ export class GapDownAndGoDownBookmapBidWallBreakdown extends Tradebook {
         };
     }
 
-    getTradebookDoc(): string {
-        return '';
-    }
-
     getEntryMethods(): string[] {
         return ['default'];
     }

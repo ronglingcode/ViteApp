@@ -58,10 +58,6 @@ export class GapAndCrapBookmapRejection extends Tradebook {
         return GapAndCrapAlgo.getAllowedReasonToAddPartial(symbol, entryPrice, logTags);
     }
 
-    getTradebookDoc(): string {
-        return '';
-    }
-
     getEntryMethods(): string[] {
         return ['wall reject 0.15R', 'wall reject 0.25R'];
     }

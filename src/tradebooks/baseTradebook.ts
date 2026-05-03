@@ -29,7 +29,6 @@ export abstract class Tradebook {
     protected buildID(baseID: string): string {
         return baseID;
     }
-    abstract getTradebookDoc(): string;
     abstract refreshLiveStats(): void;
     abstract getEntryMethods(): string[];
 

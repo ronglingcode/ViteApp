@@ -132,10 +132,6 @@ export class AllTimeHighVwapContinuation extends Tradebook {
         return ''; // TODO: Implement common live stats
     }
 
-    getTradebookDoc(): string {
-        return "";
-    }
-
     onNewTimeSalesData(): void {
         // Disable logic is handled in tradebooksManager.ts
     }

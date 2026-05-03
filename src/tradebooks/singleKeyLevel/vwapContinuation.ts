@@ -15,8 +15,6 @@ import * as TradebooksManager from '../tradebooksManager';
 
 import * as ExitRulesCheckerNew from '../../controllers/exitRulesCheckerNew';
 import * as GlobalSettings from '../../config/globalSettings';
-import * as LongDocs from '../tradebookDocs/vwapContinuationLong';
-import * as ShortDocs from '../tradebookDocs/vwapContinuationShort';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
 import * as TradebookUtils from '../tradebookUtil';
 import * as Rules from '../../algorithms/rules';
@@ -301,14 +299,6 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
 
 
         return result;
-    }
-
-    getTradebookDoc(): string {
-        if (this.isLong) {
-            return LongDocs.tradebookText;
-        } else {
-            return ShortDocs.tradebookText;
-        }
     }
 
     getEntryMethods(): string[] {
