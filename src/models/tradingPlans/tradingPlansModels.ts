@@ -49,7 +49,6 @@ export interface Gap {
 export interface TradingPlans {
     symbol: string,
     analysis: Analysis,
-    autoFlip: boolean,
     isFutures?: boolean,
     vwapCorrection: VwapCorrection,
     atr: AverageTrueRange,
