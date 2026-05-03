@@ -533,9 +533,6 @@ export const hasPremarketBreakout = (symbol: string, isLong: boolean) => {
 }
 export const getOpenExtensionFromVwapInAtr = (symbol: string, isLong: boolean) => {
     let openPrice = Models.getOpenPrice(symbol);
-    if (!openPrice) {
-        openPrice = Models.getCurrentPrice(symbol);
-    }
     let vwap = Models.getLastVwapBeforeOpen(symbol);
     if ((isLong && openPrice > vwap) ||
         (!isLong && openPrice < vwap)) {
@@ -816,9 +813,6 @@ export const hasRetestLevel = (symbol: string, isLong: boolean) => {
 }
 export const hasRetestThisLevelBeforeEntry = (symbol: string, isLong: boolean, level: number) => {
     let openPrice = Models.getOpenPrice(symbol);
-    if (!openPrice) {
-        return false;
-    }
     let keyLevel = level;
     let symbolData = Models.getSymbolData(symbol);
     if (isLong) {

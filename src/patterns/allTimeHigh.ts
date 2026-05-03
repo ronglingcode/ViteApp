@@ -4,7 +4,7 @@ export const getPatterns = (symbol: string) => {
     let allTimeHigh = symbolData.allTimeHigh;
     let openAboveAllTimeHigh = false;
     let openPrice = Models.getOpenPrice(symbol);
-    if (openPrice && openPrice > allTimeHigh) {
+    if (openPrice > allTimeHigh) {
         openAboveAllTimeHigh = true;
     }
     let candles = Models.getM1ClosedCandlesSinceOpen(symbol);

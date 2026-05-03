@@ -291,15 +291,14 @@ export const updateUIBasedOnOpenZoneForSymbol = (symbol: string, openPrice: numb
 
 }
 export const updateUIBasedOnOpenZone = () => {
+    let seconds = Helper.getSecondsSinceMarketOpen(new Date());
+    if (seconds < 0) {
+        return;
+    }
     let watchlist = Models.getWatchlist();
     watchlist.forEach(item => {
         let symbol = item.symbol;
         let openPrice = Models.getOpenPrice(symbol);
-        if (!openPrice) {
-            Firestore.logError(`${symbol} no open price`);
-            return;
-        }
-
         updateUIBasedOnOpenZoneForSymbol(symbol, openPrice);
     });
 }
@@ -348,7 +347,7 @@ export const onMinuteClosed = (
                 vwapToUse = Models.getLastVwapBeforeOpen(symbol);
             }
             let openPriceToUse = Models.getOpenPrice(symbol);
-            if (!openPriceToUse) {
+            if (!Models.hasOpenPrice(symbol)) {
                 openPriceToUse = newlyClosedCandle.close;
             }
             TradebooksManager.updateTradebooksStatus(symbol, widget.tradebooks, openPriceToUse, vwapToUse);
@@ -628,9 +627,6 @@ export const getChartAnalysis = (symbol: string) => {
         return "";
     }
     let openPrice = Models.getOpenPrice(symbol);
-    if (!openPrice) {
-        return "";
-    }
     let isLong = netQ > 0;
     let plan = TradingPlans.getTradingPlans(symbol);
     let inflectionLevel = plan.analysis.singleMomentumKeyLevel[0].high;

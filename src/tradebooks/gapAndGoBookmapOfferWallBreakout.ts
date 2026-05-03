@@ -33,8 +33,8 @@ export class GapAndGoBookmapOfferWallBreakout extends Tradebook {
         if (this.basePlan.mustOpenAboveVwap) {
             let openPrice = Models.getOpenPrice(symbol);
             let openVwap = Models.getLastVwapBeforeOpen(symbol);
-            if (openPrice == null || openVwap == null) {
-                Firestore.logError(`mustOpenAboveVwap: need open price and VWAP at open`, logTags);
+            if (openVwap == null) {
+                Firestore.logError(`mustOpenAboveVwap: need VWAP at open`, logTags);
                 return 0;
             }
             if (openPrice < openVwap) {

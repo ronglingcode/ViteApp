@@ -62,7 +62,7 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
     }
     let openPrice = Models.getOpenPrice(symbol);
     let isEntryPriceInTradableArea = Models.isPriceInTradableArea(symbol, isLong, entryPrice);
-    let isOpenInTradableArea = openPrice ? Models.isPriceInTradableArea(symbol, isLong, openPrice) : false;
+    let isOpenInTradableArea = Models.isPriceInTradableArea(symbol, isLong, openPrice);
     let hasBeenInTradableArea = Models.hasPriceBeenInTradableArea(symbol, isLong);
 
     let initialSize = liquidityScale * RiskManager.getRiskMultiplerForNextEntry(symbol, isLong, basePlan, logTags);
@@ -236,9 +236,6 @@ export const conditionallyHasReversalBarSinceOpen = (symbol: string,
     let plan = TradingPlans.getTradingPlans(symbol);
     let openPrice = Models.getOpenPrice(symbol);
     let hasReversal = Patterns.hasReversalBarSinceOpen(symbol, isLong, strictMode, considerCurrentCandleAfterOneMinute, "conditional");
-    if (!openPrice) {
-        return hasReversal;
-    }
     let gap = openPrice - plan.analysis.gap.pdc;
     let atr = plan.atr.average;
     let threashold = atr * 0.8;

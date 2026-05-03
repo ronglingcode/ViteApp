@@ -1348,19 +1348,20 @@ export const getCurrentVwap = (symbol: string) => {
     let currentVwap = vwap[vwap.length - 1].value;
     return currentVwap;
 };
-export const getOpenPrice = (symbol: string) => {
+export const hasOpenPrice = (symbol: string) => {
+    let candles = getCandlesFromDisplaySinceOpen(symbol);
+    return candles && candles.length > 0;
+}
+export const getOpenPrice = (symbol: string): number => {
     let candles = getCandlesFromDisplaySinceOpen(symbol);
     if (candles && candles.length > 0) {
         return candles[0].open;
-    } else {
-        return undefined;
     }
+    return getCurrentPrice(symbol);
 };
 export const isGappedUp = (symbol: string): boolean => {
     const plan = TradingPlans.getTradingPlans(symbol);
-    const openPrice = getOpenPrice(symbol);
-    if (!openPrice) return false;
-    return openPrice > plan.analysis.gap.pdc;
+    return getOpenPrice(symbol) > plan.analysis.gap.pdc;
 };
 export const getPreviousCandle = (symbol: string, currentCandle: SimpleCandle) => {
     let candles = getSymbolData(symbol).candles;
@@ -1595,11 +1596,7 @@ export const openPriceIsAboveVwap = (symbol: string) => {
     let open = getOpenPrice(symbol);
     let lastVwapBeforeOpen = getLastVwapBeforeOpen(symbol);
     Firestore.logDebug(`${symbol} open ${open}, last vwap ${lastVwapBeforeOpen}`);
-    if (open && open > lastVwapBeforeOpen) {
-        return true;
-    } else {
-        return false;
-    }
+    return open > lastVwapBeforeOpen;
 }
 export const getLastVolumeBeforeOpen = (symbol: string) => {
     let time = Helper.getMarketOpenTime();

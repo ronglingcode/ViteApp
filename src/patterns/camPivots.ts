@@ -2,12 +2,9 @@ import * as Models from '../models/models';
 export const getPatterns = (symbol: string) => {
     let symbolData = Models.getSymbolData(symbol);
     let camPivots = symbolData.camPivots;
-    let patternsForOpenPrice = "";
     let openPrice = Models.getOpenPrice(symbol);
     let currentPrice = Models.getCurrentPrice(symbol);
-    if (openPrice) {
-        patternsForOpenPrice = getPatternsForPrice(camPivots, openPrice);
-    }
+    let patternsForOpenPrice = getPatternsForPrice(camPivots, openPrice);
     let patternsForCurrentPrice = getPatternsForPrice(camPivots, currentPrice);
     return {
         patternsForOpenPrice: patternsForOpenPrice,

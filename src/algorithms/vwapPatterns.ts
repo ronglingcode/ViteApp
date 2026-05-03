@@ -381,9 +381,6 @@ export const isVwapContinuationEntry = (symbol: string, isLong: boolean, entryPr
         return false;
     }
     let openPrice = Models.getOpenPrice(symbol);
-    if (!openPrice) {
-        return false;
-    }
     let keyLevel = TradingPlans.getSingleMomentumLevel(plan);
     let vwap = Models.getCurrentVwap(symbol);
     if (isLong) {

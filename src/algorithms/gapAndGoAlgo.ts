@@ -37,8 +37,8 @@ export const validateEntry = (
     let openPrice = Models.getOpenPrice(symbol);
     let openVwap = Models.getLastVwapBeforeOpen(symbol);
     if (plan.mustOpenAboveVwap) {
-        if (openPrice == null || openVwap == null) {
-            Firestore.logError(`mustOpenAboveVwap: need open price and VWAP at open`, logTags);
+        if (openVwap == null) {
+            Firestore.logError(`mustOpenAboveVwap: need VWAP at open`, logTags);
             return 0;
         }
         if (openPrice < openVwap) {
@@ -57,7 +57,7 @@ export const validateEntry = (
         return 0;
     }
     // if open below vwap, once it gets above it, it cannot close 2 candles below vwap to lose momentum
-    if (openPrice && openVwap && openPrice < openVwap) {
+    if (openVwap && openPrice < openVwap) {
         let hasReclaimedVwap = false;
         let candles = Models.getM1ClosedCandlesSinceOpen(symbol);
         for (let i = 0; i < candles.length; i++) {

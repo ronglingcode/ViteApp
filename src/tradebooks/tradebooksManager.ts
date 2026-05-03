@@ -86,7 +86,7 @@ export const updateTradebooksStatusHighLevelCall = (symbol: string) => {
         let seconds = Helper.getSecondsSinceMarketOpen(new Date());
         if (seconds > 0) {
             let openPrice = Models.getOpenPrice(symbol);
-            if (openPrice && openPrice > 0) {
+            if (openPrice > 0) {
                 openPriceToUse = openPrice;
             }
             let lastVwapBeforeOpen = Models.getLastVwapBeforeOpen(symbol);

@@ -571,8 +571,8 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
             setOpenPriceOnChartFromTimeSale(lastPrice, newTime, widget);
         } else {
             if (newCandleIsAfterMaketOpen) {
-                let openPriceToUse = Models.getOpenPrice(symbol);
-                if (openPriceToUse) {
+                if (Models.hasOpenPrice(symbol)) {
+                    let openPriceToUse = Models.getOpenPrice(symbol);
                     setOpenPriceOnChartFromTimeSale(openPriceToUse, newTime, widget);
                 }
             }

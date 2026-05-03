@@ -38,9 +38,6 @@ const getStateEntry = (symbol: string, name: string) => {
 export const checkMomentumLevelBeforeClose = (symbol: string) => {
     let plans = TradingPlans.getTradingPlans(symbol);
     let openPrice = Models.getOpenPrice(symbol);
-    if (!openPrice) {
-        return;
-    }
     if (TradingPlans.hasSingleMomentumLevel(plans)) {
         let keyLevel = TradingPlans.getSingleMomentumLevel(plans);
         checkMomentumLevelPerLevelBeforeClose(
@@ -79,9 +76,6 @@ export const checkMomentumLevelPerLevelBeforeClose = (
 export const checkMomentumLevelOnClose = (symbol: string, newlyClosedCandle: Models.CandlePlus,
     symbolData: Models.SymbolData) => {
     let openPrice = Models.getOpenPrice(symbol);
-    if (!openPrice) {
-        return;
-    }
     let plans = TradingPlans.getTradingPlans(symbol);
     if (TradingPlans.hasSingleMomentumLevel(plans)) {
         let keyLevel = TradingPlans.getSingleMomentumLevel(plans);
@@ -384,9 +378,6 @@ export const isMoreThanMinimumTarget = (isLong: boolean, keyLevel: TradingPlansM
  */
 export const getOpenZoneScore = (symbol: string, keyLevel: TradingPlansModels.LevelArea) => {
     let open = Models.getOpenPrice(symbol);
-    if (!open) {
-        return 0;
-    }
     let lastVWap = Models.getLastVwapBeforeOpen(symbol);
     if ((open >= keyLevel.high && keyLevel.high > lastVWap) || (open > Math.max(keyLevel.high, lastVWap))) {
         return 1;

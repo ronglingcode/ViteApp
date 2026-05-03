@@ -87,7 +87,7 @@ export class GapGiveAndGo extends Tradebook {
         }
         let openPrice = Models.getOpenPrice(this.symbol);
         let openVwap = Models.getLastVwapBeforeOpen(this.symbol);
-        if (openPrice && openVwap && openPrice < openVwap) {
+        if (openVwap && openPrice < openVwap) {
             let hasReclaimedVwap = false;
             let candles = Models.getM1ClosedCandlesSinceOpen(this.symbol);
             for (let i = 0; i < candles.length; i++) {
