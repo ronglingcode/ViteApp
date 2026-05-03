@@ -5,7 +5,6 @@ import type { Tradebook } from "./baseTradebook";
 import { VwapContinuation } from "./singleKeyLevel/vwapContinuation"
 import { VwapContinuationFailed } from "./singleKeyLevel/vwapContinuationFailed";
 import * as Helper from "../utils/helper";
-import { PremarketHighRejection } from "./premarketHighRejection";
 import { GapDownAndGoDown } from "./gapDownAndGoDown";
 import { GapDownAndGoUp } from "./gapDownAndGoUp";
 import { GapAndGoBookmapOfferWallBreakout } from "./gapAndGoBookmapOfferWallBreakout";
@@ -47,9 +46,6 @@ export const createAllTradebooks = (symbol: string) => {
             let gapAndCrapBookmapRejection = new GapAndCrapBookmapRejection(symbol, shortPlan);
             tradebooksMap.set(gapAndCrapBookmapRejection.getID(), gapAndCrapBookmapRejection);
         }
-
-        let premarketHighRejectionShort = new PremarketHighRejection(symbol, scopeIsLong, plan.short.gapAndCrapPlan);
-        tradebooksMap.set(premarketHighRejectionShort.getID(), premarketHighRejectionShort);
     }
 
     if (plan.short.gapDownAndGoDownPlan) {
