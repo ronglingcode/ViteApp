@@ -2127,7 +2127,6 @@ export interface CamarillaPivots {
     S6: number
 }
 export enum CommonEntryMethods {
-    BelowWaterBreakdown = 'BelowWaterBreakdown',
     FirstNewLowM5 = 'FirstNewLowM5',
     FirstNewLowM15 = 'FirstNewLowM15',
     FirstNewLowM30 = 'FirstNewLowM30',

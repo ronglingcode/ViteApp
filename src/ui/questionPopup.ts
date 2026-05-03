@@ -3,7 +3,6 @@ import * as TraderFocus from '../controllers/traderFocus';
 import * as Chart from '../ui/chart';
 import * as AutoTrader from '../algorithms/autoTrader';
 import * as Firestore from '../firestore';
-import { TradebookID } from '../tradebooks/tradebookIds';
 export const show = (symbol: string) => {
     let chartWidget = Models.getChartWidget(symbol);
     if (!chartWidget)
@@ -13,9 +12,6 @@ export const show = (symbol: string) => {
     let tradebook = TraderFocus.getTradebookFromPosition(symbol);
     if (!tradebook)
         return;
-    if (tradebook.getID() == TradebookID.AboveWaterBreakout) {
-        return;
-    }
 
     let tradebookName = tradebook.name;
     let questionHtml = popupWindow.getElementsByClassName("question")[0];
