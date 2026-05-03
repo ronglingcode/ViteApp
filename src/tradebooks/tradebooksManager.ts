@@ -32,10 +32,6 @@ export const createAllTradebooks = (symbol: string) => {
         };
 
         if (shortPlan) {
-            let gapAndCrapVwapContinuation = new VwapContinuation(symbol, scopeIsLong, maxPriceKeyLevel, shortPlan);
-            gapAndCrapVwapContinuation.enableByDefault = true;
-            tradebooksMap.set(gapAndCrapVwapContinuation.getID(), gapAndCrapVwapContinuation);
-
             let gapAndCrapVwapBounceFail = new VwapContinuationFailed(true, symbol, scopeIsLong, maxPriceKeyLevel, shortPlan);
             gapAndCrapVwapBounceFail.enableByDefault = true;
             tradebooksMap.set(gapAndCrapVwapBounceFail.getID(), gapAndCrapVwapBounceFail);
