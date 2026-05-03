@@ -122,7 +122,6 @@ export interface SingleDirectionPlans {
     finalTargets: SingleExitTarget[],
     /* used strategies begin */
     levelMomentumPlan?: LevelMomentumPlan,
-    reversalPlan?: ReversalPlan,
     vwapBounceFailPlan?: VwapBounceFailPlan,
     allTimeHighVwapContinuationPlan?: AllTimeHighVwapContinuationPlan,
     gapAndCrapPlan?: GapAndCrapPlan,
@@ -253,10 +252,6 @@ export interface BookmapBigWallBreakdownFailLongPlan extends BasePlan {
 export interface AlgoPlan extends BasePlan {
     expirationInSeconds: number,
     allowPremarket: boolean,
-}
-export interface ReversalPlan extends BasePlan {
-    keyLevel: number,
-    requireLevelTouch: boolean,
 }
 export interface LevelBreakoutPlan extends BasePlan {
     entryPrice: number,

@@ -59,7 +59,6 @@ src/
 │   │   └── ...
 │   ├── gapAndGo.ts            # Gap-based strategies
 │   ├── gapAndCrap.ts
-│   ├── breakoutReversal.ts
 │   ├── vwapScalp.ts
 │   └── tradebookDocs/         # Strategy documentation
 │

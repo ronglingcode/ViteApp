@@ -8,8 +8,6 @@ export enum TradebookID {
     GapDownAndGoUpLong = 'GapDownAndGoUpLong',
     GapGiveAndGoLong = 'GapGiveAndGoLong',
     ATHVwapCont = 'ATHVwapCont',
-    ReversalLong = 'ReversalLong',
-    ReversalShort = 'ReversalShort',
     BookmapBigWallBreakdownFailLong = 'BookmapBigWallBreakdownFailLong',
     EmergingStrengthBreakoutLong = 'EmergingStrengthBreakoutLong',
     EmergingWeaknessBreakdownShort = 'EmergingWeaknessBreakdownShort',
