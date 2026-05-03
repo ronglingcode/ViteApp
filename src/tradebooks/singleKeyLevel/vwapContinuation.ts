@@ -3,7 +3,6 @@ import type * as TradingPlansModels from '../../models/tradingPlans/tradingPlans
 import * as CommonRules from './commonRules'
 import * as Chart from '../../ui/chart';
 import * as Firestore from '../../firestore';
-import * as AutoLevelMomentum from '../../algorithms/autoLevelMomentum';
 import * as Models from '../../models/models';
 import * as Atr from '../../models/atr';
 import * as EntryThresholdValidator from '../../utils/entryThresholdValidator';

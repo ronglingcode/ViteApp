@@ -8,7 +8,6 @@ import * as Models from '../models/models';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as Rules from '../algorithms/rules';
 import * as AutoTrader from '../algorithms/autoTrader';
-import * as AutoLevelMomentum from '../algorithms/autoLevelMomentum';
 import * as OrderFlowManager from '../controllers/orderFlowManager';
 import * as ChartSettings from '../ui/chartSettings';
 import * as ProxyServer from '../api/proxyServer';

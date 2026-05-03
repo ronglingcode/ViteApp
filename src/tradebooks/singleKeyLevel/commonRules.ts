@@ -1,5 +1,5 @@
 import type * as TradingPlansModels from '../../models/tradingPlans/tradingPlansModels'
-import * as AutoLevelMomentum from '../../algorithms/autoLevelMomentum';
+import * as Patterns from '../../algorithms/patterns';
 import * as Firestore from '../../firestore';
 import * as Models from '../../models/models';
 import * as EntryRulesChecker from '../../controllers/entryRulesChecker';
@@ -13,7 +13,8 @@ export const validateCommonEntryRules = (symbol: string, isLong: boolean,
     shouldCheckVwap: boolean,
     logTags: Models.LogTags) => {
     // 1. entry price is outside key level
-    if (!AutoLevelMomentum.isPriceOutsideKeyLevel(isLong, keyLevel, entryPrice)) {
+    let keyLevelThreshold = isLong ? keyLevel.high : keyLevel.low;
+    if (!Patterns.isPriceOutsideLevel(isLong, entryPrice, keyLevelThreshold, false)) {
         Firestore.logError(`${symbol} entry price ${entryPrice} is not outside key level`, logTags);
         return 0;
     };

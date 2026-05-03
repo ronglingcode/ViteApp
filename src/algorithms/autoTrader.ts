@@ -12,7 +12,6 @@ import * as Broker from '../api/broker';
 import * as MarketData from '../api/marketData';
 import * as Vwap from '../algorithms/vwap';
 import * as Patterns from '../algorithms/patterns';
-import * as AutoLevelMomentum from './autoLevelMomentum';
 import * as OrderFlow from '../controllers/orderFlow';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
@@ -334,7 +333,6 @@ export const onMinuteClosed = (
         }
     }
     if (seconds > 10) {
-        AutoLevelMomentum.checkMomentumLevelOnClose(symbol, newlyClosedCandle, symbolData);
         TradebooksManager.onNewCandleCloseForSymbol(symbol);
     }
     if (seconds < -10 || seconds > 10) {
@@ -536,9 +534,6 @@ export const updatePullbackDepth = (symbol: string, newPrice: number) => {
 export const onNewTimeAndSalesData = (symbol: string, newPrice: number, isNewCandleData: boolean) => {
     checkAlgoPendingCondition(symbol);
     updatePullbackDepth(symbol, newPrice);
-    if (!isNewCandleData) {
-        AutoLevelMomentum.checkMomentumLevelBeforeClose(symbol);
-    }
     alertHigherVolume(symbol);
     saveRedToGreenState(symbol);
     TradebooksManager.onNewTimeAndSalesDataForSymbol(symbol);

@@ -3,7 +3,6 @@ import type * as TradingPlansModels from '../../models/tradingPlans/tradingPlans
 import * as CommonRules from './commonRules'
 import * as Chart from '../../ui/chart';
 import * as Firestore from '../../firestore';
-import * as AutoLevelMomentum from '../../algorithms/autoLevelMomentum';
 import * as Models from '../../models/models';
 import * as Helper from '../../utils/helper';
 import * as Patterns from '../../algorithms/patterns';
@@ -77,7 +76,8 @@ export abstract class BaseBreakoutTradebook extends SingleKeyLevelTradebook {
     }
 
     validateEntryWithClose(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, logTags: Models.LogTags): number {
-        let hasClosedOutside = AutoLevelMomentum.hasClosedOutsideKeyLevel(this.symbol, this.isLong, this.keyLevel);
+        let keyLevelThreshold = this.isLong ? this.keyLevel.high : this.keyLevel.low;
+        let hasClosedOutside = Patterns.hasClosedBeyondPrice(this.symbol, this.isLong, keyLevelThreshold);
         if (!hasClosedOutside) {
             // not closed outside yet, try checking if there's a previous candle that tested key level
             Firestore.logError(`${this.symbol} has not closed outside key level`, logTags);

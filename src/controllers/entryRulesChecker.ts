@@ -2,7 +2,6 @@ import * as Config from '../config/config';
 import * as Rules from '../algorithms/rules';
 import * as RiskManager from '../algorithms/riskManager';
 import * as Patterns from '../algorithms/patterns';
-import * as AutoLevelMomentum from '../algorithms/autoLevelMomentum';
 import * as Vwap from '../algorithms/vwap';
 import * as Firestore from '../firestore';
 import * as Helper from '../utils/helper';
