@@ -99,8 +99,6 @@ export interface OpenVwapLevelConfig {
 export interface LevelOpenVwapConfig {
     shortVwapBounceFail: VwapBounceFailConfig,
     longAboveWaterBreakout: BreakoutTradebookConfig,
-    shortOpenFlush: TradebookCommonConfig,
-    longVwapScalp: TradebookCommonConfig,
 }
 export interface OpenLevelVwapConfig {
     shortVwapBounceFail: VwapBounceFailConfig,
@@ -127,7 +125,6 @@ export interface SingleDirectionPlans {
     levelMomentumPlan?: LevelMomentumPlan,
     reversalPlan?: ReversalPlan,
     vwapBounceFailPlan?: VwapBounceFailPlan,
-    vwapScalpPlan?: VwapScalpPlan,
     allTimeHighVwapContinuationPlan?: AllTimeHighVwapContinuationPlan,
     gapAndCrapPlan?: GapAndCrapPlan,
     gapAndGoPlan?: GapAndGoPlan,
@@ -146,11 +143,6 @@ export interface SingleDirectionPlans {
 };
 
 export interface VwapBounceFailPlan extends BasePlan { }
-export interface VwapScalpPlan extends BasePlan {
-    threshold: number,
-    originalKeyLevel: number,
-    strongReasonToUseThisLevel: string,
-}
 export interface AllTimeHighVwapContinuationPlan extends BasePlan {
     allTimeHigh: number,
 }

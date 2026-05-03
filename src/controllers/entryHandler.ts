@@ -12,7 +12,6 @@ import * as Patterns from '../algorithms/patterns';
 import * as AdjustExitsHandler from './adjustExitsHandler';
 import * as Broker from '../api/broker';
 import * as Calculator from '../utils/calculator';
-import { TradebookID } from '../tradebooks/tradebookIds';
 
 
 export const getLogTagsForEntryAction = (symbol: string, isLong: boolean, entryType: string) => {
@@ -118,13 +117,3 @@ export const marketEntryWithoutRules = (symbol: string, isLong: boolean,
     }
     TradingState.onPlaceMarketTrade(symbol, isLong, estimatedEntryPrice, stopOutPrice, riskLevel, submitEntryResult, allowedSizeMutiplier, plan);
 };
-
-export const clickOpenChasePlan = (symbol: string, shiftKey: boolean) => {
-    let tradebooksMap = Models.getTradebooks(symbol);
-    let openFlushTradebook = tradebooksMap.get(TradebookID.OpenFlushShort);
-    if (openFlushTradebook) {
-        openFlushTradebook.startEntry(shiftKey, false, Models.getDefaultEntryParameters());
-    } else {
-        Firestore.logError(`no open flush tradebook for ${symbol}`);
-    }
-}

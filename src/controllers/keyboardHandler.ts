@@ -66,8 +66,6 @@ export const handleKeyPressed = (code: string, shiftKey: boolean) => {
         //Handler.moveToInitialEntry(symbol, isLong);
     } else if (code === 'KeyZ') {
         Handler.setCustomStopLoss(symbol);
-    } else if (code === 'KeyO') {
-        EntryHandler.clickOpenChasePlan(symbol, shiftKey);
     } else if (code === 'KeyP') {
         Handler.replaceWithProfitTakingExitOrders(symbol, false, 0);
     } else if (code === 'KeyU') {
