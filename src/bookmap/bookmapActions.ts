@@ -9,8 +9,10 @@ import * as OrderFlow from "../controllers/orderFlow";
 import * as Handler from "../controllers/handler";
 import * as Models from "../models/models";
 import { GapAndGoBookmapOfferWallBreakout } from "../tradebooks/gapAndGoBookmapOfferWallBreakout";
+import { GapDownAndGoDownBookmapBidWallBreakdown } from "../tradebooks/gapDownAndGoDownBookmapBidWallBreakdown";
 import { TradebookID } from "../tradebooks/tradebookIds";
 import * as TradebooksManager from "../tradebooks/tradebooksManager";
+import * as TradingPlans from "../models/tradingPlans/tradingPlans";
 import * as Chart from "../ui/chart";
 
 export interface PriceSelectEvent {
@@ -68,37 +70,92 @@ const bookmapEntry = (symbol: string, useMarketOrder: boolean, stopLossPrice: nu
     let currentPrice = Models.getCurrentPrice(symbol);
     let isLong = stopLossPrice < currentPrice;
     const logTags = Models.generateLogTags(symbol, `${symbol}-bookmap-entry`);
+    const gapUp = Models.isGappedUp(symbol);
 
     if (isLong) {
-        const tradebookId = `${Models.TradebookFamilyName.GapAndGo}-${TradebookID.GapAndGoBookmapOfferWallBreakout}`;
-        const tradebook = TradebooksManager.getTradebookByID(symbol, tradebookId);
-        if (!tradebook) {
-            Firestore.logError(`[BookmapActions] GapAndGoBookmapOfferWallBreakout tradebook not found for ${symbol} (id: ${tradebookId})`, logTags);
-            return;
+        if (gapUp) {
+            const directionPlan = TradingPlans.getTradingPlansForSingleDirection(symbol, true);
+            if (!directionPlan.gapAndGoPlan) {
+                Firestore.logError(`[BookmapActions] no gapAndGoPlan in trading plan for ${symbol}`, logTags);
+                return;
+            }
+            const tradebookId = TradebookID.GapAndGoBookmapOfferWallBreakout;
+            const tradebook = TradebooksManager.getTradebookByID(symbol, tradebookId);
+            if (!tradebook) {
+                Firestore.logError(`[BookmapActions] GapAndGoBookmapOfferWallBreakout tradebook not found for ${symbol} (id: ${tradebookId})`, logTags);
+                return;
+            }
+            if (!(tradebook instanceof GapAndGoBookmapOfferWallBreakout)) {
+                Firestore.logError(`[BookmapActions] tradebook ${tradebookId} is not a GapAndGoBookmapOfferWallBreakout`, logTags);
+                return;
+            }
+            if (!tradebook.isEnabled()) {
+                Firestore.logError(`[BookmapActions] GapAndGoBookmapOfferWallBreakout tradebook disabled for ${symbol}`, logTags);
+                return;
+            }
+            Firestore.logInfo(`[BookmapActions] bookmapEntry long gap up: ${tradebookId} stop=$${stopLossPrice}`, logTags);
+            tradebook.triggerEntryFromBookmap(useMarketOrder, stopLossPrice);
+        } else {
+            const directionPlan = TradingPlans.getTradingPlansForSingleDirection(symbol, true);
+            if (!directionPlan.gapDownAndGoUpPlan) {
+                Firestore.logError(`[BookmapActions] no gapDownAndGoUpPlan in trading plan for ${symbol}`, logTags);
+                return;
+            }
+            const tradebookId = TradebookID.GapDownAndGoUpLong;
+            const tradebook = TradebooksManager.getTradebookByID(symbol, tradebookId);
+            if (!tradebook) {
+                Firestore.logError(`[BookmapActions] GapDownAndGoUp tradebook not found for ${symbol} (id: ${tradebookId})`, logTags);
+                return;
+            }
+            if (!tradebook.isEnabled()) {
+                Firestore.logError(`[BookmapActions] GapDownAndGoUp tradebook disabled for ${symbol}`, logTags);
+                return;
+            }
+            Firestore.logInfo(`[BookmapActions] bookmapEntry long gap down: ${tradebookId} stop=$${stopLossPrice}`, logTags);
+            tradebook.startEntry(useMarketOrder, false, Models.getDefaultEntryParameters());
         }
-        if (!(tradebook instanceof GapAndGoBookmapOfferWallBreakout)) {
-            Firestore.logError(`[BookmapActions] tradebook ${tradebookId} is not a GapAndGoBookmapOfferWallBreakout`, logTags);
-            return;
-        }
-        if (!tradebook.isEnabled()) {
-            Firestore.logError(`[BookmapActions] BookmapBigWallBreakout long tradebook disabled for ${symbol}`, logTags);
-            return;
-        }
-        Firestore.logInfo(`[BookmapActions] bookmapEntry long: ${tradebookId} stop=$${stopLossPrice}`, logTags);
-        tradebook.triggerEntryFromBookmap(useMarketOrder, stopLossPrice);
     } else {
-        const tradebookId = `${Models.TradebookFamilyName.GapAndCrap}-${TradebookID.GapAndCrapShort}`;
-        const tradebook = TradebooksManager.getTradebookByID(symbol, tradebookId);
-        if (!tradebook) {
-            Firestore.logError(`[BookmapActions] GapAndCrap tradebook not found for ${symbol} (id: ${tradebookId})`, logTags);
-            return;
+        if (gapUp) {
+            const directionPlan = TradingPlans.getTradingPlansForSingleDirection(symbol, false);
+            if (!directionPlan.gapAndCrapPlan) {
+                Firestore.logError(`[BookmapActions] no gapAndCrapPlan in trading plan for ${symbol}`, logTags);
+                return;
+            }
+            const tradebookId = `${Models.TradebookFamilyName.GapAndCrap}-${TradebookID.GapAndCrapShort}`;
+            const tradebook = TradebooksManager.getTradebookByID(symbol, tradebookId);
+            if (!tradebook) {
+                Firestore.logError(`[BookmapActions] GapAndCrap tradebook not found for ${symbol} (id: ${tradebookId})`, logTags);
+                return;
+            }
+            if (!tradebook.isEnabled()) {
+                Firestore.logError(`[BookmapActions] GapAndCrap tradebook disabled for ${symbol}`, logTags);
+                return;
+            }
+            Firestore.logInfo(`[BookmapActions] bookmapEntry short gap up: ${tradebookId} stop=$${stopLossPrice}`, logTags);
+            tradebook.startEntry(useMarketOrder, false, Models.getDefaultEntryParameters());
+        } else {
+            const directionPlan = TradingPlans.getTradingPlansForSingleDirection(symbol, false);
+            if (!directionPlan.gapDownAndGoDownPlan) {
+                Firestore.logError(`[BookmapActions] no gapDownAndGoDownPlan in trading plan for ${symbol}`, logTags);
+                return;
+            }
+            const tradebookId = TradebookID.GapDownAndGoDownBookmapBidWallBreakdown;
+            const tradebook = TradebooksManager.getTradebookByID(symbol, tradebookId);
+            if (!tradebook) {
+                Firestore.logError(`[BookmapActions] GapDownAndGoDownBookmapBidWallBreakdown tradebook not found for ${symbol} (id: ${tradebookId})`, logTags);
+                return;
+            }
+            if (!(tradebook instanceof GapDownAndGoDownBookmapBidWallBreakdown)) {
+                Firestore.logError(`[BookmapActions] tradebook ${tradebookId} is not a GapDownAndGoDownBookmapBidWallBreakdown`, logTags);
+                return;
+            }
+            if (!tradebook.isEnabled()) {
+                Firestore.logError(`[BookmapActions] GapDownAndGoDownBookmapBidWallBreakdown tradebook disabled for ${symbol}`, logTags);
+                return;
+            }
+            Firestore.logInfo(`[BookmapActions] bookmapEntry short gap down: ${tradebookId} stop=$${stopLossPrice}`, logTags);
+            tradebook.triggerEntryFromBookmap(useMarketOrder, stopLossPrice);
         }
-        if (!tradebook.isEnabled()) {
-            Firestore.logError(`[BookmapActions] GapAndCrap tradebook disabled for ${symbol}`, logTags);
-            return;
-        }
-        Firestore.logInfo(`[BookmapActions] bookmapEntry short: ${tradebookId} stop=$${stopLossPrice}`, logTags);
-        tradebook.startEntry(useMarketOrder, false, Models.getDefaultEntryParameters());
     }
 }
 

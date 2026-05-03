@@ -1356,6 +1356,12 @@ export const getOpenPrice = (symbol: string) => {
         return undefined;
     }
 };
+export const isGappedUp = (symbol: string): boolean => {
+    const plan = TradingPlans.getTradingPlans(symbol);
+    const openPrice = getOpenPrice(symbol);
+    if (!openPrice) return false;
+    return openPrice > plan.analysis.gap.pdc;
+};
 export const getPreviousCandle = (symbol: string, currentCandle: SimpleCandle) => {
     let candles = getSymbolData(symbol).candles;
     let start = 0;
