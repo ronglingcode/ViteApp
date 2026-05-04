@@ -15,6 +15,7 @@ import { TradebookID } from "../tradebooks/tradebookIds";
 import * as TradebooksManager from "../tradebooks/tradebooksManager";
 import * as TradingPlans from "../models/tradingPlans/tradingPlans";
 import * as Chart from "../ui/chart";
+import { GapAndCrapBookmapBidWallBreakdown } from "../tradebooks/gapAndCrapBookmapBidWallBreakdown";
 
 export interface PriceSelectEvent {
     symbol: string;
@@ -126,10 +127,14 @@ const bookmapEntry = (symbol: string, useMarketOrder: boolean, stopLossPrice: nu
                 Firestore.logError(`[BookmapActions] no gapAndCrapPlan in trading plan for ${symbol}`, logTags);
                 return;
             }
-            const tradebookId = `${Models.TradebookFamilyName.GapAndCrap}-${TradebookID.GapAndCrapShort}`;
+            const tradebookId = TradebookID.GapAndCrapBookmapBidWallBreakdown;
             const tradebook = TradebooksManager.getTradebookByID(symbol, tradebookId);
             if (!tradebook) {
                 Firestore.logError(`[BookmapActions] GapAndCrap tradebook not found for ${symbol} (id: ${tradebookId})`, logTags);
+                return;
+            }
+            if (!(tradebook instanceof GapAndCrapBookmapBidWallBreakdown)) {
+                Firestore.logError(`[BookmapActions] tradebook ${tradebookId} is not a GapAndCrapBookmapBidWallBreakdown`, logTags);
                 return;
             }
             if (!tradebook.isEnabled()) {
@@ -137,7 +142,7 @@ const bookmapEntry = (symbol: string, useMarketOrder: boolean, stopLossPrice: nu
                 return;
             }
             Firestore.logInfo(`[BookmapActions] bookmapEntry short gap up: ${tradebookId} stop=$${stopLossPrice}`, logTags);
-            tradebook.startEntry(useMarketOrder, false, Models.getDefaultEntryParameters());
+            tradebook.triggerEntryFromBookmap(useMarketOrder, stopLossPrice);
         } else {
             const directionPlan = TradingPlans.getTradingPlansForSingleDirection(symbol, false);
             if (!directionPlan.gapDownAndGoDownPlan) {
