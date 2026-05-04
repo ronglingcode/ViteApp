@@ -3,6 +3,7 @@ import * as Firestore from '../firestore';
 import * as Models from '../models/models';
 import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
+import * as GapAndCrapAlgo from '../algorithms/gapAndCrapAlgo';
 
 /** Shared short entry path: gap-and-crap rules + global sizing + breakout entry submit. Not a tradebook. */
 export function runGapAndCrapBookmapShortEntryPipeline(
@@ -17,7 +18,7 @@ export function runGapAndCrapBookmapShortEntryPipeline(
     logTags: Models.LogTags
 ): number {
     let riskLevelPrice = stopOutPrice;
-    if (!EntryRulesChecker.allowEntryRulesForGapAndCrap(symbol, entryPrice, logTags)) {
+    if (!GapAndCrapAlgo.allowEntryRulesForGapAndCrap(symbol, entryPrice, logTags)) {
         return 0;
     }
     let allowedSize = EntryRulesChecker.checkBasicGlobalEntryRules(

@@ -1,6 +1,7 @@
 import * as Models from '../models/models';
 import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as Firestore from '../firestore';
+import * as Helper from '../utils/helper';
 
 export const hasAtLeastOneReasonSet = (plan: TradingPlansModels.GapAndCrapPlan, symbol: string): boolean => {
     const hasOne =
@@ -16,6 +17,25 @@ export const hasAtLeastOneReasonSet = (plan: TradingPlansModels.GapAndCrapPlan, 
     }
     return true;
 };
+
+export const isGapAndCrapNewTradeExceedShotClock = () => {
+    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
+    return secondsSinceMarketOpen > 5 * 60;
+}
+
+export const allowEntryRulesForGapAndCrap = (symbol: string, entryPrice: number, logTags: Models.LogTags) => {
+    if (isGapAndCrapNewTradeExceedShotClock()) {
+        Firestore.logError(`only allow entry in the 1st 5 minutes for gap and crap`, logTags);
+        return false;
+    }
+    let symbolData = Models.getSymbolData(symbol);
+    if (entryPrice > symbolData.premktHigh) {
+        Firestore.logError(`for gap and crap, only allow entry below premarket high ${symbolData.premktHigh}`, logTags);
+        return false;
+    }
+
+    return true;
+}
 
 export const getAllowedReasonToAddPartial = (symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult => {
     let vwap = Models.getCurrentVwap(symbol);

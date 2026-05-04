@@ -697,7 +697,3 @@ export const isNewTradeAfterStopOut = (symbol: string, isLong: boolean): boolean
     }
 }
 
-export const isGapAndCrapNewTradeExceedShotClock = () => {
-    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
-    return secondsSinceMarketOpen > 5 * 60;
-}

@@ -16,7 +16,6 @@ import * as GlobalSettings from '../../config/globalSettings';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
 import * as TradebookUtils from '../tradebookUtil';
 import * as Rules from '../../algorithms/rules';
-import * as EntryRulesChecker from '../../controllers/entryRulesChecker';
 
 import { TradebookID } from '../tradebookIds';
 
@@ -178,10 +177,6 @@ export class VwapContinuation extends SingleKeyLevelTradebook {
             }
         }
         if (!Rules.isTimingAndEntryAllowedForHigherTimeframe(this.symbol, entryPrice, this.isLong, timeframe, logTags)) {
-            return 0;
-        }
-
-        if (!EntryRulesChecker.allowEntryRulesForGapAndCrap(this.symbol, entryPrice, logTags)) {
             return 0;
         }
         let allowedSize = CommonRules.validateCommonEntryRules(

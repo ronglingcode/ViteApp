@@ -32,7 +32,7 @@ export class GapAndCrapBookmapBidWallBreakdown extends Tradebook {
     ): number {
         let symbol = this.symbol;
 
-        if (!EntryRulesChecker.allowEntryRulesForGapAndCrap(symbol, entryPrice, logTags)) {
+        if (!GapAndCrapAlgo.allowEntryRulesForGapAndCrap(symbol, entryPrice, logTags)) {
             return 0;
         }
 
