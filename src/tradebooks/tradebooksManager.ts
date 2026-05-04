@@ -11,6 +11,32 @@ import { GapAndCrapBookmapBidWallBreakdown } from "./gapAndCrapBookmapBidWallBre
 import { GapAndCrapBookmapRejection } from "./gapAndCrapBookmapRejection";
 import { GapDownAndGoDownBookmapBidWallBreakdown } from "./gapDownAndGoDownBookmapBidWallBreakdown";
 
+export const createTradebooksForGapAndGo = (symbol: string, gapAndGoPlan: TradingPlansModels.GapAndGoPlan, tradebooksMap: Map<string, Tradebook>) => {
+    let gapAndGoBookmapOfferWallBreakout = new GapAndGoBookmapOfferWallBreakout(symbol, gapAndGoPlan);
+    tradebooksMap.set(gapAndGoBookmapOfferWallBreakout.getID(), gapAndGoBookmapOfferWallBreakout);
+};
+export const createTradebooksForGapAndCrap = (symbol: string, gapAndCrapPlan: TradingPlansModels.GapAndCrapPlan, tradebooksMap: Map<string, Tradebook>) => {
+    let maxPrice = gapAndCrapPlan.aboveThisLevelNoMoreShort;
+    let maxPriceKeyLevel: TradingPlansModels.LevelArea = {
+        high: maxPrice,
+        low: maxPrice
+    };
+    let scopeIsLong = false;
+    let shortPlan = TradingPlans.getTradingPlans(symbol).short.levelMomentumPlan;
+
+    if (shortPlan) {
+        let gapAndCrapVwapBounceFail = new VwapContinuationFailed(true, symbol, scopeIsLong, maxPriceKeyLevel, shortPlan);
+        gapAndCrapVwapBounceFail.enableByDefault = true;
+        tradebooksMap.set(gapAndCrapVwapBounceFail.getID(), gapAndCrapVwapBounceFail);
+
+        let gapAndCrapBookmapBidWallBreakdown = new GapAndCrapBookmapBidWallBreakdown(symbol, shortPlan);
+        tradebooksMap.set(gapAndCrapBookmapBidWallBreakdown.getID(), gapAndCrapBookmapBidWallBreakdown);
+
+        let gapAndCrapBookmapRejection = new GapAndCrapBookmapRejection(symbol, shortPlan);
+        tradebooksMap.set(gapAndCrapBookmapRejection.getID(), gapAndCrapBookmapRejection);
+    }
+}
+
 export const createAllTradebooks = (symbol: string) => {
     let plan = TradingPlans.getTradingPlans(symbol);
     let shortPlan = plan.short.levelMomentumPlan;
@@ -19,28 +45,11 @@ export const createAllTradebooks = (symbol: string) => {
     let tradebooksMap = new Map<string, Tradebook>();
 
     if (plan.long.gapAndGoPlan) {
-        let gapAndGoBookmapOfferWallBreakout = new GapAndGoBookmapOfferWallBreakout(symbol, plan.long.gapAndGoPlan);
-        tradebooksMap.set(gapAndGoBookmapOfferWallBreakout.getID(), gapAndGoBookmapOfferWallBreakout);
+        createTradebooksForGapAndGo(symbol, plan.long.gapAndGoPlan, tradebooksMap);
     }
 
     if (plan.short.gapAndCrapPlan) {
-        let maxPrice = plan.short.gapAndCrapPlan.aboveThisLevelNoMoreShort;
-        let maxPriceKeyLevel: TradingPlansModels.LevelArea = {
-            high: maxPrice,
-            low: maxPrice
-        };
-
-        if (shortPlan) {
-            let gapAndCrapVwapBounceFail = new VwapContinuationFailed(true, symbol, scopeIsLong, maxPriceKeyLevel, shortPlan);
-            gapAndCrapVwapBounceFail.enableByDefault = true;
-            tradebooksMap.set(gapAndCrapVwapBounceFail.getID(), gapAndCrapVwapBounceFail);
-
-            let gapAndCrapBookmapBidWallBreakdown = new GapAndCrapBookmapBidWallBreakdown(symbol, shortPlan);
-            tradebooksMap.set(gapAndCrapBookmapBidWallBreakdown.getID(), gapAndCrapBookmapBidWallBreakdown);
-
-            let gapAndCrapBookmapRejection = new GapAndCrapBookmapRejection(symbol, shortPlan);
-            tradebooksMap.set(gapAndCrapBookmapRejection.getID(), gapAndCrapBookmapRejection);
-        }
+        createTradebooksForGapAndCrap(symbol, plan.short.gapAndCrapPlan, tradebooksMap);
     }
 
     if (plan.short.gapDownAndGoDownPlan) {

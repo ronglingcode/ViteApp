@@ -95,7 +95,7 @@ export class GapAndGoBookmapOfferWallBreakout extends Tradebook {
         }
         return {
             allowed: false,
-            reason: "default is no add",
+            reason: "wait for premarket high",
         };
     }
 
