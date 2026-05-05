@@ -24,6 +24,11 @@ export interface PriceSelectEvent {
     timestamp: number;
 }
 
+/** remove keys like ctrl, alt */
+const cleanKeys = (keys: string[]) => {
+    return keys.filter(k => k !== "ctrl" && k !== "control" && k !== "meta" && k !== "alt");
+};
+
 /**
  * Main router for priceSelect events from Bookmap.
  * Dispatches to the appropriate handler based on keyCode.
@@ -31,18 +36,20 @@ export interface PriceSelectEvent {
 export const handlePriceSelect = (event: PriceSelectEvent) => {
     const { symbol, price, keyCode } = event;
     const rawKey = keyCode.toLowerCase().trim();
-    // Normalize "1+alt" -> "1" so plugin can send either format.
-    const key = rawKey.replace(/\+alt$/, '');
-    const digit = parseDigitHotkey(key);
-    let newPrice = price;
-    Firestore.logInfo(`[Bookmap Processed] Price selected [${symbol}]: $${price}, rawKey=${keyCode} keyCode=${key}`);
-    if (!Helper.isInActiveHoursOfMarket()) {
-        //return;
+    const splitKeys = rawKey.split('+').map(k => k.trim());
+    const cleanedKeys = cleanKeys(splitKeys);
+    if (cleanedKeys.length !== 1) {
+        Firestore.logError(`[BookmapActions] Unexpected combination of keys in priceSelect. rawKey=${rawKey}`);
+        return;
     }
 
-    if (key === "cmd" || key === "ctrl" || key === "control" || key === "meta") {
-        setStopLossFromBookmap(symbol, price);
-    } else if (key === "e") {
+    // Normalize "1+alt" -> "1" so plugin can send either format.
+    const key = cleanedKeys[0];
+    const digit = parseDigitHotkey(key);
+    let newPrice = price;
+    Firestore.logInfo(`[Bookmap Processed] Price selected [${symbol}]: $${price}, keyCode=${key}`);
+
+    if (key === "e") {
         Chart.drawEntry(symbol, price);
     } else if (key === "b") {
         bookmapEntry(symbol, true, price);
@@ -73,6 +80,8 @@ const bookmapEntry = (symbol: string, useMarketOrder: boolean, stopLossPrice: nu
     let isLong = stopLossPrice < currentPrice;
     const logTags = Models.generateLogTags(symbol, `${symbol}-bookmap-entry`);
     const gapUp = Models.isGappedUp(symbol);
+    let minutes = Helper.getMinutesSinceMarketOpen(new Date());
+    let isTestMode = minutes < 0 || minutes > (60 * 3);
 
     if (isLong) {
         if (gapUp) {
@@ -96,7 +105,9 @@ const bookmapEntry = (symbol: string, useMarketOrder: boolean, stopLossPrice: nu
                 return;
             }
             Firestore.logInfo(`[BookmapActions] bookmapEntry long gap up: ${tradebookId} stop=$${stopLossPrice}`, logTags);
-            tradebook.triggerEntryFromBookmap(useMarketOrder, stopLossPrice);
+            if (!isTestMode) {
+                tradebook.triggerEntryFromBookmap(useMarketOrder, stopLossPrice);
+            }
         } else {
             const directionPlan = TradingPlans.getTradingPlansForSingleDirection(symbol, true);
             if (!directionPlan.gapDownAndGoUpPlan) {
@@ -118,7 +129,9 @@ const bookmapEntry = (symbol: string, useMarketOrder: boolean, stopLossPrice: nu
                 return;
             }
             Firestore.logInfo(`[BookmapActions] bookmapEntry long gap down: ${tradebookId} stop=$${stopLossPrice}`, logTags);
-            tradebook.triggerEntryFromBookmap(useMarketOrder, stopLossPrice);
+            if (!isTestMode) {
+                tradebook.triggerEntryFromBookmap(useMarketOrder, stopLossPrice);
+            }
         }
     } else {
         if (gapUp) {
@@ -142,7 +155,9 @@ const bookmapEntry = (symbol: string, useMarketOrder: boolean, stopLossPrice: nu
                 return;
             }
             Firestore.logInfo(`[BookmapActions] bookmapEntry short gap up: ${tradebookId} stop=$${stopLossPrice}`, logTags);
-            tradebook.triggerEntryFromBookmap(useMarketOrder, stopLossPrice);
+            if (!isTestMode) {
+                tradebook.triggerEntryFromBookmap(useMarketOrder, stopLossPrice);
+            }
         } else {
             const directionPlan = TradingPlans.getTradingPlansForSingleDirection(symbol, false);
             if (!directionPlan.gapDownAndGoDownPlan) {
@@ -164,7 +179,9 @@ const bookmapEntry = (symbol: string, useMarketOrder: boolean, stopLossPrice: nu
                 return;
             }
             Firestore.logInfo(`[BookmapActions] bookmapEntry short gap down: ${tradebookId} stop=$${stopLossPrice}`, logTags);
-            tradebook.triggerEntryFromBookmap(useMarketOrder, stopLossPrice);
+            if (!isTestMode) {
+                tradebook.triggerEntryFromBookmap(useMarketOrder, stopLossPrice);
+            }
         }
     }
 }
