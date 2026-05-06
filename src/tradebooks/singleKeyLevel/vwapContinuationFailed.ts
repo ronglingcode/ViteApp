@@ -270,6 +270,14 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
         return result;
     }
 
+    getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
+        let result: Models.CheckRulesResult = {
+            allowed: true,
+            reason: "default disallow",
+        }
+        return result;
+    }
+
     getEligibleEntryParameters(): Models.TradebookEntryParameters {
         return {
             useCurrentCandleHigh: true,
