@@ -147,6 +147,9 @@ export interface BasePlan {
     planType?: PlanType,
     timeframe?: number,
     entryMethod?: string,
+    coreTarget: number,
+    coreCount: number,
+    runnerCount: number,
 };
 export interface PlanConfigs {
     size: number,
