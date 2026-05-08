@@ -20,6 +20,7 @@ export const hasAtLeastOneReasonSet = (plan: TradingPlansModels.GapAndCrapPlan, 
 
 export const isGapAndCrapNewTradeExceedShotClock = () => {
     let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
+    return false;
     return secondsSinceMarketOpen > 5 * 60;
 }
 
@@ -31,7 +32,7 @@ export const allowEntryRulesForGapAndCrap = (symbol: string, entryPrice: number,
     let symbolData = Models.getSymbolData(symbol);
     if (entryPrice > symbolData.premktHigh) {
         Firestore.logError(`for gap and crap, only allow entry below premarket high ${symbolData.premktHigh}`, logTags);
-        return false;
+        //return false;
     }
 
     return true;
