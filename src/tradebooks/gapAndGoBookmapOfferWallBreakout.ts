@@ -70,17 +70,15 @@ export class GapAndGoBookmapOfferWallBreakout extends Tradebook {
     }
 
     triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {
-        //Firestore.logError("only trigger from bookmap");
-        //return 0;
-
         let symbol = this.symbol;
         let logTags = Models.generateLogTags(symbol, `${symbol}_bookmap_offer_wall_breakout`);
 
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, true, useMarketOrder, Models.getDefaultEntryParameters());
         let stopOutPrice = Chart.getCustomStopLossPrice(symbol, true);
         if (stopOutPrice == 0) {
-            Firestore.logError(`no custom stop loss`, logTags);
-            return 0;
+            // default to low of the day
+            let symbolData = Models.getSymbolData(symbol);
+            stopOutPrice = symbolData.lowOfDay;
         }
         return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, logTags);
 
