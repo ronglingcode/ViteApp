@@ -15,19 +15,14 @@ import * as GlobalSettings from '../../config/globalSettings';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
 import * as TradebookUtils from '../tradebookUtil';
 
-import { TradebookID } from '../tradebookIds';
-
 export class OpenDrive extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
-    public getID(): string {
-        return this.buildID(this.isLong ? TradebookID.OpenDriveLong : TradebookID.OpenDriveShort);
-    }
-    constructor(symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
+    constructor(symbol: string, tradebookID: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan
     ) {
         let tradebookName = isLong ? 'Long Open Drive' : 'Short Open Drive';
         let buttonLabel = 'Open Drive';
-        super(symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel)
+        super(symbol, tradebookID, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel)
         this.init()
     }
 

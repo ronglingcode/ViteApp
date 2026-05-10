@@ -12,7 +12,6 @@ import * as ExitRulesCheckerNew from '../../controllers/exitRulesCheckerNew';
 import * as Rules from '../../algorithms/rules';
 import * as GlobalSettings from '../../config/globalSettings';
 import * as VwapPatterns from '../../algorithms/vwapPatterns';
-import { TradebookID } from '../tradebookIds';
 enum EntryMethod {
     ClosedCandle = 'Closed Candle',
     LiveCandle = 'Live Candle',
@@ -23,11 +22,7 @@ enum EntryMethod {
 export class VwapContinuationFailed extends SingleKeyLevelTradebook {
     public waitForClose: boolean = true;
     public disableExitRules: boolean = false;
-    private readonly shortId: TradebookID;
-    public getID(): string {
-        return this.isLong ? TradebookID.LongVwapPushdownFailed : this.shortId;
-    }
-    constructor(isGapAndCrap: boolean, symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
+    constructor(symbol: string, tradebookID: string, isGapAndCrap: boolean, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan) {
         let tradebookName = isLong ? 'Long VWAP Bounce Failed' : 'Short VWAP Pushdown Failed';
         let buttonLabel = isLong ? 'Vwap Pushdown Fail' : 'Vwap Bounce Fail';
@@ -35,10 +30,7 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
             tradebookName = 'Gap and Crap Short VWAP Bounce Fail';
             buttonLabel = `${Models.TradebookFamilyName.GapAndCrap} VWAP Bounce Fail`;
         }
-        super(symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel);
-        this.shortId = isGapAndCrap
-            ? TradebookID.GapAndCrapShortVwapBounceFailed
-            : TradebookID.GapDownAndGoDownShortVwapBounceFailed;
+        super(symbol, tradebookID, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel);
     }
 
     public updateConfig(config: TradingPlansModels.TradebooksConfig): void {

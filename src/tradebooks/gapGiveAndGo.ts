@@ -8,8 +8,6 @@ import * as Helper from '../utils/helper';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 
-import { TradebookID } from './tradebookIds';
-
 export class GapGiveAndGo extends Tradebook {
     private basePlan: TradingPlansModels.GapGiveAndGoPlan;
 
@@ -31,17 +29,13 @@ export class GapGiveAndGo extends Tradebook {
         return true;
     }
 
-    public getID(): string {
-        return this.buildID(TradebookID.GapGiveAndGoLong);
-    }
-
-    constructor(symbol: string, isLong: boolean, basePlan: TradingPlansModels.GapGiveAndGoPlan) {
+    constructor(symbol: string, tradebookID: string, isLong: boolean, basePlan: TradingPlansModels.GapGiveAndGoPlan) {
         if (!isLong) {
             throw new Error('GapGiveAndGo tradebook only supports long positions');
         }
         let tradebookName = 'Long Gap Give and Go';
         let buttonLabel = 'Gap Give and Go';
-        super(symbol, true, tradebookName, buttonLabel);
+        super(symbol, tradebookID, true, tradebookName, buttonLabel);
         this.basePlan = basePlan;
         this.enableByDefault = true;
     }

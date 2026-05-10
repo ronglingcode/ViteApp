@@ -17,6 +17,7 @@ export abstract class Tradebook {
     public enableByDefault: boolean = false;
     constructor(
         public readonly symbol: string,
+        public readonly tradebookID: string,
         public readonly isLong: boolean,
         public readonly name: string,
         public readonly buttonLabel: string,
@@ -25,9 +26,8 @@ export abstract class Tradebook {
 
     /** kick off whatever entry orders this strategy needs */
     abstract triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number;
-    abstract getID(): string;
-    protected buildID(baseID: string): string {
-        return baseID;
+    getID(): string {
+        return this.tradebookID;
     }
     abstract refreshLiveStats(): void;
     abstract getEntryMethods(): string[];

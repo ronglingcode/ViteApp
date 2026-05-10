@@ -8,8 +8,6 @@ import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as Helper from '../utils/helper';
 
-import { TradebookID } from './tradebookIds';
-
 export class GapDownAndGoDown extends Tradebook {
     private basePlan: TradingPlansModels.GapDownAndGoDownPlan;
 
@@ -30,17 +28,13 @@ export class GapDownAndGoDown extends Tradebook {
         return true;
     }
 
-    public getID(): string {
-        return this.buildID(TradebookID.GapDownAndGoDownShort);
-    }
-
-    constructor(symbol: string, isLong: boolean, basePlan: TradingPlansModels.GapDownAndGoDownPlan) {
+    constructor(symbol: string, tradebookID: string, isLong: boolean, basePlan: TradingPlansModels.GapDownAndGoDownPlan) {
         if (isLong) {
             throw new Error('GapDownAndGoDown tradebook only supports short positions');
         }
         let tradebookName = 'Short Gap Down and Go Down';
         let buttonLabel = 'Gap Down Go Down';
-        super(symbol, false, tradebookName, buttonLabel);
+        super(symbol, tradebookID, false, tradebookName, buttonLabel);
         this.basePlan = basePlan;
         this.enableByDefault = true;
     }

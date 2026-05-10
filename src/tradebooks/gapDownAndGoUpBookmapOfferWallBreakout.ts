@@ -6,19 +6,14 @@ import * as Firestore from '../firestore';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as Helper from '../utils/helper';
-import { TradebookID } from './tradebookIds';
 
 export class GapDownAndGoUpBookmapOfferWallBreakout extends Tradebook {
     private basePlan: TradingPlansModels.GapDownAndGoUpPlan;
 
-    constructor(symbol: string, basePlan: TradingPlansModels.GapDownAndGoUpPlan) {
-        super(symbol, true, 'Long Gap Down & Go Up Bookmap Offer Wall Breakout', `${Models.TradebookFamilyName.GapDownAndGoUp} bookmap`);
+    constructor(symbol: string, tradebookID: string, basePlan: TradingPlansModels.GapDownAndGoUpPlan) {
+        super(symbol, tradebookID, true, 'Long Gap Down & Go Up Bookmap Offer Wall Breakout', `${Models.TradebookFamilyName.GapDownAndGoUp} bookmap`);
         this.basePlan = basePlan;
         this.enableByDefault = true;
-    }
-
-    getID(): string {
-        return TradebookID.GapDownAndGoUpBookmapOfferWallBreakout;
     }
 
     refreshLiveStats(): void {

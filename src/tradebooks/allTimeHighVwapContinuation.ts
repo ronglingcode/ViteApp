@@ -9,23 +9,17 @@ import * as Rules from '../algorithms/rules';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 
-import { TradebookID } from './tradebookIds';
-
 export class AllTimeHighVwapContinuation extends Tradebook {
     private allTimeHighVwapContinuationPlan: TradingPlansModels.AllTimeHighVwapContinuationPlan;
 
-    public getID(): string {
-        return this.buildID(TradebookID.ATHVwapCont);
-    }
-
-    constructor(symbol: string, isLong: boolean, plan: TradingPlansModels.AllTimeHighVwapContinuationPlan) {
+    constructor(symbol: string, tradebookID: string, isLong: boolean, plan: TradingPlansModels.AllTimeHighVwapContinuationPlan) {
         // This tradebook only supports long positions
         if (!isLong) {
             throw new Error('AllTimeHighVwapContinuation tradebook only supports long positions');
         }
         let tradebookName = 'ATH VWAP Cont';
         let buttonLabel = 'ATH VWAP Cont';
-        super(symbol, true, tradebookName, buttonLabel);
+        super(symbol, tradebookID, true, tradebookName, buttonLabel);
         this.allTimeHighVwapContinuationPlan = plan;
         this.enableByDefault = false;
     }

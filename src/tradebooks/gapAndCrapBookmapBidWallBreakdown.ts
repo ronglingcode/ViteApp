@@ -6,19 +6,13 @@ import * as Firestore from '../firestore';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as GapAndCrapAlgo from '../algorithms/gapAndCrapAlgo';
 
-import { TradebookID } from './tradebookIds';
-
 export class GapAndCrapBookmapBidWallBreakdown extends Tradebook {
     private basePlan: TradingPlansModels.BasePlan;
 
-    constructor(symbol: string, basePlan: TradingPlansModels.BasePlan) {
-        super(symbol, false, 'Short Gap & Crap Bookmap Bid Wall Breakdown', `${Models.TradebookFamilyName.GapAndCrap} bookmap`);
+    constructor(symbol: string, tradebookID: string, basePlan: TradingPlansModels.BasePlan) {
+        super(symbol, tradebookID, false, 'Short Gap & Crap Bookmap Bid Wall Breakdown', `${Models.TradebookFamilyName.GapAndCrap} bookmap`);
         this.basePlan = basePlan;
         this.enableByDefault = true;
-    }
-
-    getID(): string {
-        return TradebookID.GapAndCrapBookmapBidWallBreakdown;
     }
 
     refreshLiveStats(): void { }

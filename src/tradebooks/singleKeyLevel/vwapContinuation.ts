@@ -17,19 +17,14 @@ import * as VwapPatterns from '../../algorithms/vwapPatterns';
 import * as TradebookUtils from '../tradebookUtil';
 import * as Rules from '../../algorithms/rules';
 
-import { TradebookID } from '../tradebookIds';
-
 export class VwapContinuation extends SingleKeyLevelTradebook {
     public disableExitRules: boolean = false;
     private vwapWarningActive: boolean = false;
-    public getID(): string {
-        return this.buildID(this.isLong ? TradebookID.VwapContinuationLong : TradebookID.VwapContinuationShort);
-    }
-    constructor(symbol: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
+    constructor(symbol: string, tradebookID: string, isLong: boolean, keyLevel: TradingPlansModels.LevelArea,
         levelMomentumPlan: TradingPlansModels.LevelMomentumPlan) {
         let tradebookName = isLong ? 'Long VWAP Continuation' : 'Gap and Crap Short VWAP Cont';
         let buttonLabel = isLong ? 'VWAP Cont' : `${Models.TradebookFamilyName.GapAndCrap} VWAP Cont`;
-        super(symbol, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel)
+        super(symbol, tradebookID, isLong, keyLevel, levelMomentumPlan, tradebookName, buttonLabel)
         this.init()
     }
 

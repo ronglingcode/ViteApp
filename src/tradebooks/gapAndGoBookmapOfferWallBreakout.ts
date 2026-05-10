@@ -4,7 +4,6 @@ import * as Chart from '../ui/chart';
 import * as Models from '../models/models';
 import * as Firestore from '../firestore';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
-import { TradebookID } from './tradebookIds';
 import * as GlobalSettings from '../config/globalSettings';
 import * as ExitRulesCheckerNew from '../controllers/exitRulesCheckerNew';
 import * as Helper from '../utils/helper';
@@ -15,18 +14,14 @@ export class GapAndGoBookmapOfferWallBreakout extends Tradebook {
     private coreMinCount = 0;
 
 
-    constructor(symbol: string, basePlan: TradingPlansModels.GapAndGoPlan) {
-        super(symbol, true, 'Long Gap & Go Bookmap Offer Wall Breakout', `${Models.TradebookFamilyName.GapAndGo} bookmap`);
+    constructor(symbol: string, tradebookID: string, basePlan: TradingPlansModels.GapAndGoPlan) {
+        super(symbol, tradebookID, true, 'Long Gap & Go Bookmap Offer Wall Breakout', `${Models.TradebookFamilyName.GapAndGo} bookmap`);
         this.basePlan = basePlan;
         this.enableByDefault = true;
         let scalpCount = GlobalSettings.batchCount - basePlan.coreCount - basePlan.runnerCount;
         this.scalpMinCount = GlobalSettings.batchCount - scalpCount;
         this.coreMinCount = GlobalSettings.batchCount - scalpCount - basePlan.coreCount;
 
-    }
-
-    getID(): string {
-        return TradebookID.GapAndGoBookmapOfferWallBreakout;
     }
 
     refreshLiveStats(): void { }

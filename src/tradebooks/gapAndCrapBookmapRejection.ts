@@ -6,21 +6,16 @@ import { runGapAndCrapBookmapShortEntryPipeline } from './gapAndCrapBookmapShort
 import * as GapAndCrapAlgo from '../algorithms/gapAndCrapAlgo';
 
 /** Gap & crap short-only bookmap rejection — standalone tradebook (not a BookmapBigWallBreakout subtype). */
-import { TradebookID } from './tradebookIds';
 
 export class GapAndCrapBookmapRejection extends Tradebook {
 
     private basePlan: TradingPlansModels.BasePlan;
     private static readonly entryLogSuffix = '_gap_and_crap_bookmap_rejection';
 
-    constructor(symbol: string, basePlan: TradingPlansModels.BasePlan) {
-        super(symbol, false, 'Short Gap & Crap Bookmap Rejection', `${Models.TradebookFamilyName.GapAndCrap} bookmap rejection`);
+    constructor(symbol: string, tradebookID: string, basePlan: TradingPlansModels.BasePlan) {
+        super(symbol, tradebookID, false, 'Short Gap & Crap Bookmap Rejection', `${Models.TradebookFamilyName.GapAndCrap} bookmap rejection`);
         this.basePlan = basePlan;
         this.enableByDefault = true;
-    }
-
-    getID(): string {
-        return TradebookID.GapAndCrapBookmapRejection;
     }
 
     refreshLiveStats(): void { }
