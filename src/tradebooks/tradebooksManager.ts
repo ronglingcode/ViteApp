@@ -8,7 +8,6 @@ import { GapDownAndGoDown } from "./gapDownAndGoDown";
 import { GapDownAndGoUpBookmapOfferWallBreakout } from "./gapDownAndGoUpBookmapOfferWallBreakout";
 import { BookmapWallBreak } from "./bookmapWallBreak";
 import { BookmapWallReversal } from "./bookmapWallReversal";
-import { GapAndCrapBookmapRejection } from "./gapAndCrapBookmapRejection";
 import { GapDownAndGoDownBookmapBidWallBreakdown } from "./gapDownAndGoDownBookmapBidWallBreakdown";
 import { TradebookID } from "./tradebookIds";
 
@@ -39,10 +38,6 @@ export const createTradebooksForGapAndCrap = (symbol: string, gapAndCrapPlan: Tr
         let gapAndCrapBookmapWallReversal = new BookmapWallReversal(
             symbol, TradebookID.GapAndCrapBookmapReversal, gapAndCrapPlan, maxPrice);
         tradebooksMap.set(gapAndCrapBookmapWallReversal.getID(), gapAndCrapBookmapWallReversal);
-
-        let gapAndCrapBookmapRejection = new GapAndCrapBookmapRejection(
-            symbol, TradebookID.GapAndCrapBookmapRejection, shortPlan);
-        tradebooksMap.set(gapAndCrapBookmapRejection.getID(), gapAndCrapBookmapRejection);
     }
 }
 

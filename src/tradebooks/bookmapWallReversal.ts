@@ -48,12 +48,18 @@ export class BookmapWallReversal extends Tradebook {
         entryPrice: number,
         stopOutPrice: number,
         riskReduction: number,
+        mustAlignVwap: boolean,
         logTags: Models.LogTags
     ): number {
         let symbol = this.symbol;
+        let currentVwap = Models.getCurrentVwap(symbol);
         if (this.isLong) {
             if (entryPrice < this.minMaxEntryLevel) {
                 Firestore.logError(`entryPrice ${entryPrice} below min level ${this.minMaxEntryLevel}`, logTags);
+                return 0;
+            }
+            if (mustAlignVwap && entryPrice < currentVwap) {
+                Firestore.logError(`entry below vwap: ${entryPrice} < ${currentVwap}`, logTags);
                 return 0;
             }
         } else {
@@ -61,9 +67,13 @@ export class BookmapWallReversal extends Tradebook {
                 Firestore.logError(`entryPrice ${entryPrice} above max level ${this.minMaxEntryLevel}`, logTags);
                 return 0;
             }
+            if (mustAlignVwap && entryPrice > currentVwap) {
+                Firestore.logError(`entry above vwap: ${entryPrice} > ${currentVwap}`, logTags);
+                return 0;
+            }
         }
 
-        if (this.tradebookID === TradebookID.GapAndCrapBookmapBidWallBreakdown) {
+        if (this.tradebookID === TradebookID.GapAndCrapBookmapReversal) {
             if (!GapAndCrapAlgo.allowEntryRulesForGapAndCrap(symbol, entryPrice, logTags)) {
                 return 0;
             }
@@ -98,6 +108,7 @@ export class BookmapWallReversal extends Tradebook {
         }
         let entryMethod = parameters.entryMethod;
         let riskReduction = 1;
+        let mustAlignVwap = true;
         if (entryMethod) {
             if (entryMethod.endsWith("0.15R")) {
                 riskReduction = 0.15;
@@ -106,8 +117,14 @@ export class BookmapWallReversal extends Tradebook {
                 riskReduction = 0.25;
                 Firestore.logInfo(`reduce risk to 0.25R`);
             }
+            if (entryMethod.startsWith('bid step up') ||
+                entryMethod.startsWith('bid reappear') ||
+                entryMethod.startsWith('offer step up') ||
+                entryMethod.startsWith('offer reappear')) {
+                mustAlignVwap = false;
+            }
         }
-        return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskReduction, logTags);
+        return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskReduction, mustAlignVwap, logTags);
 
     }
 
@@ -123,15 +140,22 @@ export class BookmapWallReversal extends Tradebook {
     }
 
     getEntryMethods(): string[] {
+        let patterns = [];
         if (this.isLong) {
-            return ['bid setup up 0.15R', 'bid step up 0.25R',
-                'bid reappear 0.15R', 'bid reappear 0.25R'
-            ]
+            patterns = ['bid step up', 'bid reappear'];
         } else {
-            return ['offer setup down 0.15R', 'offer step down 0.25R',
-                'offer reappear 0.15R', 'offer reappear 0.25R'
-            ]
+            patterns = [
+                'offer step down', 'offer reappear',
+                'offer clear lost swing low',
+                'offer clear lost bid'
+            ];
         }
+        let entryMethods: string[] = [];
+        patterns.forEach(pattern => {
+            entryMethods.push(`${pattern} 0.15R`);
+            entryMethods.push(`${pattern} 0.25R`);
+        });
+        return entryMethods;
     }
 
 
