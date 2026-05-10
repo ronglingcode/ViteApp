@@ -8,7 +8,7 @@ import * as GlobalSettings from '../config/globalSettings';
 import * as ExitRulesCheckerNew from '../controllers/exitRulesCheckerNew';
 import * as Helper from '../utils/helper';
 
-export class GapAndGoBookmapOfferWallBreakout extends Tradebook {
+export class BookmapWallBreak extends Tradebook {
     private basePlan: TradingPlansModels.GapAndGoPlan;
     private scalpMinCount = 0;
     private coreMinCount = 0;

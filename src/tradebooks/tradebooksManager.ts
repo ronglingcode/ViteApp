@@ -6,14 +6,14 @@ import { VwapContinuationFailed } from "./singleKeyLevel/vwapContinuationFailed"
 import * as Helper from "../utils/helper";
 import { GapDownAndGoDown } from "./gapDownAndGoDown";
 import { GapDownAndGoUpBookmapOfferWallBreakout } from "./gapDownAndGoUpBookmapOfferWallBreakout";
-import { GapAndGoBookmapOfferWallBreakout } from "./gapAndGoBookmapOfferWallBreakout";
+import { BookmapWallBreak } from "./bookmapWallBreak";
 import { GapAndCrapBookmapBidWallBreakdown } from "./gapAndCrapBookmapBidWallBreakdown";
 import { GapAndCrapBookmapRejection } from "./gapAndCrapBookmapRejection";
 import { GapDownAndGoDownBookmapBidWallBreakdown } from "./gapDownAndGoDownBookmapBidWallBreakdown";
 import { TradebookID } from "./tradebookIds";
 
 export const createTradebooksForGapAndGo = (symbol: string, gapAndGoPlan: TradingPlansModels.GapAndGoPlan, tradebooksMap: Map<string, Tradebook>) => {
-    let gapAndGoBookmapOfferWallBreakout = new GapAndGoBookmapOfferWallBreakout(
+    let gapAndGoBookmapOfferWallBreakout = new BookmapWallBreak(
         symbol, TradebookID.GapAndGoBookmapOfferWallBreakout, gapAndGoPlan);
     tradebooksMap.set(gapAndGoBookmapOfferWallBreakout.getID(), gapAndGoBookmapOfferWallBreakout);
 };

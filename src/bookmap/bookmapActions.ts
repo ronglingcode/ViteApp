@@ -8,7 +8,7 @@ import * as Helper from "../utils/helper";
 import * as OrderFlow from "../controllers/orderFlow";
 import * as Handler from "../controllers/handler";
 import * as Models from "../models/models";
-import { GapAndGoBookmapOfferWallBreakout } from "../tradebooks/gapAndGoBookmapOfferWallBreakout";
+import { BookmapWallBreak } from "../tradebooks/bookmapWallBreak";
 import { GapDownAndGoDownBookmapBidWallBreakdown } from "../tradebooks/gapDownAndGoDownBookmapBidWallBreakdown";
 import { GapDownAndGoUpBookmapOfferWallBreakout } from "../tradebooks/gapDownAndGoUpBookmapOfferWallBreakout";
 import { TradebookID } from "../tradebooks/tradebookIds";
@@ -96,7 +96,7 @@ const bookmapEntry = (symbol: string, useMarketOrder: boolean, stopLossPrice: nu
                 Firestore.logError(`[BookmapActions] GapAndGoBookmapOfferWallBreakout tradebook not found for ${symbol} (id: ${tradebookId})`, logTags);
                 return;
             }
-            if (!(tradebook instanceof GapAndGoBookmapOfferWallBreakout)) {
+            if (!(tradebook instanceof BookmapWallBreak)) {
                 Firestore.logError(`[BookmapActions] tradebook ${tradebookId} is not a GapAndGoBookmapOfferWallBreakout`, logTags);
                 return;
             }
