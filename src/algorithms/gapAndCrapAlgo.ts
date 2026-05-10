@@ -25,15 +25,7 @@ export const isGapAndCrapNewTradeExceedShotClock = () => {
 }
 
 export const allowEntryRulesForGapAndCrap = (symbol: string, entryPrice: number, logTags: Models.LogTags) => {
-    if (isGapAndCrapNewTradeExceedShotClock()) {
-        Firestore.logError(`only allow entry in the 1st 5 minutes for gap and crap`, logTags);
-        return false;
-    }
-    let symbolData = Models.getSymbolData(symbol);
-    if (entryPrice > symbolData.premktHigh) {
-        Firestore.logError(`for gap and crap, only allow entry below premarket high ${symbolData.premktHigh}`, logTags);
-        //return false;
-    }
+    // use to have 5 minute rule and premarket high rule
 
     return true;
 }

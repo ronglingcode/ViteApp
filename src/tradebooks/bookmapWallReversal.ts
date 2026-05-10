@@ -11,25 +11,20 @@ import { TradebookID } from "./tradebookIds";
 import * as GapAndGoAlgo from '../algorithms/gapAndGoAlgo';
 import * as GapAndCrapAlgo from '../algorithms/gapAndCrapAlgo';
 
-export class BookmapWallBreak extends Tradebook {
+export class BookmapWallReversal extends Tradebook {
     private basePlan: TradingPlansModels.BasePlan;
     private scalpMinCount = 0;
     private coreMinCount = 0;
-    private openMustAlignVwap: boolean;
     private minMaxEntryLevel: number;
 
-    constructor(symbol: string, tradebookID: string, basePlan: TradingPlansModels.BasePlan,
-        openMustAlignVwap: boolean, minMaxEntryLevel: number) {
-        let isLong = true;
+    constructor(symbol: string, tradebookID: string, basePlan: TradingPlansModels.BasePlan, minMaxEntryLevel: number) {
+        let isLong = false;
         let tradebookName = "unknown";
         let buttonLabel = "unknown";
-        if (tradebookID == TradebookID.GapAndGoBookmapOfferWallBreakout) {
-            tradebookName = 'Gap & Go Bookmap Offer Wall Breakout';
-            buttonLabel = 'Gap & Go bookmap';
-        } else if (tradebookID == TradebookID.GapAndCrapBookmapBidWallBreakdown) {
+        if (tradebookID == TradebookID.GapAndCrapBookmapReversal) {
             isLong = false;
-            tradebookName = 'Gap & Crap Bookmap Bid Wall Breakdown';
-            buttonLabel = 'Gap & Crap bookmap';
+            tradebookName = 'Gap & Crap Bookmap Reversal';
+            buttonLabel = 'Gap & Crap bookmap reversal';
         }
 
         super(symbol, tradebookID, isLong, tradebookName, buttonLabel);
@@ -38,14 +33,13 @@ export class BookmapWallBreak extends Tradebook {
         let scalpCount = GlobalSettings.batchCount - basePlan.coreCount - basePlan.runnerCount;
         this.scalpMinCount = GlobalSettings.batchCount - scalpCount;
         this.coreMinCount = GlobalSettings.batchCount - scalpCount - basePlan.coreCount;
-        this.openMustAlignVwap = openMustAlignVwap;
         this.minMaxEntryLevel = minMaxEntryLevel;
     }
 
     refreshLiveStats(): void { }
 
     private getBookmapLogSuffix(): string {
-        return this.isLong ? 'bookmap_offer_wall_breakout' : 'bookmap_bid_wall_breakdown';
+        return this.isLong ? 'bookmap_bid_wall_reversal' : 'bookmap_offer_wall_reversal';
     }
 
     triggerEntryCommon(
@@ -53,6 +47,7 @@ export class BookmapWallBreak extends Tradebook {
         useMarketOrder: boolean,
         entryPrice: number,
         stopOutPrice: number,
+        riskReduction: number,
         logTags: Models.LogTags
     ): number {
         let symbol = this.symbol;
@@ -67,21 +62,7 @@ export class BookmapWallBreak extends Tradebook {
                 return 0;
             }
         }
-        if (this.openMustAlignVwap) {
-            let openPrice = Models.getOpenPrice(symbol);
-            let openVwap = Models.getLastVwapBeforeOpen(symbol);
-            if (openVwap == null) {
-                Firestore.logError(`openMustAlignVwap: need VWAP at open`, logTags);
-                return 0;
-            }
-            if (this.isLong && openPrice < openVwap) {
-                Firestore.logError(`openMustAlignVwap: open ${openPrice} below VWAP at open ${openVwap}`, logTags);
-                return 0;
-            } else if (!this.isLong && openPrice > openVwap) {
-                Firestore.logError(`openMustAlignVwap: open ${openPrice} above VWAP at open ${openVwap}`, logTags);
-                return 0;
-            }
-        }
+
         if (this.tradebookID === TradebookID.GapAndCrapBookmapBidWallBreakdown) {
             if (!GapAndCrapAlgo.allowEntryRulesForGapAndCrap(symbol, entryPrice, logTags)) {
                 return 0;
@@ -96,7 +77,7 @@ export class BookmapWallBreak extends Tradebook {
             Firestore.logError(`${symbol} not allowed entry`, logTags);
             return 0;
         }
-        allowedSize = allowedSize / 4;
+        allowedSize = allowedSize * riskReduction;
         let planCopy = JSON.parse(JSON.stringify(this.basePlan)) as TradingPlansModels.BasePlan;
         this.submitEntryOrdersBase(
             dryRun, useMarketOrder, entryPrice, stopOutPrice, stopOutPrice, allowedSize, planCopy, logTags);
@@ -115,22 +96,23 @@ export class BookmapWallBreak extends Tradebook {
             let symbolData = Models.getSymbolData(symbol);
             stopOutPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
         }
-        return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, logTags);
+        let entryMethod = parameters.entryMethod;
+        let riskReduction = 1;
+        if (entryMethod) {
+            if (entryMethod.endsWith("0.15R")) {
+                riskReduction = 0.15;
+                Firestore.logInfo(`reduce risk to 0.15R`);
+            } else if (entryMethod.endsWith("0.25R")) {
+                riskReduction = 0.25;
+                Firestore.logInfo(`reduce risk to 0.25R`);
+            }
+        }
+        return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskReduction, logTags);
 
-    }
-
-    triggerEntryFromBookmap(useMarketOrder: boolean, stopOutPrice: number): number {
-        let symbol = this.symbol;
-        let logTags = Models.generateLogTags(symbol, `${symbol}_${this.getBookmapLogSuffix()}`);
-        let entryPrice = Chart.getBreakoutEntryPrice(symbol, this.isLong, useMarketOrder, Models.getDefaultEntryParameters());
-
-        return this.triggerEntryCommon(false, useMarketOrder, entryPrice, stopOutPrice, logTags);
     }
 
     getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
-        if (this.tradebookID === TradebookID.GapAndGoBookmapOfferWallBreakout) {
-            return GapAndGoAlgo.getAllowedReasonToAddPartial(symbol, entryPrice);
-        } else if (this.tradebookID === TradebookID.GapAndCrapBookmapBidWallBreakdown) {
+        if (this.tradebookID === TradebookID.GapAndCrapBookmapReversal) {
             return GapAndCrapAlgo.getAllowedReasonToAddPartial(symbol, entryPrice);
         } else {
             return {
@@ -141,8 +123,17 @@ export class BookmapWallBreak extends Tradebook {
     }
 
     getEntryMethods(): string[] {
-        return ['default'];
+        if (this.isLong) {
+            return ['bid setup up 0.15R', 'bid step up 0.25R',
+                'bid reappear 0.15R', 'bid reappear 0.25R'
+            ]
+        } else {
+            return ['offer setup down 0.15R', 'offer step down 0.25R',
+                'offer reappear 0.15R', 'offer reappear 0.25R'
+            ]
+        }
     }
+
 
     getDisallowedReasonToAdjustSingleLimitOrder(
         symbol: string, keyIndex: number, order: Models.OrderModel,

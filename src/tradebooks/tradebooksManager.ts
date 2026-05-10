@@ -7,6 +7,7 @@ import * as Helper from "../utils/helper";
 import { GapDownAndGoDown } from "./gapDownAndGoDown";
 import { GapDownAndGoUpBookmapOfferWallBreakout } from "./gapDownAndGoUpBookmapOfferWallBreakout";
 import { BookmapWallBreak } from "./bookmapWallBreak";
+import { BookmapWallReversal } from "./bookmapWallReversal";
 import { GapAndCrapBookmapRejection } from "./gapAndCrapBookmapRejection";
 import { GapDownAndGoDownBookmapBidWallBreakdown } from "./gapDownAndGoDownBookmapBidWallBreakdown";
 import { TradebookID } from "./tradebookIds";
@@ -32,8 +33,12 @@ export const createTradebooksForGapAndCrap = (symbol: string, gapAndCrapPlan: Tr
         tradebooksMap.set(gapAndCrapVwapBounceFail.getID(), gapAndCrapVwapBounceFail);
 
         let gapAndCrapBookmapBidWallBreakdown = new BookmapWallBreak(
-            symbol, TradebookID.GapAndCrapBookmapBidWallBreakdown, shortPlan, false, maxPrice);
+            symbol, TradebookID.GapAndCrapBookmapBidWallBreakdown, gapAndCrapPlan, false, maxPrice);
         tradebooksMap.set(gapAndCrapBookmapBidWallBreakdown.getID(), gapAndCrapBookmapBidWallBreakdown);
+
+        let gapAndCrapBookmapWallReversal = new BookmapWallReversal(
+            symbol, TradebookID.GapAndCrapBookmapReversal, gapAndCrapPlan, maxPrice);
+        tradebooksMap.set(gapAndCrapBookmapWallReversal.getID(), gapAndCrapBookmapWallReversal);
 
         let gapAndCrapBookmapRejection = new GapAndCrapBookmapRejection(
             symbol, TradebookID.GapAndCrapBookmapRejection, shortPlan);
