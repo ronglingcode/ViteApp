@@ -7,14 +7,13 @@ import * as Helper from "../utils/helper";
 import { GapDownAndGoDown } from "./gapDownAndGoDown";
 import { GapDownAndGoUpBookmapOfferWallBreakout } from "./gapDownAndGoUpBookmapOfferWallBreakout";
 import { BookmapWallBreak } from "./bookmapWallBreak";
-import { GapAndCrapBookmapBidWallBreakdown } from "./gapAndCrapBookmapBidWallBreakdown";
 import { GapAndCrapBookmapRejection } from "./gapAndCrapBookmapRejection";
 import { GapDownAndGoDownBookmapBidWallBreakdown } from "./gapDownAndGoDownBookmapBidWallBreakdown";
 import { TradebookID } from "./tradebookIds";
 
 export const createTradebooksForGapAndGo = (symbol: string, gapAndGoPlan: TradingPlansModels.GapAndGoPlan, tradebooksMap: Map<string, Tradebook>) => {
     let gapAndGoBookmapOfferWallBreakout = new BookmapWallBreak(
-        symbol, TradebookID.GapAndGoBookmapOfferWallBreakout, gapAndGoPlan);
+        symbol, TradebookID.GapAndGoBookmapOfferWallBreakout, gapAndGoPlan, gapAndGoPlan.mustOpenAboveVwap, gapAndGoPlan.support.low);
     tradebooksMap.set(gapAndGoBookmapOfferWallBreakout.getID(), gapAndGoBookmapOfferWallBreakout);
 };
 export const createTradebooksForGapAndCrap = (symbol: string, gapAndCrapPlan: TradingPlansModels.GapAndCrapPlan, tradebooksMap: Map<string, Tradebook>) => {
@@ -32,8 +31,8 @@ export const createTradebooksForGapAndCrap = (symbol: string, gapAndCrapPlan: Tr
         gapAndCrapVwapBounceFail.enableByDefault = true;
         tradebooksMap.set(gapAndCrapVwapBounceFail.getID(), gapAndCrapVwapBounceFail);
 
-        let gapAndCrapBookmapBidWallBreakdown = new GapAndCrapBookmapBidWallBreakdown(
-            symbol, TradebookID.GapAndCrapBookmapBidWallBreakdown, shortPlan);
+        let gapAndCrapBookmapBidWallBreakdown = new BookmapWallBreak(
+            symbol, TradebookID.GapAndCrapBookmapBidWallBreakdown, shortPlan, false, maxPrice);
         tradebooksMap.set(gapAndCrapBookmapBidWallBreakdown.getID(), gapAndCrapBookmapBidWallBreakdown);
 
         let gapAndCrapBookmapRejection = new GapAndCrapBookmapRejection(

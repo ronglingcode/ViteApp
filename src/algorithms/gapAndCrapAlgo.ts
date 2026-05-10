@@ -38,7 +38,7 @@ export const allowEntryRulesForGapAndCrap = (symbol: string, entryPrice: number,
     return true;
 }
 
-export const getAllowedReasonToAddPartial = (symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult => {
+export const getAllowedReasonToAddPartial = (symbol: string, entryPrice: number): Models.CheckRulesResult => {
     let vwap = Models.getCurrentVwap(symbol);
     if (entryPrice < vwap) {
         return {
@@ -48,6 +48,6 @@ export const getAllowedReasonToAddPartial = (symbol: string, entryPrice: number,
     }
     return {
         allowed: false,
-        reason: 'default is no add',
+        reason: 'wait for below vwap',
     };
 }

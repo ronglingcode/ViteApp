@@ -15,7 +15,6 @@ import { TradebookID } from "../tradebooks/tradebookIds";
 import * as TradebooksManager from "../tradebooks/tradebooksManager";
 import * as TradingPlans from "../models/tradingPlans/tradingPlans";
 import * as Chart from "../ui/chart";
-import { GapAndCrapBookmapBidWallBreakdown } from "../tradebooks/gapAndCrapBookmapBidWallBreakdown";
 
 export interface PriceSelectEvent {
     symbol: string;
@@ -146,8 +145,8 @@ const bookmapEntry = (symbol: string, useMarketOrder: boolean, stopLossPrice: nu
                 Firestore.logError(`[BookmapActions] GapAndCrap tradebook not found for ${symbol} (id: ${tradebookId})`, logTags);
                 return;
             }
-            if (!(tradebook instanceof GapAndCrapBookmapBidWallBreakdown)) {
-                Firestore.logError(`[BookmapActions] tradebook ${tradebookId} is not a GapAndCrapBookmapBidWallBreakdown`, logTags);
+            if (!(tradebook instanceof BookmapWallBreak)) {
+                Firestore.logError(`[BookmapActions] tradebook ${tradebookId} is not a BookmapWallBreak`, logTags);
                 return;
             }
             if (!tradebook.isEnabled()) {

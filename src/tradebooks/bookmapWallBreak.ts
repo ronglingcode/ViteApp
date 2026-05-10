@@ -7,21 +7,39 @@ import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as GlobalSettings from '../config/globalSettings';
 import * as ExitRulesCheckerNew from '../controllers/exitRulesCheckerNew';
 import * as Helper from '../utils/helper';
+import { TradebookID } from "./tradebookIds";
+import * as GapAndGoAlgo from '../algorithms/gapAndGoAlgo';
+import * as GapAndCrapAlgo from '../algorithms/gapAndCrapAlgo';
 
 export class BookmapWallBreak extends Tradebook {
-    private basePlan: TradingPlansModels.GapAndGoPlan;
+    private basePlan: TradingPlansModels.BasePlan;
     private scalpMinCount = 0;
     private coreMinCount = 0;
+    private openMustAlignVwap: boolean;
+    private minMaxEntryLevel: number;
 
+    constructor(symbol: string, tradebookID: string, basePlan: TradingPlansModels.BasePlan,
+        openMustAlignVwap: boolean, minMaxEntryLevel: number) {
+        let isLong = true;
+        let tradebookName = "unknown";
+        let buttonLabel = "unknown";
+        if (tradebookID == TradebookID.GapAndGoBookmapOfferWallBreakout) {
+            tradebookName = 'Gap & Go Bookmap Offer Wall Breakout';
+            buttonLabel = 'Gap & Go bookmap';
+        } else if (tradebookID == TradebookID.GapAndCrapBookmapBidWallBreakdown) {
+            isLong = false;
+            tradebookName = 'Gap & Crap Bookmap Bid Wall Breakdown';
+            buttonLabel = 'Gap & Crap bookmap';
+        }
 
-    constructor(symbol: string, tradebookID: string, basePlan: TradingPlansModels.GapAndGoPlan) {
-        super(symbol, tradebookID, true, 'Long Gap & Go Bookmap Offer Wall Breakout', `${Models.TradebookFamilyName.GapAndGo} bookmap`);
+        super(symbol, tradebookID, isLong, tradebookName, buttonLabel);
         this.basePlan = basePlan;
         this.enableByDefault = true;
         let scalpCount = GlobalSettings.batchCount - basePlan.coreCount - basePlan.runnerCount;
         this.scalpMinCount = GlobalSettings.batchCount - scalpCount;
         this.coreMinCount = GlobalSettings.batchCount - scalpCount - basePlan.coreCount;
-
+        this.openMustAlignVwap = openMustAlignVwap;
+        this.minMaxEntryLevel = minMaxEntryLevel;
     }
 
     refreshLiveStats(): void { }
@@ -34,16 +52,34 @@ export class BookmapWallBreak extends Tradebook {
         logTags: Models.LogTags
     ): number {
         let symbol = this.symbol;
-
-        if (this.basePlan.mustOpenAboveVwap) {
+        if (this.isLong) {
+            if (entryPrice < this.minMaxEntryLevel) {
+                Firestore.logError(`entryPrice ${entryPrice} below min level ${this.minMaxEntryLevel}`, logTags);
+                return 0;
+            }
+        } else {
+            if (entryPrice > this.minMaxEntryLevel) {
+                Firestore.logError(`entryPrice ${entryPrice} above max level ${this.minMaxEntryLevel}`, logTags);
+                return 0;
+            }
+        }
+        if (this.openMustAlignVwap) {
             let openPrice = Models.getOpenPrice(symbol);
             let openVwap = Models.getLastVwapBeforeOpen(symbol);
             if (openVwap == null) {
-                Firestore.logError(`mustOpenAboveVwap: need VWAP at open`, logTags);
+                Firestore.logError(`openMustAlignVwap: need VWAP at open`, logTags);
                 return 0;
             }
-            if (openPrice < openVwap) {
-                Firestore.logError(`mustOpenAboveVwap: open ${openPrice} below VWAP at open ${openVwap}`, logTags);
+            if (this.isLong && openPrice < openVwap) {
+                Firestore.logError(`openMustAlignVwap: open ${openPrice} below VWAP at open ${openVwap}`, logTags);
+                return 0;
+            } else if (!this.isLong && openPrice > openVwap) {
+                Firestore.logError(`openMustAlignVwap: open ${openPrice} above VWAP at open ${openVwap}`, logTags);
+                return 0;
+            }
+        }
+        if (this.tradebookID === TradebookID.GapAndCrapBookmapBidWallBreakdown) {
+            if (!GapAndCrapAlgo.allowEntryRulesForGapAndCrap(symbol, entryPrice, logTags)) {
                 return 0;
             }
         }
@@ -73,7 +109,7 @@ export class BookmapWallBreak extends Tradebook {
         if (stopOutPrice == 0) {
             // default to low of the day
             let symbolData = Models.getSymbolData(symbol);
-            stopOutPrice = symbolData.lowOfDay;
+            stopOutPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
         }
         return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, logTags);
 
@@ -88,18 +124,16 @@ export class BookmapWallBreak extends Tradebook {
     }
 
     getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
-        let symbolData = Models.getSymbolData(symbol);
-        let premarketHigh = symbolData.premktHigh;
-        if (entryPrice >= premarketHigh) {
+        if (this.tradebookID === TradebookID.GapAndGoBookmapOfferWallBreakout) {
+            return GapAndGoAlgo.getAllowedReasonToAddPartial(symbol, entryPrice);
+        } else if (this.tradebookID === TradebookID.GapAndCrapBookmapBidWallBreakdown) {
+            return GapAndCrapAlgo.getAllowedReasonToAddPartial(symbol, entryPrice);
+        } else {
             return {
-                allowed: true,
-                reason: "price is above premarket high, allow add",
+                allowed: false,
+                reason: `unknown tradebook ID: ${this.tradebookID}`,
             };
         }
-        return {
-            allowed: false,
-            reason: "wait for premarket high",
-        };
     }
 
     getEntryMethods(): string[] {
@@ -142,10 +176,10 @@ export class BookmapWallBreak extends Tradebook {
                 };
                 return allowedReason;
             }
-            if (newPrice >= this.basePlan.coreTarget) {
+            if ((this.isLong && newPrice >= this.basePlan.coreTarget) || (!this.isLong && newPrice <= this.basePlan.coreTarget)) {
                 let allowedReason: Models.CheckRulesResult = {
                     allowed: true,
-                    reason: `allow adjust stop for core if new price ${newPrice} is above core target ${this.basePlan.coreTarget}`,
+                    reason: `allow adjust exit for core if new price ${newPrice} is above core target ${this.basePlan.coreTarget}`,
                 };
                 return allowedReason;
             }
@@ -154,10 +188,9 @@ export class BookmapWallBreak extends Tradebook {
             if (minutesSinceOpen >= 14) {
                 let allowedReason: Models.CheckRulesResult = {
                     allowed: true,
-                    reason: "alow core exit after 10 minutes from open",
+                    reason: "alow runner exit after 14 minutes from open",
                 };
                 return allowedReason;
-
             }
         }
         return newResult;
@@ -190,7 +223,7 @@ export class BookmapWallBreak extends Tradebook {
                 };
                 return allowedReason;
             }
-            if (newPrice >= this.basePlan.coreTarget) {
+            if ((this.isLong && newPrice >= this.basePlan.coreTarget) || (!this.isLong && newPrice <= this.basePlan.coreTarget)) {
                 let allowedReason: Models.CheckRulesResult = {
                     allowed: true,
                     reason: `allow adjust stop for core if new price ${newPrice} is above core target ${this.basePlan.coreTarget}`,
@@ -202,7 +235,7 @@ export class BookmapWallBreak extends Tradebook {
             if (minutesSinceOpen >= 14) {
                 let allowedReason: Models.CheckRulesResult = {
                     allowed: true,
-                    reason: "alow core exit after 10 minutes from open",
+                    reason: "alow runner exit after 14 minutes from open",
                 };
                 return allowedReason;
 
@@ -212,7 +245,6 @@ export class BookmapWallBreak extends Tradebook {
     }
 
     getDisallowedReasonToMarketOutSingleOrder(symbol: string, keyIndex: number, logTags: Models.LogTags): Models.CheckRulesResult {
-
         let isMarketOrder = true;
         let currentPrice = Models.getCurrentPrice(symbol);
         let newResult = ExitRulesCheckerNew.isAllowedForSingleOrderForAllTradebooks(
@@ -226,7 +258,7 @@ export class BookmapWallBreak extends Tradebook {
             // manage scalp position
             let allowedReason: Models.CheckRulesResult = {
                 allowed: true,
-                reason: `allow adjust stop for scalps: ${exitCount} > ${this.scalpMinCount}`,
+                reason: `allow market out for scalps: ${exitCount} > ${this.scalpMinCount}`,
             };
             return allowedReason;
         } else if (exitCount >= this.coreMinCount) {
@@ -239,10 +271,10 @@ export class BookmapWallBreak extends Tradebook {
                 };
                 return allowedReason;
             }
-            if (newPrice >= this.basePlan.coreTarget) {
+            if ((this.isLong && newPrice >= this.basePlan.coreTarget) || (!this.isLong && newPrice <= this.basePlan.coreTarget)) {
                 let allowedReason: Models.CheckRulesResult = {
                     allowed: true,
-                    reason: `allow adjust stop for core if new price ${newPrice} is above core target ${this.basePlan.coreTarget}`,
+                    reason: `allow market out for core if new price ${newPrice} is above core target ${this.basePlan.coreTarget}`,
                 };
                 return allowedReason;
             }
@@ -251,10 +283,9 @@ export class BookmapWallBreak extends Tradebook {
             if (minutesSinceOpen >= 14) {
                 let allowedReason: Models.CheckRulesResult = {
                     allowed: true,
-                    reason: "alow core exit after 10 minutes from open",
+                    reason: "alow runner exit after 14 minutes from open",
                 };
                 return allowedReason;
-
             }
         }
         return newResult;
