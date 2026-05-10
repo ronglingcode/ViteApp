@@ -53,20 +53,17 @@ export class GapAndCrapBookmapBidWallBreakdown extends Tradebook {
     }
 
     triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {
-        Firestore.logError("only trigger entry from bookmap for bid wall breakdown", Models.generateLogTags(this.symbol, 'gap_and_crap_bookmap_bid_wall_breakdown'));
-        return 0;
-        /*
-           let symbol = this.symbol;
-           let logTags = Models.generateLogTags(symbol, `${symbol}_bookmap_bid_wall_breakdown`);
-   
-           let entryPrice = Chart.getBreakoutEntryPrice(symbol, false, useMarketOrder, Models.getDefaultEntryParameters());
-           let stopOutPrice = Chart.getCustomStopLossPrice(symbol, false);
-           if (stopOutPrice == 0) {
-               Firestore.logError(`no custom stop loss`, logTags);
-               return 0;
-           }
-           return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, logTags);
-           */
+        let symbol = this.symbol;
+        let logTags = Models.generateLogTags(symbol, `${symbol}_bookmap_bid_wall_breakdown`);
+
+        let entryPrice = Chart.getBreakoutEntryPrice(symbol, false, useMarketOrder, Models.getDefaultEntryParameters());
+        let stopOutPrice = Chart.getCustomStopLossPrice(symbol, false);
+        if (stopOutPrice == 0) {
+            let symbolData = Models.getSymbolData(symbol);
+            stopOutPrice = symbolData.highOfDay;
+        }
+        return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, logTags);
+
     }
 
     triggerEntryFromBookmap(useMarketOrder: boolean, stopOutPrice: number): number {
