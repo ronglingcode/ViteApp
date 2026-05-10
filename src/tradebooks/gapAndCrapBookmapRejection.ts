@@ -49,7 +49,7 @@ export class GapAndCrapBookmapRejection extends Tradebook {
     }
 
     getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
-        return GapAndCrapAlgo.getAllowedReasonToAddPartial(symbol, entryPrice, logTags);
+        return GapAndCrapAlgo.getAllowedReasonToAddPartial(symbol, entryPrice);
     }
 
     getEntryMethods(): string[] {

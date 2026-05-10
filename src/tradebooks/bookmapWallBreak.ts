@@ -44,6 +44,10 @@ export class BookmapWallBreak extends Tradebook {
 
     refreshLiveStats(): void { }
 
+    private getBookmapLogSuffix(): string {
+        return this.isLong ? 'bookmap_offer_wall_breakout' : 'bookmap_bid_wall_breakdown';
+    }
+
     triggerEntryCommon(
         dryRun: boolean,
         useMarketOrder: boolean,
@@ -85,7 +89,7 @@ export class BookmapWallBreak extends Tradebook {
         }
 
         let allowedSize = EntryRulesChecker.checkBasicGlobalEntryRules(
-            symbol, true, entryPrice, stopOutPrice, useMarketOrder,
+            symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder,
             this.basePlan, false, logTags);
 
         if (allowedSize === 0) {
@@ -102,10 +106,10 @@ export class BookmapWallBreak extends Tradebook {
 
     triggerEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {
         let symbol = this.symbol;
-        let logTags = Models.generateLogTags(symbol, `${symbol}_bookmap_offer_wall_breakout`);
+        let logTags = Models.generateLogTags(symbol, `${symbol}_${this.getBookmapLogSuffix()}`);
 
-        let entryPrice = Chart.getBreakoutEntryPrice(symbol, true, useMarketOrder, Models.getDefaultEntryParameters());
-        let stopOutPrice = Chart.getCustomStopLossPrice(symbol, true);
+        let entryPrice = Chart.getBreakoutEntryPrice(symbol, this.isLong, useMarketOrder, Models.getDefaultEntryParameters());
+        let stopOutPrice = Chart.getCustomStopLossPrice(symbol, this.isLong);
         if (stopOutPrice == 0) {
             // default to low of the day
             let symbolData = Models.getSymbolData(symbol);
@@ -117,8 +121,8 @@ export class BookmapWallBreak extends Tradebook {
 
     triggerEntryFromBookmap(useMarketOrder: boolean, stopOutPrice: number): number {
         let symbol = this.symbol;
-        let logTags = Models.generateLogTags(symbol, `${symbol}_bookmap_offer_wall_breakout`);
-        let entryPrice = Chart.getBreakoutEntryPrice(symbol, true, useMarketOrder, Models.getDefaultEntryParameters());
+        let logTags = Models.generateLogTags(symbol, `${symbol}_${this.getBookmapLogSuffix()}`);
+        let entryPrice = Chart.getBreakoutEntryPrice(symbol, this.isLong, useMarketOrder, Models.getDefaultEntryParameters());
 
         return this.triggerEntryCommon(false, useMarketOrder, entryPrice, stopOutPrice, logTags);
     }
