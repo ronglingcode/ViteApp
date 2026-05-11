@@ -62,6 +62,9 @@ const getDefaultBreakoutTradeState = (isLong: boolean) => {
                 alwaysAllowMoveStop: false,
                 setupQuality: TradingPlansModels.SetupQuality.Move2Move,
             },
+            coreTarget: 0,
+            coreCount: 0,
+            runnerCount: 0,
         }
     }
     return result;
