@@ -25,6 +25,10 @@ export class BookmapWallReversal extends Tradebook {
             isLong = false;
             tradebookName = 'Gap & Crap Bookmap Reversal';
             buttonLabel = 'Gap & Crap bookmap reversal';
+        } else if (tradebookID == TradebookID.GapGiveAndGoBookmapReversal) {
+            isLong = true;
+            tradebookName = 'Gap, Give & Go'
+            buttonLabel = 'Gap, give and go bookmap reversal';
         }
 
         super(symbol, tradebookID, isLong, tradebookName, buttonLabel);
@@ -69,12 +73,6 @@ export class BookmapWallReversal extends Tradebook {
             }
             if (mustAlignVwap && entryPrice > currentVwap) {
                 Firestore.logError(`entry above vwap: ${entryPrice} > ${currentVwap}`, logTags);
-                return 0;
-            }
-        }
-
-        if (this.tradebookID === TradebookID.GapAndCrapBookmapReversal) {
-            if (!GapAndCrapAlgo.allowEntryRulesForGapAndCrap(symbol, entryPrice, logTags)) {
                 return 0;
             }
         }
@@ -131,7 +129,13 @@ export class BookmapWallReversal extends Tradebook {
     getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
         if (this.tradebookID === TradebookID.GapAndCrapBookmapReversal) {
             return GapAndCrapAlgo.getAllowedReasonToAddPartial(symbol, entryPrice);
-        } else {
+        } else if (this.tradebookID == TradebookID.GapGiveAndGoBookmapReversal) {
+            return {
+                allowed: true,
+                reason: "default",
+            }
+        }
+        else {
             return {
                 allowed: false,
                 reason: `unknown tradebook ID: ${this.tradebookID}`,

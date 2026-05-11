@@ -24,12 +24,6 @@ export const isGapAndCrapNewTradeExceedShotClock = () => {
     return secondsSinceMarketOpen > 5 * 60;
 }
 
-export const allowEntryRulesForGapAndCrap = (symbol: string, entryPrice: number, logTags: Models.LogTags) => {
-    // use to have 5 minute rule and premarket high rule
-
-    return true;
-}
-
 export const getAllowedReasonToAddPartial = (symbol: string, entryPrice: number): Models.CheckRulesResult => {
     let vwap = Models.getCurrentVwap(symbol);
     if (entryPrice < vwap) {

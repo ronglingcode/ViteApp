@@ -82,11 +82,7 @@ export class BookmapWallBreak extends Tradebook {
                 return 0;
             }
         }
-        if (this.tradebookID === TradebookID.GapAndCrapBookmapBidWallBreakdown) {
-            if (!GapAndCrapAlgo.allowEntryRulesForGapAndCrap(symbol, entryPrice, logTags)) {
-                return 0;
-            }
-        }
+
 
         let allowedSize = EntryRulesChecker.checkBasicGlobalEntryRules(
             symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder,
