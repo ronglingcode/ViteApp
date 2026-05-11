@@ -14,3 +14,6 @@ export const showDataFeedsBar: boolean = false;
 export const checkMaxEntryThreshold: boolean = false;
 export const tradesPerSecondRollingWindowSeconds: number = 10; // Rolling window for tracking average trades per second
 export const enableBookmapSocket: boolean = true;
+
+/** use custom risk level on top of stop loss level */
+export const enableRiskLevel: boolean = false;

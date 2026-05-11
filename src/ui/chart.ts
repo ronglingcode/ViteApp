@@ -822,6 +822,9 @@ export const updateAccountUIStatus = async (symbolList: string[], source: string
     }
 };
 export const drawRiskLevels = (symbol: string) => {
+    if (!GlobalSettings.enableRiskLevel) {
+        return;
+    }
     let widget = Models.getChartWidget(symbol);
     if (!widget) {
         return;
