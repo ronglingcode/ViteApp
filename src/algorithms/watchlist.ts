@@ -8,7 +8,7 @@ import * as googleDocsApi from '../api/googleDocs/googleDocsApi';
 import { populateBestIdeas } from '../controllers/traderFocus';
 import * as GapAndGoAlgo from './gapAndGoAlgo';
 import * as GapAndCrapAlgo from './gapAndCrapAlgo';
-import { GapGiveAndGo } from '../tradebooks/gapGiveAndGo';
+import * as GapGiveAndGoAlgo from './gapGiveAndGoAlgo';
 import { GapDownAndGoDown } from '../tradebooks/gapDownAndGoDown';
 import * as GapDownAndGoUpAlgo from './gapDownAndGoUpAlgo';
 
@@ -256,7 +256,7 @@ const verifyTradingPlansForSingleDirection = (symbol: string, plan: TradingPlans
         hasBestTradebook = true;
     }
     if (plan.gapGiveAndGoPlan) {
-        if (!GapGiveAndGo.hasAtLeastOneReasonSet(plan.gapGiveAndGoPlan, symbol)) {
+        if (!GapGiveAndGoAlgo.hasAtLeastOneReasonSet(plan.gapGiveAndGoPlan, symbol)) {
             return false;
         }
         hasBestTradebook = true;

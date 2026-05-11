@@ -1,4 +1,5 @@
 export enum TradebookID {
+    GapGiveAndGoBookmapReversal = 'GapGiveAndGoBookmapReversal',
     GapAndGoBookmapOfferWallBreakout = 'GapAndGoBookmapOfferWallBreakout',
     GapDownAndGoDownBookmapBidWallBreakdown = 'GapDownAndGoDownBookmapBidWallBreakdown',
     GapAndCrapBookmapBidWallBreakdown = 'GapAndCrapBookmapBidWallBreakdown',
