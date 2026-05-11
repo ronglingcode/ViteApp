@@ -281,9 +281,6 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
     getEntryMethods(): string[] {
         let methods1: string[] = [
             EntryMethod.ClosedCandle,
-            EntryMethod.M5NewHighLow,
-            EntryMethod.M15NewHighLow,
-            EntryMethod.M30NewHighLow
         ];
         let methods2 = [
             EntryMethod.LiveCandle,
