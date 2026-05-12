@@ -9,7 +9,6 @@ import * as OrderFlow from "../controllers/orderFlow";
 import * as Handler from "../controllers/handler";
 import * as Models from "../models/models";
 import { BookmapWallBreak } from "../tradebooks/bookmapWallBreak";
-import { GapDownAndGoUpBookmapOfferWallBreakout } from "../tradebooks/gapDownAndGoUpBookmapOfferWallBreakout";
 import { TradebookID } from "../tradebooks/tradebookIds";
 import * as TradebooksManager from "../tradebooks/tradebooksManager";
 import * as TradingPlans from "../models/tradingPlans/tradingPlans";
@@ -118,8 +117,8 @@ const bookmapEntry = (symbol: string, useMarketOrder: boolean, stopLossPrice: nu
                 Firestore.logError(`[BookmapActions] GapDownAndGoUpBookmapOfferWallBreakout tradebook not found for ${symbol} (id: ${tradebookId})`, logTags);
                 return;
             }
-            if (!(tradebook instanceof GapDownAndGoUpBookmapOfferWallBreakout)) {
-                Firestore.logError(`[BookmapActions] tradebook ${tradebookId} is not a GapDownAndGoUpBookmapOfferWallBreakout`, logTags);
+            if (!(tradebook instanceof BookmapWallBreak)) {
+                Firestore.logError(`[BookmapActions] tradebook ${tradebookId} is not a BookmapWallBreak`, logTags);
                 return;
             }
             if (!tradebook.isEnabled()) {
@@ -232,5 +231,4 @@ const setStopLossFromBookmap = (symbol: string, newPrice: number) => {
         OrderFlow.adjustExitPairsWithNewPrice(symbol, [pair], newPrice, true, positionIsLong, logTags);
     }
 };
-
 

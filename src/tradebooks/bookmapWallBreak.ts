@@ -11,6 +11,7 @@ import { TradebookID } from "./tradebookIds";
 import * as GapAndGoAlgo from '../algorithms/gapAndGoAlgo';
 import * as GapAndCrapAlgo from '../algorithms/gapAndCrapAlgo';
 import * as GapDownAndGoDownAlgo from '../algorithms/gapDownAndGoDownAlgo';
+import * as GapDownAndGoUpAlgo from '../algorithms/gapDownAndGoUpAlgo';
 
 export class BookmapWallBreak extends Tradebook {
     private basePlan: TradingPlansModels.BasePlan;
@@ -35,6 +36,10 @@ export class BookmapWallBreak extends Tradebook {
             isLong = false;
             tradebookName = 'gap down & go down bookmap';
             buttonLabel = 'gap down & go down bookmap';
+        } else if (tradebookID == TradebookID.GapDownAndGoUpBookmapOfferWallBreakout) {
+            isLong = true;
+            tradebookName = 'Gap Down & Go Up Bookmap Offer Wall Breakout';
+            buttonLabel = `gap down and go up bookmap breakout`;
         }
 
         super(symbol, tradebookID, isLong, tradebookName, buttonLabel);
@@ -135,6 +140,8 @@ export class BookmapWallBreak extends Tradebook {
             return GapAndCrapAlgo.getAllowedReasonToAddPartial(symbol, entryPrice);
         } else if (this.tradebookID == TradebookID.GapDownAndGoDownBookmapBidWallBreakdown) {
             return GapDownAndGoDownAlgo.getAllowedReasonToAddPartial(symbol, entryPrice);
+        } else if (this.tradebookID == TradebookID.GapDownAndGoUpBookmapOfferWallBreakout) {
+            return GapDownAndGoUpAlgo.getAllowedReasonToAddPartial(symbol, entryPrice);
         } else {
             return {
                 allowed: false,
