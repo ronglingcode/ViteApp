@@ -9,7 +9,7 @@ import { populateBestIdeas } from '../controllers/traderFocus';
 import * as GapAndGoAlgo from './gapAndGoAlgo';
 import * as GapAndCrapAlgo from './gapAndCrapAlgo';
 import * as GapGiveAndGoAlgo from './gapGiveAndGoAlgo';
-import { GapDownAndGoDown } from '../tradebooks/gapDownAndGoDown';
+import * as GapDownAndGoDownAlgo from './gapDownAndGoDownAlgo';
 import * as GapDownAndGoUpAlgo from './gapDownAndGoUpAlgo';
 
 declare let window: Models.MyWindow;
@@ -263,7 +263,7 @@ const verifyTradingPlansForSingleDirection = (symbol: string, plan: TradingPlans
     }
 
     if (plan.gapDownAndGoDownPlan) {
-        if (!GapDownAndGoDown.hasAtLeastOneReasonSet(plan.gapDownAndGoDownPlan, symbol)) {
+        if (!GapDownAndGoDownAlgo.hasAtLeastOneReasonSet(plan.gapDownAndGoDownPlan, symbol)) {
             return false;
         }
         hasBestTradebook = true;

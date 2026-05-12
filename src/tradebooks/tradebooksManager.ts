@@ -4,11 +4,9 @@ import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import type { Tradebook } from "./baseTradebook";
 import { VwapContinuationFailed } from "./singleKeyLevel/vwapContinuationFailed";
 import * as Helper from "../utils/helper";
-import { GapDownAndGoDown } from "./gapDownAndGoDown";
 import { GapDownAndGoUpBookmapOfferWallBreakout } from "./gapDownAndGoUpBookmapOfferWallBreakout";
 import { BookmapWallBreak } from "./bookmapWallBreak";
 import { BookmapWallReversal } from "./bookmapWallReversal";
-import { GapDownAndGoDownBookmapBidWallBreakdown } from "./gapDownAndGoDownBookmapBidWallBreakdown";
 import { TradebookID } from "./tradebookIds";
 
 export const createTradebooksForGapAndGo = (symbol: string, gapAndGoPlan: TradingPlansModels.GapAndGoPlan, tradebooksMap: Map<string, Tradebook>) => {
@@ -45,11 +43,28 @@ export const createTradebooksForGapAndCrap = (symbol: string, gapAndCrapPlan: Tr
     }
 }
 
-export const createAllTradebooks = (symbol: string) => {
+export const createTradebooksForGapDownAndGoDown = (symbol: string, gapPlan: TradingPlansModels.GapDownAndGoDownPlan, tradebooksMap: Map<string, Tradebook>) => {
     let plan = TradingPlans.getTradingPlans(symbol);
     let shortPlan = plan.short.levelMomentumPlan;
-    let scopeIsLong = false;
 
+    let maxPriceKeyLevel: TradingPlansModels.LevelArea = {
+        high: gapPlan.buyersTrappedBelowThisLevel || 0,
+        low: gapPlan.buyersTrappedBelowThisLevel || 0
+    };
+    if (shortPlan) {
+        let gapDownAndGoDownVwapBounceFail = new VwapContinuationFailed(
+            symbol, TradebookID.GapDownAndGoDownShortVwapBounceFailed, false, false, maxPriceKeyLevel, shortPlan);
+        gapDownAndGoDownVwapBounceFail.enableByDefault = true;
+        tradebooksMap.set(gapDownAndGoDownVwapBounceFail.getID(), gapDownAndGoDownVwapBounceFail);
+    }
+
+    let gapDownAndGoDownBookmapBidWallBreakdown = new BookmapWallBreak(
+        symbol, TradebookID.GapDownAndGoDownBookmapBidWallBreakdown, gapPlan, false, maxPriceKeyLevel.high);
+    tradebooksMap.set(gapDownAndGoDownBookmapBidWallBreakdown.getID(), gapDownAndGoDownBookmapBidWallBreakdown);
+}
+
+export const createAllTradebooks = (symbol: string) => {
+    let plan = TradingPlans.getTradingPlans(symbol);
     let tradebooksMap = new Map<string, Tradebook>();
 
     if (plan.long.gapAndGoPlan) {
@@ -61,24 +76,7 @@ export const createAllTradebooks = (symbol: string) => {
     }
 
     if (plan.short.gapDownAndGoDownPlan) {
-        let gapDownAndGoDown = new GapDownAndGoDown(
-            symbol, TradebookID.GapDownAndGoDownShort, false, plan.short.gapDownAndGoDownPlan);
-        tradebooksMap.set(gapDownAndGoDown.getID(), gapDownAndGoDown);
-
-        let maxPriceKeyLevel: TradingPlansModels.LevelArea = {
-            high: plan.short.gapDownAndGoDownPlan.buyersTrappedBelowThisLevel || 0,
-            low: plan.short.gapDownAndGoDownPlan.buyersTrappedBelowThisLevel || 0
-        };
-        if (shortPlan) {
-            let gapDownAndGoDownVwapBounceFail = new VwapContinuationFailed(
-                symbol, TradebookID.GapDownAndGoDownShortVwapBounceFailed, false, false, maxPriceKeyLevel, shortPlan);
-            gapDownAndGoDownVwapBounceFail.enableByDefault = true;
-            tradebooksMap.set(gapDownAndGoDownVwapBounceFail.getID(), gapDownAndGoDownVwapBounceFail);
-        }
-
-        let gapDownAndGoDownBookmapBidWallBreakdown = new GapDownAndGoDownBookmapBidWallBreakdown(
-            symbol, TradebookID.GapDownAndGoDownBookmapBidWallBreakdown, plan.short.gapDownAndGoDownPlan);
-        tradebooksMap.set(gapDownAndGoDownBookmapBidWallBreakdown.getID(), gapDownAndGoDownBookmapBidWallBreakdown);
+        createTradebooksForGapDownAndGoDown(symbol, plan.short.gapDownAndGoDownPlan, tradebooksMap);
     }
 
     if (plan.long.gapDownAndGoUpPlan) {

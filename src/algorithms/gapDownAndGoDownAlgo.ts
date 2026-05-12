@@ -1,21 +1,20 @@
-import * as Models from '../models/models';
 import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as Firestore from '../firestore';
+import * as Models from '../models/models';
 
-export const hasAtLeastOneReasonSet = (plan: TradingPlansModels.GapAndCrapPlan, symbol: string): boolean => {
+export const hasAtLeastOneReasonSet = (plan: TradingPlansModels.GapDownAndGoDownPlan, symbol: string): boolean => {
     const hasOne =
-        !!plan.heavySupplyZoneDays ||
-        !!plan.recentRallyWithoutPullback ||
-        !!plan.extendedGapUpInAtr ||
-        !!plan.earnings ||
-        !!plan.topEdgeOfCurrentRange ||
-        !!plan.nearBelowPreviousEventKeyLevel;
+        !!plan.nearBelowConsolidationRange ||
+        !!plan.nearBelowConsolidationRangeTop ||
+        !!plan.buyersTrappedBelowThisLevel ||
+        !!plan.previousInsideDay;
     if (!hasOne) {
-        Firestore.logError(`${symbol} missing one reason set for gap and crap plan`);
+        Firestore.logError(`${symbol} missing one reason set for gap down and go down plan`);
         return false;
     }
     return true;
-};
+}
+
 
 export const getAllowedReasonToAddPartial = (symbol: string, entryPrice: number): Models.CheckRulesResult => {
     let vwap = Models.getCurrentVwap(symbol);
