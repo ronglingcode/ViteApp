@@ -1,13 +1,24 @@
 export enum TradebookID {
-    GapGiveAndGoBookmapReversal = 'GapGiveAndGoBookmapReversal',
+    // Gap & Go
     GapAndGoBookmapOfferWallBreakout = 'GapAndGoBookmapOfferWallBreakout',
-    GapDownAndGoDownBookmapBidWallBreakdown = 'GapDownAndGoDownBookmapBidWallBreakdown',
+
+    // Gap Give & Go
+    GapGiveAndGoBookmapReversal = 'GapGiveAndGoBookmapReversal',
+
+    // Gap & Crap
     GapAndCrapBookmapBidWallBreakdown = 'GapAndCrapBookmapBidWallBreakdown',
-    GapAndCrapBookmapReversal = 'GapGapAndCrapBookmapReversal',
+    GapAndCrapOfferStepDownReappear = 'GapAndCrapOfferStepDownReappear',
+    GapAndCrapBreakdownBidSwingLow = 'GapAndCrapBreakdownBidSwingLow',
+    GapAndCrapShortVwapBounceFailed = 'GapAndCrap-ShortVwapBounceFailed',
+
+    // Gap Down & Go Down
+    GapDownAndGoDownBookmapBidWallBreakdown = 'GapDownAndGoDownBookmapBidWallBreakdown',
+    GapDownAndGoDownShortVwapBounceFailed = 'GapDownAndGoDown-ShortVwapBounceFailed',
+
+    // Gap Down & Go Up
     GapDownAndGoUpBookmapOfferWallBreakout = 'GapDownAndGoUpBookmapOfferWallBreakout',
     GapDownAndGoUpBookmapReversal = 'GapDownAndGoUpBookmapReversal',
 
+    // Generic
     ShortVwapBounceFailed = 'ShortVwapBounceFailed',
-    GapAndCrapShortVwapBounceFailed = 'GapAndCrap-ShortVwapBounceFailed',
-    GapDownAndGoDownShortVwapBounceFailed = 'GapDownAndGoDown-ShortVwapBounceFailed',
 }

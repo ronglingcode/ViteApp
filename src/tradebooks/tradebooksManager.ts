@@ -32,13 +32,16 @@ export const createTradebooksForGapAndCrap = (symbol: string, gapAndCrapPlan: Tr
         gapAndCrapVwapBounceFail.enableByDefault = true;
         tradebooksMap.set(gapAndCrapVwapBounceFail.getID(), gapAndCrapVwapBounceFail);
 
-        let gapAndCrapBookmapBidWallBreakdown = new BookmapWallBreak(
+        let bookmapBreakdown = new BookmapWallBreak(
             symbol, TradebookID.GapAndCrapBookmapBidWallBreakdown, gapAndCrapPlan, false, maxPrice);
-        tradebooksMap.set(gapAndCrapBookmapBidWallBreakdown.getID(), gapAndCrapBookmapBidWallBreakdown);
+        tradebooksMap.set(bookmapBreakdown.getID(), bookmapBreakdown);
 
-        let gapAndCrapBookmapWallReversal = new BookmapWallReversal(
-            symbol, TradebookID.GapAndCrapBookmapReversal, gapAndCrapPlan, maxPrice);
-        tradebooksMap.set(gapAndCrapBookmapWallReversal.getID(), gapAndCrapBookmapWallReversal);
+        let bookmapReversal1 = new BookmapWallReversal(
+            symbol, TradebookID.GapAndCrapOfferStepDownReappear, gapAndCrapPlan, maxPrice);
+        tradebooksMap.set(bookmapReversal1.getID(), bookmapReversal1);
+        let bookmapReversal2 = new BookmapWallReversal(
+            symbol, TradebookID.GapAndCrapBreakdownBidSwingLow, gapAndCrapPlan, maxPrice);
+        tradebooksMap.set(bookmapReversal2.getID(), bookmapReversal2);
     }
 }
 

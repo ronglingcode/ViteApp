@@ -40,6 +40,8 @@ export class BookmapWallBreak extends Tradebook {
             isLong = true;
             tradebookName = 'Gap Down & Go Up Bookmap Offer Wall Breakout';
             buttonLabel = `gap down and go up bookmap breakout`;
+        } else {
+            Firestore.logError(`unknow tradebook id ${tradebookID}`)
         }
 
         super(symbol, tradebookID, isLong, tradebookName, buttonLabel);

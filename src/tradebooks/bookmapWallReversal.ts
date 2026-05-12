@@ -22,10 +22,14 @@ export class BookmapWallReversal extends Tradebook {
         let isLong = false;
         let tradebookName = "unknown";
         let buttonLabel = "unknown";
-        if (tradebookID == TradebookID.GapAndCrapBookmapReversal) {
+        if (tradebookID == TradebookID.GapAndCrapOfferStepDownReappear) {
             isLong = false;
-            tradebookName = 'Gap & Crap Bookmap Reversal';
-            buttonLabel = 'Gap & Crap bookmap reversal';
+            tradebookName = 'Gap & Crap Offer Step Down Or Reappear';
+            buttonLabel = 'Gap & Crap offer step down / reappear';
+        } else if (tradebookID == TradebookID.GapAndCrapBreakdownBidSwingLow) {
+            isLong = false;
+            tradebookName = 'Gap & Crap breakdown bid / swing low';
+            buttonLabel = 'Gap & Crap breakdown bid / swing low';
         } else if (tradebookID == TradebookID.GapGiveAndGoBookmapReversal) {
             isLong = true;
             tradebookName = 'Gap, Give & Go'
@@ -34,6 +38,8 @@ export class BookmapWallReversal extends Tradebook {
             isLong = true;
             tradebookName = 'Gap Down & Go Up Bookmap Reversal';
             buttonLabel = `gap down & go up bookmap bid reversal`;
+        } else {
+            Firestore.logError(`unknow tradebook id ${tradebookID}`)
         }
 
         super(symbol, tradebookID, isLong, tradebookName, buttonLabel);
@@ -119,20 +125,22 @@ export class BookmapWallReversal extends Tradebook {
             } else if (entryMethod.endsWith("0.25R")) {
                 riskReduction = 0.25;
                 Firestore.logInfo(`reduce risk to 0.25R`);
+            } else if (entryMethod.endsWith("0.5R")) {
+                riskReduction = 0.5;
+                Firestore.logInfo(`reduce risk to 0.5R`);
             }
-            if (entryMethod.startsWith('bid step up') ||
-                entryMethod.startsWith('bid reappear') ||
-                entryMethod.startsWith('offer step up') ||
-                entryMethod.startsWith('offer reappear')) {
-                mustAlignVwap = false;
-            }
+        }
+        if (this.tradebookID == TradebookID.GapAndCrapOfferStepDownReappear) {
+            mustAlignVwap = false;
         }
         return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskReduction, mustAlignVwap, logTags);
 
     }
 
     getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
-        if (this.tradebookID === TradebookID.GapAndCrapBookmapReversal) {
+        if (this.tradebookID === TradebookID.GapAndCrapOfferStepDownReappear ||
+            this.tradebookID === TradebookID.GapAndCrapBreakdownBidSwingLow
+        ) {
             return GapAndCrapAlgo.getAllowedReasonToAddPartial(symbol, entryPrice);
         } else if (this.tradebookID == TradebookID.GapGiveAndGoBookmapReversal) {
             return {
@@ -155,11 +163,7 @@ export class BookmapWallReversal extends Tradebook {
         if (this.isLong) {
             patterns = ['bid step up', 'bid reappear'];
         } else {
-            patterns = [
-                'offer step down', 'offer reappear',
-                'offer clear lost swing low',
-                'offer clear lost bid'
-            ];
+            return ["0.15R", "0.25R", "0.5R", "1R"];
         }
         let entryMethods: string[] = [];
         patterns.forEach(pattern => {
