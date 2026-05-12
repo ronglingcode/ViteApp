@@ -31,7 +31,7 @@ This document summarizes the concrete tradebook classes under `src/tradebooks`. 
 ## GapAndGoBookmapOfferWallBreakout
 
 - Source: `src/tradebooks/gapAndGoBookmapOfferWallBreakout.ts`
-- Entry rules: this book is effectively Bookmap-only because `triggerEntry(...)` is disabled. In `triggerEntryCommon(...)`, if `basePlan.mustOpenAboveVwap` is set, the open price must be at or above the last VWAP before open. It then applies `checkBasicGlobalEntryRules(...)`.
+- Entry rules: this book is effectively Bookmap-only because `triggerEntry(...)` is disabled. In `triggerEntryCommon(...)`, it applies `checkBasicGlobalEntryRules(...)`.
 - Sizing rules: accepted size is quartered (`allowedSize / 4`).
 - Add rules: partial adds are only allowed once the add price is at or above premarket high.
 - Exit rules: no custom exit restrictions; base `Tradebook` defaults apply.

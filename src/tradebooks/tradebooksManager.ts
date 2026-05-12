@@ -10,7 +10,7 @@ import { TradebookID } from "./tradebookIds";
 
 export const createTradebooksForGapAndGo = (symbol: string, gapAndGoPlan: TradingPlansModels.GapAndGoPlan, tradebooksMap: Map<string, Tradebook>) => {
     let gapAndGoBookmapOfferWallBreakout = new BookmapWallBreak(
-        symbol, TradebookID.GapAndGoBookmapOfferWallBreakout, gapAndGoPlan, gapAndGoPlan.mustOpenAboveVwap, gapAndGoPlan.support.low);
+        symbol, TradebookID.GapAndGoBookmapOfferWallBreakout, gapAndGoPlan, gapAndGoPlan.support.low);
     tradebooksMap.set(gapAndGoBookmapOfferWallBreakout.getID(), gapAndGoBookmapOfferWallBreakout);
     let gapGiveAndGo = new BookmapWallReversal(
         symbol, TradebookID.GapGiveAndGoBookmapReversal, gapAndGoPlan, gapAndGoPlan.support.low,
@@ -33,7 +33,7 @@ export const createTradebooksForGapAndCrap = (symbol: string, gapAndCrapPlan: Tr
         tradebooksMap.set(gapAndCrapVwapBounceFail.getID(), gapAndCrapVwapBounceFail);
 
         let bookmapBreakdown = new BookmapWallBreak(
-            symbol, TradebookID.GapAndCrapBookmapBidWallBreakdown, gapAndCrapPlan, false, maxPrice);
+            symbol, TradebookID.GapAndCrapBookmapBidWallBreakdown, gapAndCrapPlan, maxPrice);
         tradebooksMap.set(bookmapBreakdown.getID(), bookmapBreakdown);
 
         let bookmapReversal1 = new BookmapWallReversal(
@@ -61,7 +61,7 @@ export const createTradebooksForGapDownAndGoDown = (symbol: string, gapPlan: Tra
     }
 
     let gapDownAndGoDownBookmapBidWallBreakdown = new BookmapWallBreak(
-        symbol, TradebookID.GapDownAndGoDownBookmapBidWallBreakdown, gapPlan, false, maxPriceKeyLevel.high);
+        symbol, TradebookID.GapDownAndGoDownBookmapBidWallBreakdown, gapPlan, maxPriceKeyLevel.high);
     tradebooksMap.set(gapDownAndGoDownBookmapBidWallBreakdown.getID(), gapDownAndGoDownBookmapBidWallBreakdown);
 }
 
@@ -69,7 +69,7 @@ export const createTradebooksForGapDownAndGoUp = (symbol: string, gapPlan: Tradi
     let minSupport = gapPlan.support.length > 0 ? gapPlan.support[0].low : 0;
 
     let gapDownAndGoUpBookmapOfferWallBreakout = new BookmapWallBreak(
-        symbol, TradebookID.GapDownAndGoUpBookmapOfferWallBreakout, gapPlan, false, minSupport);
+        symbol, TradebookID.GapDownAndGoUpBookmapOfferWallBreakout, gapPlan, minSupport);
     tradebooksMap.set(gapDownAndGoUpBookmapOfferWallBreakout.getID(), gapDownAndGoUpBookmapOfferWallBreakout);
 
     let gapDownAndGoUpBookmapWallReversal = new BookmapWallReversal(

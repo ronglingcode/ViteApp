@@ -17,11 +17,10 @@ export class BookmapWallBreak extends Tradebook {
     private basePlan: TradingPlansModels.BasePlan;
     private scalpMinCount = 0;
     private coreMinCount = 0;
-    private openMustAlignVwap: boolean;
     private minMaxEntryLevel: number;
 
     constructor(symbol: string, tradebookID: string, basePlan: TradingPlansModels.BasePlan,
-        openMustAlignVwap: boolean, minMaxEntryLevel: number) {
+        minMaxEntryLevel: number) {
         let isLong = true;
         let tradebookName = "unknown";
         let buttonLabel = "unknown";
@@ -50,7 +49,6 @@ export class BookmapWallBreak extends Tradebook {
         let scalpCount = GlobalSettings.batchCount - basePlan.coreCount - basePlan.runnerCount;
         this.scalpMinCount = GlobalSettings.batchCount - scalpCount;
         this.coreMinCount = GlobalSettings.batchCount - scalpCount - basePlan.coreCount;
-        this.openMustAlignVwap = openMustAlignVwap;
         this.minMaxEntryLevel = minMaxEntryLevel;
     }
 
@@ -79,23 +77,6 @@ export class BookmapWallBreak extends Tradebook {
                 return 0;
             }
         }
-        if (this.openMustAlignVwap) {
-            let openPrice = Models.getOpenPrice(symbol);
-            let openVwap = Models.getLastVwapBeforeOpen(symbol);
-            if (openVwap == null) {
-                Firestore.logError(`openMustAlignVwap: need VWAP at open`, logTags);
-                return 0;
-            }
-            if (this.isLong && openPrice < openVwap) {
-                Firestore.logError(`openMustAlignVwap: open ${openPrice} below VWAP at open ${openVwap}`, logTags);
-                return 0;
-            } else if (!this.isLong && openPrice > openVwap) {
-                Firestore.logError(`openMustAlignVwap: open ${openPrice} above VWAP at open ${openVwap}`, logTags);
-                return 0;
-            }
-        }
-
-
         let allowedSize = EntryRulesChecker.checkBasicGlobalEntryRules(
             symbol, this.isLong, entryPrice, stopOutPrice, useMarketOrder,
             this.basePlan, false, logTags);

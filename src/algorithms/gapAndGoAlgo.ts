@@ -20,12 +20,11 @@ export const hasAtLeastOneReasonSet = (plan: TradingPlansModels.GapAndGoPlan, sy
 };
 
 // Entry rules:
-// 1. mustOpenAboveVwap — if the plan flag is set, the open price must be at or above VWAP at open
-// 2. Min support — entry price must be at or above basePlan.support.low
-// 3. 15-minute window — only allowed within the first 15 minutes after market open
-// 4. VWAP reclaim consistency — if the stock opened below VWAP but has since reclaimed it, entry is blocked if the last two 1m candles both closed back below VWAP
-// 5. Basic global entry rules — delegates to EntryRulesChecker.checkBasicGlobalEntryRules (standard size/risk checks)
-// 6. Below-VWAP penalty — if entry price is currently below VWAP, allowed only if within support.low + 2 × ATR; if so, size is cut to 50%
+// 1. Min support — entry price must be at or above basePlan.support.low
+// 2. 15-minute window — only allowed within the first 15 minutes after market open
+// 3. VWAP reclaim consistency — if the stock opened below VWAP but has since reclaimed it, entry is blocked if the last two 1m candles both closed back below VWAP
+// 4. Basic global entry rules — delegates to EntryRulesChecker.checkBasicGlobalEntryRules (standard size/risk checks)
+// 5. Below-VWAP penalty — if entry price is currently below VWAP, allowed only if within support.low + 2 × ATR; if so, size is cut to 50%
 export const validateEntry = (
     symbol: string,
     plan: TradingPlansModels.GapAndGoPlan,
@@ -36,16 +35,6 @@ export const validateEntry = (
 ): number => {
     let openPrice = Models.getOpenPrice(symbol);
     let openVwap = Models.getLastVwapBeforeOpen(symbol);
-    if (plan.mustOpenAboveVwap) {
-        if (openVwap == null) {
-            Firestore.logError(`mustOpenAboveVwap: need VWAP at open`, logTags);
-            return 0;
-        }
-        if (openPrice < openVwap) {
-            Firestore.logError(`mustOpenAboveVwap: open ${openPrice} below VWAP at open ${openVwap}`, logTags);
-            return 0;
-        }
-    }
     let minSupport = plan.support.low;
     if (entryPrice < minSupport) {
         Firestore.logError(`entry price ${entryPrice} is below min daily support ${minSupport}`, logTags);
