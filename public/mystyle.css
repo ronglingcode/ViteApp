@@ -229,6 +229,17 @@ span.algo {
     border-radius: 2px;
 }
 
+.sideBar .entryMethodButtons.twoButtonsPerRow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 2px;
+}
+
+.sideBar .entryMethodButtons.twoButtonsPerRow .longButton,
+.sideBar .entryMethodButtons.twoButtonsPerRow .shortButton {
+    margin-right: 0;
+}
+
 .sideBar .longButtonTitle {
     color: #2E7D32;
     /* dark green */

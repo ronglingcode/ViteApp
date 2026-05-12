@@ -1744,11 +1744,16 @@ const createTradebookUINew = (tradebook: Tradebook, sideBar: HTMLElement, classN
     container.appendChild(title);
     let stats = document.createElement("div");
     container.appendChild(stats);
+    let entryMethodButtons = document.createElement("div");
+    entryMethodButtons.classList.add("entryMethodButtons");
+    if (entryMethods.every(entryMethod => entryMethod.trim().length < 10)) {
+        entryMethodButtons.classList.add("twoButtonsPerRow");
+    }
+    container.appendChild(entryMethodButtons);
     let buttons: HTMLElement[] = [];
     entryMethods.forEach(entryMethod => {
-        let entryMethodButton = createButton(entryMethod, "div", container);
+        let entryMethodButton = createButton(entryMethod, "div", entryMethodButtons);
         entryMethodButton.classList.add(className);
-        container.appendChild(entryMethodButton);
         buttons.push(entryMethodButton);
         entryMethodButton.addEventListener("click", (pointerEvent) => {
             Firestore.logInfo(`tradebook ${tradebook.buttonLabel} ${entryMethod} clicked`);

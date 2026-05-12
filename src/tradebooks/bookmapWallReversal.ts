@@ -130,7 +130,10 @@ export class BookmapWallReversal extends Tradebook {
                 Firestore.logInfo(`reduce risk to 0.5R`);
             }
         }
-        if (this.tradebookID == TradebookID.GapAndCrapOfferStepDownReappear) {
+        if (this.tradebookID == TradebookID.GapAndCrapOfferStepDownReappear ||
+            this.tradebookID == TradebookID.GapGiveAndGoBookmapReversal ||
+            this.tradebookID == TradebookID.GapDownAndGoUpBookmapReversal
+        ) {
             mustAlignVwap = false;
         }
         return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskReduction, mustAlignVwap, logTags);
