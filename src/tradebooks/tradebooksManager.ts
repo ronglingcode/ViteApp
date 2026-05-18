@@ -63,6 +63,13 @@ export const createTradebooksForGapDownAndGoDown = (symbol: string, gapPlan: Tra
     let gapDownAndGoDownBookmapBidWallBreakdown = new BookmapWallBreak(
         symbol, TradebookID.GapDownAndGoDownBookmapBidWallBreakdown, gapPlan, maxPriceKeyLevel.high);
     tradebooksMap.set(gapDownAndGoDownBookmapBidWallBreakdown.getID(), gapDownAndGoDownBookmapBidWallBreakdown);
+
+    let gapDownAndGoDownBookmapReversal1 = new BookmapWallReversal(
+        symbol, TradebookID.GapDownAndGoDownOfferStepDownReappear, gapPlan, maxPriceKeyLevel.high);
+    tradebooksMap.set(gapDownAndGoDownBookmapReversal1.getID(), gapDownAndGoDownBookmapReversal1);
+    let gapDownAndGoDownBookmapReversal2 = new BookmapWallReversal(
+        symbol, TradebookID.GapDownAndGoDownBreakdownBidSwingLow, gapPlan, maxPriceKeyLevel.high);
+    tradebooksMap.set(gapDownAndGoDownBookmapReversal2.getID(), gapDownAndGoDownBookmapReversal2);
 }
 
 export const createTradebooksForGapDownAndGoUp = (symbol: string, gapPlan: TradingPlansModels.GapDownAndGoUpPlan, tradebooksMap: Map<string, Tradebook>) => {

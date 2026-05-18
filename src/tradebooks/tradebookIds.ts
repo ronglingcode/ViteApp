@@ -13,6 +13,8 @@ export enum TradebookID {
 
     // Gap Down & Go Down
     GapDownAndGoDownBookmapBidWallBreakdown = 'GapDownAndGoDownBookmapBidWallBreakdown',
+    GapDownAndGoDownOfferStepDownReappear = 'GapDownAndGoDownOfferStepDownReappear',
+    GapDownAndGoDownBreakdownBidSwingLow = 'GapDownAndGoDownBreakdownBidSwingLow',
     GapDownAndGoDownShortVwapBounceFailed = 'GapDownAndGoDown-ShortVwapBounceFailed',
 
     // Gap Down & Go Up

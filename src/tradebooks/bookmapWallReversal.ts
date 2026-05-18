@@ -10,6 +10,7 @@ import * as Helper from '../utils/helper';
 import { TradebookID } from "./tradebookIds";
 import * as GapAndGoAlgo from '../algorithms/gapAndGoAlgo';
 import * as GapAndCrapAlgo from '../algorithms/gapAndCrapAlgo';
+import * as GapDownAndGoDownAlgo from '../algorithms/gapDownAndGoDownAlgo';
 import * as GapDownAndGoUpAlgo from '../algorithms/gapDownAndGoUpAlgo';
 
 export class BookmapWallReversal extends Tradebook {
@@ -30,6 +31,14 @@ export class BookmapWallReversal extends Tradebook {
             isLong = false;
             tradebookName = 'Gap & Crap breakdown bid / swing low';
             buttonLabel = 'Gap & Crap breakdown bid / swing low';
+        } else if (tradebookID == TradebookID.GapDownAndGoDownOfferStepDownReappear) {
+            isLong = false;
+            tradebookName = 'Gap Down & Go Down Offer Step Down Or Reappear';
+            buttonLabel = 'Gap Down & Go Down offer step down / reappear';
+        } else if (tradebookID == TradebookID.GapDownAndGoDownBreakdownBidSwingLow) {
+            isLong = false;
+            tradebookName = 'Gap Down & Go Down breakdown bid / swing low';
+            buttonLabel = 'Gap Down & Go Down breakdown bid / swing low';
         } else if (tradebookID == TradebookID.GapGiveAndGoBookmapReversal) {
             isLong = true;
             tradebookName = 'Gap, Give & Go'
@@ -131,6 +140,7 @@ export class BookmapWallReversal extends Tradebook {
             }
         }
         if (this.tradebookID == TradebookID.GapAndCrapOfferStepDownReappear ||
+            this.tradebookID == TradebookID.GapDownAndGoDownOfferStepDownReappear ||
             this.tradebookID == TradebookID.GapGiveAndGoBookmapReversal ||
             this.tradebookID == TradebookID.GapDownAndGoUpBookmapReversal
         ) {
@@ -145,6 +155,10 @@ export class BookmapWallReversal extends Tradebook {
             this.tradebookID === TradebookID.GapAndCrapBreakdownBidSwingLow
         ) {
             return GapAndCrapAlgo.getAllowedReasonToAddPartial(symbol, entryPrice);
+        } else if (this.tradebookID === TradebookID.GapDownAndGoDownOfferStepDownReappear ||
+            this.tradebookID === TradebookID.GapDownAndGoDownBreakdownBidSwingLow
+        ) {
+            return GapDownAndGoDownAlgo.getAllowedReasonToAddPartial(symbol, entryPrice);
         } else if (this.tradebookID == TradebookID.GapGiveAndGoBookmapReversal) {
             return {
                 allowed: true,
