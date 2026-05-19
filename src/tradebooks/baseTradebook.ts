@@ -4,6 +4,7 @@ import * as Helper from '../utils/helper';
 import * as TradingState from '../models/tradingState';
 import * as EntryHandler from '../controllers/entryHandler';
 import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
+import * as GlobalSettings from '../config/globalSettings';
 
 // 1) Define a common interface
 export abstract class Tradebook {
@@ -43,6 +44,64 @@ export abstract class Tradebook {
 
     setCoreInvalidationLevel(level: number): void {
         this.coreInvalidationLevel = level;
+    }
+
+    private getDisallowedReasonForMissingCoreInvalidationLevel(exitTier: string, logTags: Models.LogTags): Models.CheckRulesResult | null {
+        if (this.coreInvalidationLevel !== -1) {
+            return null;
+        }
+        let message = `coreInvalidationLevel is still -1; set the invalidation level before adjusting ${exitTier} exit orders`;
+        Firestore.logError(message, logTags);
+        Helper.speak("set the invalidation level");
+        if (!GlobalSettings.blockExitAdjustmentsWithoutCoreInvalidationLevel) {
+            return null;
+        }
+        return {
+            allowed: false,
+            reason: message,
+        };
+    }
+
+    protected getDisallowedReasonForMissingCoreInvalidationLevelAtKeyIndex(
+        symbol: string, keyIndex: number, basePlan: TradingPlansModels.BasePlan, logTags: Models.LogTags): Models.CheckRulesResult | null {
+        let partialIndex = this.getPartialIndexForExitAdjustment(symbol, keyIndex);
+        let exitTier = this.getExitTierForPartialIndex(basePlan, partialIndex);
+        if (exitTier === "scalp") {
+            return null;
+        }
+        return this.getDisallowedReasonForMissingCoreInvalidationLevel(exitTier, logTags);
+    }
+
+    protected getDisallowedReasonForMissingCoreInvalidationLevelInExitPairRange(
+        symbol: string, totalPairsCount: number, basePlan: TradingPlansModels.BasePlan, logTags: Models.LogTags): Models.CheckRulesResult | null {
+        for (let keyIndex = 0; keyIndex < totalPairsCount; keyIndex++) {
+            let partialIndex = this.getPartialIndexForExitAdjustment(symbol, keyIndex);
+            let exitTier = this.getExitTierForPartialIndex(basePlan, partialIndex);
+            if (exitTier !== "scalp") {
+                return this.getDisallowedReasonForMissingCoreInvalidationLevel(exitTier, logTags);
+            }
+        }
+        return null;
+    }
+
+    // Convert the current visible exit-pair index back to the original batch slot.
+    // If earlier partials have already exited, the remaining pair at keyIndex 0 may
+    // now represent core/runner instead of the first scalp partial. This is the same
+    // index shift handled by Helper.getBatchIndex(...).
+    private getPartialIndexForExitAdjustment(symbol: string, keyIndex: number): number {
+        let totalPairsCount = Models.getExitPairs(symbol).length;
+        return Helper.getBatchIndex(keyIndex, GlobalSettings.batchCount, totalPairsCount);
+    }
+
+    private getExitTierForPartialIndex(basePlan: TradingPlansModels.BasePlan, partialIndex: number): string {
+        let scalpCount = GlobalSettings.batchCount - basePlan.coreCount - basePlan.runnerCount;
+        if (partialIndex < scalpCount) {
+            return "scalp";
+        }
+        if (partialIndex < scalpCount + basePlan.coreCount) {
+            return "core";
+        }
+        return "runner";
     }
 
     startEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {

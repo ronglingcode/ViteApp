@@ -14,6 +14,8 @@ export const showDataFeedsBar: boolean = false;
 export const checkMaxEntryThreshold: boolean = false;
 export const tradesPerSecondRollingWindowSeconds: number = 10; // Rolling window for tracking average trades per second
 export const enableBookmapSocket: boolean = true;
+// false: remind only. true: block core/runner exit adjustments until coreInvalidationLevel is set.
+export const blockExitAdjustmentsWithoutCoreInvalidationLevel: boolean = false;
 
 /** use custom risk level on top of stop loss level */
 export const enableRiskLevel: boolean = false;

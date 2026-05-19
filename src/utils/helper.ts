@@ -356,6 +356,17 @@ export const getPullbackDepth = (currentPrice: number, entryPrice: number, stopL
     return Math.round(depth * 100) / 100;
 }
 
+/**
+ * Maps the currently visible exit-pair index back to its original batch index.
+ *
+ * Exit pairs are shown only for the partials that are still open. If the first
+ * partials have already exited, visible key 0 no longer means original batch 0.
+ *
+ * Examples when initialTotal is 10:
+ * - currentTotal 10, keyIndex 0 -> batch 0
+ * - currentTotal 8, keyIndex 0 -> batch 2
+ * - currentTotal 8, keyIndex 3 -> batch 5
+ */
 export const getBatchIndex = (keyIndex: number, initialTotal: number, currentTotal: number) => {
     let batchIndex = keyIndex;
     if (currentTotal < initialTotal) {

@@ -203,13 +203,17 @@ export class BookmapWallReversal extends Tradebook {
     getDisallowedReasonToAdjustSingleLimitOrder(
         symbol: string, keyIndex: number, order: Models.OrderModel,
         pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
+        let exitCount = Models.getExitPairs(symbol).length;
+        let missingCoreInvalidationResult = this.getDisallowedReasonForMissingCoreInvalidationLevelAtKeyIndex(symbol, keyIndex, this.basePlan, logTags);
+        if (missingCoreInvalidationResult) {
+            return missingCoreInvalidationResult;
+        }
         let isMarketOrder = false;
         let newResult = ExitRulesCheckerNew.isAllowedForLimitOrderForAllTradebooks(
             symbol, this.isLong, isMarketOrder, newPrice, keyIndex, pair, logTags);
         if (newResult.allowed) {
             return newResult;
         }
-        let exitCount = Models.getExitPairs(symbol).length;
         if (exitCount >= this.scalpMinCount) {
             // manage scalp position
             let allowedReason: Models.CheckRulesResult = {
@@ -249,6 +253,11 @@ export class BookmapWallReversal extends Tradebook {
 
     getDisallowedReasonToAdjustSingleStopOrder(
         symbol: string, keyIndex: number, order: Models.OrderModel, pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
+        let exitCount = Models.getExitPairs(symbol).length;
+        let missingCoreInvalidationResult = this.getDisallowedReasonForMissingCoreInvalidationLevelAtKeyIndex(symbol, keyIndex, this.basePlan, logTags);
+        if (missingCoreInvalidationResult) {
+            return missingCoreInvalidationResult;
+        }
         let isMarketOrder = false;
         let newResult = ExitRulesCheckerNew.isAllowedForSingleOrderForAllTradebooks(
             symbol, this.isLong, isMarketOrder, newPrice, keyIndex, logTags);
@@ -256,7 +265,6 @@ export class BookmapWallReversal extends Tradebook {
             return newResult;
         }
 
-        let exitCount = Models.getExitPairs(symbol).length;
         if (exitCount >= this.scalpMinCount) {
             // manage scalp position
             let allowedReason: Models.CheckRulesResult = {
@@ -296,6 +304,11 @@ export class BookmapWallReversal extends Tradebook {
     }
 
     getDisallowedReasonToMarketOutSingleOrder(symbol: string, keyIndex: number, logTags: Models.LogTags): Models.CheckRulesResult {
+        let exitCount = Models.getExitPairs(symbol).length;
+        let missingCoreInvalidationResult = this.getDisallowedReasonForMissingCoreInvalidationLevelAtKeyIndex(symbol, keyIndex, this.basePlan, logTags);
+        if (missingCoreInvalidationResult) {
+            return missingCoreInvalidationResult;
+        }
         let isMarketOrder = true;
         let currentPrice = Models.getCurrentPrice(symbol);
         let newResult = ExitRulesCheckerNew.isAllowedForSingleOrderForAllTradebooks(
@@ -304,7 +317,6 @@ export class BookmapWallReversal extends Tradebook {
             return newResult;
         }
         let newPrice = Models.getCurrentPrice(symbol);
-        let exitCount = Models.getExitPairs(symbol).length;
         if (exitCount >= this.scalpMinCount) {
             // manage scalp position
             let allowedReason: Models.CheckRulesResult = {
@@ -340,6 +352,18 @@ export class BookmapWallReversal extends Tradebook {
             }
         }
         return newResult;
+    }
+
+    getDisallowedReasonToAdjustAllExitPairs(symbol: string, logTags: Models.LogTags, newPrice: number): Models.CheckRulesResult {
+        let exitCount = Models.getExitPairs(symbol).length;
+        let missingCoreInvalidationResult = this.getDisallowedReasonForMissingCoreInvalidationLevelInExitPairRange(symbol, exitCount, this.basePlan, logTags);
+        if (missingCoreInvalidationResult) {
+            return missingCoreInvalidationResult;
+        }
+        return {
+            allowed: true,
+            reason: "allow adjust all exits",
+        };
     }
 
     onNewTimeSalesData(): void { }

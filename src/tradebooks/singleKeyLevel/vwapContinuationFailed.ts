@@ -187,6 +187,10 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
                 reason: "disabled",
             };
         }
+        let missingCoreInvalidationResult = this.getDisallowedReasonForMissingCoreInvalidationLevelAtKeyIndex(symbol, keyIndex, this.levelMomentumPlan, logTags);
+        if (missingCoreInvalidationResult) {
+            return missingCoreInvalidationResult;
+        }
         let result: Models.CheckRulesResult = {
             allowed: false,
             reason: "default disallow",
@@ -215,6 +219,10 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
                 reason: "disabled",
             };
         }
+        let missingCoreInvalidationResult = this.getDisallowedReasonForMissingCoreInvalidationLevelAtKeyIndex(symbol, keyIndex, this.levelMomentumPlan, logTags);
+        if (missingCoreInvalidationResult) {
+            return missingCoreInvalidationResult;
+        }
         let result: Models.CheckRulesResult = {
             allowed: false,
             reason: "default disallow",
@@ -242,6 +250,10 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
                 reason: "disabled",
             };
         }
+        let missingCoreInvalidationResult = this.getDisallowedReasonForMissingCoreInvalidationLevelAtKeyIndex(symbol, keyIndex, this.levelMomentumPlan, logTags);
+        if (missingCoreInvalidationResult) {
+            return missingCoreInvalidationResult;
+        }
         let result: Models.CheckRulesResult = {
             allowed: false,
             reason: "default disallow",
@@ -260,6 +272,24 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
         }
 
         return result;
+    }
+
+    getDisallowedReasonToAdjustAllExitPairs(symbol: string, logTags: Models.LogTags, newPrice: number): Models.CheckRulesResult {
+        if (this.disableExitRules) {
+            return {
+                allowed: true,
+                reason: "disabled",
+            };
+        }
+        let exitCount = Models.getExitPairs(symbol).length;
+        let missingCoreInvalidationResult = this.getDisallowedReasonForMissingCoreInvalidationLevelInExitPairRange(symbol, exitCount, this.levelMomentumPlan, logTags);
+        if (missingCoreInvalidationResult) {
+            return missingCoreInvalidationResult;
+        }
+        return {
+            allowed: true,
+            reason: "allow adjust all exits",
+        };
     }
 
     getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
