@@ -602,11 +602,26 @@ const getPartialQuantity = (symbol: string, isLong: boolean) => {
 };
 
 export const setCustomStopLoss = (symbol: string) => {
-    if (Config.getProfileSettingsForSymbol(symbol).allowTighterStop) {
-        let crosshairPrice = Chart.getCrossHairPrice(symbol);
-        if (crosshairPrice)
-            Chart.drawStopLoss(symbol, crosshairPrice);
+    let crosshairPrice = Chart.getCrossHairPrice(symbol);
+    if (!crosshairPrice) {
+        return;
     }
+
+    if (Config.getProfileSettingsForSymbol(symbol).allowTighterStop) {
+        Chart.drawStopLoss(symbol, crosshairPrice);
+    }
+
+    let netQuantity = Models.getPositionNetQuantity(symbol);
+    if (netQuantity === 0) {
+        return;
+    }
+
+    let tradebook = TraderFocus.getTradebookFromPosition(symbol);
+    if (!tradebook) {
+        return;
+    }
+
+    tradebook.setCoreInvalidationLevel(crosshairPrice);
 };
 
 export const replaceWithProfitTakingExitOrders = (symbol: string, marketOutOnePartial: boolean,

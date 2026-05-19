@@ -15,6 +15,7 @@ export abstract class Tradebook {
     protected enabled: boolean = false;
     public sizingCount: number = 10;
     public enableByDefault: boolean = false;
+    protected coreInvalidationLevel: number = -1;
     constructor(
         public readonly symbol: string,
         public readonly tradebookID: string,
@@ -34,6 +35,14 @@ export abstract class Tradebook {
 
     getCommonLiveStats(): string {
         return `size: ${this.sizingCount}, `;
+    }
+
+    getCoreInvalidationLevel(): number {
+        return this.coreInvalidationLevel;
+    }
+
+    setCoreInvalidationLevel(level: number): void {
+        this.coreInvalidationLevel = level;
     }
 
     startEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {

@@ -62,6 +62,15 @@ export class BookmapWallReversal extends Tradebook {
 
     refreshLiveStats(): void { }
 
+    override setCoreInvalidationLevel(manualLevel: number): void {
+        let symbolData = Models.getSymbolData(this.symbol);
+        if (this.isLong) {
+            this.coreInvalidationLevel = Math.min(symbolData.lowOfDay, manualLevel);
+        } else {
+            this.coreInvalidationLevel = Math.max(symbolData.highOfDay, manualLevel);
+        }
+    }
+
     private getBookmapLogSuffix(): string {
         return this.isLong ? 'bookmap_bid_wall_reversal' : 'bookmap_offer_wall_reversal';
     }
