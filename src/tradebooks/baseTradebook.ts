@@ -16,7 +16,6 @@ export abstract class Tradebook {
     protected enabled: boolean = false;
     public sizingCount: number = 10;
     public enableByDefault: boolean = false;
-    protected coreInvalidationLevel: number = -1;
     constructor(
         public readonly symbol: string,
         public readonly tradebookID: string,
@@ -38,16 +37,15 @@ export abstract class Tradebook {
         return `size: ${this.sizingCount}, `;
     }
 
-    getCoreInvalidationLevel(): number {
-        return this.coreInvalidationLevel;
-    }
-
     setCoreInvalidationLevel(level: number): void {
-        this.coreInvalidationLevel = level;
+        let breakoutTradeState = TradingState.getBreakoutTradeState(this.symbol, this.isLong);
+        breakoutTradeState.coreInvalidationLevel = level;
+        TradingState.update();
     }
 
     private getDisallowedReasonForMissingCoreInvalidationLevel(exitTier: string, logTags: Models.LogTags): Models.CheckRulesResult | null {
-        if (this.coreInvalidationLevel !== -1) {
+        let breakoutTradeState = TradingState.getBreakoutTradeState(this.symbol, this.isLong);
+        if ((breakoutTradeState.coreInvalidationLevel ?? -1) !== -1) {
             return null;
         }
         let message = `coreInvalidationLevel is still -1; set the invalidation level before adjusting ${exitTier} exit orders`;

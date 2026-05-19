@@ -65,9 +65,9 @@ export class BookmapWallReversal extends Tradebook {
     override setCoreInvalidationLevel(manualLevel: number): void {
         let symbolData = Models.getSymbolData(this.symbol);
         if (this.isLong) {
-            this.coreInvalidationLevel = Math.min(symbolData.lowOfDay, manualLevel);
+            super.setCoreInvalidationLevel(Math.min(symbolData.lowOfDay, manualLevel));
         } else {
-            this.coreInvalidationLevel = Math.max(symbolData.highOfDay, manualLevel);
+            super.setCoreInvalidationLevel(Math.max(symbolData.highOfDay, manualLevel));
         }
     }
 
