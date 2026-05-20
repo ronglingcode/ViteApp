@@ -5,6 +5,7 @@ import * as TradingState from '../models/tradingState';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import * as UI from '../ui/ui';
 import * as Firestore from '../firestore';
+import * as ManagementCard from './managementCard';
 
 export const updateUI = async () => {
     let config = await TradingPlans.fetchConfigData();
@@ -80,7 +81,7 @@ export const populateTradeManagementForPosition = (position: Models.Position, ro
         return;
     }
     let tradebookID = breakoutTradeState.submitEntryResult.tradeBookID;
-    populateTradeManagementForTradebook(symbol, isLong, tradebookID, root);
+    ManagementCard.populateForPosition(position, root, tradebookID);
 }
 export const populateTradeManagementForTradebook = (symbol: string, isLong: boolean, tradebookID: string, root: HTMLElement) => {
     let tradebook = TradebooksManager.getTradebookByID(symbol, tradebookID);
@@ -103,7 +104,15 @@ export const populateTradeManagementForTradebook = (symbol: string, isLong: bool
 export const test = () => {
     let traderFocusInstructionsContent = document.getElementById("traderFocusInstructionsContent");
     if (traderFocusInstructionsContent) {
+        let section = document.getElementById("traderFocusInstructions");
+        if (section) {
+            section.classList.remove("collapsed");
+            let icon = section.querySelector(".collapseIcon");
+            if (icon) {
+                icon.textContent = "-";
+            }
+        }
         traderFocusInstructionsContent.innerHTML = "";
-        populateTradeManagementForTradebook("GOOGL", true, "aboveWaterBreakout", traderFocusInstructionsContent);
+        ManagementCard.populateMockForTest(traderFocusInstructionsContent);
     }
 }

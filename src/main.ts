@@ -154,7 +154,7 @@ if (tosScriptsButton) {
 let testPopButton = document.getElementById("test_popup");
 if (testPopButton) {
     testPopButton.addEventListener("click", () => {
-
+        TraderFocus.test();
     });
 }
 

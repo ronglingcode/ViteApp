@@ -400,6 +400,76 @@ span.algo {
     margin: 0;
 }
 
+#traderFocus .managementCard {
+    padding-bottom: 8px;
+}
+
+#traderFocus .managementSetupChooser {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+#traderFocus .managementSetupButton {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0f172a;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    line-height: 1.2;
+    cursor: pointer;
+}
+
+#traderFocus .managementSetupButton:hover {
+    border-color: #2563eb;
+}
+
+#traderFocus .managementSetupButton.active {
+    border-color: #2563eb;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-weight: 700;
+}
+
+#traderFocus .managementForm {
+    margin-top: 8px;
+    display: grid;
+    gap: 6px;
+}
+
+#traderFocus .managementCardTitle {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+#traderFocus .managementField {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+    font-size: 13px;
+}
+
+#traderFocus .managementField span {
+    color: #475569;
+}
+
+#traderFocus .managementField input {
+    min-width: 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 13px;
+}
+
+#traderFocus .managementSelectedSetup {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #475569;
+}
+
 .tradeInterval {
     display: none;
 }
