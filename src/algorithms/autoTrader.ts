@@ -529,7 +529,7 @@ export const onNewTimeAndSalesData = (symbol: string, newPrice: number, isNewCan
     updatePullbackDepth(symbol, newPrice);
     alertHigherVolume(symbol);
     saveRedToGreenState(symbol);
-    TradebooksManager.onNewTimeAndSalesDataForSymbol(symbol);
+    TradebooksManager.onNewTimeAndSalesDataForSymbol(symbol, newPrice);
     let status = getChartAnalysis(symbol);
     if (status) {
         Chart.updateToolTipPriceLine(symbol, status);

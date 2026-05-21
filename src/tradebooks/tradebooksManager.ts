@@ -162,14 +162,14 @@ export const getTradebookByID = (symbol: string, tradebookID: string) => {
     return tradebooksMap.get(tradebookID);
 }
 
-export const onNewTimeAndSalesDataForSymbol = (symbol: string) => {
+export const onNewTimeAndSalesDataForSymbol = (symbol: string, newPrice: number) => {
     let widget = Models.getChartWidget(symbol);
     if (!widget) {
         return;
     }
     let tradebooksMap = widget.tradebooks;
     tradebooksMap.forEach(tradebook => {
-        tradebook.onNewTimeSalesData();
+        tradebook.onNewTimeSalesData(newPrice);
     });
 }
 

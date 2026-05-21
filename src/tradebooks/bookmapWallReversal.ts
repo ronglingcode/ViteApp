@@ -366,5 +366,5 @@ export class BookmapWallReversal extends Tradebook {
         };
     }
 
-    onNewTimeSalesData(): void { }
+    onNewTimeSalesData(newPrice: number): void { }
 }

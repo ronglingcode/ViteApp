@@ -242,7 +242,7 @@ export abstract class Tradebook {
         }
     }
 
-    onNewTimeSalesData(): void {
+    onNewTimeSalesData(newPrice: number): void {
         // do nothing
     }
     onNewCandleClose(): void {
