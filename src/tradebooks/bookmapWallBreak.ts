@@ -7,6 +7,7 @@ import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as GlobalSettings from '../config/globalSettings';
 import * as ExitRulesCheckerNew from '../controllers/exitRulesCheckerNew';
 import * as Helper from '../utils/helper';
+import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import { TradebookID } from "./tradebookIds";
 import * as GapAndGoAlgo from '../algorithms/gapAndGoAlgo';
 import * as GapAndCrapAlgo from '../algorithms/gapAndCrapAlgo';
@@ -18,6 +19,9 @@ export class BookmapWallBreak extends Tradebook {
     private scalpMinCount = 0;
     private coreMinCount = 0;
     private minMaxEntryLevel: number;
+    private inPullbackPhase = false;
+    private hasPullbackPhase = false;
+    private recentPullbackPrice = 0;
 
     constructor(symbol: string, tradebookID: string, basePlan: TradingPlansModels.BasePlan,
         minMaxEntryLevel: number) {
@@ -52,7 +56,25 @@ export class BookmapWallBreak extends Tradebook {
         this.minMaxEntryLevel = minMaxEntryLevel;
     }
 
-    refreshLiveStats(): void { }
+    refreshLiveStats(): void {
+        if (!this.isEnabled() || !GlobalSettings.allowLiveStats) {
+            Helper.updateHtmlIfChanged(this.htmlStats, '');
+            return;
+        }
+
+        let symbol = this.symbol;
+        let symbolData = Models.getSymbolData(symbol);
+        let defaultPullbackPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
+        let recentPullbackPrice = this.recentPullbackPrice || defaultPullbackPrice;
+        let pullbackPrice = Helper.roundPrice(symbol, recentPullbackPrice);
+        let pullbackLabel = this.isLong ? 'pullback low' : 'popup high';
+        let liveStats = this.getCommonLiveStats();
+        liveStats += `${pullbackLabel}: ${pullbackPrice}`;
+        if (this.inPullbackPhase) {
+            liveStats += ' (pulling back)';
+        }
+        Helper.updateHtmlIfChanged(this.htmlStats, liveStats);
+    }
 
     private getBookmapLogSuffix(): string {
         return this.isLong ? 'bookmap_offer_wall_breakout' : 'bookmap_bid_wall_breakdown';
@@ -303,5 +325,55 @@ export class BookmapWallBreak extends Tradebook {
         };
     }
 
-    onNewTimeSalesData(): void { }
+    onNewTimeSalesData(newPrice: number): void {
+        let secondsSinceOpen = Helper.getSecondsSinceMarketOpen(new Date());
+        if (secondsSinceOpen < 0) {
+            return;
+        }
+
+        let symbol = this.symbol;
+        let symbolData = Models.getSymbolData(symbol);
+        let atr = TradingPlans.getTradingPlans(symbol).atr.average;
+        if (atr <= 0 || newPrice <= 0) {
+            return;
+        }
+
+        if (this.isLong) {
+            if (symbolData.highOfDay <= 0 || symbolData.lowOfDay <= 0 || symbolData.lowOfDay >= 99999999) {
+                return;
+            }
+            if (!this.hasPullbackPhase) {
+                this.recentPullbackPrice = symbolData.lowOfDay;
+            }
+            let pullbackThreshold = symbolData.highOfDay - atr * 0.1;
+            if (this.inPullbackPhase) {
+                this.recentPullbackPrice = Math.min(this.recentPullbackPrice, newPrice);
+                if (newPrice >= symbolData.highOfDay) {
+                    this.inPullbackPhase = false;
+                }
+            } else if (newPrice <= pullbackThreshold) {
+                this.inPullbackPhase = true;
+                this.hasPullbackPhase = true;
+                this.recentPullbackPrice = newPrice;
+            }
+        } else {
+            if (symbolData.lowOfDay <= 0 || symbolData.lowOfDay >= 99999999 || symbolData.highOfDay <= 0) {
+                return;
+            }
+            if (!this.hasPullbackPhase) {
+                this.recentPullbackPrice = symbolData.highOfDay;
+            }
+            let popupThreshold = symbolData.lowOfDay + atr * 0.1;
+            if (this.inPullbackPhase) {
+                this.recentPullbackPrice = Math.max(this.recentPullbackPrice, newPrice);
+                if (newPrice <= symbolData.lowOfDay) {
+                    this.inPullbackPhase = false;
+                }
+            } else if (newPrice >= popupThreshold) {
+                this.inPullbackPhase = true;
+                this.hasPullbackPhase = true;
+                this.recentPullbackPrice = newPrice;
+            }
+        }
+    }
 }
