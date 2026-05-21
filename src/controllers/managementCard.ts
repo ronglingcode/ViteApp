@@ -55,6 +55,17 @@ const getSide = (position: Models.Position): ManagementSide => {
     return position.netQuantity > 0 ? 'long' : 'short';
 };
 
+// Checks whether the trading plan allows management for this side.
+const isSideEnabled = (symbol: string, side: ManagementSide) => {
+    try {
+        let plan = TradingPlans.getTradingPlans(symbol);
+        let sidePlan = side === 'long' ? plan.long : plan.short;
+        return sidePlan.enabled !== false;
+    } catch (e) {
+        return true;
+    }
+};
+
 // Builds the per-symbol, per-side, per-setup storage key for editable card fields.
 const getDraftStorageKey = (symbol: string, side: ManagementSide, setupId: ManagementSetupId) => {
     return `trade-management:${symbol}:${side}:${setupId}`;
@@ -618,8 +629,8 @@ const updateCardPositionState = (container: HTMLElement, context: ManagementPosi
     }
 
     updateCollapsedState(container, context.symbol);
-    setSideSectionVisibility(container, 'long', !activeSide || activeSide === 'long');
-    setSideSectionVisibility(container, 'short', !activeSide || activeSide === 'short');
+    setSideSectionVisibility(container, 'long', isSideEnabled(context.symbol, 'long') && (!activeSide || activeSide === 'long'));
+    setSideSectionVisibility(container, 'short', isSideEnabled(context.symbol, 'short') && (!activeSide || activeSide === 'short'));
 };
 
 // Shows or hides one side section without rebuilding its form state.

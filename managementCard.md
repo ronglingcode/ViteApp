@@ -42,6 +42,7 @@ For every account refresh after cards exist:
 3. Only update the status tag and long/short side visibility.
 4. If there is no open position for a symbol, show both side sections.
 5. If there is an open position, show only the side matching the position and hide the opposite side.
+6. If `TradingPlans.getTradingPlans(symbol).long.enabled` or `.short.enabled` is explicitly `false`, hide that side completely.
 
 When a setup is selected, persist that selected setup separately from card data and re-render only that side section. For reappear setups, add the original/reappeared price and size fields above the common management fields.
 
