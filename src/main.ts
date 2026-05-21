@@ -186,6 +186,7 @@ window.TradingApp.TOS.initialize().then(async () => {
 
     Models.setTimeframe(timeframe);
     cleanUpChatWindows();
+    TraderFocus.updateTradeManagementUI();
 
     // open web socket
     AlpacaStreaming.createWebSocketForMarketData();
@@ -279,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Setup section expand/collapse functionality for A+ Setups and Trade Management
+    // Setup section expand/collapse functionality for collapsible trader-focus sections.
     const sectionHeaders = document.querySelectorAll('.clickableSectionTitle');
     sectionHeaders.forEach(header => {
         header.addEventListener('click', () => {

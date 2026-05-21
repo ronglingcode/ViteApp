@@ -8,6 +8,20 @@ import * as TakeProfit from "../algorithms/takeProfit";
 import * as Helper from "../utils/helper";
 import * as TradingPlans from "../models/tradingPlans/tradingPlans";
 import * as GlobalSettings from '../config/globalSettings';
+import * as ManagementCard from './managementCard';
+
+const getCommittedManagementBlock = (
+    symbol: string,
+    isLong: boolean,
+    logTags: Models.LogTags,
+    action: string,
+) => {
+    let result = ManagementCard.getDisallowedReasonToAdjustExitOrders(symbol, isLong);
+    if (result) {
+        Firestore.logInfo(`${action} disallowed: ${result.reason}`, logTags);
+    }
+    return result;
+};
 
 export const isAllowedForAllOrdersForAllTradebooks = (symbol: string, isLong: boolean, isMarketOrder: boolean, newPrice: number, logTags: Models.LogTags) => {
     let { planConfigs, exitPairsCount } = getCommonInfo(symbol);
@@ -121,14 +135,14 @@ export const isAllowedForSingleOrderForAllTradebooks = (symbol: string, isLong: 
 
     // use 0.1 today's current high-low range as buffer
     let symbolData = Models.getSymbolData(symbol);
-    let buffer = (symbolData.highOfDay- symbolData.lowOfDay) * 0.1;
+    let buffer = (symbolData.highOfDay - symbolData.lowOfDay) * 0.1;
     let thresholdWithBuffer = isLong ? threshold - buffer : threshold + buffer;
     if ((isLong && newPrice >= thresholdWithBuffer) || (!isLong && newPrice <= thresholdWithBuffer)) {
         allowedReason.allowed = true;
         allowedReason.reason = `new target ${newPrice} meets threshold: ${threshold}, with buffer: ${thresholdWithBuffer}`;
         return allowedReason;
     }
-    
+
     if ((isLong && symbolData.highOfDay >= threshold) || (!isLong && symbolData.lowOfDay <= threshold)) {
         allowedReason.allowed = true;
         allowedReason.reason = `has reached minimum target: ${threshold}`;
@@ -171,7 +185,10 @@ export const getCommonInfo = (symbol: string) => {
 export const isAllowedToAdjustSingleLimitOrder = (symbol: string, keyIndex: number,
     order: Models.OrderModel, pair: Models.ExitPair,
     newPrice: number, logTags: Models.LogTags) => {
-    let { tradebookID } = getCommonInfo(symbol);
+    let { isLong, tradebookID } = getCommonInfo(symbol);
+    if (getCommittedManagementBlock(symbol, isLong, logTags, "adjust limit order")) {
+        return false;
+    }
     let tradebook = TradebooksManager.getTradebookByID(symbol, tradebookID);
     if (tradebook) {
         let result = tradebook.getDisallowedReasonToAdjustSingleLimitOrder(symbol, keyIndex, order, pair, newPrice, logTags);
@@ -186,7 +203,10 @@ export const isAllowedToAdjustSingleLimitOrder = (symbol: string, keyIndex: numb
 export const checkAdjustSingleStopOrderRules = (symbol: string, keyIndex: number,
     order: Models.OrderModel, pair: Models.ExitPair,
     newPrice: number, logTags: Models.LogTags) => {
-    let { tradebookID } = getCommonInfo(symbol);
+    let { isLong, tradebookID } = getCommonInfo(symbol);
+    if (getCommittedManagementBlock(symbol, isLong, logTags, "adjust stop order")) {
+        return false;
+    }
     let tradebook = TradebooksManager.getTradebookByID(symbol, tradebookID);
     if (tradebook) {
         let result = tradebook.getDisallowedReasonToAdjustSingleStopOrder(symbol, keyIndex, order, pair, newPrice, logTags);
@@ -211,5 +231,22 @@ export const isAllowedToMarketOutSingleOrder = (symbol: string, keyIndex: number
         Firestore.logInfo(`no tradebook found for ${symbol}`, logTags);
     }
 
+    return true;
+};
+
+export const isAllowedToAdjustAllExitPairs = (symbol: string, newPrice: number, logTags: Models.LogTags) => {
+    let { isLong, tradebookID } = getCommonInfo(symbol);
+    if (getCommittedManagementBlock(symbol, isLong, logTags, "adjust all exit pairs")) {
+        return false;
+    }
+    let tradebook = TradebooksManager.getTradebookByID(symbol, tradebookID);
+    if (tradebook) {
+        let result = tradebook.getDisallowedReasonToAdjustAllExitPairs(symbol, logTags, newPrice);
+        let text = result.allowed ? `allow` : `cannot`;
+        Firestore.logInfo(`${text} adjust all exit pairs: ${result.reason}`, logTags);
+        return result.allowed;
+    } else {
+        Firestore.logInfo(`no tradebook found for ${symbol}`, logTags);
+    }
     return true;
 };
