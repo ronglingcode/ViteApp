@@ -41,14 +41,37 @@ export const populateBestIdeas = (bestIdeas: Map<string, string[]>) => {
 export const updateTradeManagementUI = () => {
     let traderFocusInstructionsContent = document.getElementById("traderFocusInstructionsContent");
     if (traderFocusInstructionsContent) {
-        traderFocusInstructionsContent.innerHTML = "";
-        let positions = Models.getOpenPositions();
-        positions.forEach(position => {
-            if (traderFocusInstructionsContent) {
-                populateTradeManagementForPosition(position, traderFocusInstructionsContent);
-            }
-        });
+        ManagementCard.render(traderFocusInstructionsContent, getManagementContexts());
     }
+}
+const getManagementContexts = (): ManagementCard.ManagementPositionContext[] => {
+    let positions = Models.getOpenPositions();
+    let positionBySymbol = new Map<string, Models.Position>();
+    positions.forEach(position => {
+        positionBySymbol.set(position.symbol, position);
+    });
+
+    return Models.getWatchlist().map(item => {
+        let position = positionBySymbol.get(item.symbol);
+        return {
+            symbol: item.symbol,
+            position: position,
+            tradebookID: position ? getTradebookIDForPosition(position) : undefined,
+        };
+    });
+}
+const getTradebookIDForPosition = (position: Models.Position) => {
+    let symbol = position.symbol;
+    if (position.netQuantity === 0) {
+        return undefined;
+    }
+    let isLong = position.netQuantity > 0;
+    let breakoutTradeState = TradingState.getBreakoutTradeState(symbol, isLong);
+    if (!breakoutTradeState) {
+        Firestore.logError(`should have breakoutTradeState for position ${symbol}`);
+        return undefined;
+    }
+    return breakoutTradeState.submitEntryResult.tradeBookID;
 }
 export const getTradebookFromPosition = (symbol: string) => {
     let position = Models.getOpenPositions();
@@ -70,17 +93,10 @@ export const getTradebookFromPosition = (symbol: string) => {
     return null;
 }
 export const populateTradeManagementForPosition = (position: Models.Position, root: HTMLElement) => {
-    let symbol = position.symbol;
     if (position.netQuantity === 0) {
         return;
     }
-    let isLong = position.netQuantity > 0;
-    let breakoutTradeState = TradingState.getBreakoutTradeState(symbol, isLong);
-    if (!breakoutTradeState) {
-        Firestore.logError(`should have breakoutTradeState for position ${symbol}`);
-        return;
-    }
-    let tradebookID = breakoutTradeState.submitEntryResult.tradeBookID;
+    let tradebookID = getTradebookIDForPosition(position);
     ManagementCard.populateForPosition(position, root, tradebookID);
 }
 export const populateTradeManagementForTradebook = (symbol: string, isLong: boolean, tradebookID: string, root: HTMLElement) => {

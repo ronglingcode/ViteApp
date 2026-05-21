@@ -43,7 +43,7 @@ For every account refresh after cards exist:
 4. If there is no open position for a symbol, show both side sections.
 5. If there is an open position, show only the side matching the position and hide the opposite side.
 
-When a setup is selected, persist that selected setup separately from card data and re-render only that side section. For `bookmap_offer_reappear`, add the offer price and size fields above the common management fields.
+When a setup is selected, persist that selected setup separately from card data and re-render only that side section. For reappear setups, add the original/reappeared price and size fields above the common management fields.
 
 The existing `Test popup` button should render the same management-card UI with a mock short `TEST` position. This lets the card be tested before a real broker position exists. In test mode, `bookmap_offer_reappear` is preselected so the editable card is visible immediately.
 
@@ -90,20 +90,21 @@ Common fields to render as editable text inputs for every setup:
 - Runner target
 - Runner trigger condition
 
-Additional fields for `bookmap_offer_reappear`, rendered above the common fields:
+Additional fields for reappear setups, rendered above the common fields:
 
 - Original price
 - Original size
 - Reappeared size
 
-Setup cards can define field-specific hint text. For `bookmap_offer_reappear`:
+Setup cards can define field-specific hint text. For reappear setups:
 
 - Core target hint: `vwap, premarket high`
-- Runner trigger condition hint: `vwap bounce fail, premarket low breakdown`
+- Bid Reappear runner trigger condition hint: `vwap reclaim, premarket high breakout`
+- Offer Reappear runner trigger condition hint: `vwap bounce fail, premarket low breakdown`
 
-Setup cards can also define field width as `long` or `short`. `Core count` is short by default. For `bookmap_offer_reappear`, `Original price`, `Original size`, and `Reappeared size` are short fields.
+Setup cards can also define field width as `long` or `short`. `Core count` is short by default. For reappear setups, `Original price`, `Original size`, and `Reappeared size` are short fields.
 
-Setup cards can define quick templates. Applying a template writes only that selected setup's draft fields, records the active template on that draft, then refreshes that side section with that template button highlighted. For `bookmap_offer_reappear`:
+Setup cards can define quick templates. Applying a template writes only that selected setup's draft fields, records the active template on that draft, then refreshes that side section with that template button highlighted. For reappear setups:
 
 - `Scalp to vwap`: `runnerCount = 0`, `coreCount = 5`, `coreTarget = vwap`
 - `Major at vwap`: `coreCount = 4`, `coreTarget = vwap`, `runnerCount = 3`, `runnerTarget = below vwap`
@@ -246,7 +247,7 @@ updateTradeManagementUI()
         -> always render setup choosers
         -> mark selected or inferred setupId as active only on the selected/position side
         -> render one selected setup management card
-        -> add offer-size fields when draft.setupId === 'bookmap_offer_reappear'
+        -> add original/reappeared price and size fields for reappear setups
 ```
 
 ## First Coding Slice
