@@ -138,7 +138,7 @@ export const handleTimeAndSalesData = (data: any) => {
         return;
     }
 
-    if (GlobalSettings.competeForTimeAndSales) {
+    if (StreamingHandler.shouldCompeteForTimeAndSales()) {
         if (updated) {
             DB.updateFromTimeSale(record);
         }

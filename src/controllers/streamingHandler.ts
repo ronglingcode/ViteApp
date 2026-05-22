@@ -4,6 +4,8 @@ import * as Chart from '../ui/chart';
 import * as Firestore from '../firestore';
 import * as Broker from '../api/broker';
 import * as GlobalSettings from '../config/globalSettings';
+import * as Helper from '../utils/helper';
+import type * as Models from '../models/models';
 // https://polygon.io/glossary/conditions-indicators
 export const conditionsNotUpdateHighLow = [
     "W", "C", "T", "U", "M", "Q", "N", "H", "I", "V", "7"
@@ -12,17 +14,25 @@ export const conditionsNotUpdateLastPrice = [
     "W", "C", "T", "U", "M", "Q", "N", "H", "I", "V", "7"
 ];
 export const conditionsNotUpdateLastPriceNumbers = [
-    2,7,12,13,15,16,20,21,37,52,53
+    2, 7, 12, 13, 15, 16, 20, 21, 37, 52, 53
 ];
 export const conditionsNotUpdateVolume = [
     "M", "Q", "9"
 ];
 
+export const shouldCompeteForTimeAndSales = () => {
+    if (!GlobalSettings.competeForTimeAndSales) {
+        return false;
+    }
+    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
+    return secondsSinceMarketOpen < GlobalSettings.competeForTimeAndSalesWindowSeconds;
+}
+
 export const handleTimeAndSalesData = (data: any) => {
-    let {record, shouldFilter} = AlpacaStreaming.createTimeSale(data);
+    let { record, shouldFilter } = AlpacaStreaming.createTimeSale(data);
     let symbol = record.symbol;
     let updated = DB.tryUpdateMaxTimeSaleTimestamp(record, 'a');
-    
+
     Chart.addToTimeAndSales(symbol, 'alpacaFeed', shouldFilter, record);
     if (!shouldFilter && record.lastPrice && record.lastSize && record.timestamp) {
     }
@@ -30,7 +40,7 @@ export const handleTimeAndSalesData = (data: any) => {
         return;
     }
 
-    if (GlobalSettings.competeForTimeAndSales) {
+    if (shouldCompeteForTimeAndSales()) {
         if (updated) {
             DB.updateFromTimeSale(record);
         }

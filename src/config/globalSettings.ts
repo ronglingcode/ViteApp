@@ -5,6 +5,7 @@ export const marketDataSource: string = "massive"; // alpaca, massive
 export const impliedMarketCapThresholdInBillions: number = 0.9;
 export const premarketVolumeThresholdInMillions: number = 0.9;
 export const competeForTimeAndSales: boolean = true;
+export const competeForTimeAndSalesWindowSeconds: number = 2 * 60;
 export const allowLiveStats: boolean = true;
 export const enableLeftPaneFeatures: boolean = true;
 export const enableAiAgent: boolean = enableLeftPaneFeatures && false;
