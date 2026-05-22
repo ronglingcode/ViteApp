@@ -499,6 +499,10 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
         for (let i = 0; i < keyAreasToDraw.length; i++) {
             const element = keyAreasToDraw[i];
             let kac = buildKeyAreaCloudCandleData(newTime, element.upperPrice, element.lowerPrice, element.direction);
+            // TODO: Review this key-area update. Finding: this passes the parent
+            // keyAreaData array instead of symbolData.keyAreaData[i].candles, and
+            // it runs once per timeframe. That may append duplicate/wrong-shaped
+            // entries, but leave behavior unchanged until we verify chart impact.
             for (let j = 0; j < allCharts.length; j++) {
                 addDataAndUpdateChart(newTime, symbolData.keyAreaData, kac, allCharts[j].keyAreaSeriesList[i]);
             }
