@@ -100,8 +100,6 @@ export const handleQuoteUpdates = (data: any, receivedTime: Date) => {
     LevelOneQuote.updateQuoteIfNotEmpty(quoteData, quote);
     if (GlobalSettings.advancedLevelOneQuoteFeaturesEnabled) {
         OrderFlowManager.updateSchwabQuote(quote.symbol, quoteData);
-        let quotes = OrderFlowManager.getSchwabLevelOneQuote(quote.symbol);
-        Chart.addToQuoteBar(quote.symbol, 'schwabQuote', quotes);
     }
 }
 

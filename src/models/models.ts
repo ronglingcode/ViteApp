@@ -283,10 +283,6 @@ export interface ChartWidgetHtmlContents {
     tradingPlans: AlgoElements,
     sideBar: HTMLElement,
     tradebookButtons: HTMLElement,
-    level1QuotePrice: HTMLElement,
-    level1QuoteSize: HTMLElement,
-    level1QuoteLargeOrders: HTMLElement,
-    timeAndSales: HTMLElement,
 };
 export interface AlgoElements {
     long: HTMLElement,

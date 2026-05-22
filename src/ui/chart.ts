@@ -15,9 +15,7 @@ import * as TakeProfit from '../algorithms/takeProfit';
 import * as Handler from '../controllers/handler';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import type { Tradebook } from '../tradebooks/baseTradebook';
-import * as OrderFlowManager from '../controllers/orderFlowManager';
 import * as Patterns from '../algorithms/patterns';
-import * as Calculator from '../utils/calculator';
 import * as TimeHelper from '../utils/timeHelper';
 import * as TraderFocus from '../controllers/traderFocus';
 import * as QuestionPopup from './questionPopup';
@@ -270,10 +268,6 @@ const getHtmlContentsAndTradebooks = (symbol: string, tabIndex: number) => {
     let tradingPlans = container.getElementsByClassName("tradingPlans")[0] as HTMLElement;
     let sideBar = container.getElementsByClassName("sideBar")[0] as HTMLElement;
     let tradebookButtons = sideBar.getElementsByClassName("tradebookButtons")[0] as HTMLElement;
-    let level1QuotePrice = sideBar.getElementsByClassName("level1QuotePrice")[0] as HTMLElement;
-    let level1QuoteSize = sideBar.getElementsByClassName("level1QuoteSize")[0] as HTMLElement;
-    let level1QuoteLargeOrders = sideBar.getElementsByClassName("level1QuoteLargeOrders")[0] as HTMLElement;
-    let timeAndSales = sideBar.getElementsByClassName("timeAndSales")[0] as HTMLElement;
     let htmlContents: Models.ChartWidgetHtmlContents = {
         chartM1: chart,
         chartM5: chartM5,
@@ -303,10 +297,6 @@ const getHtmlContentsAndTradebooks = (symbol: string, tabIndex: number) => {
         },
         sideBar: sideBar,
         tradebookButtons: tradebookButtons,
-        level1QuotePrice: level1QuotePrice,
-        level1QuoteSize: level1QuoteSize,
-        level1QuoteLargeOrders: level1QuoteLargeOrders,
-        timeAndSales: timeAndSales,
     };
     //widget.htmlContents.quantityBar = widget.htmlContents.container.getElementsByClassName("quantityBar")[0];
     //widget.htmlContents.quantityInput = widget.htmlContents.quantityBar.getElementsByTagName("input")[0];
@@ -560,105 +550,6 @@ export const getMultiplier = (symbol: string) => {
     }
     let multiplier = parseFloat(qty.substring(0, qty.length - 1));
     return multiplier / 100;*/
-};
-
-
-export const addToQuoteBar = (symbol: string, classname: string, quotes: Models.LevelOneQuote[]) => {
-    let widget = Models.getChartWidget(symbol);
-    if (!widget) {
-        return;
-    }
-    let container = widget.htmlContents.container;
-    let quoteBar = container.getElementsByClassName(classname)[0] as HTMLElement;
-    quoteBar.innerHTML = '';
-    let atr = Models.getAtr(symbol).average;
-    for (let i = quotes.length - 1; i >= 0; i--) {
-        let quote = quotes[i];
-        let spread = quote.askPrice - quote.bidPrice;
-        let spreadString = Calculator.getPercentageString(spread, atr, 1);
-        let li = document.createElement("div");
-        li.innerText = `${spreadString} ${quote.bidSize}x${quote.askSize}`;
-        let spreadStatus = OrderFlowManager.isSingleSpreadTooLarge(spread, atr);
-        if (spreadStatus == "too large") {
-            li.style.color = 'red';
-        } else if (spreadStatus == "quite large") {
-            li.style.color = 'brown';
-        }
-        quoteBar.appendChild(li);
-    }
-}
-export const addToTimeAndSalesOld = (widget: Models.ChartWidget, lastPrice: number, lastSize: number) => {
-    let target = widget.htmlContents.timeAndSales;
-    let li = document.createElement("div");
-    li.innerText = `${lastPrice} ${lastSize}`;
-    if (!target.firstChild) {
-        target.appendChild(li);
-    } else {
-        target.insertBefore(li, target.firstChild);
-    }
-    target.insertBefore(li, target.firstChild);
-    while (target.children.length > 4) {
-        let lastChild = target.lastChild;
-        lastChild?.remove();
-    }
-}
-export const addToTimeAndSales = (
-    symbol: string, classname: string, shouldFilter: boolean, record: Models.TimeSale
-) => {
-    if (!GlobalSettings.showDataFeedsBar) {
-        return;
-    }
-
-    let widget = Models.getChartWidget(symbol);
-    if (!widget) {
-        return;
-    }
-
-    let container = widget.htmlContents.container;
-    let classnameForUnfiltered = `${classname}Unfiltered`;
-    let classnameForFiltered = `${classname}Filtered`;
-    if (!shouldFilter) {
-        addToTimeAndSalesSection(true, classnameForFiltered, container, record);
-    } else {
-        addToTimeAndSalesSection(false, classnameForUnfiltered, container, record);
-    }
-    let classnameForSequence = `${classname}Sequence`;
-    let sequenceContainer = container.getElementsByClassName(classnameForSequence)[0] as HTMLElement;
-    if (sequenceContainer)
-        sequenceContainer.innerText = `${record.rawTimestamp ?? ''}`;
-}
-const addToTimeAndSalesSection = (filtered: boolean, classnameToUse: string, container: HTMLElement, record: Models.TimeSale) => {
-    let parent = container.getElementsByClassName(classnameToUse)[0] as HTMLElement;
-    let li = document.createElement("div");
-    if (!filtered) {
-        li.innerText = `${record.lastPrice ?? 0}x${record.lastSize ?? 0},${record.conditions.join(',')}`;
-    } else {
-        li.innerText = `${record.lastPrice ?? 0}x${record.lastSize ?? 0}`;
-    }
-    if (!parent.firstChild) {
-        parent.appendChild(li);
-    } else {
-        parent.insertBefore(li, parent.firstChild);
-    }
-    while (parent.children.length > 10) {
-        let lastChild = parent.lastChild;
-        lastChild?.remove();
-    }
-}
-
-export const addToListView = (widget: Models.ChartWidget, text: string) => {
-    let target = widget.htmlContents.level1QuoteLargeOrders;
-    let li = document.createElement("div");
-    li.innerText = text;
-    if (!target.firstChild) {
-        target.appendChild(li);
-    } else {
-        target.insertBefore(li, target.firstChild);
-    }
-    while (target.children.length > 5) {
-        let lastChild = target.lastChild;
-        lastChild?.remove();
-    }
 };
 export const drawOrderExecutions = (symbol: string, widget: Models.ChartWidget) => {
     if (!window.HybridApp.AccountCache)

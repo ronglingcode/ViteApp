@@ -186,37 +186,11 @@ span.algo {
     flex-direction: column;
 }
 
-.alpacaQuote,
-.schwabQuote,
-.alpacaFeed,
-.massiveFeed {
-    width: 100px;
-    flex-direction: column;
-}
-
-.schwabQuote,
-.alpacaQuote {
-    display: none;
-}
-
-.timeAndSales {
-    display: none;
-}
-
-.sideBar,
-.alpacaQuote,
-.schwabQuote,
-.alpacaFeed,
-.massiveFeed {
+.sideBar {
     font-size: 10px;
     border-left: solid black 1px;
     padding: 0 2px 0 4px;
     text-align: center;
-}
-
-.feedTitle {
-    border-bottom: solid 1px black;
-    border-top: solid 1px black;
 }
 
 .sideBar .longButton,
@@ -279,10 +253,7 @@ span.algo {
     /* light red */
 }
 
-.sideBar .tradebookButtons,
-.sideBar .level1QuoteSize,
-.sideBar .level1QuoteLargeOrders,
-.sideBar .timeAndSales {
+.sideBar .tradebookButtons {
     border-bottom: solid 1px black;
 }
 

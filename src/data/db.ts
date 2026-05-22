@@ -550,10 +550,6 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
     Chart.showLiveR(symbol, position, widget);
     updateChartColor(symbol, widget);
     //console.log(timesale);
-    if (timesale.lastPrice && timesale.lastSize) {
-        Chart.addToTimeAndSalesOld(widget, timesale.lastPrice, timesale.lastSize);
-    }
-
     AutoTrader.onNewTimeAndSalesData(symbol, lastPrice, isNewCandleData);
     updateFromTimeSaleForHigherTimeFrame(symbol, widget, timesale, 5, newVwapValue);
     updateFromTimeSaleForHigherTimeFrame(symbol, widget, timesale, 15, newVwapValue);
@@ -708,8 +704,6 @@ export const updateFromLevelOneQuote = (quote: Models.Quote) => {
     OrderFlowManager.updateQuote(symbol, symbolData.bidSize, symbolData.askSize, symbolData.bidPrice, symbolData.askPrice, spreadInAtr);
 
     Chart.updateUI(symbol, "spread", `${spread}`);
-    Chart.updateUI(symbol, "level1QuotePrice", `${symbolData.bidPrice} x ${symbolData.askPrice}`);
-    Chart.updateUI(symbol, "level1QuoteSize", `${symbolData.bidSize} x ${symbolData.askSize}`);
 
     let fullQuote: Models.LevelOneQuote = {
         bidPrice: symbolData.bidPrice,

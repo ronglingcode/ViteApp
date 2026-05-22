@@ -11,7 +11,6 @@ export const enableLeftPaneFeatures: boolean = true;
 export const enableAiAgent: boolean = enableLeftPaneFeatures && false;
 export const showBestPlans: boolean = enableLeftPaneFeatures && false;
 export const showTradebooksForPosition: boolean = enableLeftPaneFeatures && false;
-export const showDataFeedsBar: boolean = false;
 export const checkMaxEntryThreshold: boolean = false;
 export const m15ChartEnabledAfterSeconds: number = 15 * 60;
 export const enableBookmapSocket: boolean = true;

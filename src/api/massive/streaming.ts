@@ -1,7 +1,6 @@
 import * as Models from '../../models/models';
 import * as StreamingHandler from '../../controllers/streamingHandler';
 import * as Helper from '../../utils/helper';
-import * as Chart from '../../ui/chart';
 import * as DB from '../../data/db';
 import * as Firestore from '../../firestore';
 import * as GlobalSettings from '../../config/globalSettings';
@@ -131,9 +130,6 @@ export const handleTimeAndSalesData = (data: any) => {
     //console.log(data);
     let { record, shouldFilter } = createTimeSale(data);
     let updated = DB.tryUpdateMaxTimeSaleTimestamp(record, 'm');
-    Chart.addToTimeAndSales(record.symbol, 'massiveFeed', shouldFilter, record);
-    if (!shouldFilter && record.lastPrice && record.lastSize && record.tradeTime) {
-    }
     if (shouldFilter) {
         return;
     }

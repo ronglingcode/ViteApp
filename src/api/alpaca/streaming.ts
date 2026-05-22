@@ -2,7 +2,6 @@ import * as Secret from '../../config/secret';
 import * as Models from '../../models/models';
 import * as StreamingHandler from '../../controllers/streamingHandler';
 import * as Helper from '../../utils/helper';
-import * as Chart from '../../ui/chart';
 import * as DB from '../../data/db';
 import * as LevelOneQuote from '../../models/levelOneQuote';
 import * as OrderFlowManager from '../../controllers/orderFlowManager';
@@ -54,8 +53,6 @@ export const handleQuoteUpdates = (data: any) => {
     LevelOneQuote.updateQuoteIfNotEmpty(quoteData, quote);
     if (GlobalSettings.advancedLevelOneQuoteFeaturesEnabled) {
         OrderFlowManager.updateAlpacaQuote(quote.symbol, quoteData);
-        let levelOneQuote = OrderFlowManager.getAlpacaLevelOneQuote(quote.symbol);
-        Chart.addToQuoteBar(quote.symbol, 'alpacaQuote', levelOneQuote);
     }
 }
 export const createWebSocket = async () => {

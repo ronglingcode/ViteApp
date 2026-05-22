@@ -1,6 +1,5 @@
 import * as DB from '../data/db';
 import * as AlpacaStreaming from '../api/alpaca/streaming';
-import * as Chart from '../ui/chart';
 import * as Firestore from '../firestore';
 import * as Broker from '../api/broker';
 import * as GlobalSettings from '../config/globalSettings';
@@ -30,12 +29,8 @@ export const shouldCompeteForTimeAndSales = () => {
 
 export const handleTimeAndSalesData = (data: any) => {
     let { record, shouldFilter } = AlpacaStreaming.createTimeSale(data);
-    let symbol = record.symbol;
     let updated = DB.tryUpdateMaxTimeSaleTimestamp(record, 'a');
 
-    Chart.addToTimeAndSales(symbol, 'alpacaFeed', shouldFilter, record);
-    if (!shouldFilter && record.lastPrice && record.lastSize && record.timestamp) {
-    }
     if (shouldFilter) {
         return;
     }

@@ -317,17 +317,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-if (!GlobalSettings.showDataFeedsBar) {
-    let feed1 = document.getElementsByClassName('alpacaFeed');
-    let feed2 = document.getElementsByClassName('massiveFeed');
-    for (let i = 0; i < feed1.length; i++) {
-        (feed1[i] as HTMLElement).style.display = 'none';
-    }
-    for (let i = 0; i < feed2.length; i++) {
-        (feed2[i] as HTMLElement).style.display = 'none';
-    }
-}
-
 if (!GlobalSettings.enableLeftPaneFeatures) {
     let leftPane = document.getElementById('traderFocus');
     if (leftPane) {
