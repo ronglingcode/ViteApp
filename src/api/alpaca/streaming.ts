@@ -4,6 +4,7 @@ import * as StreamingHandler from '../../controllers/streamingHandler';
 import * as Helper from '../../utils/helper';
 import * as DB from '../../data/db';
 import * as LevelOneQuote from '../../models/levelOneQuote';
+import * as GlobalSettings from '../../config/globalSettings';
 
 
 export const createWebSocketForMarketData = async () => {
@@ -91,6 +92,46 @@ export const createWebSocket = async () => {
 const sendWebsocketRequest = (socket: WebSocket, request: any) => {
     socket.send(JSON.stringify(request));
 }
+
+const getWatchlistSymbols = () => {
+    let symbols: string[] = [];
+    let watchlist = Models.getWatchlist();
+    for (let i = 0; i < watchlist.length; i++) {
+        symbols.push(watchlist[i].symbol);
+    }
+    return symbols;
+}
+
+const shouldUseAlpacaTradeStream = () => {
+    return GlobalSettings.marketDataSource == "alpaca" || StreamingHandler.shouldCompeteForTimeAndSales();
+}
+
+const getCompetitionWindowCleanupDelayMs = () => {
+    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
+    let secondsUntilCleanup = GlobalSettings.competeForTimeAndSalesWindowSeconds - secondsSinceMarketOpen;
+    return Math.max(0, secondsUntilCleanup) * 1000;
+}
+
+const unsubscribeTrades = (webSocket: WebSocket) => {
+    if (webSocket.readyState != WebSocket.OPEN) {
+        return;
+    }
+    let request = {
+        "action": "unsubscribe",
+        "trades": getWatchlistSymbols()
+    };
+    sendWebsocketRequest(webSocket, request);
+}
+
+const scheduleTradeCleanupIfNeeded = (webSocket: WebSocket) => {
+    if (GlobalSettings.marketDataSource == "alpaca") {
+        return;
+    }
+    setTimeout(() => {
+        unsubscribeTrades(webSocket);
+    }, getCompetitionWindowCleanupDelayMs());
+}
+
 export const sendAuthRequest = (webSocket: WebSocket) => {
     const alpacaSecrets = Secret.alpaca();
     let request = {
@@ -111,17 +152,15 @@ export const subscribeActivity = (webSocket: WebSocket) => {
     sendWebsocketRequest(webSocket, request);
 }
 export const subscribeTradesAndQuotesRequests = (webSocket: WebSocket) => {
-    let symbols: string[] = [];
-    let watchlist = Models.getWatchlist();
-    for (let i = 0; i < watchlist.length; i++) {
-        let s = watchlist[i].symbol;
-        symbols.push(s);
+    let symbols = getWatchlistSymbols();
+    if (shouldUseAlpacaTradeStream()) {
+        let request = {
+            "action": "subscribe",
+            "trades": symbols
+        };
+        sendWebsocketRequest(webSocket, request);
+        scheduleTradeCleanupIfNeeded(webSocket);
     }
-    let request = {
-        "action": "subscribe",
-        "trades": symbols
-    };
-    sendWebsocketRequest(webSocket, request);
     if (DB.levelOneQuoteSource != DB.levelOneQuoteSourceAlpaca) {
         return;
     }
