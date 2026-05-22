@@ -4,6 +4,8 @@ import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansMod
 import * as TradingState from '../models/tradingState';
 import { TradebookID } from '../tradebooks/tradebookIds';
 import * as GlobalSettings from '../config/globalSettings';
+import * as Firestore from '../firestore';
+import * as Helper from '../utils/helper';
 import {
     getFieldHint,
     getFieldWidth,
@@ -600,15 +602,18 @@ export const isExitAdjustmentCommitted = (symbol: string, isLong: boolean) => {
 
 // Returns a blocking rule result when committed management is required but missing.
 export const getDisallowedReasonToAdjustExitOrders = (symbol: string, isLong: boolean): Models.CheckRulesResult | null => {
-    if (!GlobalSettings.blockExitAdjustmentsWithoutCommittedTradeManagementCard) {
+    if (isExitAdjustmentCommitted(symbol, isLong)) {
         return null;
     }
-    if (isExitAdjustmentCommitted(symbol, isLong)) {
+    let message = `trade management card is not committed for ${symbol}`;
+    if (!GlobalSettings.blockExitAdjustmentsWithoutCommittedTradeManagementCard) {
+        Firestore.logError(message);
+        Helper.speak(`warning, ${symbol} trade management is not committed`);
         return null;
     }
     return {
         allowed: false,
-        reason: "trade management card is not committed",
+        reason: message,
     };
 };
 
