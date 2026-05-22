@@ -1,13 +1,7 @@
 import { SimpleRollingWindow } from "./simpleRollingWindow";
-import * as Models from '../models/models';
 import * as DB from '../data/db';
 
-const WINDOW_IN_SECONDS = 30;
-const MAX_POINTS_IN_WINDOW = 100;
 export const spreadMonitors = new Map<string, SimpleRollingWindow<number>>();
-export const schwabSpreadMonitors = new Map<string, SimpleRollingWindow<Models.LevelOneQuote>>();
-export const alpacaSpreadMonitors = new Map<string, SimpleRollingWindow<Models.LevelOneQuote>>();
-export const level1HistoryMonitors = new Map<string, string[]>();
 
 const alpacaWindowSize = 10;
 const schwabWindowSize = 6;
@@ -18,44 +12,6 @@ export const getOrCreateSpreadMonitor = (symbol: string) => {
         spreadMonitors.set(symbol, new SimpleRollingWindow<number>(windowSize));
     }
     return spreadMonitors.get(symbol)!;
-}
-export const getOrCreateSchwabSpreadMonitor = (symbol: string) => {
-    if (!schwabSpreadMonitors.has(symbol)) {
-        schwabSpreadMonitors.set(symbol, new SimpleRollingWindow<Models.LevelOneQuote>(schwabWindowSize));
-    }
-    return schwabSpreadMonitors.get(symbol)!;
-}
-export const getOrCreateAlpacaSpreadMonitor = (symbol: string) => {
-    if (!alpacaSpreadMonitors.has(symbol)) {
-        alpacaSpreadMonitors.set(symbol, new SimpleRollingWindow(alpacaWindowSize));
-    }
-    return alpacaSpreadMonitors.get(symbol)!;
-}
-
-const getSpreadInAtrPercent = (symbol: string, quoteData: Models.LevelOneQuote) => {
-    let spread = quoteData.askPrice - quoteData.bidPrice;
-    let atr = Models.getAtr(symbol).average;
-    let spreadInAtr = spread / atr;
-    let spreadInATRPercent = spreadInAtr * 100;
-    spreadInATRPercent = Math.round(spreadInATRPercent * 100) / 100;
-    return spreadInATRPercent;
-}
-export const updateSchwabQuote = (symbol: string, quoteData: Models.LevelOneQuote) => {
-    const schwabSpreadMonitor = getOrCreateSchwabSpreadMonitor(symbol);
-    schwabSpreadMonitor.push(quoteData);
-}
-export const getSchwabLevelOneQuote = (symbol: string) => {
-    const schwabSpreadMonitor = getOrCreateSchwabSpreadMonitor(symbol);
-    return schwabSpreadMonitor.getItems();
-}
-
-export const updateAlpacaQuote = (symbol: string, quoteData: Models.LevelOneQuote) => {
-    const alpacaSpreadMonitor = getOrCreateAlpacaSpreadMonitor(symbol);
-    alpacaSpreadMonitor.push(quoteData);
-}
-export const getAlpacaLevelOneQuote = (symbol: string) => {
-    const alpacaSpreadMonitor = getOrCreateAlpacaSpreadMonitor(symbol);
-    return alpacaSpreadMonitor.getItems();
 }
 
 export const updateQuote = (symbol: string, bidSize: number, askSize: number, bidPrice: number, askPrice: number, spreadInAtr: number) => {

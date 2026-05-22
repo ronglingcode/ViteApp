@@ -2,10 +2,8 @@ import * as Models from '../../models/models';
 import * as Helper from '../../utils/helper';
 import * as Chart from '../../ui/chart';
 import * as DB from '../../data/db';
-import * as OrderFlowManager from '../../controllers/orderFlowManager';
 import * as LevelOneQuote from '../../models/levelOneQuote';
 import * as Firestore from '../../firestore';
-import * as GlobalSettings from '../../config/globalSettings';
 declare let window: Models.MyWindow;
 
 
@@ -31,7 +29,9 @@ export const createWebSocket = async () => {
                 let command = res.command;
                 if (service === "ADMIN") {
                     if (command === "LOGIN") {
-                        subscribeLevelOneQuotes(websocket);
+                        if (DB.levelOneQuoteSource == DB.levelOneQuoteSourceSchwab) {
+                            subscribeLevelOneQuotes(websocket);
+                        }
                         subscribeActivity(websocket);
                         subscribeChartUpdates(websocket);
                     }
@@ -98,9 +98,6 @@ export const handleQuoteUpdates = (data: any, receivedTime: Date) => {
     let symbolData = Models.getSymbolData(quote.symbol);
     let quoteData = symbolData.schwabLevelOneQuote;
     LevelOneQuote.updateQuoteIfNotEmpty(quoteData, quote);
-    if (GlobalSettings.advancedLevelOneQuoteFeaturesEnabled) {
-        OrderFlowManager.updateSchwabQuote(quote.symbol, quoteData);
-    }
 }
 
 const sendWebsocketRequest = (socket: WebSocket, request: any) => {

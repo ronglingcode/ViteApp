@@ -9,7 +9,6 @@ import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as AutoTrader from '../algorithms/autoTrader';
 import * as OrderFlowManager from '../controllers/orderFlowManager';
 import * as ChartSettings from '../ui/chartSettings';
-import * as ProxyServer from '../api/proxyServer';
 import * as Broker from '../api/broker';
 import * as GlobalSettings from '../config/globalSettings';
 import * as UI from '../ui/ui';
@@ -699,26 +698,9 @@ export const updateFromLevelOneQuote = (quote: Models.Quote) => {
     let topPlan = TradingPlans.getTradingPlans(symbol);
     let atr = topPlan.atr.average;
     let spreadInAtr = spread / atr;
-    let spreadInATRPercent = spreadInAtr * 100;
-    spreadInATRPercent = Math.round(spreadInATRPercent * 100) / 100;
     OrderFlowManager.updateQuote(symbol, symbolData.bidSize, symbolData.askSize, symbolData.bidPrice, symbolData.askPrice, spreadInAtr);
 
     Chart.updateUI(symbol, "spread", `${spread}`);
-
-    let fullQuote: Models.LevelOneQuote = {
-        bidPrice: symbolData.bidPrice,
-        askPrice: symbolData.askPrice,
-        bidSize: symbolData.bidSize,
-        askSize: symbolData.askSize,
-    };
-    let tradingViewTime = Helper.jsDateToTradingViewUTC(new Date());
-
-    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
-    if (GlobalSettings.advancedLevelOneQuoteFeaturesEnabled) {
-        if (secondsSinceMarketOpen >= 0 || true) {
-            ProxyServer.saveLevelOneQuote(symbol, symbolData.bidPrice, symbolData.bidSize, symbolData.askPrice, symbolData.askSize);
-        }
-    }
 };
 
 export const addOrbAreaCandle = (newTime: LightweightCharts.UTCTimestamp, orbArea: Models.SimpleCandle[], openingCandle: Models.Candle | undefined) => {

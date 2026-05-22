@@ -4,8 +4,6 @@ import * as StreamingHandler from '../../controllers/streamingHandler';
 import * as Helper from '../../utils/helper';
 import * as DB from '../../data/db';
 import * as LevelOneQuote from '../../models/levelOneQuote';
-import * as OrderFlowManager from '../../controllers/orderFlowManager';
-import * as GlobalSettings from '../../config/globalSettings';
 
 
 export const createWebSocketForMarketData = async () => {
@@ -51,9 +49,6 @@ export const handleQuoteUpdates = (data: any) => {
     let symbolData = Models.getSymbolData(quote.symbol);
     let quoteData = symbolData.alpacaLevelOneQuote;
     LevelOneQuote.updateQuoteIfNotEmpty(quoteData, quote);
-    if (GlobalSettings.advancedLevelOneQuoteFeaturesEnabled) {
-        OrderFlowManager.updateAlpacaQuote(quote.symbol, quoteData);
-    }
 }
 export const createWebSocket = async () => {
     let socketUrl = "wss://api.alpaca.markets/stream";
@@ -133,6 +128,9 @@ export const subscribeTradesAndQuotesRequests = (webSocket: WebSocket) => {
         "trades": symbols
     };
     sendWebsocketRequest(webSocket, request);
+    if (DB.levelOneQuoteSource != DB.levelOneQuoteSourceAlpaca) {
+        return;
+    }
     let request2 = {
         "action": "subscribe",
         "quotes": symbols
