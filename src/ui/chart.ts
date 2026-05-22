@@ -24,6 +24,25 @@ import * as QuestionPopup from './questionPopup';
 import * as GlobalSettings from '../config/globalSettings';
 declare let window: Models.MyWindow;
 
+const updateUiTargetCache = new WeakMap<HTMLElement, Map<string, HTMLElement>>();
+
+const getUpdateUiTarget = (container: HTMLElement, className: string): HTMLElement | undefined => {
+    let containerCache = updateUiTargetCache.get(container);
+    if (!containerCache) {
+        containerCache = new Map<string, HTMLElement>();
+        updateUiTargetCache.set(container, containerCache);
+    }
+
+    let target = containerCache.get(className);
+    if (!target || !target.isConnected || !container.contains(target)) {
+        target = container.getElementsByClassName(className)[0] as HTMLElement | undefined;
+        if (target) {
+            containerCache.set(className, target);
+        }
+    }
+    return target;
+};
+
 export const setup = () => {
     let watchlist = window.HybridApp.Watchlist;
     if (!watchlist)
@@ -1415,8 +1434,7 @@ export const updateUI = (symbol: string, className: string, text: string) => {
     if (!widget) {
         return;
     }
-    let htmlContainter = widget.htmlContents.container;
-    let target = htmlContainter.getElementsByClassName(className)[0] as HTMLElement;
+    let target = getUpdateUiTarget(widget.htmlContents.container, className);
     if (target)
         target.innerText = text;
 };
