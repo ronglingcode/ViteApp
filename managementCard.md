@@ -97,13 +97,32 @@ Additional fields for reappear setups, rendered above the common fields:
 - Original size
 - Reappeared size
 
+Additional fields for Bookmap Offer Breakout, rendered above the common fields:
+
+- Wall price
+- Wall size
+- Swing low
+
+Additional fields for Bookmap Bid Breakdown, rendered above the common fields:
+
+- Wall price
+- Wall size
+- Swing high
+
+Additional fields for Bookmap Bid Step Up and Bookmap Offer Step Down, rendered above the common fields:
+
+- Wall 1 price
+- Wall 1 size
+- Wall 2 price
+- Wall 2 size
+
 Setup cards can define field-specific hint text. For reappear setups:
 
 - Core target hint: `vwap, premarket high`
 - Bid Reappear runner trigger condition hint: `vwap reclaim, premarket high breakout`
 - Offer Reappear runner trigger condition hint: `vwap bounce fail, premarket low breakdown`
 
-Setup cards can also define field width as `long` or `short`. `Core count` is short by default. For reappear setups, `Original price`, `Original size`, and `Reappeared size` are short fields.
+Setup cards can also define field width as `long` or `short`. `Core count` is short by default. For reappear setups, `Original price`, `Original size`, and `Reappeared size` are short fields. For wall breakout/breakdown setups, `Wall price`, `Wall size`, `Swing low`, and `Swing high` are short fields. For wall step setups, `Wall 1 price`, `Wall 1 size`, `Wall 2 price`, and `Wall 2 size` are short fields.
 
 Setup cards can define quick templates. Applying a template writes only that selected setup's draft fields, records the active template on that draft, then refreshes that side section with that template button highlighted. For reappear setups:
 
@@ -131,6 +150,14 @@ Each field should use the first available source in this order:
    - `coreCount`: empty string
    - `coreTarget`: empty string
    - `runnerTarget`: empty string
+   - `wallPrice`: empty string
+   - `wallSize`: empty string
+   - `wall1Price`: empty string
+   - `wall1Size`: empty string
+   - `wall2Price`: empty string
+   - `wall2Size`: empty string
+   - `swingLow`: empty string
+   - `swingHigh`: empty string
    - `originalOfferPrice`: empty string
    - `originalSize`: empty string
    - `reappearedOfferSize`: empty string
@@ -175,6 +202,14 @@ interface ManagementDraft {
     symbol: string;
     side: 'long' | 'short';
     setupId?: ManagementSetupId;
+    wallPrice: string;
+    wallSize: string;
+    wall1Price: string;
+    wall1Size: string;
+    wall2Price: string;
+    wall2Size: string;
+    swingLow: string;
+    swingHigh: string;
     originalOfferPrice: string;
     originalSize: string;
     reappearedOfferSize: string;
@@ -199,7 +234,7 @@ type ManagementSetupId =
 
 The values stay strings because the first version is a manual UI. Numeric validation can come later when rules start consuming the fields.
 
-Each setup card ends with a `Commit` button. Clicking it toggles the draft between committed and uncommitted. `GlobalSettings.blockExitAdjustmentsWithoutCommittedTradeManagementCard` controls whether an uncommitted active side blocks exit-order adjustments. The primary checks live in the tradebook exit-rule wrapper calls for single limit, single stop, and all-exit adjustments, with the lower order-adjustment helper kept as a configurable backstop. Clicking `Commit` also records an inferred setup as the selected setup, so tradebook-id inference can still drive the exit-adjustment guard.
+Each setup card ends with a `Commit` button. Clicking it toggles the draft between committed and uncommitted. Transitioning from uncommitted to committed requires every rendered field for that setup to have a non-empty value. `GlobalSettings.blockExitAdjustmentsWithoutCommittedTradeManagementCard` controls whether an uncommitted active side blocks exit-order adjustments. The primary checks live in the tradebook exit-rule wrapper calls for single limit, single stop, and all-exit adjustments, with the lower order-adjustment helper kept as a configurable backstop. Clicking `Commit` also records an inferred setup as the selected setup, so tradebook-id inference can still drive the exit-adjustment guard.
 
 ## Proposed Code Shape
 

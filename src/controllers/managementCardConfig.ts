@@ -14,6 +14,14 @@ export interface ManagementSetupOption {
 }
 
 export type ManagementFieldName =
+    | 'wallPrice'
+    | 'wallSize'
+    | 'wall1Price'
+    | 'wall1Size'
+    | 'wall2Price'
+    | 'wall2Size'
+    | 'swingLow'
+    | 'swingHigh'
     | 'originalOfferPrice'
     | 'originalSize'
     | 'reappearedOfferSize'
@@ -97,6 +105,36 @@ const reappearSetupConfig: ManagementSetupConfig = {
 };
 
 export const setupConfigs: Partial<Record<ManagementSetupId, ManagementSetupConfig>> = {
+    bookmap_offer_breakout: {
+        fieldWidths: {
+            wallPrice: 'short',
+            wallSize: 'short',
+            swingLow: 'short',
+        },
+    },
+    bookmap_bid_breakdown: {
+        fieldWidths: {
+            wallPrice: 'short',
+            wallSize: 'short',
+            swingHigh: 'short',
+        },
+    },
+    bookmap_bid_step_up: {
+        fieldWidths: {
+            wall1Price: 'short',
+            wall1Size: 'short',
+            wall2Price: 'short',
+            wall2Size: 'short',
+        },
+    },
+    bookmap_offer_step_down: {
+        fieldWidths: {
+            wall1Price: 'short',
+            wall1Size: 'short',
+            wall2Price: 'short',
+            wall2Size: 'short',
+        },
+    },
     bookmap_bid_reappear: {
         ...reappearSetupConfig,
         fieldHints: {

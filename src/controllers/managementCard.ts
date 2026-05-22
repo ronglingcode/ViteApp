@@ -23,6 +23,14 @@ interface ManagementDraft {
     side: ManagementSide,
     setupId?: ManagementSetupId,
     tradebookID?: string,
+    wallPrice?: string,
+    wallSize?: string,
+    wall1Price?: string,
+    wall1Size?: string,
+    wall2Price?: string,
+    wall2Size?: string,
+    swingLow?: string,
+    swingHigh?: string,
     originalOfferPrice?: string,
     originalSize?: string,
     originalOfferSize?: string,
@@ -42,6 +50,11 @@ interface ManagementSelection {
     side: ManagementSide,
     setupId: ManagementSetupId,
     updatedAt: string,
+}
+
+interface RequiredDraftField {
+    fieldName: keyof ManagementDraft,
+    label: string,
 }
 
 export interface ManagementPositionContext {
@@ -232,6 +245,63 @@ const hasReappearFields = (setupId: ManagementSetupId | undefined) => {
     return setupId === 'bookmap_offer_reappear' || setupId === 'bookmap_bid_reappear';
 };
 
+// Returns true for wall-break setups that need wall context fields.
+const hasWallBreakFields = (setupId: ManagementSetupId | undefined) => {
+    return setupId === 'bookmap_offer_breakout' || setupId === 'bookmap_bid_breakdown';
+};
+
+// Returns true for wall-step setups that need first/second wall fields.
+const hasWallStepFields = (setupId: ManagementSetupId | undefined) => {
+    return setupId === 'bookmap_bid_step_up' || setupId === 'bookmap_offer_step_down';
+};
+
+// Lists the fields that must be filled before the setup can be committed.
+const getRequiredDraftFields = (setupId: ManagementSetupId | undefined): RequiredDraftField[] => {
+    let fields: RequiredDraftField[] = [];
+    if (hasWallBreakFields(setupId)) {
+        fields.push(
+            { fieldName: 'wallPrice', label: 'Wall price' },
+            { fieldName: 'wallSize', label: 'Wall size' },
+        );
+        if (setupId === 'bookmap_offer_breakout') {
+            fields.push({ fieldName: 'swingLow', label: 'Swing low' });
+        }
+        if (setupId === 'bookmap_bid_breakdown') {
+            fields.push({ fieldName: 'swingHigh', label: 'Swing high' });
+        }
+    }
+    if (hasWallStepFields(setupId)) {
+        fields.push(
+            { fieldName: 'wall1Price', label: 'Wall 1 price' },
+            { fieldName: 'wall1Size', label: 'Wall 1 size' },
+            { fieldName: 'wall2Price', label: 'Wall 2 price' },
+            { fieldName: 'wall2Size', label: 'Wall 2 size' },
+        );
+    }
+    if (hasReappearFields(setupId)) {
+        fields.push(
+            { fieldName: 'originalOfferPrice', label: 'Original price' },
+            { fieldName: 'originalSize', label: 'Original size' },
+            { fieldName: 'reappearedOfferSize', label: 'Reappeared size' },
+        );
+    }
+    fields.push(
+        { fieldName: 'coreCount', label: 'Core count' },
+        { fieldName: 'coreTarget', label: 'Core target' },
+        { fieldName: 'runnerCount', label: 'Runner count' },
+        { fieldName: 'runnerTarget', label: 'Runner target' },
+        { fieldName: 'runnerTriggerCondition', label: 'Runner trigger condition' },
+    );
+    return fields;
+};
+
+// Returns human-readable labels for fields that are blank.
+const getMissingRequiredFieldLabels = (draft: ManagementDraft) => {
+    return getRequiredDraftFields(draft.setupId)
+        .filter(field => String(draft[field.fieldName] ?? '').trim() === '')
+        .map(field => field.label);
+};
+
 // Creates a complete draft by merging saved values with available plan defaults.
 const createDraft = (
     position: Models.Position,
@@ -247,6 +317,14 @@ const createDraft = (
         side: side,
         setupId: setupId,
         tradebookID: tradebookID,
+        wallPrice: existingDraft?.wallPrice ?? '',
+        wallSize: existingDraft?.wallSize ?? '',
+        wall1Price: existingDraft?.wall1Price ?? '',
+        wall1Size: existingDraft?.wall1Size ?? '',
+        wall2Price: existingDraft?.wall2Price ?? '',
+        wall2Size: existingDraft?.wall2Size ?? '',
+        swingLow: existingDraft?.swingLow ?? '',
+        swingHigh: existingDraft?.swingHigh ?? '',
         originalOfferPrice: existingDraft?.originalOfferPrice ?? '',
         originalSize: existingDraft?.originalSize ?? existingDraft?.originalOfferSize ?? '',
         reappearedOfferSize: existingDraft?.reappearedOfferSize ?? '',
@@ -405,6 +483,38 @@ const renderManagementSetupCard = (draft: ManagementDraft, root: HTMLElement, re
         rerenderSection();
     });
 
+    if (hasWallBreakFields(draft.setupId)) {
+        renderInput(form, 'Wall price', draft.wallPrice ?? '',
+            getFieldHint(draft.setupId, 'wallPrice'), getFieldWidth(draft.setupId, 'wallPrice'),
+            value => updateDraftField('wallPrice', value));
+        renderInput(form, 'Wall size', draft.wallSize ?? '',
+            getFieldHint(draft.setupId, 'wallSize'), getFieldWidth(draft.setupId, 'wallSize'),
+            value => updateDraftField('wallSize', value));
+        if (draft.setupId === 'bookmap_offer_breakout') {
+            renderInput(form, 'Swing low', draft.swingLow ?? '',
+                getFieldHint(draft.setupId, 'swingLow'), getFieldWidth(draft.setupId, 'swingLow'),
+                value => updateDraftField('swingLow', value));
+        }
+        if (draft.setupId === 'bookmap_bid_breakdown') {
+            renderInput(form, 'Swing high', draft.swingHigh ?? '',
+                getFieldHint(draft.setupId, 'swingHigh'), getFieldWidth(draft.setupId, 'swingHigh'),
+                value => updateDraftField('swingHigh', value));
+        }
+    }
+    if (hasWallStepFields(draft.setupId)) {
+        renderInput(form, 'Wall 1 price', draft.wall1Price ?? '',
+            getFieldHint(draft.setupId, 'wall1Price'), getFieldWidth(draft.setupId, 'wall1Price'),
+            value => updateDraftField('wall1Price', value));
+        renderInput(form, 'Wall 1 size', draft.wall1Size ?? '',
+            getFieldHint(draft.setupId, 'wall1Size'), getFieldWidth(draft.setupId, 'wall1Size'),
+            value => updateDraftField('wall1Size', value));
+        renderInput(form, 'Wall 2 price', draft.wall2Price ?? '',
+            getFieldHint(draft.setupId, 'wall2Price'), getFieldWidth(draft.setupId, 'wall2Price'),
+            value => updateDraftField('wall2Price', value));
+        renderInput(form, 'Wall 2 size', draft.wall2Size ?? '',
+            getFieldHint(draft.setupId, 'wall2Size'), getFieldWidth(draft.setupId, 'wall2Size'),
+            value => updateDraftField('wall2Size', value));
+    }
     if (hasReappearFields(draft.setupId)) {
         renderInput(form, 'Original price', draft.originalOfferPrice ?? '',
             getFieldHint(draft.setupId, 'originalOfferPrice'), getFieldWidth(draft.setupId, 'originalOfferPrice'),
@@ -437,6 +547,10 @@ const renderManagementSetupCard = (draft: ManagementDraft, root: HTMLElement, re
     commitButton.className = 'managementCommitButton';
     form.appendChild(commitButton);
 
+    let commitMessage = document.createElement('div');
+    commitMessage.className = 'managementCommitMessage';
+    form.appendChild(commitMessage);
+
     // Updates button copy and styling from the current draft commit state.
     const updateCommitButton = () => {
         let isCommitted = currentDraft.committed === true;
@@ -445,11 +559,20 @@ const renderManagementSetupCard = (draft: ManagementDraft, root: HTMLElement, re
     };
 
     commitButton.addEventListener('click', () => {
+        let nextCommitted = currentDraft.committed !== true;
+        if (nextCommitted) {
+            let missingFields = getMissingRequiredFieldLabels(currentDraft);
+            if (missingFields.length > 0) {
+                commitMessage.textContent = `Fill in before commit: ${missingFields.join(', ')}`;
+                return;
+            }
+        }
         currentDraft = {
             ...currentDraft,
-            committed: currentDraft.committed !== true,
+            committed: nextCommitted,
             updatedAt: new Date().toISOString(),
         };
+        commitMessage.textContent = '';
         if (currentDraft.setupId) {
             saveSelection({
                 symbol: currentDraft.symbol,

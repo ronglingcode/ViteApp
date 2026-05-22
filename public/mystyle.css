@@ -582,6 +582,13 @@ span.algo {
     color: #166534;
 }
 
+#traderFocus .managementCommitMessage {
+    width: 100%;
+    color: #b91c1c;
+    font-size: 11px;
+    line-height: 1.25;
+}
+
 #traderFocus .managementSelectedSetup {
     margin-top: 8px;
     font-size: 13px;
