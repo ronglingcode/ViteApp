@@ -122,12 +122,15 @@ export class BookmapWallBreak extends Tradebook {
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, this.isLong, useMarketOrder, Models.getDefaultEntryParameters());
         let stopOutPrice = Chart.getCustomStopLossPrice(symbol, this.isLong);
         if (stopOutPrice == 0) {
-            // default to low of the day
+            // default to swing high/low
+            stopOutPrice = this.recentPullbackPrice;
+        }
+        if (stopOutPrice == 0) {
+            // default to high/low of the day
             let symbolData = Models.getSymbolData(symbol);
             stopOutPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
         }
         return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, logTags);
-
     }
 
     triggerEntryFromBookmap(useMarketOrder: boolean, stopOutPrice: number): number {
