@@ -1326,8 +1326,9 @@ export const updateUI = (symbol: string, className: string, text: string) => {
         return;
     }
     let target = getUpdateUiTarget(widget.htmlContents.container, className);
-    if (target)
-        target.innerText = text;
+    if (target && target.textContent !== text) {
+        target.textContent = text;
+    }
 };
 
 export const drawRiskLevel = (symbol: string, price: number) => {
