@@ -595,10 +595,6 @@ span.algo {
     color: #475569;
 }
 
-.tradeInterval {
-    display: none;
-}
-
 .chatwindow {
     max-height: 200px;
     overflow-y: scroll;

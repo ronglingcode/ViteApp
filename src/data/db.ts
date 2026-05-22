@@ -375,56 +375,6 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
     let symbolData = Models.getSymbolData(symbol);
     let lastPrice = timesale.lastPrice ?? 0;
     let lastSize = timesale.lastSize ?? 0;
-    if (timesale.tradeTime) {
-        let tradeTime = Helper.numberToDate(timesale.tradeTime);
-        if (symbolData.lastTradeTime) {
-            let diff = tradeTime.getTime() - symbolData.lastTradeTime.getTime();
-            symbolData.tradeTimeIntervalInMilliseconds = Math.floor(diff);
-            Chart.updateUI(symbol, "tradeInterval", Helper.numberToString(symbolData.tradeTimeIntervalInMilliseconds) + "ms");
-        }
-        symbolData.lastTradeTime = tradeTime;
-
-        // Track time and sales per second
-        let currentSecond = Math.floor(tradeTime.getTime() / 1000);
-        let lastEntry = symbolData.timeAndSalesPerSecond[symbolData.timeAndSalesPerSecond.length - 1];
-
-        if (lastEntry && lastEntry.second === currentSecond) {
-            // Increment count for current second
-            lastEntry.count++;
-        } else {
-            // Add new entry for this second
-            symbolData.timeAndSalesPerSecond.push({
-                second: currentSecond,
-                count: 1
-            });
-        }
-
-        // Keep only last n seconds (configurable rolling window)
-        let rollingWindowSeconds = GlobalSettings.tradesPerSecondRollingWindowSeconds;
-        let nSecondsAgo = currentSecond - rollingWindowSeconds;
-        symbolData.timeAndSalesPerSecond = symbolData.timeAndSalesPerSecond.filter(
-            entry => entry.second > nSecondsAgo
-        );
-
-        // Calculate average trades per second over the rolling window
-        // Exclude the most recent second since that window is not closed yet
-        let entriesForAverage = symbolData.timeAndSalesPerSecond.length > 1
-            ? symbolData.timeAndSalesPerSecond.slice(0, -1)
-            : [];
-
-        let totalTrades = 0;
-        for (let i = 0; i < entriesForAverage.length; i++) {
-            totalTrades += entriesForAverage[i].count;
-        }
-        // Calculate average trades per second
-        let averageTradesPerSecond = entriesForAverage.length > 0
-            ? (totalTrades / entriesForAverage.length).toFixed(0)
-            : "0";
-
-        // Update UI with average trades per second
-        Chart.updateUI(symbol, "avgTradesPerSecond", `TPS:${averageTradesPerSecond}`);
-    }
-
     symbolData.totalVolume += lastSize;
     symbolData.totalTradingAmount += (lastPrice * lastSize);
     let newVwapValue = symbolData.totalTradingAmount / symbolData.totalVolume;
@@ -809,26 +759,6 @@ const updateVwapCount = (symbolData: Models.SymbolData, closePrice: number) => {
     } else if (closePrice < previousVwap) {
         symbolData.premktBelowVwapCount++;
     }
-}
-
-/**
- * Get time and sales per second data for the last 3 seconds
- * @param symbol - The stock symbol
- * @returns Array of time and sales data per second
- */
-export const getTimeAndSalesPerSecond = (symbol: string): Models.TimeAndSalesPerSecond[] => {
-    let symbolData = Models.getSymbolData(symbol);
-    return symbolData.timeAndSalesPerSecond;
-}
-
-/**
- * Get total count of time and sales in the last 3 seconds
- * @param symbol - The stock symbol
- * @returns Total count
- */
-export const getTimeAndSalesLast3SecondsTotal = (symbol: string): number => {
-    let symbolData = Models.getSymbolData(symbol);
-    return symbolData.timeAndSalesPerSecond.reduce((total, entry) => total + entry.count, 0);
 }
 
 /**

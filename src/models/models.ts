@@ -349,15 +349,12 @@ export interface SymbolData {
     askPrice: number,
     bidSize: number,
     askSize: number,
-    lastTradeTime?: Date,
-    tradeTimeIntervalInMilliseconds: number,
     m1Vwaps: LineSeriesData[],
     volumes: LineSeriesData[],
     totalVolume: number,
     totalTradingAmount: number,
     schwabLevelOneQuote: LevelOneQuote,
     alpacaLevelOneQuote: LevelOneQuote,
-    timeAndSalesPerSecond: TimeAndSalesPerSecond[],
     maxTimeSaleTimestamp: MaxTimeSaleTimestamp,
     camPivots: CamarillaPivots,
     allTimeHigh: number,
@@ -390,10 +387,6 @@ export interface KeyAreaData {
     candles: SimpleCandle[],
 }
 
-export interface TimeAndSalesPerSecond {
-    second: number,  // Unix timestamp in seconds
-    count: number,
-}
 export const getCurrentSpread = (symbol: string) => {
     let symbolData = getSymbolData(symbol);
     return symbolData.askPrice - symbolData.bidPrice;
@@ -1053,7 +1046,6 @@ export const getDefaultSymbolData = () => {
         askPrice: 0,
         bidSize: 0,
         askSize: 0,
-        tradeTimeIntervalInMilliseconds: 0,
         OpenRangeLineSeriesData: getEmptyOpenRangeLineSeriesData(),
         totalVolume: 0,
         totalTradingAmount: 0,
@@ -1069,7 +1061,6 @@ export const getDefaultSymbolData = () => {
             bidSize: 0,
             askSize: 0,
         },
-        timeAndSalesPerSecond: [],
         maxTimeSaleTimestamp: {
             timestamp: 0,
             tradeIds: [],
