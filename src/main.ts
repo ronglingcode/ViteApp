@@ -158,6 +158,24 @@ if (testPopButton) {
     });
 }
 
+let toggleManagementCardExitBlockButton = document.getElementById("toggle_management_card_exit_block");
+const updateManagementCardExitBlockButtonText = () => {
+    if (!toggleManagementCardExitBlockButton) {
+        return;
+    }
+    toggleManagementCardExitBlockButton.textContent = GlobalSettings.blockExitAdjustmentsWithoutCommittedTradeManagementCard
+        ? "Block card exits: ON"
+        : "Block card exits: OFF";
+};
+if (toggleManagementCardExitBlockButton) {
+    updateManagementCardExitBlockButtonText();
+    toggleManagementCardExitBlockButton.addEventListener("click", () => {
+        const enabled = GlobalSettings.toggleBlockExitAdjustmentsWithoutCommittedTradeManagementCard();
+        updateManagementCardExitBlockButtonText();
+        Firestore.addToLogView(`blockExitAdjustmentsWithoutCommittedTradeManagementCard: ${enabled}`, 'Info');
+    });
+}
+
 Firestore.addToLogView('version 1.364', 'Info');
 
 let now = new Date();
