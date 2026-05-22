@@ -226,11 +226,9 @@ export interface ChartWidget {
     timeframeChartM1: TimeFrameChart,
     timeframeChartM5: TimeFrameChart,
     timeframeChartM15: TimeFrameChart,
-    timeframeChartM30: TimeFrameChart,
     chartM1: LightweightCharts.IChartApi,
     chartM5: LightweightCharts.IChartApi,
     chartM15: LightweightCharts.IChartApi,
-    chartM30: LightweightCharts.IChartApi,
     candleSeries: LightweightCharts.ISeriesApi<"Candlestick">,
     entryPriceLine?: LightweightCharts.IPriceLine,
     stopLossPriceLine?: LightweightCharts.IPriceLine,
@@ -274,7 +272,6 @@ export interface ChartWidgetHtmlContents {
     chartM1: HTMLElement, // document.getElementById("chart" + tabIndex),
     chartM5: HTMLElement, // document.getElementById("chartM5" + tabIndex),
     chartM15: HTMLElement, // document.getElementById("chartM15" + tabIndex),
-    chartM30: HTMLElement, // document.getElementById("chartM30" + tabIndex),
     symbol: HTMLElement, // document.getElementById("symbol" + tabIndex),
     positionCount: Element,
     popupWindow: HTMLElement, // document.getElementById("chart0popup"),
@@ -1674,13 +1671,13 @@ export const getChartsInAllTimeframes = (symbol: string) => {
     let widget = getChartWidget(symbol);
     if (!widget)
         return [];
-    return [widget.timeframeChartM1, widget.timeframeChartM5, widget.timeframeChartM15, widget.timeframeChartM30];
+    return [widget.timeframeChartM1, widget.timeframeChartM5, widget.timeframeChartM15];
 };
 export const getChartsHtmlInAllTimeframes = (symbol: string) => {
     let widget = getChartWidget(symbol);
     if (!widget)
         return [];
-    return [widget.htmlContents.chartM1, widget.htmlContents.chartM5, widget.htmlContents.chartM15, widget.htmlContents.chartM30];
+    return [widget.htmlContents.chartM1, widget.htmlContents.chartM5, widget.htmlContents.chartM15];
 }
 export const getExitOrdersPairs = (symbol: string) => {
     let widget = getChartWidget(symbol);

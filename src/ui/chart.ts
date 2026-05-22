@@ -106,8 +106,6 @@ export const createChartWidget = (tabIndex: number, watchlistItem: Models.Watchl
         5, htmlContents.chartM5, tabIndex, totalCount, keyAreasToDraw, chartState);
     let timeframeChartM15 = createTimeFrameChart(
         15, htmlContents.chartM15, tabIndex, totalCount, keyAreasToDraw, chartState);
-    let timeframeChartM30 = createTimeFrameChart(
-        30, htmlContents.chartM30, tabIndex, totalCount, keyAreasToDraw, chartState);
 
     let myWidget: Models.ChartWidget = {
         symbol: symbol,
@@ -119,11 +117,9 @@ export const createChartWidget = (tabIndex: number, watchlistItem: Models.Watchl
         chartM1: timeframeChartM1.chart,
         chartM5: timeframeChartM5.chart,
         chartM15: timeframeChartM15.chart,
-        chartM30: timeframeChartM30.chart,
         timeframeChartM1: timeframeChartM1,
         timeframeChartM5: timeframeChartM5,
         timeframeChartM15: timeframeChartM15,
-        timeframeChartM30: timeframeChartM30,
         candleSeries: timeframeChartM1.candleSeries,
         openPriceSeries: timeframeChartM1.chart.addLineSeries(ChartSettings.openPriceSettings),
         entryOrders: [],
@@ -229,7 +225,6 @@ const getHtmlContentsAndTradebooks = (symbol: string, tabIndex: number) => {
     let chart = document.getElementById("chart" + tabIndex) as HTMLElement;
     let chartM5 = document.getElementById("chart" + tabIndex + "M5") as HTMLElement;
     let chartM15 = document.getElementById("chart" + tabIndex + "M15") as HTMLElement;
-    let chartM30 = document.getElementById("chart" + tabIndex + "M30") as HTMLElement;
     let popupWindow = document.getElementById("chart" + tabIndex + "popup") as HTMLElement;
     let quizButton = popupWindow.getElementsByTagName("button")[0] as HTMLElement;
     quizButton.addEventListener("click", () => {
@@ -264,7 +259,6 @@ const getHtmlContentsAndTradebooks = (symbol: string, tabIndex: number) => {
         chartM1: chart,
         chartM5: chartM5,
         chartM15: chartM15,
-        chartM30: chartM30,
         symbol: document.getElementById("symbol" + tabIndex) as HTMLElement,
         container: container,
         positionCount: container.getElementsByClassName("positionCount")[0],
@@ -335,7 +329,7 @@ const setupAddCountButtons = (container: HTMLElement, symbol: string) => {
 }
 const setupTimeframeButtons = (container: HTMLElement, symbol: string) => {
     let children = container.getElementsByTagName("span");
-    let timeframes = [1, 5, 15, 30];
+    let timeframes = [1, 5, 15];
     if (children.length > 0) {
         for (let i = 0; i < children.length; i++) {
             let timeframeButton = children[i];
@@ -349,6 +343,12 @@ export const showChartForTimeframe = (symbol: string, timeframe: number) => {
     let widget = Models.getChartWidget(symbol);
     if (!widget)
         return;
+    if (timeframe == 15) {
+        let seconds = Helper.getSecondsSinceMarketOpen(new Date());
+        if (seconds < GlobalSettings.m15ChartEnabledAfterSeconds) {
+            timeframe = 5;
+        }
+    }
     let buttons = widget.htmlContents.timeframeButtonsContainer.getElementsByTagName("span");
     let charts = Models.getChartsHtmlInAllTimeframes(symbol);
     for (let j = 0; j < charts.length; j++) {
@@ -365,8 +365,8 @@ export const showChartForTimeframe = (symbol: string, timeframe: number) => {
         charts[2].style.display = 'block';
         buttons[2].style.backgroundColor = 'lightblue';
     } else {
-        charts[3].style.display = 'block';
-        buttons[3].style.backgroundColor = 'lightblue';
+        charts[0].style.display = 'block';
+        buttons[0].style.backgroundColor = 'lightblue';
     }
 }
 

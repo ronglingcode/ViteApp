@@ -26,6 +26,7 @@ const throttledCancelAllEntryOrders = Helper.executeOncePerInterval(
 export const levelOneQuoteSourceAlpaca: string = 'alpaca';
 export const levelOneQuoteSourceSchwab: string = 'schwab';
 export const levelOneQuoteSource: string = levelOneQuoteSourceAlpaca;
+const m15ChartSyncedAfterGate = new Set<string>();
 
 const buildDataMultipleTimeFrame = (symbol: string, inputCandlesM1: Models.Candle[]) => {
     let symbolData = Models.getSymbolData(symbol);
@@ -92,6 +93,7 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyC
         return;
     }
     let symbolData = Models.getSymbolData(symbol);
+    m15ChartSyncedAfterGate.delete(symbol);
     let keyAreasToDraw = TradingPlans.getKeyAreasToDraw(symbol);
     for (let i = 0; i < keyAreasToDraw.length; i++) {
         symbolData.keyAreaData.push({
@@ -206,9 +208,6 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyC
     allCharts[2].volumeSeries.setData(symbolData.m15Volumes);
     allCharts[2].candleSeries.setData(symbolData.m15Candles);
     allCharts[2].vwapSeries.setData(symbolData.m15Vwaps);
-    allCharts[3].volumeSeries.setData(symbolData.m30Volumes);
-    allCharts[3].candleSeries.setData(symbolData.m30Candles);
-    allCharts[3].vwapSeries.setData(symbolData.m30Vwaps);
 
     for (let lookBackStart = 0; lookBackStart < symbolData.m1Candles.length - 1; lookBackStart++) {
         let ma5 = Models.getMovingAverageCandle(symbol, 5, lookBackStart, symbolData.m1Candles);
@@ -343,13 +342,20 @@ export const updateFromTimeSaleForHigherTimeFrame = (
         allCharts[1].candleSeries.update(lastCandle);
         allCharts[1].vwapSeries.update(lastVwap);
     } else if (timeframe == 15) {
+        let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(Helper.numberToDate(timesale.tradeTime));
+        if (secondsSinceMarketOpen < GlobalSettings.m15ChartEnabledAfterSeconds) {
+            return;
+        }
+        if (!m15ChartSyncedAfterGate.has(symbol)) {
+            allCharts[2].volumeSeries.setData(symbolData.m15Volumes);
+            allCharts[2].candleSeries.setData(symbolData.m15Candles);
+            allCharts[2].vwapSeries.setData(symbolData.m15Vwaps);
+            m15ChartSyncedAfterGate.add(symbol);
+            return;
+        }
         allCharts[2].volumeSeries.update(lastVolume);
         allCharts[2].candleSeries.update(lastCandle);
         allCharts[2].vwapSeries.update(lastVwap);
-    } else if (timeframe == 30) {
-        allCharts[3].volumeSeries.update(lastVolume);
-        allCharts[3].candleSeries.update(lastCandle);
-        allCharts[3].vwapSeries.update(lastVwap);
     }
 }
 export const updateFromTimeSale = (timesale: Models.TimeSale) => {
@@ -601,7 +607,6 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
     AutoTrader.onNewTimeAndSalesData(symbol, lastPrice, isNewCandleData);
     updateFromTimeSaleForHigherTimeFrame(symbol, widget, timesale, 5, newVwapValue);
     updateFromTimeSaleForHigherTimeFrame(symbol, widget, timesale, 15, newVwapValue);
-    updateFromTimeSaleForHigherTimeFrame(symbol, widget, timesale, 30, newVwapValue);
 };
 
 const setColorForVolume = (candles: Models.CandlePlus[], volumes: Models.LineSeriesData[], currentIndex: number) => {

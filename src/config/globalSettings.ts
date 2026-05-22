@@ -14,6 +14,7 @@ export const showTradebooksForPosition: boolean = enableLeftPaneFeatures && fals
 export const showDataFeedsBar: boolean = false;
 export const checkMaxEntryThreshold: boolean = false;
 export const tradesPerSecondRollingWindowSeconds: number = 10; // Rolling window for tracking average trades per second
+export const m15ChartEnabledAfterSeconds: number = 15 * 60;
 export const enableBookmapSocket: boolean = true;
 // false: remind only. true: block core/runner exit adjustments until coreInvalidationLevel is set.
 export const blockExitAdjustmentsWithoutCoreInvalidationLevel: boolean = false;

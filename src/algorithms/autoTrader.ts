@@ -10,6 +10,7 @@ import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import * as VwapPatterns from './vwapPatterns';
 import * as Agent from '../ai/agent';
+import * as GlobalSettings from '../config/globalSettings';
 import { TradebookID } from '../tradebooks/tradebookIds';
 
 declare let window: Models.MyWindow;
@@ -105,11 +106,8 @@ export const getTimeFrameToUse = () => {
     if (seconds > (60 * 10)) {
         timeframe = 5;
     }
-    if (seconds > (60 * 30)) {
+    if (seconds >= GlobalSettings.m15ChartEnabledAfterSeconds) {
         timeframe = 15;
-    }
-    if (seconds > (60 * 60)) {
-        timeframe = 30;
     }
     return timeframe
 }
