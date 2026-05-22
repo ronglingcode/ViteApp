@@ -36,8 +36,6 @@ export const createWebSocketForMarketData = async () => {
         });
     };
 
-    websocket.onopen = function () {
-    }
     return websocket;
 };
 
@@ -103,10 +101,6 @@ export const sendAuthRequest = (webSocket: WebSocket) => {
     sendWebsocketRequest(webSocket, request);
 }
 
-export const subscribe = (webSocket: WebSocket) => {
-    subscribeTradesAndQuotesRequests(webSocket);
-    subscribeActivity(webSocket);
-}
 export const subscribeActivity = (webSocket: WebSocket) => {
     let request = {
         "action": "listen",
@@ -137,7 +131,6 @@ export const subscribeTradesAndQuotesRequests = (webSocket: WebSocket) => {
     };
     sendWebsocketRequest(webSocket, request2);
 }
-export const non_update: string[] = ['I'];
 export const createTimeSale = (c: any) => {
     let has_non_update = false;
     let tradeTime = Helper.numberToDate(c["t"]);
