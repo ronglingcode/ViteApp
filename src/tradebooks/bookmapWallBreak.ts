@@ -85,6 +85,7 @@ export class BookmapWallBreak extends Tradebook {
         useMarketOrder: boolean,
         entryPrice: number,
         stopOutPrice: number,
+        riskReduction: number,
         logTags: Models.LogTags
     ): number {
         let symbol = this.symbol;
@@ -107,7 +108,7 @@ export class BookmapWallBreak extends Tradebook {
             Firestore.logError(`${symbol} not allowed entry`, logTags);
             return 0;
         }
-        allowedSize = allowedSize / 4;
+        allowedSize = allowedSize * riskReduction;
         let planCopy = JSON.parse(JSON.stringify(this.basePlan)) as TradingPlansModels.BasePlan;
         this.submitEntryOrdersBase(
             dryRun, useMarketOrder, entryPrice, stopOutPrice, stopOutPrice, allowedSize, planCopy, logTags);
@@ -130,7 +131,13 @@ export class BookmapWallBreak extends Tradebook {
             let symbolData = Models.getSymbolData(symbol);
             stopOutPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
         }
-        return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, logTags);
+        let riskReduction = 1;
+        if (parameters.entryMethod == "0.25R") {
+            riskReduction = 0.25;
+        } else if (parameters.entryMethod == "0.5R") {
+            riskReduction = 0.5;
+        }
+        return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskReduction, logTags);
     }
 
     triggerEntryFromBookmap(useMarketOrder: boolean, stopOutPrice: number): number {
@@ -138,7 +145,7 @@ export class BookmapWallBreak extends Tradebook {
         let logTags = Models.generateLogTags(symbol, `${symbol}_${this.getBookmapLogSuffix()}`);
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, this.isLong, useMarketOrder, Models.getDefaultEntryParameters());
 
-        return this.triggerEntryCommon(false, useMarketOrder, entryPrice, stopOutPrice, logTags);
+        return this.triggerEntryCommon(false, useMarketOrder, entryPrice, stopOutPrice, 0.25, logTags);
     }
 
     getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
@@ -159,7 +166,7 @@ export class BookmapWallBreak extends Tradebook {
     }
 
     getEntryMethods(): string[] {
-        return ['default'];
+        return ["0.25R", "0.5R", "1R"];
     }
 
     getDisallowedReasonToAdjustSingleLimitOrder(
