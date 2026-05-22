@@ -575,8 +575,6 @@ export const updateChartColor = (symbol: string, widget: Models.ChartWidget) => 
     if (mo <= 0) {
         return;
     }
-    let atr = Models.getAtr(symbol);
-    let logTags: Models.LogTags = {}
     let liquidityScale = Models.getLiquidityScale(symbol);
     // exclude spread rules for chart color
     let allRulesPassed = liquidityScale > 0; // && !Rules.isSpreadTooLarge(symbol);
