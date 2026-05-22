@@ -7,6 +7,14 @@ declare let window: Models.MyWindow;
 
 /** True while clock diff is in the red zone; used to speak only on transition into bad sync. */
 let clockSyncWarningSpoken = false;
+let clockNode: HTMLElement | null = null;
+
+const getClockNode = (): HTMLElement | null => {
+    if (!clockNode || !clockNode.isConnected) {
+        clockNode = document.getElementById("clock");
+    }
+    return clockNode;
+};
 
 export let currentChartReviewIndex: number = -1;
 
@@ -111,7 +119,7 @@ export const addOneLineSpan = (root: HTMLElement, text: string, className?: stri
     root.appendChild(span);
 }
 export const updateClock = (timeAndSalesTime: Date) => {
-    let clock = document.getElementById("clock");
+    let clock = getClockNode();
     if (!clock)
         return;
     let localTime = new Date();
