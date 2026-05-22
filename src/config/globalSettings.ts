@@ -17,7 +17,7 @@ export const enableBookmapSocket: boolean = true;
 // false: remind only. true: block core/runner exit adjustments until coreInvalidationLevel is set.
 export const blockExitAdjustmentsWithoutCoreInvalidationLevel: boolean = false;
 // false: do not block. true: block exit adjustments until the active trade management card is committed.
-export let blockExitAdjustmentsWithoutCommittedTradeManagementCard: boolean = false;
+export let blockExitAdjustmentsWithoutCommittedTradeManagementCard: boolean = true;
 
 export const toggleBlockExitAdjustmentsWithoutCommittedTradeManagementCard = (): boolean => {
     blockExitAdjustmentsWithoutCommittedTradeManagementCard = !blockExitAdjustmentsWithoutCommittedTradeManagementCard;
