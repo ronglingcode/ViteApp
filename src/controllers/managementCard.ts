@@ -304,6 +304,26 @@ const getMissingRequiredFieldLabels = (draft: ManagementDraft) => {
         .map(field => field.label);
 };
 
+// Checks whether a single visible exit pair maps back to the scalp tier.
+const isScalpTierExitAdjustment = (symbol: string, isLong: boolean, keyIndex: number | undefined) => {
+    if (keyIndex === undefined) {
+        return false;
+    }
+    try {
+        let breakoutTradeState = TradingState.getBreakoutTradeState(symbol, isLong);
+        let plan = breakoutTradeState.plan;
+        let scalpCount = GlobalSettings.batchCount - plan.coreCount - plan.runnerCount;
+        if (scalpCount <= 0) {
+            return false;
+        }
+        let exitPairsCount = Models.getExitPairs(symbol).length;
+        let partialIndex = Helper.getBatchIndex(keyIndex, GlobalSettings.batchCount, exitPairsCount);
+        return partialIndex < scalpCount;
+    } catch (e) {
+        return false;
+    }
+};
+
 // Creates a complete draft by merging saved values with available plan defaults.
 const createDraft = (
     position: Models.Position,
@@ -600,16 +620,25 @@ export const isExitAdjustmentCommitted = (symbol: string, isLong: boolean) => {
     return draft?.committed === true;
 };
 
-// Returns a blocking rule result when committed management is required but missing.
-export const getDisallowedReasonToAdjustExitOrders = (symbol: string, isLong: boolean): Models.CheckRulesResult | null => {
+// Returns whether exit adjustment is allowed by the committed management card rule.
+export const getDisallowedReasonToAdjustExitOrders = (symbol: string, isLong: boolean, keyIndex?: number): Models.CheckRulesResult => {
     if (isExitAdjustmentCommitted(symbol, isLong)) {
-        return null;
+        return {
+            allowed: true,
+            reason: "trade management card is committed",
+        };
     }
     let message = `trade management card is not committed for ${symbol}`;
-    if (!GlobalSettings.blockExitAdjustmentsWithoutCommittedTradeManagementCard) {
+    let isScalpTier = isScalpTierExitAdjustment(symbol, isLong, keyIndex);
+    if (!GlobalSettings.blockExitAdjustmentsWithoutCommittedTradeManagementCard || isScalpTier) {
         Firestore.logError(message);
         Helper.speak(`warning, ${symbol} trade management is not committed`);
-        return null;
+        return {
+            allowed: true,
+            reason: isScalpTier
+                ? `${message}, but scalp tier adjustment is allowed`
+                : `${message}, but committed management card blocking is disabled`,
+        };
     }
     return {
         allowed: false,

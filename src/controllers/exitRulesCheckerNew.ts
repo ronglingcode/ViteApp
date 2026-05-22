@@ -15,12 +15,20 @@ const getCommittedManagementBlock = (
     isLong: boolean,
     logTags: Models.LogTags,
     action: string,
-) => {
-    let result = ManagementCard.getDisallowedReasonToAdjustExitOrders(symbol, isLong);
-    if (result) {
-        Firestore.logInfo(`${action} disallowed: ${result.reason}`, logTags);
+    keyIndex?: number,
+): Models.CheckRulesResult => {
+    let managementResult = ManagementCard.getDisallowedReasonToAdjustExitOrders(symbol, isLong, keyIndex);
+    if (!managementResult.allowed) {
+        Firestore.logInfo(`${action} disallowed: ${managementResult.reason}`, logTags);
+        return {
+            allowed: false,
+            reason: managementResult.reason,
+        };
     }
-    return result;
+    return {
+        allowed: true,
+        reason: managementResult.reason,
+    };
 };
 
 export const isAllowedForAllOrdersForAllTradebooks = (symbol: string, isLong: boolean, isMarketOrder: boolean, newPrice: number, logTags: Models.LogTags) => {
@@ -186,7 +194,8 @@ export const isAllowedToAdjustSingleLimitOrder = (symbol: string, keyIndex: numb
     order: Models.OrderModel, pair: Models.ExitPair,
     newPrice: number, logTags: Models.LogTags) => {
     let { isLong, tradebookID } = getCommonInfo(symbol);
-    if (getCommittedManagementBlock(symbol, isLong, logTags, "adjust limit order")) {
+    let managementResult = getCommittedManagementBlock(symbol, isLong, logTags, "adjust limit order", keyIndex);
+    if (!managementResult.allowed) {
         return false;
     }
     let tradebook = TradebooksManager.getTradebookByID(symbol, tradebookID);
@@ -204,7 +213,8 @@ export const checkAdjustSingleStopOrderRules = (symbol: string, keyIndex: number
     order: Models.OrderModel, pair: Models.ExitPair,
     newPrice: number, logTags: Models.LogTags) => {
     let { isLong, tradebookID } = getCommonInfo(symbol);
-    if (getCommittedManagementBlock(symbol, isLong, logTags, "adjust stop order")) {
+    let managementResult = getCommittedManagementBlock(symbol, isLong, logTags, "adjust stop order", keyIndex);
+    if (!managementResult.allowed) {
         return false;
     }
     let tradebook = TradebooksManager.getTradebookByID(symbol, tradebookID);
@@ -236,7 +246,8 @@ export const isAllowedToMarketOutSingleOrder = (symbol: string, keyIndex: number
 
 export const isAllowedToAdjustAllExitPairs = (symbol: string, newPrice: number, logTags: Models.LogTags) => {
     let { isLong, tradebookID } = getCommonInfo(symbol);
-    if (getCommittedManagementBlock(symbol, isLong, logTags, "adjust all exit pairs")) {
+    let managementResult = getCommittedManagementBlock(symbol, isLong, logTags, "adjust all exit pairs");
+    if (!managementResult.allowed) {
         return false;
     }
     let tradebook = TradebooksManager.getTradebookByID(symbol, tradebookID);
@@ -247,6 +258,15 @@ export const isAllowedToAdjustAllExitPairs = (symbol: string, newPrice: number, 
         return result.allowed;
     } else {
         Firestore.logInfo(`no tradebook found for ${symbol}`, logTags);
+    }
+    return true;
+};
+
+export const isAllowedToAdjustBatchExitPairs = (symbol: string, logTags: Models.LogTags) => {
+    let { isLong } = getCommonInfo(symbol);
+    let managementResult = getCommittedManagementBlock(symbol, isLong, logTags, "adjust batch exit pairs");
+    if (!managementResult.allowed) {
+        return false;
     }
     return true;
 };

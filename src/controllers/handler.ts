@@ -329,6 +329,9 @@ export const adjustBatchExits = async (symbol: string, code: string, shiftKey: b
         if (shiftKey) {
             keyGPressedWithShift(symbol);
         } else {
+            if (!ExitRulesCheckerNew.isAllowedToAdjustBatchExitPairs(symbol, logTags)) {
+                return;
+            }
             keyGPressed(symbol);
         }
         return;
