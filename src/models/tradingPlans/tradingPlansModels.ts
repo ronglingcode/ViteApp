@@ -1,10 +1,3 @@
-
-export enum DailySetup {
-    'Unknown',
-    'TwoWayOpen',
-    'LevelNearAboveRange',
-    'LevelNearBelowRange',
-}
 export interface TradingSettings {
     useSingleOrderForEntry: boolean,
     /**
@@ -14,9 +7,7 @@ export interface TradingSettings {
 }
 
 export interface Analysis {
-    dailyChartStory: number,
     gap: Gap,
-    dailySetup: DailySetup,
     /**
      * 0: no defer, 1: defer 1 second after open, -1: invalid value.
      */
@@ -150,6 +141,7 @@ export interface BasePlan {
     coreTarget: number,
     coreCount: number,
     runnerCount: number,
+    runnerTriggerCondition: string,
 };
 export interface PlanConfigs {
     size: number,

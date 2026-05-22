@@ -354,7 +354,7 @@ const createDraft = (
         coreCount: existingDraft?.coreCount ?? numberToDraftValue(defaultPlan?.coreCount),
         coreTarget: existingDraft?.coreTarget ?? numberToDraftValue(defaultPlan?.coreTarget),
         runnerTarget: existingDraft?.runnerTarget ?? '',
-        runnerTriggerCondition: existingDraft?.runnerTriggerCondition ?? 'vwap bounce fail',
+        runnerTriggerCondition: existingDraft?.runnerTriggerCondition ?? defaultPlan?.runnerTriggerCondition ?? 'vwap bounce fail',
         activeTemplateId: existingDraft?.activeTemplateId,
         committed: existingDraft?.committed ?? false,
         updatedAt: new Date().toISOString(),

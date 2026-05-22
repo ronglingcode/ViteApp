@@ -133,10 +133,6 @@ export const finishedStockAnalysis = (symbol: string, plan: TradingPlansModels.T
     let analysis = plan.analysis;
     let errorMsg = `${symbol} missing `;
 
-    if (analysis.dailyChartStory < 0) {
-        Firestore.logError(`${errorMsg} dailyChartStory`);
-        return false;
-    }
     if (analysis.gap.pdc == 0) {
         Firestore.logError(`${errorMsg} gap pdc`);
         return false;

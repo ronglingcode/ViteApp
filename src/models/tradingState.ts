@@ -66,6 +66,7 @@ const getDefaultBreakoutTradeState = (isLong: boolean) => {
             coreTarget: 0,
             coreCount: 0,
             runnerCount: 0,
+            runnerTriggerCondition: "",
         }
     }
     return result;
