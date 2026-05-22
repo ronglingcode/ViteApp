@@ -33,7 +33,6 @@ export const createWebSocket = async () => {
                             subscribeLevelOneQuotes(websocket);
                         }
                         subscribeActivity(websocket);
-                        subscribeChartUpdates(websocket);
                     }
                 }
                 else if (service === "LEVELONE_EQUITIES") {
@@ -68,14 +67,6 @@ export const createWebSocket = async () => {
                         });
                         showActivitySummary(act);
                         Chart.updateAccountUIStatus([], 'account activity');
-                    }
-                } else if (service === "CHART_EQUITY") {
-                    if (command == "SUBS") {
-                        let contents = element.content;
-                        // received chart updates
-                        contents.forEach((c: any) => {
-                            //console.log(c);
-                        });
                     }
                 } else {
                     console.log('unknown service');
@@ -134,21 +125,6 @@ export const subscribeActivity = (webSocket: WebSocket) => {
         "parameters": {
             "keys": "Account Activity",
             "fields": "0,1,2,3"
-        }
-    }
-    sendWebsocketRequest(webSocket, request);
-}
-export const subscribeChartUpdates = (webSocket: WebSocket) => {
-    let streamerInfo = window.HybridApp.Secrets.schwab;
-    let request = {
-        "service": "CHART_EQUITY",
-        "requestid": "4",
-        "command": "SUBS",
-        "SchwabClientCustomerId": streamerInfo.schwabClientCustomerId,
-        "SchwabClientCorrelId": streamerInfo.schwabClientCorrelId,
-        "parameters": {
-            "keys": Models.getWatchlistSymbolsInString(),
-            "fields": "0,1,2,4,5"
         }
     }
     sendWebsocketRequest(webSocket, request);

@@ -80,6 +80,7 @@ Last full review: 2026-05-22.
    - Current behavior: `subscribeChartUpdates(websocket)` is called after Schwab login, but `CHART_EQUITY` content is ignored.
    - Why it matters: unnecessary websocket messages still parse JSON and iterate content.
    - Preferred fix: remove the subscription unless a real consumer is added.
+   - Progress: completed on 2026-05-22. Removed the subscription call, ignored `CHART_EQUITY` handler branch, and `subscribeChartUpdates()`.
 
 8. M30 data still exists even though the chart was removed.
    - Files: `src/data/db.ts`, `src/models/models.ts`, tradebook/timeframe helpers.
@@ -123,7 +124,11 @@ Acceptance:
 
 ### 1. Stop duplicate trade stream work after the competition window
 
-Status: not started.
+Status: partially completed.
+
+Progress:
+- Completed current primary config path on 2026-05-22: when `marketDataSource == "massive"`, Alpaca trades unsubscribe after the competition window while Alpaca quotes remain active.
+- Still pending if needed later: when `marketDataSource == "alpaca"`, close or unsubscribe Massive after the competition window.
 
 Goal: after the first configured window, only the main trade source should continue delivering trade messages to the app.
 
@@ -147,7 +152,7 @@ Acceptance:
 
 ### 2. Remove unused Schwab `CHART_EQUITY` subscription
 
-Status: not started.
+Status: completed on 2026-05-22.
 
 Goal: avoid parsing ignored Schwab chart messages.
 
@@ -155,11 +160,14 @@ Implementation notes:
 - In `src/api/schwab/streaming.ts`, after successful `ADMIN` login, do not call `subscribeChartUpdates(websocket)` unless a config flag explicitly enables it.
 - Leave account activity subscription intact.
 - Leave Schwab level-one quote subscription gated by `DB.levelOneQuoteSource`.
+- Implemented by removing the `subscribeChartUpdates(websocket)` call, the ignored `CHART_EQUITY` message branch, and the `subscribeChartUpdates()` function.
 
 Acceptance:
-- Schwab account events still work.
-- Schwab quotes still work when selected as `levelOneQuoteSource`.
-- No ignored `CHART_EQUITY` stream is subscribed by default.
+- [x] Schwab account events still work.
+- [x] Schwab quotes still work when selected as `levelOneQuoteSource`.
+- [x] No ignored `CHART_EQUITY` stream is subscribed by default.
+- [x] `git diff --check` passed.
+- [x] `npm run build` passed.
 
 ### 3. Batch per-tick chart and DOM rendering
 
