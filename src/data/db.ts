@@ -545,8 +545,6 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
     allCharts[0].vwapSeries.update(lastVwap);
     allCharts[0].candleSeries.update(lastCandle);
 
-    let position = Models.getPosition(symbol);
-    Chart.showLiveR(symbol, position, widget);
     updateChartColor(symbol, widget);
     //console.log(timesale);
     AutoTrader.onNewTimeAndSalesData(symbol, lastPrice, isNewCandleData);

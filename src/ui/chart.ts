@@ -952,60 +952,8 @@ export const showToolTips = (symbol: string, text: string) => {
     });
 
 }
-export const showLiveR = (symbol: string, position: Models.Position | undefined, widget: Models.ChartWidget) => {
-    return;
-    /*
-    if (!position) {
-        return;
-    }
-    let currentProfitRatio = getCurrentProfitRatio(symbol, position, widget);
-    if (currentProfitRatio > 0) {
-        let allCharts = Models.getChartsInAllTimeframes(symbol);
-        allCharts.forEach(chart => {
-            showLiveRForTimeframe(symbol, position, currentProfitRatio, chart);
-        });
-    }*/
-}
-export const showLiveRForTimeframe = (symbol: string, position: Models.Position,
-    currentProfitRatio: number, timeframeChart: Models.TimeFrameChart) => {
-    let isLong = position.netQuantity > 0;
-    let markerPosition: LightweightCharts.SeriesMarkerPosition = isLong ? 'aboveBar' : 'belowBar';
-    let markerShape: LightweightCharts.SeriesMarkerShape = isLong ? 'arrowUp' : 'arrowDown';
-    let candles = Models.getCandlesFromDisplay(symbol);
-    let lastCandle = candles[candles.length - 1];
-    let atr = TradingState.getAtrInTrade(symbol);
-    let todayRange = Models.getTodayRange(atr);
-    let currentRange = Models.getCurrentRange(symbol, isLong);
-    let atrText = `atr: ${currentRange}/${todayRange}`;
-    timeframeChart.liveRMarker = {
-        time: lastCandle.time,
-        position: markerPosition,
-        color: 'black',
-        shape: markerShape,
-        text: `${currentProfitRatio}R ${atrText}`,
-        size: 0.1,
-    };
-    showMarkers(timeframeChart);
-};
-const getCurrentProfitRatio = (symbol: string, position: Models.Position | undefined, widget: Models.ChartWidget) => {
-    if (!position) {
-        return 0;
-    }
-    let currentPrice = Models.getCurrentPrice(symbol);
-    let filledPrice = widget.initialCost;
-    let stopPrice = widget.initialStopPrice;
-    let isLong = position.netQuantity > 0;
-    if ((isLong && currentPrice < filledPrice) || (!isLong && currentPrice > filledPrice)) {
-        // do not show current loss
-        return 0;
-    }
 
-    let currentProfit = Math.abs(currentPrice - filledPrice);
-    let risk = Math.abs(stopPrice - filledPrice);
-    let ratio = currentProfit / risk;
-    ratio = Math.round(ratio * 10) / 10;
-    return ratio;
-};
+
 /**
  * @returns the risk multiples
  */
