@@ -298,7 +298,13 @@ Acceptance:
 
 ### 9. Coalesce account sync and account UI redraw
 
-Status: not started.
+Status: completed on 2026-05-23.
+
+Progress:
+- Added an in-flight guard around `Chart.updateAccountUIStatus()`.
+- Simplified `Chart.updateAccountUIStatus()` to take only a source label and always refresh all watchlist symbols.
+- While a refresh is running, new requests are merged into one pending refresh by source label.
+- After the active refresh finishes, the pending refresh runs once, then the guard clears.
 
 Goal: prevent overlapping broker sync and chart redraw work.
 
@@ -313,9 +319,9 @@ Implementation notes:
 - Draw working-order price lines only when account state changed, if feasible.
 
 Acceptance:
-- Account UI still refreshes after order events.
-- Periodic refresh still happens.
-- Multiple requests collapse into one active sync plus at most one pending sync.
+- [x] Account UI still refreshes after order events.
+- [x] Periodic refresh still happens.
+- [x] Multiple requests collapse into one active sync plus at most one pending sync.
 
 ### 10. Review and fix key-area new-candle update
 

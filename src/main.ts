@@ -138,7 +138,7 @@ if (checkQuantityButton) {
 let syncAccountButton = document.getElementById("update_account_ui");
 if (syncAccountButton) {
     syncAccountButton.addEventListener("click", () => {
-        Chart.updateAccountUIStatus([], 'sync button');
+        Chart.updateAccountUIStatus('sync button');
         TraderFocus.updateUI();
     });
 }

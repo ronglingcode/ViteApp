@@ -66,7 +66,7 @@ export const createWebSocket = async () => {
                             act.push(activity);
                         });
                         showActivitySummary(act);
-                        Chart.updateAccountUIStatus([], 'account activity');
+                        Chart.updateAccountUIStatus('account activity');
                     }
                 } else {
                     console.log('unknown service');

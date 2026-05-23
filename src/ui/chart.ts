@@ -715,20 +715,54 @@ const getRiskPerShare = (symbol: string, isLong: boolean,
     }
 }
 
-export const updateAccountUIStatus = async (symbolList: string[], source: string) => {
+let accountUiRefreshInProgress = false;
+let pendingAccountUiRefreshSource: string | undefined;
+
+const mergeAccountUiRefreshSources = (current: string, incoming: string) => {
+    if (current == incoming || current.includes(incoming)) {
+        return current;
+    }
+    let merged = `${current}, ${incoming}`;
+    if (merged.length > 200) {
+        return `${current}, more`;
+    }
+    return merged;
+}
+
+const queuePendingAccountUiRefresh = (source: string) => {
+    if (!pendingAccountUiRefreshSource) {
+        pendingAccountUiRefreshSource = source;
+        return;
+    }
+    pendingAccountUiRefreshSource = mergeAccountUiRefreshSources(pendingAccountUiRefreshSource, source);
+}
+
+const runAccountUIStatusUpdate = async (source: string) => {
     let done = await Broker.syncAccount(source);
     if (done) {
-        if (!symbolList || symbolList.length == 0) {
-            let wl = Models.getWatchlist();
-            wl.forEach(element => {
-                updateAccountUIStatusForSymbol(element.symbol);
-            });
-        } else {
-            symbolList.forEach(symbol => {
-                updateAccountUIStatusForSymbol(symbol);
-            });
-        }
+        let wl = Models.getWatchlist();
+        wl.forEach(element => {
+            updateAccountUIStatusForSymbol(element.symbol);
+        });
         TraderFocus.updateTradeManagementUI();
+    }
+};
+
+export const updateAccountUIStatus = async (source: string) => {
+    if (accountUiRefreshInProgress) {
+        queuePendingAccountUiRefresh(source);
+        return;
+    }
+    accountUiRefreshInProgress = true;
+    let refreshSource: string | undefined = source;
+    try {
+        while (refreshSource) {
+            await runAccountUIStatusUpdate(refreshSource);
+            refreshSource = pendingAccountUiRefreshSource;
+            pendingAccountUiRefreshSource = undefined;
+        }
+    } finally {
+        accountUiRefreshInProgress = false;
     }
 };
 export const drawRiskLevels = (symbol: string) => {

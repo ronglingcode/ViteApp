@@ -51,10 +51,10 @@ export const UpdateAccountUIWithDelay = (source: string) => {
         lastAccountSyncTime = new Date(now.getTime() + 900);
         console.log(`sync account with delay`);
         setTimeout(() => {
-            Chart.updateAccountUIStatus([], `update account ui with delay ${source}`);
+            Chart.updateAccountUIStatus(`update account ui with delay ${source}`);
         }, 500);
         setTimeout(() => {
-            Chart.updateAccountUIStatus([], `update account ui with delay ${source}`);
+            Chart.updateAccountUIStatus(`update account ui with delay ${source}`);
         }, 1000);
     } else {
         console.log(`sync account saved`);

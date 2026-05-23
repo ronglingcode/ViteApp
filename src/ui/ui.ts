@@ -82,8 +82,7 @@ export const reviewNextChart = () => {
 export const syncAndUpdate = (delaySeconds: number) => {
     if (Config.getProfileSettings().brokerName == "TradeStation") {
         setTimeout(() => {
-            let symbols = window.HybridApp.SymbolsList;
-            Chart.updateAccountUIStatus(symbols, 'sync and update');
+            Chart.updateAccountUIStatus('sync and update');
         }, delaySeconds * 1000);
     }
 };
