@@ -56,7 +56,7 @@ Last full review: 2026-05-22.
      - `getChartAnalysis(symbol)`.
      - `Chart.updateToolTipPriceLine(symbol, status)` when status text exists.
      - `Chart.drawRiskLevels(symbol)`.
-   - Why it matters: some of these call helpers that build arrays or scan candles since open. With a position open, `getChartAnalysis()` can call `VwapPatterns.getStatusForVwapContinuationLongWithPremarketHigh()`, which currently `structuredClone()`s candles and VWAP arrays.
+   - Why it matters: some of these call helpers that build arrays or scan candles since open. With a position open, `getChartAnalysis()` can call `VwapPatterns.getStatusForVwapContinuationLongWithPremarketHigh()`, which still rebuilds since-open candle and VWAP arrays.
    - Preferred fix: separate per-tick trading state from lower-frequency display/analysis. Run expensive analysis on new candle, once per second, or only when the visible status would change.
 
 5. Account sync and chart redraw timers can overlap with open-time load.
@@ -259,15 +259,16 @@ Acceptance:
 
 ### 7. Optimize `getChartAnalysis()` and VWAP status helpers
 
-Status: not started.
+Status: partially completed.
+
+Progress:
+- Removed `structuredClone()` from `VwapPatterns.getStatusForVwapContinuationLongWithPremarketHigh()` because it only reads the candle/VWAP arrays.
+- Still pending: avoid rebuilding since-open arrays and reduce how often chart analysis runs in the tick path.
 
 Goal: remove expensive array cloning/scanning from position tick path.
 
 Implementation notes:
-- `VwapPatterns.getStatusForVwapContinuationLongWithPremarketHigh()` currently uses:
-  - `structuredClone(Models.getCandlesFromM1SinceOpen(symbol))`
-  - `structuredClone(Models.getVwapsSinceOpen(symbol))`
-- Avoid `structuredClone()` when the function only reads.
+- `VwapPatterns.getStatusForVwapContinuationLongWithPremarketHigh()` no longer uses `structuredClone()` when reading candle and VWAP arrays.
 - Avoid building since-open arrays just to inspect last/current candles.
 - Cache:
   - open price
@@ -277,7 +278,7 @@ Implementation notes:
 
 Acceptance:
 - Same status strings for known scenarios.
-- No `structuredClone()` in tick-triggered chart analysis.
+- [x] No `structuredClone()` in tick-triggered chart analysis.
 
 ### 8. Batch quote DOM updates and simplify numeric rolling windows
 

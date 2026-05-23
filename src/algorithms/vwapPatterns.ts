@@ -11,8 +11,8 @@ export const test = () => {
 }
 export const getStatusForVwapContinuationLongWithPremarketHigh = (symbol: string,
     maxCount: number) => {
-    let candles = structuredClone(Models.getCandlesFromM1SinceOpen(symbol));
-    let vwaps = structuredClone(Models.getVwapsSinceOpen(symbol));
+    let candles = Models.getCandlesFromM1SinceOpen(symbol);
+    let vwaps = Models.getVwapsSinceOpen(symbol);
     if (maxCount > 0) {
         candles = candles.slice(0, maxCount);
         vwaps = vwaps.slice(0, maxCount);
