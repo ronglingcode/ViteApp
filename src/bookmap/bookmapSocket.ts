@@ -35,7 +35,7 @@ export const createWebSocket = () => {
     websocket.onmessage = function (messageEvent) {
         let data = JSON.parse(messageEvent.data);
         let type = data.type;
-        if (type !== "orderbook") {
+        if (type !== "orderbook" && type !== "custom_button_click") {
             console.log(data);
         }
         let symbol = normalizeSymbol(data.symbol || "");
@@ -68,8 +68,11 @@ export const createWebSocket = () => {
                 keyCode: data.keyCode || "cmd",
                 timestamp: data.timestamp,
             });
+        } else if (type === "custom_button_click") {
+            console.log("[BookmapSocket] custom_button_click");
+            console.log(data)
         } else if (type === "subscribed") {
-            console.log(`[BookmapSocket] Subscribed to ${data.channel} (interval=${data.intervalMs}ms, levels=${data.levels})`);
+            console.log(`[BookmapSocket] Subscribed to ${data.channel}(interval = ${data.intervalMs}ms, levels = ${data.levels})`);
         } else if (type === "unsubscribed") {
             console.log(`[BookmapSocket] Unsubscribed from ${data.channel}`);
         } else {
