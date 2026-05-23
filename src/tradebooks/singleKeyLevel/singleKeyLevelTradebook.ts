@@ -39,6 +39,6 @@ export abstract class SingleKeyLevelTradebook extends Tradebook {
     }
 
     getEntryMethods(): string[] {
-        return [];
+        return ['default'];
     }
 }

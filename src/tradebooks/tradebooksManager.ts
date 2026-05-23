@@ -8,6 +8,15 @@ import { BookmapWallBreak } from "./bookmapWallBreak";
 import { BookmapWallReversal } from "./bookmapWallReversal";
 import { TradebookID } from "./tradebookIds";
 
+export interface BookmapTradebookButtonDefinition {
+    id: string,
+    label: string,
+    side: "long" | "short",
+    tradebookId: string,
+    tradebookName: string,
+    entryMethods: string[],
+}
+
 export const createTradebooksForGapAndGo = (symbol: string, gapAndGoPlan: TradingPlansModels.GapAndGoPlan, tradebooksMap: Map<string, Tradebook>) => {
     let gapAndGoBookmapOfferWallBreakout = new BookmapWallBreak(
         symbol, TradebookID.GapAndGoBookmapOfferWallBreakout, gapAndGoPlan, gapAndGoPlan.support.low);
@@ -160,6 +169,41 @@ export const getTradebookByID = (symbol: string, tradebookID: string) => {
     }
     let tradebooksMap = widget.tradebooks;
     return tradebooksMap.get(tradebookID);
+}
+
+export const getBookmapTradebookButtonDefinitions = (symbol: string): BookmapTradebookButtonDefinition[] => {
+    let widget = Models.getChartWidget(symbol);
+    if (!widget) {
+        return [];
+    }
+
+    let tradebooks: BookmapTradebookButtonDefinition[] = [];
+    widget.tradebooks.forEach(tradebook => {
+        if (!tradebook.isEnabled() && !tradebook.enableByDefault) {
+            return;
+        }
+
+        let entryMethods = tradebook.getEntryMethods();
+        if (entryMethods.length > 0) {
+            tradebooks.push(createBookmapTradebookButtonDefinition(symbol, tradebook, entryMethods));
+        }
+    });
+    return tradebooks;
+}
+
+const createBookmapTradebookButtonDefinition = (
+    symbol: string,
+    tradebook: Tradebook,
+    entryMethods: string[],
+): BookmapTradebookButtonDefinition => {
+    return {
+        id: `${symbol}:${tradebook.getID()}`,
+        label: tradebook.buttonLabel,
+        side: tradebook.isLong ? "long" : "short",
+        tradebookId: tradebook.getID(),
+        tradebookName: tradebook.name,
+        entryMethods: entryMethods,
+    };
 }
 
 export const onNewTimeAndSalesDataForSymbol = (symbol: string, newPrice: number) => {

@@ -8,6 +8,7 @@ import { processOrderbookSnapshot } from "./largeOrderTracker";
 import { handlePriceSelect } from "./bookmapActions";
 import * as Helper from "../utils/helper";
 import * as Models from "../models/models";
+import * as TradebooksManager from "../tradebooks/tradebooksManager";
 declare let window: Models.MyWindow;
 
 const BOOKMAP_WS_URL = "ws://localhost:8765";
@@ -30,6 +31,7 @@ export const createWebSocket = () => {
     websocket.onopen = function () {
         console.log("[BookmapSocket] Connected");
         subscribeToOrderbook();
+        sendTradeButtonConfigsForAllSymbols();
     };
 
     websocket.onmessage = function (messageEvent) {
@@ -71,6 +73,7 @@ export const createWebSocket = () => {
         } else if (type === "custom_button_click") {
             console.log("[BookmapSocket] custom_button_click");
             console.log(data)
+            handleCustomButtonClick(data);
         } else if (type === "subscribed") {
             console.log(`[BookmapSocket] Subscribed to ${data.channel}(interval = ${data.intervalMs}ms, levels = ${data.levels})`);
         } else if (type === "unsubscribed") {
@@ -100,4 +103,54 @@ const subscribeToOrderbook = () => {
             channel: "orderbook",
         }));
     }
+};
+
+export const sendTradeButtonConfigsForAllSymbols = () => {
+    let watchlist = Models.getWatchlist();
+    for (let i = 0; i < watchlist.length; i++) {
+        sendTradeButtonConfigForSymbol(watchlist[i].symbol);
+    }
+};
+
+export const sendTradeButtonConfigForSymbol = (symbol: string) => {
+    if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+        return;
+    }
+
+    let tradebooks = TradebooksManager.getBookmapTradebookButtonDefinitions(symbol);
+    websocket.send(JSON.stringify({
+        type: "trade_button_config",
+        symbol: symbol,
+        tradebooks: tradebooks,
+        timestamp: Date.now(),
+    }));
+    console.log(`[BookmapSocket] Sent ${tradebooks.length} tradebook button groups for ${symbol}`);
+};
+
+const handleCustomButtonClick = (data: any) => {
+    let symbol = normalizeSymbol(data.symbol || "");
+    let tradebookId = getString(data.tradebook_id || data.tradebookId);
+    let entryMethod = getString(data.entry_method || data.entryMethod);
+    let useMarketOrder = data.use_market_order === true || data.useMarketOrder === true;
+
+    if (!tradebookId) {
+        console.warn("[BookmapSocket] custom_button_click missing tradebook_id", data);
+        return;
+    }
+
+    let tradebook = TradebooksManager.getTradebookByID(symbol, tradebookId);
+    if (!tradebook) {
+        console.warn(`[BookmapSocket] tradebook not found for ${symbol}: ${tradebookId}`, data);
+        return;
+    }
+
+    console.log(`[BookmapSocket] Starting ${tradebook.buttonLabel} ${entryMethod} for ${symbol}`);
+    tradebook.startEntry(useMarketOrder, false, {
+        ...Models.getDefaultEntryParameters(),
+        entryMethod: entryMethod || undefined,
+    });
+};
+
+const getString = (value: any): string => {
+    return typeof value === "string" ? value : "";
 };
