@@ -13,6 +13,7 @@ import * as Broker from '../api/broker';
 import * as GlobalSettings from '../config/globalSettings';
 import * as UI from '../ui/ui';
 import * as BasicIndicators from '../indicators/basicIndicators';
+import * as ChartSeries from '../utils/chartSeries';
 
 // Create a throttled version of cancelAllEntryOrders that executes once per second
 const throttledCancelAllEntryOrders = Helper.executeOncePerInterval(
@@ -26,6 +27,32 @@ export const levelOneQuoteSourceAlpaca: string = 'alpaca';
 export const levelOneQuoteSourceSchwab: string = 'schwab';
 export const levelOneQuoteSource: string = levelOneQuoteSourceAlpaca;
 const m15ChartSyncedAfterGate = new Set<string>();
+const staleTimeSaleLogIntervalMs = 30_000;
+const staleTimeSaleLastLogByKey = new Map<string, number>();
+
+const shouldIgnoreStaleTimeSale = (
+    symbol: string,
+    timeframe: number,
+    newTime: LightweightCharts.UTCTimestamp,
+    lastTime: LightweightCharts.UTCTimestamp,
+    tradeTime?: number,
+) => {
+    if (newTime >= lastTime) {
+        return false;
+    }
+
+    let key = `${symbol}:${timeframe}`;
+    let now = Date.now();
+    let lastLogTime = staleTimeSaleLastLogByKey.get(key) ?? 0;
+    if (now - lastLogTime >= staleTimeSaleLogIntervalMs) {
+        staleTimeSaleLastLogByKey.set(key, now);
+        console.error(
+            `[DB] Ignoring stale ${timeframe}m timesale for ${symbol}: ` +
+            `last chart time=${lastTime}, new time=${newTime}, tradeTime=${tradeTime ?? 'n/a'}`
+        );
+    }
+    return true;
+};
 
 const buildDataMultipleTimeFrame = (symbol: string, inputCandlesM1: Models.Candle[]) => {
     let symbolData = Models.getSymbolData(symbol);
@@ -269,6 +296,13 @@ export const updateFromTimeSaleForHigherTimeFrame = (
     let higherTimeFrameVwaps = Models.getHigherTimeFrameVwaps(symbol, timeframe);
     let lastVwap = higherTimeFrameVwaps[higherTimeFrameVwaps.length - 1];
 
+    if (!lastCandle || !lastVolume || !lastVwap) {
+        return;
+    }
+
+    if (shouldIgnoreStaleTimeSale(symbol, timeframe, newTime, lastCandle.time, timesale.tradeTime)) {
+        return;
+    }
 
     if (timeframeBucket < Config.Settings.marketOpenTime) {
         // update pre-market indicators
@@ -337,9 +371,9 @@ export const updateFromTimeSaleForHigherTimeFrame = (
     //setColorForVolume(symbolData.candles, symbolData.volumes, symbolData.volumes.length - 1);
     let allCharts = Models.getChartsInAllTimeframes(symbol);
     if (timeframe == 5) {
-        allCharts[1].volumeSeries.update(lastVolume);
-        allCharts[1].candleSeries.update(lastCandle);
-        allCharts[1].vwapSeries.update(lastVwap);
+        ChartSeries.safeUpdateSeries(allCharts[1].volumeSeries, lastVolume, `${symbol} 5m volume`);
+        ChartSeries.safeUpdateSeries(allCharts[1].candleSeries, lastCandle, `${symbol} 5m candle`);
+        ChartSeries.safeUpdateSeries(allCharts[1].vwapSeries, lastVwap, `${symbol} 5m vwap`);
     } else if (timeframe == 15) {
         let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(Helper.numberToDate(timesale.tradeTime));
         if (secondsSinceMarketOpen < GlobalSettings.m15ChartEnabledAfterSeconds) {
@@ -352,36 +386,38 @@ export const updateFromTimeSaleForHigherTimeFrame = (
             m15ChartSyncedAfterGate.add(symbol);
             return;
         }
-        allCharts[2].volumeSeries.update(lastVolume);
-        allCharts[2].candleSeries.update(lastCandle);
-        allCharts[2].vwapSeries.update(lastVwap);
+        ChartSeries.safeUpdateSeries(allCharts[2].volumeSeries, lastVolume, `${symbol} 15m volume`);
+        ChartSeries.safeUpdateSeries(allCharts[2].candleSeries, lastCandle, `${symbol} 15m candle`);
+        ChartSeries.safeUpdateSeries(allCharts[2].vwapSeries, lastVwap, `${symbol} 15m vwap`);
     }
 }
 export const updateFromTimeSale = (timesale: Models.TimeSale) => {
-    let usedTimeframe = Models.getUsedTimeframe();
     let symbol = timesale.symbol;
     let widget = Models.getChartWidget(symbol);
     if (!widget)
         return;
 
-    Chart.updateUI(symbol, "currentPrice", Helper.numberToStringWithPaddingToCents(timesale.lastPrice));
     let allCharts = Models.getChartsInAllTimeframes(symbol);
-    UI.updateClock(Helper.numberToDate(timesale.tradeTime));
     let timeframeBucket = Helper.numberToDate(timesale.tradeTime);
     timeframeBucket.setSeconds(0, 0);
-    timeframeBucket = TimeHelper.roundToTimeFrameBucketTime(timeframeBucket, usedTimeframe);
+    timeframeBucket = TimeHelper.roundToTimeFrameBucketTime(timeframeBucket, 1);
     let newTime = Helper.jsDateToUTC(timeframeBucket);
     let symbolData = Models.getSymbolData(symbol);
     let lastPrice = timesale.lastPrice ?? 0;
     let lastSize = timesale.lastSize ?? 0;
-    symbolData.totalVolume += lastSize;
-    symbolData.totalTradingAmount += (lastPrice * lastSize);
-    let newVwapValue = symbolData.totalTradingAmount / symbolData.totalVolume;
     let lastCandle = symbolData.candles[symbolData.candles.length - 1];
     if (!lastCandle) {
         // sometimes timesales data comes in before chart is loaded.
         return;
     }
+    if (shouldIgnoreStaleTimeSale(symbol, 1, newTime, lastCandle.time, timesale.tradeTime)) {
+        return;
+    }
+    Chart.updateUI(symbol, "currentPrice", Helper.numberToStringWithPaddingToCents(timesale.lastPrice));
+    UI.updateClock(Helper.numberToDate(timesale.tradeTime));
+    symbolData.totalVolume += lastSize;
+    symbolData.totalTradingAmount += (lastPrice * lastSize);
+    let newVwapValue = symbolData.totalTradingAmount / symbolData.totalVolume;
     let lastVolume = symbolData.volumes[symbolData.volumes.length - 1];
     let lastVwap = symbolData.m1Vwaps[symbolData.m1Vwaps.length - 1];
     if (timeframeBucket < Config.Settings.marketOpenTime) {
@@ -473,14 +509,14 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
                 time: ma5.time,
                 value: ma5.close,
             });
-            allCharts[0].ma5Series?.update(symbolData.m1ma5[symbolData.m1ma5.length - 1]);
+            ChartSeries.safeUpdateSeries(allCharts[0].ma5Series, symbolData.m1ma5[symbolData.m1ma5.length - 1], `${symbol} m1 ma5`);
         }
         if (ma9) {
             symbolData.m1ma9.push({
                 time: ma9.time,
                 value: ma9.close,
             });
-            allCharts[0].ma9Series?.update(symbolData.m1ma9[symbolData.m1ma9.length - 1]);
+            ChartSeries.safeUpdateSeries(allCharts[0].ma9Series, symbolData.m1ma9[symbolData.m1ma9.length - 1], `${symbol} m1 ma9`);
         }
 
         // create a new candle
@@ -541,9 +577,9 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
     let volumeText = `${Helper.largeNumberToString(lastVolume.value)} $${Helper.roundToMillion(lastVolume.value * lastPrice)}M`
     Chart.updateUI(symbol, "currentVolume", volumeText);
     setColorForVolume(symbolData.candles, symbolData.volumes, symbolData.volumes.length - 1);
-    allCharts[0].volumeSeries.update(lastVolume);
-    allCharts[0].vwapSeries.update(lastVwap);
-    allCharts[0].candleSeries.update(lastCandle);
+    ChartSeries.safeUpdateSeries(allCharts[0].volumeSeries, lastVolume, `${symbol} m1 volume`);
+    ChartSeries.safeUpdateSeries(allCharts[0].vwapSeries, lastVwap, `${symbol} m1 vwap`);
+    ChartSeries.safeUpdateSeries(allCharts[0].candleSeries, lastCandle, `${symbol} m1 candle`);
 
     updateChartColor(symbol, widget);
     //console.log(timesale);
@@ -610,7 +646,7 @@ const buildKeyAreaCloudCandleData = (time: LightweightCharts.UTCTimestamp, upper
 export const setOpenPriceOnChartFromTimeSale = (
     openPrice: number, time: LightweightCharts.UTCTimestamp,
     widget: Models.ChartWidget) => {
-    widget.openPriceSeries.update({ time: time, value: openPrice });
+    ChartSeries.safeUpdateSeries(widget.openPriceSeries, { time: time, value: openPrice }, `${widget.symbol} open price`);
 }
 const setDataForOpenPrice = (widget: Models.ChartWidget, a: Models.OpenRangeLineSeriesData) => {
     widget.openPriceSeries.setData(a.openPrice);
@@ -720,7 +756,7 @@ export const addDataAndUpdateChart = (
         time: newTime
     });
     // update with last element in dataArray
-    series.update(dataArray.slice(-1)[0]);
+    ChartSeries.safeUpdateSeries(series, dataArray.slice(-1)[0], 'key area');
 };
 
 

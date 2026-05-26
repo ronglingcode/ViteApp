@@ -20,6 +20,7 @@ import * as TimeHelper from '../utils/timeHelper';
 import * as TraderFocus from '../controllers/traderFocus';
 import * as QuestionPopup from './questionPopup';
 import * as GlobalSettings from '../config/globalSettings';
+import * as ChartSeries from '../utils/chartSeries';
 declare let window: Models.MyWindow;
 
 const updateUiTargetCache = new WeakMap<HTMLElement, Map<string, HTMLElement>>();
@@ -1416,14 +1417,14 @@ export const populatePreMarketLineSeries = (time: number, high: number, low: num
                 time: time as LightweightCharts.UTCTimestamp,
                 value: high,
             };
-            timeframeChart.premktHigh.update(newData);
+            ChartSeries.safeUpdateSeries(timeframeChart.premktHigh, newData, `${widget.symbol} premarket high`);
         }
         if (timeframeChart.premktLow) {
             let newData: LightweightCharts.LineData = {
                 time: time as LightweightCharts.UTCTimestamp,
                 value: low,
             };
-            timeframeChart.premktLow.update(newData);
+            ChartSeries.safeUpdateSeries(timeframeChart.premktLow, newData, `${widget.symbol} premarket low`);
         }
     });
 };
