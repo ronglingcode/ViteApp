@@ -8,12 +8,18 @@ import { processOrderbookSnapshot } from "./largeOrderTracker";
 import { handlePriceSelect } from "./bookmapActions";
 import * as Helper from "../utils/helper";
 import * as Models from "../models/models";
+import * as TradingPlans from "../models/tradingPlans/tradingPlans";
 import * as TradebooksManager from "../tradebooks/tradebooksManager";
 declare let window: Models.MyWindow;
 
 const BOOKMAP_WS_URL = "ws://localhost:8765";
 const RECONNECT_DELAY_MS = 3000;
 const ORDERBOOK_INTERVAL_MS = 1000;
+
+interface BookmapKeyLevel {
+    price: number;
+    label?: string;
+}
 
 /** Normalize symbol e.g. "ADBE:NASDAQ:STOCKS@BMD" -> "ADBE" */
 const normalizeSymbol = (raw: string): string => {
@@ -32,6 +38,7 @@ export const createWebSocket = () => {
         console.log("[BookmapSocket] Connected");
         subscribeToOrderbook();
         sendTradeButtonConfigsForAllSymbols();
+        sendKeyLevelConfigsForAllSymbols();
     };
 
     websocket.onmessage = function (messageEvent) {
@@ -47,7 +54,7 @@ export const createWebSocket = () => {
         if (type === "heartbeat") {
             // price tracked via heartbeat if needed later
         } else if (type === "breakout") {
-            console.log(`[BookmapSocket] BREAKOUT [${symbol}]: level=${data.breakoutLevel}, swingLow=${data.swingLow}, timestamp=${data.timestamp}`);
+            console.log(`[BookmapSocket] BREAKOUT [${symbol}]: level=${data.breakoutLevel}, timestamp=${data.timestamp}`);
         } else if (type === "orderbook") {
             //console.log(`[BookmapSocket] Orderbook [${symbol}]: ${data.largeBids.length} largeBids, ${data.largeAsks.length} largeAsks`);
             let atr = 0;
@@ -125,6 +132,44 @@ export const sendTradeButtonConfigForSymbol = (symbol: string) => {
         timestamp: Date.now(),
     }));
     console.log(`[BookmapSocket] Sent ${tradebooks.length} tradebook button groups for ${symbol}`);
+};
+
+export const sendKeyLevelConfigsForAllSymbols = () => {
+    let watchlist = Models.getWatchlist();
+    for (let i = 0; i < watchlist.length; i++) {
+        sendKeyLevelConfigForSymbol(watchlist[i].symbol);
+    }
+};
+
+export const sendKeyLevelConfigForSymbol = (symbol: string) => {
+    if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+        return;
+    }
+
+    const levels = getBookmapKeyLevelsForSymbol(symbol);
+    websocket.send(JSON.stringify({
+        type: "key_levels_config",
+        symbol: symbol,
+        levels: levels,
+        timestamp: Date.now(),
+    }));
+    console.log(`[BookmapSocket] Sent ${levels.length} key levels for ${symbol}`);
+};
+
+const getBookmapKeyLevelsForSymbol = (symbol: string): BookmapKeyLevel[] => {
+    const plan = TradingPlans.getTradingPlansWithoutDefault(symbol);
+    const rawLevels = plan?.keyLevels?.otherLevels ?? [];
+    const seen = new Set<number>();
+    const levels: BookmapKeyLevel[] = [];
+
+    for (const price of rawLevels) {
+        if (!Number.isFinite(price) || price <= 0 || seen.has(price)) {
+            continue;
+        }
+        seen.add(price);
+        levels.push({ price });
+    }
+    return levels;
 };
 
 const handleCustomButtonClick = (data: any) => {
