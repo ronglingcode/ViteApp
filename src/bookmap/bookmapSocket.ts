@@ -15,6 +15,7 @@ declare let window: Models.MyWindow;
 const BOOKMAP_WS_URL = "ws://localhost:8765";
 const RECONNECT_DELAY_MS = 3000;
 const ORDERBOOK_INTERVAL_MS = 1000;
+const CONFIG_PUSH_INTERVAL_MS = 60_000;
 
 interface BookmapKeyLevel {
     price: number;
@@ -29,6 +30,7 @@ const normalizeSymbol = (raw: string): string => {
 };
 
 let websocket: WebSocket | null = null;
+let configPushIntervalId: ReturnType<typeof setInterval> | null = null;
 
 export const createWebSocket = () => {
     console.log(`[BookmapSocket] Connecting to ${BOOKMAP_WS_URL}...`);
@@ -37,8 +39,8 @@ export const createWebSocket = () => {
     websocket.onopen = function () {
         console.log("[BookmapSocket] Connected");
         subscribeToOrderbook();
-        sendTradeButtonConfigsForAllSymbols();
-        sendKeyLevelConfigsForAllSymbols();
+        pushBookmapConfigsForAllSymbols();
+        startPeriodicConfigPush();
     };
 
     websocket.onmessage = function (messageEvent) {
@@ -92,6 +94,7 @@ export const createWebSocket = () => {
 
     websocket.onclose = function () {
         console.log(`[BookmapSocket] Disconnected, reconnecting in ${RECONNECT_DELAY_MS}ms...`);
+        stopPeriodicConfigPush();
         websocket = null;
         setTimeout(createWebSocket, RECONNECT_DELAY_MS);
     };
@@ -110,6 +113,26 @@ const subscribeToOrderbook = () => {
             channel: "orderbook",
         }));
     }
+};
+
+const pushBookmapConfigsForAllSymbols = () => {
+    sendTradeButtonConfigsForAllSymbols();
+    sendKeyLevelConfigsForAllSymbols();
+};
+
+const startPeriodicConfigPush = () => {
+    if (configPushIntervalId !== null) {
+        return;
+    }
+    configPushIntervalId = setInterval(pushBookmapConfigsForAllSymbols, CONFIG_PUSH_INTERVAL_MS);
+};
+
+const stopPeriodicConfigPush = () => {
+    if (configPushIntervalId === null) {
+        return;
+    }
+    clearInterval(configPushIntervalId);
+    configPushIntervalId = null;
 };
 
 export const sendTradeButtonConfigsForAllSymbols = () => {
