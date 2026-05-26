@@ -5,7 +5,6 @@ import * as Config from '../config/config';
 import * as RiskManager from '../algorithms/riskManager';
 import * as Watchlist from '../algorithms/watchlist';
 import * as Firestore from '../firestore';
-import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as TradingState from '../models/tradingState';
 import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as OrderFlowManager from '../controllers/orderFlowManager';
@@ -659,12 +658,6 @@ export const shouldAllowEarlyEntry = (symbol: string, secondsSinceMarketOpen: nu
         allowed: true,
         reason: "default",
     };
-    let topPlan = TradingPlans.getTradingPlans(symbol);
-    if (isBlockedByDeferTrading(topPlan.analysis.deferTradingInSeconds, secondsSinceMarketOpen)) {
-        result.allowed = false;
-        result.reason = `defer trading in ${topPlan.analysis.deferTradingInSeconds} seconds`;
-        return result;
-    }
     let symbolData = Models.getSymbolData(symbol);
     let volumeQuality = SetupQuality.getPremarketVolumeQuality(symbol, symbolData.premarketDollarCollection);
 
@@ -696,4 +689,3 @@ export const isNewTradeAfterStopOut = (symbol: string, isLong: boolean): boolean
         return (symbolData.highOfDay > initialStop);
     }
 }
-

@@ -143,15 +143,6 @@ export const finishedStockAnalysis = (symbol: string, plan: TradingPlansModels.T
         //Firestore.logError(`missing both singleMomentumKeyLevel and dualMomentumKeyLevels`);
         //return false;
     }
-    if (analysis.deferTradingInSeconds == -1) {
-        Firestore.logError(`${errorMsg} deferTradingInSeconds`);
-        return false;
-    }
-    if (analysis.stopTradingAfterSeconds == -1) {
-        Firestore.logError(`${errorMsg} stopTradingAfterSeconds`);
-        return false;
-    }
-
     return true;
 }
 

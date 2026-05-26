@@ -8,15 +8,6 @@ export interface TradingSettings {
 
 export interface Analysis {
     gap: Gap,
-    /**
-     * 0: no defer, 1: defer 1 second after open, -1: invalid value.
-     */
-    deferTradingInSeconds: number,
-    /**
-     * 0: no stop, 1: stop 1 second after open, -1: invalid value.
-     */
-    stopTradingAfterSeconds: number,
-
     singleMomentumKeyLevel: LevelArea[],
     /**
      * 1: use premarket high, -1: use premarket low, 0: not use premarket levels
@@ -146,14 +137,6 @@ export interface BasePlan {
 export interface PlanConfigs {
     size: number,
     sizingCount?: number,
-    /**
-     * 0: no defer, 1: defer 1 second after open, -1: invalid value.
-     */
-    deferTradingInSeconds: number,
-    /**
-     * 0: no stop, 1: stop 1 second after open, -1: invalid value.
-     */
-    stopTradingAfterSeconds: number,
     requireReversal: boolean,
     alwaysAllowFlatten: boolean,
     alwaysAllowMoveStop: boolean,

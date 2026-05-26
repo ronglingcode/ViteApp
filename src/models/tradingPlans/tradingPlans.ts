@@ -322,25 +322,6 @@ export const generateTosScripts = () => {
     scriptForAtr += '1;';
     console.log(`${scriptForAtr}\n${scriptForSingleLevelHigh}\n${scriptForSingleLevelLow}`);
 }
-export const getTradingTiming = (symbol: string, basePlan: TradingPlansModels.BasePlan) => {
-    let tradingPlans = getTradingPlans(symbol);
-    let analysis = tradingPlans.analysis;
-    let deferTradingInSeconds = analysis.deferTradingInSeconds;
-    let stopTradingAfterSeconds = analysis.stopTradingAfterSeconds;
-    let planConfigs = basePlan.planConfigs;
-    let overrideDeferTradingInSeconds = planConfigs.deferTradingInSeconds;
-    let overrideStopTradingAfterSeconds = planConfigs.stopTradingAfterSeconds;
-    if (overrideDeferTradingInSeconds > 0) {
-        deferTradingInSeconds = overrideDeferTradingInSeconds;
-    }
-    if (overrideStopTradingAfterSeconds > 0) {
-        stopTradingAfterSeconds = overrideStopTradingAfterSeconds;
-    }
-    return {
-        deferTradingInSeconds,
-        stopTradingAfterSeconds,
-    }
-}
 export const getMinTarget = (symbol: string, isLong: boolean, partialIndex: number) => {
     let targets = calculateTargets(symbol, isLong);
     let minTargets = populateTargets(targets, isLong);

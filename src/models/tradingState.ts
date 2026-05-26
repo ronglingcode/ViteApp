@@ -56,8 +56,6 @@ const getDefaultBreakoutTradeState = (isLong: boolean) => {
             },
             planConfigs: {
                 size: 0,
-                deferTradingInSeconds: 0,
-                stopTradingAfterSeconds: 0,
                 requireReversal: true,
                 alwaysAllowFlatten: false,
                 alwaysAllowMoveStop: false,

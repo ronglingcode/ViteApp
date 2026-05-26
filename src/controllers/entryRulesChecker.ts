@@ -48,15 +48,6 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
     if (Models.hasEntryOrdersInSameDirection(symbol, isLong)) {
         Firestore.logInfo(`had entries in the same direction, old entries will be cancelled`, logTags);
     }
-    let tradingTiming = TradingPlans.getTradingTiming(symbol, basePlan);
-    let stopTradingAfterSeconds = tradingTiming.stopTradingAfterSeconds;
-    if (Rules.isBlockedByAfterTrading(stopTradingAfterSeconds, secondsSinceMarketOpen)) {
-        Firestore.logError(
-            `stop after ${stopTradingAfterSeconds},  currently ${secondsSinceMarketOpen}`,
-            logTags,
-        );
-        return 0;
-    }
     let openPrice = Models.getOpenPrice(symbol);
     let isEntryPriceInTradableArea = Models.isPriceInTradableArea(symbol, isLong, entryPrice);
     let isOpenInTradableArea = Models.isPriceInTradableArea(symbol, isLong, openPrice);
@@ -243,4 +234,3 @@ export const conditionallyHasReversalBarSinceOpen = (symbol: string,
     }
     return hasReversal;
 }
-
