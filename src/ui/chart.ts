@@ -120,11 +120,6 @@ export const createChartWidget = (tabIndex: number, watchlistItem: Models.Watchl
     };
     let timeframeChartM1 = createTimeFrameChart(
         1, htmlContents.chartM1, tabIndex, totalCount, keyAreasToDraw, chartState);
-    let timeframeChartM5 = createTimeFrameChart(
-        5, htmlContents.chartM5, tabIndex, totalCount, keyAreasToDraw, chartState);
-    let timeframeChartM15 = createTimeFrameChart(
-        15, htmlContents.chartM15, tabIndex, totalCount, keyAreasToDraw, chartState);
-
     let myWidget: Models.ChartWidget = {
         symbol: symbol,
         chartState: chartState,
@@ -133,11 +128,7 @@ export const createChartWidget = (tabIndex: number, watchlistItem: Models.Watchl
         stock: watchlistItem,
         htmlContents: htmlContents,
         chartM1: timeframeChartM1.chart,
-        chartM5: timeframeChartM5.chart,
-        chartM15: timeframeChartM15.chart,
         timeframeChartM1: timeframeChartM1,
-        timeframeChartM5: timeframeChartM5,
-        timeframeChartM15: timeframeChartM15,
         candleSeries: timeframeChartM1.candleSeries,
         openPriceSeries: timeframeChartM1.chart.addLineSeries(ChartSettings.openPriceSettings),
         entryOrders: [],
@@ -241,8 +232,6 @@ const updateHoveredCandle = (data: any, widget: Models.ChartWidget) => {
 const getHtmlContentsAndTradebooks = (symbol: string, tabIndex: number) => {
     let container = document.getElementById("chartContainer" + tabIndex) as HTMLElement;
     let chart = document.getElementById("chart" + tabIndex) as HTMLElement;
-    let chartM5 = document.getElementById("chart" + tabIndex + "M5") as HTMLElement;
-    let chartM15 = document.getElementById("chart" + tabIndex + "M15") as HTMLElement;
     let popupWindow = document.getElementById("chart" + tabIndex + "popup") as HTMLElement;
     let quizButton = popupWindow.getElementsByTagName("button")[0] as HTMLElement;
     quizButton.addEventListener("click", () => {
@@ -265,14 +254,12 @@ const getHtmlContentsAndTradebooks = (symbol: string, tabIndex: number) => {
     let currentCandleContainer = container.getElementsByClassName("currentCandle")[0] as HTMLElement;
     let quantityBarContainer = container.getElementsByClassName("quantityBar")[0] as HTMLElement;
     let exitButtonsContainer = container.getElementsByClassName("exitButtons")[0] as HTMLElement;
-    let timeframeButtonsContainer = container.getElementsByClassName("timeframebuttons")[0] as HTMLElement;
+    let timeframeButtonsContainer = (container.getElementsByClassName("timeframebuttons")[0] as HTMLElement | undefined) ?? document.createElement('span');
     let tradingPlans = container.getElementsByClassName("tradingPlans")[0] as HTMLElement;
     let sideBar = container.getElementsByClassName("sideBar")[0] as HTMLElement;
     let tradebookButtons = sideBar.getElementsByClassName("tradebookButtons")[0] as HTMLElement;
     let htmlContents: Models.ChartWidgetHtmlContents = {
         chartM1: chart,
-        chartM5: chartM5,
-        chartM15: chartM15,
         symbol: document.getElementById("symbol" + tabIndex) as HTMLElement,
         container: container,
         positionCount: container.getElementsByClassName("positionCount")[0],
@@ -305,7 +292,6 @@ const getHtmlContentsAndTradebooks = (symbol: string, tabIndex: number) => {
 
     let tradebooksMap = setupTradingPlans(symbol, htmlContents.tradingPlans, htmlContents.tradebookButtons);
     setupExitButtons(symbol, htmlContents.exitButtonsContainer);
-    setupTimeframeButtons(htmlContents.timeframeButtonsContainer, symbol);
     setupAddCountButtons(htmlContents.container, symbol);
     let refreshButton = htmlContents.container.getElementsByClassName("refresh")[0] as HTMLElement;
     refreshButton.addEventListener("click", (pointerEvent) => {
@@ -337,45 +323,20 @@ const setupAddCountButtons = (container: HTMLElement, symbol: string) => {
         });
     }
 }
-const setupTimeframeButtons = (container: HTMLElement, symbol: string) => {
-    let children = container.getElementsByTagName("span");
-    let timeframes = [1, 5, 15];
-    if (children.length > 0) {
-        for (let i = 0; i < children.length; i++) {
-            let timeframeButton = children[i];
-            timeframeButton.addEventListener("click", (pointerEvent) => {
-                showChartForTimeframe(symbol, timeframes[i]);
-            });
-        }
-    }
-}
-export const showChartForTimeframe = (symbol: string, timeframe: number) => {
+export const showChartForTimeframe = (symbol: string, _timeframe: number) => {
     let widget = Models.getChartWidget(symbol);
     if (!widget)
         return;
-    if (timeframe == 15) {
-        let seconds = Helper.getSecondsSinceMarketOpen(new Date());
-        if (seconds < GlobalSettings.m15ChartEnabledAfterSeconds) {
-            timeframe = 5;
-        }
-    }
     let buttons = widget.htmlContents.timeframeButtonsContainer.getElementsByTagName("span");
     let charts = Models.getChartsHtmlInAllTimeframes(symbol);
     for (let j = 0; j < charts.length; j++) {
         charts[j].style.display = 'none';
-        buttons[j].style.backgroundColor = '';
+        if (buttons[j]) {
+            buttons[j].style.backgroundColor = '';
+        }
     }
-    if (timeframe == 1) {
-        charts[0].style.display = 'block';
-        buttons[0].style.backgroundColor = 'lightblue';
-    } else if (timeframe == 5) {
-        charts[1].style.display = 'block';
-        buttons[1].style.backgroundColor = 'lightblue';
-    } else if (timeframe == 15) {
-        charts[2].style.display = 'block';
-        buttons[2].style.backgroundColor = 'lightblue';
-    } else {
-        charts[0].style.display = 'block';
+    widget.htmlContents.chartM1.style.display = 'block';
+    if (buttons[0]) {
         buttons[0].style.backgroundColor = 'lightblue';
     }
 }

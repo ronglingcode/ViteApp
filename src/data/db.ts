@@ -10,7 +10,6 @@ import * as AutoTrader from '../algorithms/autoTrader';
 import * as OrderFlowManager from '../controllers/orderFlowManager';
 import * as ChartSettings from '../ui/chartSettings';
 import * as Broker from '../api/broker';
-import * as GlobalSettings from '../config/globalSettings';
 import * as UI from '../ui/ui';
 import * as BasicIndicators from '../indicators/basicIndicators';
 import * as ChartSeries from '../utils/chartSeries';
@@ -26,7 +25,6 @@ const throttledCancelAllEntryOrders = Helper.executeOncePerInterval(
 export const levelOneQuoteSourceAlpaca: string = 'alpaca';
 export const levelOneQuoteSourceSchwab: string = 'schwab';
 export const levelOneQuoteSource: string = levelOneQuoteSourceAlpaca;
-const m15ChartSyncedAfterGate = new Set<string>();
 const staleTimeSaleLogIntervalMs = 30_000;
 const staleTimeSaleLastLogByKey = new Map<string, number>();
 
@@ -54,62 +52,6 @@ const shouldIgnoreStaleTimeSale = (
     return true;
 };
 
-const buildDataMultipleTimeFrame = (symbol: string, inputCandlesM1: Models.Candle[]) => {
-    let symbolData = Models.getSymbolData(symbol);
-    let prevDatetime = 0;
-    let vwapCorrection = TradingPlans.getVwapCorrection(symbol);
-    let vwapCorrectionVolumeSum = vwapCorrection.volumeSum;
-    let vwapCorrectionTradingAmount = vwapCorrection.tradingSum;
-    let vwapCorrected = false;
-    for (let i = 0; i < inputCandlesM1.length; i++) {
-        let element = inputCandlesM1[i];
-        // avoid duplicates
-        if (prevDatetime === element.datetime) {
-            continue;
-        } else {
-            prevDatetime = element.datetime;
-        }
-        let d = new Date(element.datetime);
-        if (d < Config.Settings.dtStartTime)
-            continue;
-
-        let newD = Helper.jsDateToUTC(d);
-        let newCandle = Models.buildCandlePlus(symbol, element, newD, Helper.getMinutesSinceMarketOpen(d));
-        //symbolData.m1Candles.push(newCandle);
-        let newVolume = {
-            time: newD,
-            value: element.volume,
-            jsDate: Helper.tvTimestampToLocalJsDate(newD),
-        };
-        //symbolData.m1Volumes.push(newVolume);
-
-        let newTradingAmount = element.volume * Models.getTypicalPrice(element);
-
-        /*if (newCandle.minutesSinceMarketOpen < 0) {
-            if (!vwapCorrected && vwapCorrectionTradingAmount > 0 && vwapCorrectionVolumeSum > 0) {
-                if (newCandle.minutesSinceMarketOpen >= -30) {
-                    symbolData.totalTradingAmount = vwapCorrectionTradingAmount;
-                    symbolData.premarketDollarTraded = symbolData.totalTradingAmount;
-                    symbolData.totalVolume = vwapCorrectionVolumeSum;
-                    vwapCorrected = true;
-                }
-            }
-            symbolData.premarketDollarTraded += newTradingAmount;
-            if (newCandle.minutesSinceMarketOpen > -30) {
-                updateVwapCount(symbolData, newCandle.close);
-            }
-        }*/
-    }
-    symbolData.m5Candles = Models.aggregateCandles(symbolData.m1Candles, 5);
-    symbolData.m15Candles = Models.aggregateCandles(symbolData.m1Candles, 15);
-    symbolData.m30Candles = Models.aggregateCandles(symbolData.m1Candles, 30);
-    symbolData.m5Volumes = Models.aggregateVolumes(symbolData.m1Volumes, 5);
-    symbolData.m15Volumes = Models.aggregateVolumes(symbolData.m1Volumes, 15);
-    symbolData.m30Volumes = Models.aggregateVolumes(symbolData.m1Volumes, 30);
-    symbolData.m5Vwaps = Models.aggregateVwaps(symbolData.m1Vwaps, 5);
-    symbolData.m15Vwaps = Models.aggregateVwaps(symbolData.m1Vwaps, 15);
-    symbolData.m30Vwaps = Models.aggregateVwaps(symbolData.m1Vwaps, 30);
-}
 export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyCandles: Models.Candle[]) => {
     let usedTimeframe = Models.getUsedTimeframe();
     let widget = Models.getChartWidget(symbol);
@@ -119,7 +61,6 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyC
         return;
     }
     let symbolData = Models.getSymbolData(symbol);
-    m15ChartSyncedAfterGate.delete(symbol);
     let keyAreasToDraw = TradingPlans.getKeyAreasToDraw(symbol);
     for (let i = 0; i < keyAreasToDraw.length; i++) {
         symbolData.keyAreaData.push({
@@ -215,7 +156,6 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyC
             //AutoTrader.onMinuteClosed(symbol, newCandle, false, symbolData);
         }
     }
-    buildDataMultipleTimeFrame(symbol, data);
     for (let i = 1; i < symbolData.volumes.length; i++) {
         setColorForVolume(symbolData.candles, symbolData.volumes, i);
     }
@@ -227,13 +167,6 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyC
     for (let i = 0; i < keyAreasToDraw.length; i++) {
         allCharts[0].keyAreaSeriesList[i].setData(symbolData.keyAreaData[i].candles);
     }
-
-    allCharts[1].volumeSeries.setData(symbolData.m5Volumes);
-    allCharts[1].candleSeries.setData(symbolData.m5Candles);
-    allCharts[1].vwapSeries.setData(symbolData.m5Vwaps);
-    allCharts[2].volumeSeries.setData(symbolData.m15Volumes);
-    allCharts[2].candleSeries.setData(symbolData.m15Candles);
-    allCharts[2].vwapSeries.setData(symbolData.m15Vwaps);
 
     for (let lookBackStart = 0; lookBackStart < symbolData.m1Candles.length - 1; lookBackStart++) {
         let ma5 = Models.getMovingAverageCandle(symbol, 5, lookBackStart, symbolData.m1Candles);
@@ -276,120 +209,6 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyC
     BasicIndicators.updateIndicators(symbol, symbolData, dailyCandles);
     Chart.onPriceHistoryLoaded(symbol);
     Chart.drawLevelsAfterChartInitialize(widget);
-};
-export const updateFromTimeSaleForHigherTimeFrame = (
-    symbol: string, widget: Models.ChartWidget, timesale: Models.TimeSale, timeframe: number, newVwapValue: number) => {
-    let timeframeBucket = Helper.numberToDate(timesale.tradeTime);
-    timeframeBucket.setSeconds(0, 0);
-    timeframeBucket = TimeHelper.roundToTimeFrameBucketTime(timeframeBucket, timeframe);
-    let newTime = Helper.jsDateToUTC(timeframeBucket);
-    let symbolData = Models.getSymbolData(symbol);
-    let lastPrice = timesale.lastPrice ?? 0;
-    let lastSize = timesale.lastSize ?? 0;
-
-    let higherTimeFrameCandles = Models.getHigherTimeFrameCandles(symbol, timeframe);
-    let lastCandle = higherTimeFrameCandles[higherTimeFrameCandles.length - 1];
-
-    let higherTimeFrameVolumes = Models.getHigherTimeFrameVolumes(symbol, timeframe);
-    let lastVolume = higherTimeFrameVolumes[higherTimeFrameVolumes.length - 1];
-
-    let higherTimeFrameVwaps = Models.getHigherTimeFrameVwaps(symbol, timeframe);
-    let lastVwap = higherTimeFrameVwaps[higherTimeFrameVwaps.length - 1];
-
-    if (!lastCandle || !lastVolume || !lastVwap) {
-        return;
-    }
-
-    if (shouldIgnoreStaleTimeSale(symbol, timeframe, newTime, lastCandle.time, timesale.tradeTime)) {
-        return;
-    }
-
-    if (timeframeBucket < Config.Settings.marketOpenTime) {
-        // update pre-market indicators
-        // no need to update
-    } else {
-        // update in-market indicators
-        // nothing to update
-    }
-
-    let isNewCandleData = true;
-
-    if (newTime == lastCandle.time) {
-        isNewCandleData = false;
-        // update current candle
-        lastVolume.value += lastSize;
-        if (timesale.tradeTime && timesale.tradeTime < lastCandle.firstTradeTime) {
-            lastCandle.open = lastPrice;
-            lastCandle.firstTradeTime = timesale.tradeTime;
-            Firestore.logInfo("received out of order timesale " + symbol + ": " + timesale.tradeTime);
-        }
-        if (lastPrice > lastCandle.high) {
-            lastCandle.high = lastPrice;
-        } else if (lastPrice < lastCandle.low) {
-            lastCandle.low = lastPrice;
-        }
-        lastCandle.close = lastPrice;
-        lastCandle.volume += lastSize;
-        lastVwap.value = Models.getCurrentVwap(symbol);
-
-    } else {
-        // moved to a new candle
-        // handle newly closed candle
-        let newlyClosedCandle = lastCandle;
-
-
-        // create a new candle
-        let newDate = Helper.tvTimestampToLocalJsDate(newTime);
-        let newCandleIsMarketOpenCandle = Helper.isMarketOpenTime(newDate, Config.Settings.currentDay);
-
-        lastCandle = {
-            symbol: timesale.symbol,
-            time: newTime,
-            open: lastPrice,
-            high: lastPrice,
-            low: lastPrice,
-            close: lastPrice,
-            minutesSinceMarketOpen: Helper.getMinutesSinceMarketOpen(newDate),
-            firstTradeTime: timesale.tradeTime ?? 0,
-            datetime: timesale.tradeTime ?? 0,
-            volume: lastSize,
-            vwap: 0,
-        };
-        let newCandleIsAfterMaketOpen = lastCandle.minutesSinceMarketOpen >= 0;
-        higherTimeFrameCandles.push(lastCandle);
-        lastVolume = {
-            time: newTime,
-            value: lastSize
-        };
-        higherTimeFrameVolumes.push(lastVolume);
-        lastVwap = {
-            time: newTime,
-            value: Models.getCurrentVwap(symbol)
-        };
-        higherTimeFrameVwaps.push(lastVwap);
-    }
-    //setColorForVolume(symbolData.candles, symbolData.volumes, symbolData.volumes.length - 1);
-    let allCharts = Models.getChartsInAllTimeframes(symbol);
-    if (timeframe == 5) {
-        ChartSeries.safeUpdateSeries(allCharts[1].volumeSeries, lastVolume, `${symbol} 5m volume`);
-        ChartSeries.safeUpdateSeries(allCharts[1].candleSeries, lastCandle, `${symbol} 5m candle`);
-        ChartSeries.safeUpdateSeries(allCharts[1].vwapSeries, lastVwap, `${symbol} 5m vwap`);
-    } else if (timeframe == 15) {
-        let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(Helper.numberToDate(timesale.tradeTime));
-        if (secondsSinceMarketOpen < GlobalSettings.m15ChartEnabledAfterSeconds) {
-            return;
-        }
-        if (!m15ChartSyncedAfterGate.has(symbol)) {
-            allCharts[2].volumeSeries.setData(symbolData.m15Volumes);
-            allCharts[2].candleSeries.setData(symbolData.m15Candles);
-            allCharts[2].vwapSeries.setData(symbolData.m15Vwaps);
-            m15ChartSyncedAfterGate.add(symbol);
-            return;
-        }
-        ChartSeries.safeUpdateSeries(allCharts[2].volumeSeries, lastVolume, `${symbol} 15m volume`);
-        ChartSeries.safeUpdateSeries(allCharts[2].candleSeries, lastCandle, `${symbol} 15m candle`);
-        ChartSeries.safeUpdateSeries(allCharts[2].vwapSeries, lastVwap, `${symbol} 15m vwap`);
-    }
 }
 export const updateFromTimeSale = (timesale: Models.TimeSale) => {
     let symbol = timesale.symbol;
@@ -584,8 +403,6 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
     updateChartColor(symbol, widget);
     //console.log(timesale);
     AutoTrader.onNewTimeAndSalesData(symbol, lastPrice, isNewCandleData);
-    updateFromTimeSaleForHigherTimeFrame(symbol, widget, timesale, 5, newVwapValue);
-    updateFromTimeSaleForHigherTimeFrame(symbol, widget, timesale, 15, newVwapValue);
 };
 
 const setColorForVolume = (candles: Models.CandlePlus[], volumes: Models.LineSeriesData[], currentIndex: number) => {

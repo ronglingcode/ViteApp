@@ -182,8 +182,8 @@ Your role:
 Be concise and actionable. 
 
 IMPORTANT: You must respond with a valid JSON object containing exactly two fields:
-- "full answer": Just 1-2 sentences per bullet point. Start each point with a few key phrases. Keep this field less than 200 characters.
-- "short answer": A very brief summary (4-5 words
+- "short_answer": A very brief summary, 4-5 words.
+- "full_answer": Just 1-2 sentences per bullet point. Start each point with a few key phrases. Keep this field less than 200 characters.
 
 Example format:
 {
@@ -227,7 +227,7 @@ Please provide brief trade and market analysis and actionable trade management s
             await Chatgpt.streamChat(messages, (chunk) => {
                 //appendToDiv(div, chunk);
                 fullResponse += chunk;
-                // Find substring after '"full answer": "' for fullResponse
+                // Find partial JSON fields while streaming.
                 const fullAnswerMatch = fullResponse.match(/"full_answer":\s*"([^"]*)/);
                 const fullAnswer = fullAnswerMatch ? fullAnswerMatch[1] : "";
                 const shortAnswerMatch = fullResponse.match(/"short_answer":\s*"([^"]*)/);
@@ -333,9 +333,9 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
     let symbolData = Models.getSymbolData(symbol);
     let closedCandles = Models.getM1ClosedCandlesSinceOpen(symbol);
     let currentCandle = Models.getCurrentCandle(symbol);
-    let candles = Models.getCandlesFromM1SinceOpen(symbol);
-    let m5Candles = Models.getCandlesFromM5SinceOpen(symbol);
-    let m15Candles = Models.getCandlesFromM15SinceOpen(symbol);
+    if (!currentCandle) {
+        return `- Market data is not loaded yet for ${symbol}.`;
+    }
     let currentCandleText = candleToText(currentCandle, Models.getCurrentVwap(symbol));
     let vwaps = Models.getVwapsSinceOpen(symbol);
     let candlesText = "";
@@ -352,27 +352,12 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
         candlesText += candleToText(candle, vwap.value);
     }
     let currentPrice = Models.getCurrentPrice(symbol);
-    let m5CandlesText = "";
-    let m15CandlesText = "";
-    if (minutes >= 5) {
-        m5Candles = symbolData.m5Candles;
-        for (let i = 0; i < m5Candles.length - 1; i++) {
-            let candle = m5Candles[i];
-            m5CandlesText += candleToText(candle, Models.getCurrentVwap(symbol));
-        }
-        if (minutes >= 15) {
-            m15Candles = symbolData.m15Candles;
-            for (let i = 0; i < m15Candles.length - 1; i++) {
-                let candle = m15Candles[i];
-                m15CandlesText += candleToText(candle, Models.getCurrentVwap(symbol));
-            }
-        }
-    }
+    let firstCandleSinceOpen = closedCandles[0] ?? currentCandle;
     let finalText = `
 - Inflection level: ${inflection}.
 - ATR: ${plan.atr.average}.
 - Open Price: ${openPrice}.
-- Market open time: ${TimeHelper.formatDateToHHMMSS(new Date(closedCandles[0].datetime))}.
+- First available candle time since open: ${TimeHelper.formatDateToHHMMSS(new Date(firstCandleSinceOpen.datetime))}.
 - Current time: ${TimeHelper.formatDateToHHMMSS(new Date())}, ${minutes} minutes since market open.
 - vwap at open: ${openVwap}.
 - Premarket high: ${symbolData.premktHigh}, premarket low: ${symbolData.premktLow}.
@@ -383,14 +368,6 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
 - Has the price tested the inflection level: ${hasTestedKeyLevel}.
 - Has the price tested the vwap since open: ${hasTestedVwap}.
 `;
-    if (m5CandlesText) {
-        finalText += `- 5-minute closed candles since open: [${m5CandlesText}].`;
-    }
-    if (m15CandlesText) {
-        finalText += `- 15-minute closed candles since open: [${m15CandlesText}].`;
-    }
-    console.log("m5CandlesText: ");
-    console.log(m15CandlesText);
     return finalText;
 }
 

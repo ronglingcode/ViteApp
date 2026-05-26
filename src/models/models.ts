@@ -224,11 +224,7 @@ export interface ChartWidget {
     stock: WatchlistItem,
     htmlContents: ChartWidgetHtmlContents,
     timeframeChartM1: TimeFrameChart,
-    timeframeChartM5: TimeFrameChart,
-    timeframeChartM15: TimeFrameChart,
     chartM1: LightweightCharts.IChartApi,
-    chartM5: LightweightCharts.IChartApi,
-    chartM15: LightweightCharts.IChartApi,
     candleSeries: LightweightCharts.ISeriesApi<"Candlestick">,
     entryPriceLine?: LightweightCharts.IPriceLine,
     stopLossPriceLine?: LightweightCharts.IPriceLine,
@@ -270,8 +266,6 @@ export interface SymbolFundamental {
 export interface ChartWidgetHtmlContents {
     container: HTMLElement, // chartContainer
     chartM1: HTMLElement, // document.getElementById("chart" + tabIndex),
-    chartM5: HTMLElement, // document.getElementById("chartM5" + tabIndex),
-    chartM15: HTMLElement, // document.getElementById("chartM15" + tabIndex),
     symbol: HTMLElement, // document.getElementById("symbol" + tabIndex),
     positionCount: Element,
     popupWindow: HTMLElement, // document.getElementById("chart0popup"),
@@ -317,16 +311,7 @@ export interface LevelOneQuote {
 }
 export interface SymbolData {
     m1Candles: CandlePlus[],
-    m5Candles: CandlePlus[],
-    m15Candles: CandlePlus[],
-    m30Candles: CandlePlus[],
     m1Volumes: LineSeriesData[],
-    m5Volumes: LineSeriesData[],
-    m15Volumes: LineSeriesData[],
-    m30Volumes: LineSeriesData[],
-    m5Vwaps: LineSeriesData[],
-    m15Vwaps: LineSeriesData[],
-    m30Vwaps: LineSeriesData[],
     m1ma5: LineSeriesData[],
     m1ma9: LineSeriesData[],
     candles: CandlePlus[],
@@ -1016,16 +1001,7 @@ export const getDefaultSymbolData = () => {
     let result: SymbolData = {
         candles: m1Candles,
         m1Candles: m1Candles,
-        m5Candles: [],
-        m15Candles: [],
-        m30Candles: [],
         m1Volumes: m1Volumes,
-        m5Volumes: [],
-        m15Volumes: [],
-        m30Volumes: [],
-        m5Vwaps: [],
-        m15Vwaps: [],
-        m30Vwaps: [],
         m1ma5: [],
         m1ma9: [],
         keyAreaData: [],
@@ -1164,16 +1140,7 @@ export const getCandlesFromM5SinceOpen = (symbol: string) => {
     return getCandlesFromM5SinceTime(symbol, tvTime);
 }
 export const getCandlesFromM5SinceTime = (symbol: string, time: LightweightCharts.UTCTimestamp) => {
-    let symbolData = getSymbolData(symbol);
-    let allCandles = symbolData.m5Candles;
-    let results: CandlePlus[] = [];
-    for (let i = 0; i < allCandles.length; i++) {
-        const candle = allCandles[i];
-        if (candle.time >= time) {
-            results.push(candle);
-        }
-    }
-    return results;
+    return getCandlesFromHigherTimeframeSinceTime(symbol, 5, time);
 }
 export const getCandlesFromM15SinceOpen = (symbol: string) => {
     let time = Helper.getMarketOpenTime();
@@ -1181,16 +1148,7 @@ export const getCandlesFromM15SinceOpen = (symbol: string) => {
     return getCandlesFromM15SinceTime(symbol, tvTime);
 }
 export const getCandlesFromM15SinceTime = (symbol: string, time: LightweightCharts.UTCTimestamp) => {
-    let symbolData = getSymbolData(symbol);
-    let allCandles = symbolData.m15Candles;
-    let results: CandlePlus[] = [];
-    for (let i = 0; i < allCandles.length; i++) {
-        const candle = allCandles[i];
-        if (candle.time >= time) {
-            results.push(candle);
-        }
-    }
-    return results;
+    return getCandlesFromHigherTimeframeSinceTime(symbol, 15, time);
 }
 export const getCandlesFromM30SinceOpen = (symbol: string) => {
     let time = Helper.getMarketOpenTime();
@@ -1199,8 +1157,10 @@ export const getCandlesFromM30SinceOpen = (symbol: string) => {
 }
 
 export const getCandlesFromM30SinceTime = (symbol: string, time: LightweightCharts.UTCTimestamp) => {
-    let symbolData = getSymbolData(symbol);
-    let allCandles = symbolData.m30Candles;
+    return getCandlesFromHigherTimeframeSinceTime(symbol, 30, time);
+}
+const getCandlesFromHigherTimeframeSinceTime = (symbol: string, timeframe: number, time: LightweightCharts.UTCTimestamp) => {
+    let allCandles = getHigherTimeFrameCandles(symbol, timeframe);
     let results: CandlePlus[] = [];
     for (let i = 0; i < allCandles.length; i++) {
         const candle = allCandles[i];
@@ -1368,40 +1328,25 @@ export const getM1ClosedCandlesSinceOpen = (symbol: string) => {
 }
 export const getHigherTimeFrameCandles = (symbol: string, timeframe: number) => {
     let symbolData = getSymbolData(symbol);
-    if (timeframe == 5) {
-        return symbolData.m5Candles;
-    } else if (timeframe == 15) {
-        return symbolData.m15Candles;
-    } else if (timeframe == 30) {
-        return symbolData.m30Candles;
-    } else {
-        return [];
+    if (timeframe == 1) {
+        return symbolData.m1Candles;
     }
+    return aggregateCandles(symbolData.m1Candles, timeframe);
 }
 export const getHigherTimeFrameVolumes = (symbol: string, timeframe: number) => {
     let symbolData = getSymbolData(symbol);
-    if (timeframe == 5) {
-        return symbolData.m5Volumes;
-    } else if (timeframe == 15) {
-        return symbolData.m15Volumes;
-    } else if (timeframe == 30) {
-        return symbolData.m30Volumes;
-    } else {
-        return [];
+    if (timeframe == 1) {
+        return symbolData.m1Volumes;
     }
+    return aggregateVolumes(symbolData.m1Volumes, timeframe);
 }
 
 export const getHigherTimeFrameVwaps = (symbol: string, timeframe: number) => {
     let symbolData = getSymbolData(symbol);
-    if (timeframe == 5) {
-        return symbolData.m5Vwaps;
-    } else if (timeframe == 15) {
-        return symbolData.m15Vwaps;
-    } else if (timeframe == 30) {
-        return symbolData.m30Vwaps;
-    } else {
-        return [];
+    if (timeframe == 1) {
+        return symbolData.m1Vwaps;
     }
+    return aggregateVwaps(symbolData.m1Vwaps, timeframe);
 }
 
 export const getCandlesLog = (candles: Candle[]) => {
@@ -1553,15 +1498,10 @@ export const getVwapsSinceOpen = (symbol: string) => {
 }
 export const getVwapsForHigherTimeframe = (symbol: string, timeframe: number) => {
     let symbolData = getSymbolData(symbol);
-    if (timeframe == 5) {
-        return symbolData.m5Vwaps;
-    } else if (timeframe == 15) {
-        return symbolData.m15Vwaps;
-    } else if (timeframe == 30) {
-        return symbolData.m30Vwaps;
-    } else {
+    if (timeframe == 1) {
         return symbolData.m1Vwaps;
     }
+    return aggregateVwaps(symbolData.m1Vwaps, timeframe);
 }
 export const getVwapsSinceOpenForTimeframe = (symbol: string, timeframe: number) => {
     let time = Helper.getMarketOpenTime();
@@ -1658,13 +1598,13 @@ export const getChartsInAllTimeframes = (symbol: string) => {
     let widget = getChartWidget(symbol);
     if (!widget)
         return [];
-    return [widget.timeframeChartM1, widget.timeframeChartM5, widget.timeframeChartM15];
+    return [widget.timeframeChartM1];
 };
 export const getChartsHtmlInAllTimeframes = (symbol: string) => {
     let widget = getChartWidget(symbol);
     if (!widget)
         return [];
-    return [widget.htmlContents.chartM1, widget.htmlContents.chartM5, widget.htmlContents.chartM15];
+    return [widget.htmlContents.chartM1];
 }
 export const getExitOrdersPairs = (symbol: string) => {
     let widget = getChartWidget(symbol);
