@@ -25,8 +25,27 @@ const throttledCancelAllEntryOrders = Helper.executeOncePerInterval(
 export const levelOneQuoteSourceAlpaca: string = 'alpaca';
 export const levelOneQuoteSourceSchwab: string = 'schwab';
 export const levelOneQuoteSource: string = levelOneQuoteSourceAlpaca;
-const staleTimeSaleLogIntervalMs = 30_000;
-const staleTimeSaleLastLogByKey = new Map<string, number>();
+
+const getTimeSaleSourceName = (source: string) => {
+    if (source == 'a') {
+        return 'alpaca';
+    }
+    if (source == 'm') {
+        return 'massive';
+    }
+    return source;
+};
+
+const logLateTimeSaleIfNeeded = (record: Models.TimeSale, source: string, latestTimestamp: number) => {
+    if (record.timestamp <= 0 || record.timestamp >= latestTimestamp) {
+        return;
+    }
+
+    let lateByMs = latestTimestamp - record.timestamp;
+    console.warn(
+        `[T&S late] ${getTimeSaleSourceName(source)} ${record.symbol} ${lateByMs}ms`
+    );
+};
 
 const shouldIgnoreStaleTimeSale = (
     symbol: string,
@@ -39,16 +58,9 @@ const shouldIgnoreStaleTimeSale = (
         return false;
     }
 
-    let key = `${symbol}:${timeframe}`;
-    let now = Date.now();
-    let lastLogTime = staleTimeSaleLastLogByKey.get(key) ?? 0;
-    if (now - lastLogTime >= staleTimeSaleLogIntervalMs) {
-        staleTimeSaleLastLogByKey.set(key, now);
-        console.error(
-            `[DB] Ignoring stale ${timeframe}m timesale for ${symbol}: ` +
-            `last chart time=${lastTime}, new time=${newTime}, tradeTime=${tradeTime ?? 'n/a'}`
-        );
-    }
+    console.error(
+        `[T&S stale] ${symbol} ${timeframe}m ${newTime}<${lastTime} trade=${tradeTime ?? 'n/a'}`
+    );
     return true;
 };
 
@@ -607,5 +619,6 @@ export const tryUpdateMaxTimeSaleTimestamp = (record: Models.TimeSale, source: s
         UI.addToNetwork(source);
         return true;
     }
+    logLateTimeSaleIfNeeded(record, source, symbolData.maxTimeSaleTimestamp.timestamp);
     return false;
 }
