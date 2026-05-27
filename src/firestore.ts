@@ -216,7 +216,7 @@ export const fetchConfigData = async () => {
         let d = new Date(item.timestamp.seconds * 1000);
         let seconds = Helper.getSecondsSinceMarketOpen(d);
         if (seconds > 0 && seconds < 5 * 60) {
-            //results.push(item);
+            results.push(item);
             logError(`cannot use trading plan updated within first 5 minutes`);
         } else {
             results.push(item);
