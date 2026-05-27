@@ -36,15 +36,123 @@ const getTimeSaleSourceName = (source: string) => {
     return source;
 };
 
+const maxTimeSaleDiagnosticSamples = 20;
+const timeSaleDiagnostics = {
+    received: 0,
+    accepted: 0,
+    late: 0,
+    stale: 0,
+    rendered: 0,
+    samples: [] as string[],
+};
+(globalThis as any).timeSaleDiagnostics = timeSaleDiagnostics;
+let lastTimeSaleDiagnosticsViewAt = 0;
+
+const addTimeSaleDiagnosticSample = (sample: string) => {
+    timeSaleDiagnostics.samples.push(sample);
+    if (timeSaleDiagnostics.samples.length > maxTimeSaleDiagnosticSamples) {
+        timeSaleDiagnostics.samples.shift();
+    }
+};
+
+const getJsHeapText = () => {
+    let memory = (performance as any).memory;
+    if (!memory) {
+        return '';
+    }
+    return ` heap=${Math.round(memory.usedJSHeapSize / 1024 / 1024)}M`;
+};
+
+const updateTimeSaleDiagnosticsView = () => {
+    let now = Date.now();
+    if (now - lastTimeSaleDiagnosticsViewAt < 1000) {
+        return;
+    }
+    lastTimeSaleDiagnosticsViewAt = now;
+
+    let network = document.getElementById("network");
+    if (!network) {
+        return;
+    }
+    network.textContent = `T&S recv=${timeSaleDiagnostics.received} ok=${timeSaleDiagnostics.accepted} ` +
+        `late=${timeSaleDiagnostics.late} stale=${timeSaleDiagnostics.stale} ` +
+        `render=${timeSaleDiagnostics.rendered}${getJsHeapText()}`;
+};
+
 const logLateTimeSaleIfNeeded = (record: Models.TimeSale, source: string, latestTimestamp: number) => {
     if (record.timestamp <= 0 || record.timestamp >= latestTimestamp) {
         return;
     }
 
     let lateByMs = latestTimestamp - record.timestamp;
-    console.warn(
-        `[T&S late] ${getTimeSaleSourceName(source)} ${record.symbol} ${lateByMs}ms`
-    );
+    timeSaleDiagnostics.late++;
+    addTimeSaleDiagnosticSample(`[T&S late] ${getTimeSaleSourceName(source)} ${record.symbol} ${lateByMs}ms`);
+    updateTimeSaleDiagnosticsView();
+};
+
+const liveTimeSaleRenderIntervalMs = 100;
+
+interface PendingTimeSaleRender {
+    symbol: string,
+    allCharts: Models.TimeFrameChart[],
+    symbolData: Models.SymbolData,
+    timeAndSalesTime: Date,
+    lastPrice: number,
+    lastVolume: Models.LineSeriesData,
+    lastVwap: Models.LineSeriesData,
+    lastCandle: Models.CandlePlus,
+}
+
+// These maps coalesce high-frequency T&S ticks into one chart render per symbol.
+// pendingTimeSaleRenderBySymbol keeps only the newest render payload, scheduledTimeSaleRenderBySymbol
+// prevents duplicate timers, and lastTimeSaleRenderAtBySymbol enforces the minimum render interval.
+const pendingTimeSaleRenderBySymbol = new Map<string, PendingTimeSaleRender>();
+const scheduledTimeSaleRenderBySymbol = new Map<string, ReturnType<typeof setTimeout>>();
+const lastTimeSaleRenderAtBySymbol = new Map<string, number>();
+
+// Applies the newest queued T&S render payload for a symbol to the DOM and chart series.
+// Older payloads are discarded before this runs, so each flush draws the latest known state.
+const flushTimeSaleRender = (symbol: string) => {
+    let render = pendingTimeSaleRenderBySymbol.get(symbol);
+    pendingTimeSaleRenderBySymbol.delete(symbol);
+    scheduledTimeSaleRenderBySymbol.delete(symbol);
+    if (!render) {
+        return;
+    }
+
+    lastTimeSaleRenderAtBySymbol.set(symbol, Date.now());
+    timeSaleDiagnostics.rendered++;
+    updateTimeSaleDiagnosticsView();
+    Chart.updateUI(symbol, "currentPrice", Helper.numberToStringWithPaddingToCents(render.lastPrice));
+    UI.updateClock(render.timeAndSalesTime);
+
+    let volumeText = `${Helper.largeNumberToString(render.lastVolume.value)} $${Helper.roundToMillion(render.lastVolume.value * render.lastPrice)}M`
+    Chart.updateUI(symbol, "currentVolume", volumeText);
+    setColorForVolume(render.symbolData.candles, render.symbolData.volumes, render.symbolData.volumes.length - 1);
+    ChartSeries.safeUpdateSeries(render.allCharts[0].volumeSeries, render.lastVolume, `${symbol} m1 volume`);
+    ChartSeries.safeUpdateSeries(render.allCharts[0].vwapSeries, render.lastVwap, `${symbol} m1 vwap`);
+    ChartSeries.safeUpdateSeries(render.allCharts[0].candleSeries, render.lastCandle, `${symbol} m1 candle`);
+};
+
+// Stores the newest T&S render payload and schedules a flush only when needed.
+// If a timer already exists, the pending payload is replaced and that timer will draw the latest state.
+const queueTimeSaleRender = (render: PendingTimeSaleRender) => {
+    pendingTimeSaleRenderBySymbol.set(render.symbol, render);
+    if (scheduledTimeSaleRenderBySymbol.has(render.symbol)) {
+        return;
+    }
+
+    let now = Date.now();
+    let lastRenderAt = lastTimeSaleRenderAtBySymbol.get(render.symbol) ?? 0;
+    let delay = Math.max(0, liveTimeSaleRenderIntervalMs - (now - lastRenderAt));
+    if (delay == 0) {
+        flushTimeSaleRender(render.symbol);
+        return;
+    }
+
+    scheduledTimeSaleRenderBySymbol.set(render.symbol, setTimeout(() => {
+        flushTimeSaleRender(render.symbol);
+    }, delay));
 };
 
 const shouldIgnoreStaleTimeSale = (
@@ -58,9 +166,9 @@ const shouldIgnoreStaleTimeSale = (
         return false;
     }
 
-    console.error(
-        `[T&S stale] ${symbol} ${timeframe}m ${newTime}<${lastTime} trade=${tradeTime ?? 'n/a'}`
-    );
+    timeSaleDiagnostics.stale++;
+    addTimeSaleDiagnosticSample(`[T&S stale] ${symbol} ${timeframe}m ${newTime}<${lastTime}`);
+    updateTimeSaleDiagnosticsView();
     return true;
 };
 
@@ -244,8 +352,8 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
     if (shouldIgnoreStaleTimeSale(symbol, 1, newTime, lastCandle.time, timesale.tradeTime)) {
         return;
     }
-    Chart.updateUI(symbol, "currentPrice", Helper.numberToStringWithPaddingToCents(timesale.lastPrice));
-    UI.updateClock(Helper.numberToDate(timesale.tradeTime));
+    let timeAndSalesTime = Helper.numberToDate(timesale.tradeTime);
+    TimeHelper.setCurrentMarketTime(timeAndSalesTime);
     symbolData.totalVolume += lastSize;
     symbolData.totalTradingAmount += (lastPrice * lastSize);
     let newVwapValue = symbolData.totalTradingAmount / symbolData.totalVolume;
@@ -405,12 +513,16 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
     }
     //widget.candleSeries.update(lastCandle);
 
-    let volumeText = `${Helper.largeNumberToString(lastVolume.value)} $${Helper.roundToMillion(lastVolume.value * lastPrice)}M`
-    Chart.updateUI(symbol, "currentVolume", volumeText);
-    setColorForVolume(symbolData.candles, symbolData.volumes, symbolData.volumes.length - 1);
-    ChartSeries.safeUpdateSeries(allCharts[0].volumeSeries, lastVolume, `${symbol} m1 volume`);
-    ChartSeries.safeUpdateSeries(allCharts[0].vwapSeries, lastVwap, `${symbol} m1 vwap`);
-    ChartSeries.safeUpdateSeries(allCharts[0].candleSeries, lastCandle, `${symbol} m1 candle`);
+    queueTimeSaleRender({
+        symbol,
+        allCharts,
+        symbolData,
+        timeAndSalesTime,
+        lastPrice,
+        lastVolume,
+        lastVwap,
+        lastCandle,
+    });
 
     updateChartColor(symbol, widget);
     //console.log(timesale);
@@ -602,6 +714,8 @@ const updateVwapCount = (symbolData: Models.SymbolData, closePrice: number) => {
  * @returns true if the timestamp was updated, false otherwise
  */
 export const tryUpdateMaxTimeSaleTimestamp = (record: Models.TimeSale, source: string) => {
+    timeSaleDiagnostics.received++;
+    updateTimeSaleDiagnosticsView();
     let tradeId = record.tradeID?.toString() ?? '';
     let symbolData = Models.getSymbolData(record.symbol);
     if (record.timestamp > symbolData.maxTimeSaleTimestamp.timestamp) {
@@ -610,6 +724,8 @@ export const tryUpdateMaxTimeSaleTimestamp = (record: Models.TimeSale, source: s
             tradeIds: [tradeId],
         };
         UI.addToNetwork(source);
+        timeSaleDiagnostics.accepted++;
+        updateTimeSaleDiagnosticsView();
         return true;
     }
     if (record.timestamp == symbolData.maxTimeSaleTimestamp.timestamp &&
@@ -617,6 +733,8 @@ export const tryUpdateMaxTimeSaleTimestamp = (record: Models.TimeSale, source: s
     ) {
         symbolData.maxTimeSaleTimestamp.tradeIds.push(tradeId);
         UI.addToNetwork(source);
+        timeSaleDiagnostics.accepted++;
+        updateTimeSaleDiagnosticsView();
         return true;
     }
     logLateTimeSaleIfNeeded(record, source, symbolData.maxTimeSaleTimestamp.timestamp);

@@ -17,6 +17,19 @@ declare let window: Models.MyWindow;
 
 let refreshInprogress: Map<string, boolean> = new Map<string, boolean>();
 let higherVolumeAlerts: Map<string, Set<number>> = new Map<string, Set<number>>();
+const liveChartAnnotationIntervalMs = 300;
+const lastLiveChartAnnotationAtBySymbol = new Map<string, number>();
+
+const shouldUpdateLiveChartAnnotations = (symbol: string) => {
+    let now = Date.now();
+    let lastUpdateAt = lastLiveChartAnnotationAtBySymbol.get(symbol) ?? 0;
+    if (now - lastUpdateAt < liveChartAnnotationIntervalMs) {
+        return false;
+    }
+    lastLiveChartAnnotationAtBySymbol.set(symbol, now);
+    return true;
+}
+
 export const checkVolumeOnCandleClose = (symbol: string, newlyClosedCandle: Models.CandlePlus) => {
     let seconds = Helper.getSecondsSinceMarketOpen(new Date());
     if (seconds < 100) {
@@ -528,6 +541,9 @@ export const onNewTimeAndSalesData = (symbol: string, newPrice: number, isNewCan
     alertHigherVolume(symbol);
     saveRedToGreenState(symbol);
     TradebooksManager.onNewTimeAndSalesDataForSymbol(symbol, newPrice);
+    if (!shouldUpdateLiveChartAnnotations(symbol)) {
+        return;
+    }
     let status = getChartAnalysis(symbol);
     if (status) {
         Chart.updateToolTipPriceLine(symbol, status);

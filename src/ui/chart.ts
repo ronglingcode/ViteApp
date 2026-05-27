@@ -1770,10 +1770,18 @@ export const updateToolTipPriceLine = (symbol: string, text: string) => {
     if (!chart)
         return;
     let m1Chart = chart.timeframeChartM1;
-    if (m1Chart.toolTipPriceLine) {
-        m1Chart.candleSeries.removePriceLine(m1Chart.toolTipPriceLine);
-    }
     let currentPrice = Models.getCurrentPrice(symbol);
+    if (m1Chart.toolTipPriceLine) {
+        let options = m1Chart.toolTipPriceLine.options();
+        if (options.price == currentPrice && options.title == text) {
+            return;
+        }
+        m1Chart.toolTipPriceLine.applyOptions({
+            price: currentPrice,
+            title: text,
+        });
+        return;
+    }
     m1Chart.toolTipPriceLine = createPriceLine(
         m1Chart.candleSeries, currentPrice, text, "black", 1, false, "dashed");
 }
