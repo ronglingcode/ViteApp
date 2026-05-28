@@ -10,6 +10,7 @@ import * as Helper from "../utils/helper";
 import * as Models from "../models/models";
 import * as TradingPlans from "../models/tradingPlans/tradingPlans";
 import * as TradebooksManager from "../tradebooks/tradebooksManager";
+import * as KeyboardHandler from "../controllers/keyboardHandler";
 declare let window: Models.MyWindow;
 
 const BOOKMAP_WS_URL = "ws://localhost:8765";
@@ -197,6 +198,13 @@ const getBookmapKeyLevelsForSymbol = (symbol: string): BookmapKeyLevel[] => {
 
 const handleCustomButtonClick = (data: any) => {
     let symbol = normalizeSymbol(data.symbol || "");
+    let keyCode = getString(data.keyCode || data.key_code);
+    if (keyCode) {
+        console.log(`[BookmapSocket] Handling ${data.button_name || data.button_id || "button"} as ${keyCode} for ${symbol}`);
+        KeyboardHandler.handleKeyPressed(keyCode, false, symbol);
+        return;
+    }
+
     let tradebookId = getString(data.tradebook_id || data.tradebookId);
     let entryMethod = getString(data.entry_method || data.entryMethod);
     let useMarketOrder = data.use_market_order === true || data.useMarketOrder === true;

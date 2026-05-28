@@ -9,9 +9,9 @@ import * as Broker from '../api/broker';
 import * as Firestore from '../firestore';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 
-export const handleKeyPressed = (code: string, shiftKey: boolean) => {
+export const handleKeyPressed = (code: string, shiftKey: boolean, symbolOverride?: string) => {
     let uiState = Models.getUIState();
-    let symbol = uiState.activeSymbol;
+    let symbol = symbolOverride || uiState.activeSymbol;
 
     if (!symbol) {
         console.log("no active symbol, skip");
