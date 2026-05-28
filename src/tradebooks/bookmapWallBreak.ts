@@ -337,7 +337,7 @@ export class BookmapWallBreak extends Tradebook {
 
     onNewTimeSalesData(newPrice: number): void {
         let secondsSinceOpen = Helper.getSecondsSinceMarketOpen(new Date());
-        if (secondsSinceOpen < 0) {
+        if (secondsSinceOpen < 60) {
             return;
         }
 
