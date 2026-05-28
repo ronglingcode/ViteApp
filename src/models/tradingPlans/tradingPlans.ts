@@ -255,37 +255,6 @@ export const isInRange = (price: number, vwap: number, high: string, low: string
     return true;
 }
 
-export const generateScriptsForTradableAreas = () => {
-    let symbols = window.HybridApp.SymbolsList;
-    let scriptForSingleLevelHigh = `Def keyLevelHigh = `;
-    let scriptForSingleLevelLow = `Def keyLevelLow = `;
-    let scriptForAtr = `Def atr = `;
-    let scriptForLongEndDistance = `Def longEndDistance = `;
-    let scriptForShortEndDistance = `Def shortEndDistance = `;
-    let scriptForVwapDistance = `Def vwapDistance = `;
-    for (let i = 0; i < symbols.length; i++) {
-        let s = symbols[i];
-        let plan = getTradingPlans(s);
-        scriptForAtr += `if GetSymbol() == "${s}" then ${plan.atr.average} else `;
-        if (hasSingleMomentumLevel(plan)) {
-            let keyLevel = getSingleMomentumLevel(plan);
-            scriptForSingleLevelHigh += `if GetSymbol() == "${s}" then ${keyLevel.high} else `;
-            scriptForSingleLevelLow += `if GetSymbol() == "${s}" then ${keyLevel.low} else `;
-            let longArea = Models.getTradableArea(s, true);
-            let shortArea = Models.getTradableArea(s, false);
-            scriptForLongEndDistance += `if GetSymbol() == "${s}" then ${longArea.high} else `;
-            scriptForShortEndDistance += `if GetSymbol() == "${s}" then ${shortArea.low} else `;
-            scriptForVwapDistance += `if GetSymbol() == "${s}" then ${shortArea.distanceToVwap} else `;
-        }
-    }
-    scriptForSingleLevelHigh += '0;';
-    scriptForSingleLevelLow += '0;';
-    scriptForAtr += '1;';
-    scriptForLongEndDistance += '0;';
-    scriptForShortEndDistance += '0;';
-    scriptForVwapDistance += '0;';
-    console.log(`${scriptForAtr}\n${scriptForSingleLevelHigh}\n${scriptForSingleLevelLow}\n${scriptForLongEndDistance}\n${scriptForShortEndDistance}\n${scriptForVwapDistance}`);
-}
 export const getMinTarget = (symbol: string, isLong: boolean, partialIndex: number) => {
     let targets = calculateTargets(symbol, isLong);
     let minTargets = populateTargets(targets, isLong);

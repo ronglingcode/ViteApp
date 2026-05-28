@@ -24,25 +24,6 @@ export const checkTrailStopRules = (symbol: string, timeFrame: number, logTags: 
 export const checkTrailStopSingleRules = (symbol: string, batchIndex: number, timeFrame: number, logTags: Models.LogTags) => {
     return exitRulesCheckerSimple.checkTrailStopSingleRules(symbol, batchIndex, timeFrame, logTags);
 }
-export const checkCommonAdjustStops = (symbol: string, newPrice: number) => {
-    checkRetestBeforeMovingStops(symbol);
-    let { breakoutTradeState } = exitRulesCheckerSimple.getCommonInfo(symbol);
-    let quality = breakoutTradeState.plan.planConfigs.setupQuality;
-    if (quality == TradingPlansModels.SetupQuality.Scalp ||
-        quality == TradingPlansModels.SetupQuality.Unknown) {
-        Firestore.logInfo(`allow moving stop due to setup quality ${quality}`);
-        return true;
-    }
-    let isLong = Models.getPositionNetQuantity(symbol) > 0;
-    return exitRulesCheckerSimple.isLessTightThanClosedCandlesForAdjustStop(symbol, isLong, newPrice);
-}
-export const checkRetestBeforeMovingStops = (symbol: string) => {
-    let isLong = Models.getPositionNetQuantity(symbol) > 0;
-    if (Patterns.hasRetestLevel(symbol, isLong)) {
-        Helper.speak(`respect original stop that retest key level`);
-    }
-}
-
 
 const getCommonInfo = (symbol: string) => {
     let symbolState = TradingState.getSymbolState(symbol);

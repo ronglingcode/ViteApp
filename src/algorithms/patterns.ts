@@ -800,17 +800,6 @@ export const hasClosedOutsideVwap = (symbol: string, isLong: boolean) => {
     return false;
 }
 
-export const hasRetestLevel = (symbol: string, isLong: boolean) => {
-    let plans = TradingPlans.getTradingPlans(symbol);
-    if (TradingPlans.hasSingleMomentumLevel(plans)) {
-        let keyLevel = TradingPlans.getSingleMomentumLevel(plans);
-        let level = isLong ? keyLevel.high : keyLevel.low;
-        return hasRetestThisLevelBeforeEntry(symbol, isLong, level);
-    }
-
-
-    return false;
-}
 export const hasRetestThisLevelBeforeEntry = (symbol: string, isLong: boolean, level: number) => {
     let openPrice = Models.getOpenPrice(symbol);
     let keyLevel = level;
