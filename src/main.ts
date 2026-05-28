@@ -143,14 +143,6 @@ if (syncAccountButton) {
     });
 }
 
-let tosScriptsButton = document.getElementById("gen_scripts");
-if (tosScriptsButton) {
-    tosScriptsButton.addEventListener("click", () => {
-        TradingPlans.generateScriptsForTradableAreas();
-        //TradingPlans.generateTosScripts();
-    });
-}
-
 let testPopButton = document.getElementById("test_popup");
 if (testPopButton) {
     testPopButton.addEventListener("click", () => {

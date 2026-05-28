@@ -138,11 +138,6 @@ export const finishedStockAnalysis = (symbol: string, plan: TradingPlansModels.T
         return false;
     }
 
-    if (!TradingPlans.hasMomentumLevels(plan)) {
-        // TODO check it has reversal plan
-        //Firestore.logError(`missing both singleMomentumKeyLevel and dualMomentumKeyLevels`);
-        //return false;
-    }
     return true;
 }
 

@@ -15,9 +15,6 @@ export const getTradingPlansForSingleDirection = (symbol: string, isLong: boolea
         return plans.short;
 }
 
-export const hasMomentumLevels = (plan: TradingPlansModels.TradingPlans) => {
-    return hasSingleMomentumLevel(plan) || hasDualMomentumLevels(plan);
-}
 export const getSingleMomentumLevel = (plan: TradingPlansModels.TradingPlans) => {
     let usePremarketLevel = plan.analysis.usePremarketKeyLevel;
     let symbolData = Models.getSymbolData(plan.symbol);
@@ -43,11 +40,7 @@ export const hasSingleMomentumLevel = (plan: TradingPlansModels.TradingPlans) =>
     let level = getSingleMomentumLevel(plan);
     return level && level.high > 0 && level.low > 0;
 }
-export const hasDualMomentumLevels = (plan: TradingPlansModels.TradingPlans) => {
-    let analysis = plan.analysis;
-    let levels = analysis.dualMomentumKeyLevels;
-    return levels.length == 2;
-}
+
 export const getDualMomentumLevels = (plan: TradingPlansModels.TradingPlans) => {
     let analysis = plan.analysis;
     let levels = analysis.dualMomentumKeyLevels;
@@ -171,10 +164,6 @@ export const validateTradingPlans = (symbol: string, tradingPlans: TradingPlansM
         }
     }
 
-    let hasLevels = hasMomentumLevels(tradingPlans);
-    if (!hasLevels) {
-        return "no levels";
-    }
 
     let longPlanInvalidReason = validateTradingPlansForOneDirection(tradingPlans.long, true);
     if (longPlanInvalidReason.length > 0) {
@@ -296,31 +285,6 @@ export const generateScriptsForTradableAreas = () => {
     scriptForShortEndDistance += '0;';
     scriptForVwapDistance += '0;';
     console.log(`${scriptForAtr}\n${scriptForSingleLevelHigh}\n${scriptForSingleLevelLow}\n${scriptForLongEndDistance}\n${scriptForShortEndDistance}\n${scriptForVwapDistance}`);
-}
-export const generateTosScripts = () => {
-    let symbols = window.HybridApp.SymbolsList;
-    let scriptForSingleLevelHigh = `Def keyLevelHigh = `;
-    let scriptForSingleLevelLow = `Def keyLevelLow = `;
-    let scriptForDualLevels = `Def keyLevel = `;
-    let scriptForAtr = `Def atr = `;
-    for (let i = 0; i < symbols.length; i++) {
-        let s = symbols[i];
-        let plan = getTradingPlans(s);
-        scriptForAtr += `if GetSymbol() == "${s}" then ${plan.atr.average} else `;
-        if (hasSingleMomentumLevel(plan)) {
-            let keyLevel = getSingleMomentumLevel(plan);
-            scriptForSingleLevelHigh += `if GetSymbol() == "${s}" then ${keyLevel.high} else `;
-            scriptForSingleLevelLow += `if GetSymbol() == "${s}" then ${keyLevel.low} else `;
-        } else if (hasDualMomentumLevels(plan)) {
-            let { levelHigh, levelLow } = getDualMomentumLevels(plan);
-            let keyLevelScript = `if GetSymbol() == "${s}" then ${levelHigh} else `;
-            scriptForDualLevels += keyLevelScript;
-        }
-    }
-    scriptForSingleLevelHigh += '0;';
-    scriptForSingleLevelLow += '0;';
-    scriptForAtr += '1;';
-    console.log(`${scriptForAtr}\n${scriptForSingleLevelHigh}\n${scriptForSingleLevelLow}`);
 }
 export const getMinTarget = (symbol: string, isLong: boolean, partialIndex: number) => {
     let targets = calculateTargets(symbol, isLong);
