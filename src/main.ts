@@ -172,19 +172,6 @@ Firestore.addToLogView('version 1.364', 'Info');
 
 let now = new Date();
 
-export const cleanUpChatWindows = () => {
-    let watchlist = Models.getWatchlist();
-    for (let i = 0; i < watchlist.length; i++) {
-        let symbol = watchlist[i].symbol;
-        let chatWindowContainer = document.getElementById(`chatContainer${i}`) as HTMLElement;
-        let chatHeaderText = document.getElementById(`chatHeaderText${i}`) as HTMLElement;
-        if (chatWindowContainer && chatHeaderText) {
-            chatHeaderText.textContent = symbol;
-            chatWindowContainer.style.display = 'block';
-        }
-    }
-};
-
 window.TradingApp.TOS.initialize().then(async () => {
     // tos initialized with new access token
     // tos access token expires in 30 minutes, so refresh before that
@@ -195,7 +182,6 @@ window.TradingApp.TOS.initialize().then(async () => {
     let timeframe = 1;
 
     Models.setTimeframe(timeframe);
-    cleanUpChatWindows();
     TraderFocus.updateTradeManagementUI();
 
     // open web socket
@@ -271,25 +257,7 @@ htmlBody.addEventListener("keydown", async function (keyboardEvent) {
     KeyboardHandler.handleKeyPressed(code, shiftKey);
 });
 
-// Setup chat window expand/collapse functionality
 document.addEventListener('DOMContentLoaded', () => {
-    const chatHeaders = document.querySelectorAll('.chatHeader');
-    chatHeaders.forEach(header => {
-        header.addEventListener('click', () => {
-            const chatId = header.getAttribute('data-chat');
-            if (chatId) {
-                const container = header.closest('.chatContainer');
-                if (container) {
-                    container.classList.toggle('collapsed');
-                    const icon = header.querySelector('.collapseIcon');
-                    if (icon) {
-                        icon.textContent = container.classList.contains('collapsed') ? '+' : '−';
-                    }
-                }
-            }
-        });
-    });
-
     // Setup section expand/collapse functionality for collapsible trader-focus sections.
     const sectionHeaders = document.querySelectorAll('.clickableSectionTitle');
     sectionHeaders.forEach(header => {

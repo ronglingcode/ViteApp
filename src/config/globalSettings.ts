@@ -7,7 +7,6 @@ export const competeForTimeAndSales: boolean = true;
 export const competeForTimeAndSalesWindowSeconds: number = 2 * 60;
 export const allowLiveStats: boolean = true;
 export const enableLeftPaneFeatures: boolean = true;
-export const enableAiAgent: boolean = enableLeftPaneFeatures && false;
 export const showBestPlans: boolean = enableLeftPaneFeatures && false;
 export const showTradebooksForPosition: boolean = enableLeftPaneFeatures && false;
 export const checkMaxEntryThreshold: boolean = false;

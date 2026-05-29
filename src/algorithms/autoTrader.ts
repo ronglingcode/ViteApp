@@ -9,7 +9,6 @@ import * as OrderFlow from '../controllers/orderFlow';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import * as VwapPatterns from './vwapPatterns';
-import * as Agent from '../ai/agent';
 import * as GlobalSettings from '../config/globalSettings';
 import { TradebookID } from '../tradebooks/tradebookIds';
 
@@ -332,9 +331,6 @@ export const onMinuteClosed = (
 
         }
         getBreakoutEntryClosePercentage(symbol, newlyClosedCandle);
-        if (seconds > 0) {
-            Agent.testTradeAnalysis(symbol);
-        }
     }
     if (seconds > 10) {
         TradebooksManager.onNewCandleCloseForSymbol(symbol);

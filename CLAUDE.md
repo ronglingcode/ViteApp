@@ -36,7 +36,6 @@ src/
 ├── api/                       # Broker API integrations
 │   ├── broker.ts              # Broker abstraction layer
 │   ├── marketData.ts          # Market data fetching
-│   ├── proxyServer.ts         # Localhost proxy for API calls
 │   ├── schwab/                # Charles Schwab (primary broker)
 │   │   ├── api.ts             # OAuth, orders, account data
 │   │   ├── streaming.ts       # WebSocket for quotes/activity
@@ -113,11 +112,6 @@ src/
 │   ├── secret_template.ts     # Template for secrets
 │   └── profiles/              # Trading profiles (schwab, futures, etc.)
 │
-├── ai/                        # LLM/AI integration
-│   ├── agent.ts               # ChatGPT agent with market context
-│   ├── chatgpt.ts             # OpenAI API wrapper
-│   └── marketDataFeatures.ts  # Feature extraction for AI
-│
 ├── indicators/                # Technical indicators
 │   ├── basicIndicators.ts     # Moving averages, basic calcs
 │   └── camPivots.ts           # Camarilla pivot points
@@ -178,8 +172,7 @@ Key flags:
 - `marketDataSource`: "massive" or "alpaca"
 - `impliedMarketCapThresholdInBillions`: 0.9 (minimum market cap filter)
 - `premarketVolumeThresholdInMillions`: 0.9 (minimum premarket volume)
-- `enableLeftPaneFeatures`: currently `false` (disables AI agent UI)
-- `enableAiAgent`: tied to left pane feature flag
+- `enableLeftPaneFeatures`: toggles left-pane trader focus features
 - `enableBookmapSocket`: connects to the Bookmap Active Trader plugin WebSocket (ws://localhost:8765)
 
 ### Profiles (`src/config/profiles/`)
