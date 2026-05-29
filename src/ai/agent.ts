@@ -327,7 +327,6 @@ const candleToText = (candle: Models.CandlePlus, vwap: number | undefined) => {
 }
 export const getMarketDataText = (symbol: string, isLong: boolean) => {
     let plan = TradingPlans.getTradingPlans(symbol);
-    let inflection = plan.analysis.singleMomentumKeyLevel[0].high;
     let openPrice = Models.getOpenPrice(symbol);
     let openVwap = Models.getLastVwapBeforeOpen(symbol);
     let symbolData = Models.getSymbolData(symbol);
@@ -340,8 +339,6 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
     let vwaps = Models.getVwapsSinceOpen(symbol);
     let candlesText = "";
     let minutes = Helper.getMinutesSinceMarketOpen(new Date());
-    let hasTestedKeyLevel = (isLong && symbolData.lowOfDay <= inflection) ||
-        (!isLong && symbolData.highOfDay >= inflection);
     let hasTestedVwap = false;
     for (let i = 0; i < closedCandles.length && i < vwaps.length; i++) {
         let candle = closedCandles[i];
@@ -354,7 +351,6 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
     let currentPrice = Models.getCurrentPrice(symbol);
     let firstCandleSinceOpen = closedCandles[0] ?? currentCandle;
     let finalText = `
-- Inflection level: ${inflection}.
 - ATR: ${plan.atr.average}.
 - Open Price: ${openPrice}.
 - First available candle time since open: ${TimeHelper.formatDateToHHMMSS(new Date(firstCandleSinceOpen.datetime))}.
@@ -365,7 +361,6 @@ export const getMarketDataText = (symbol: string, isLong: boolean) => {
 - 1-minute closed candles since market open with time(T), volume(V), vwap, 5-period moving average (ma5), 9-period moving average (ma9): [${candlesText}].
 - Current price: ${currentPrice}.
 - Current 1-minute live candle that's not closed yet: ${currentCandleText}.
-- Has the price tested the inflection level: ${hasTestedKeyLevel}.
 - Has the price tested the vwap since open: ${hasTestedVwap}.
 `;
     return finalText;

@@ -800,24 +800,6 @@ export const hasClosedOutsideVwap = (symbol: string, isLong: boolean) => {
     return false;
 }
 
-export const hasRetestThisLevelBeforeEntry = (symbol: string, isLong: boolean, level: number) => {
-    let openPrice = Models.getOpenPrice(symbol);
-    let keyLevel = level;
-    let symbolData = Models.getSymbolData(symbol);
-    if (isLong) {
-        if (openPrice > keyLevel) {
-            return symbolData.lowOfDay < keyLevel;
-        } else {
-            return openPrice > keyLevel && symbolData.lowOfDay < keyLevel;
-        }
-    } else {
-        if (openPrice < keyLevel) {
-            return symbolData.highOfDay > keyLevel;
-        } else {
-            return openPrice < keyLevel && symbolData.highOfDay > keyLevel;
-        }
-    }
-}
 export const hasPullbackToVwapBeforeOpen = (symbol: string, lookBackBarsCount: number) => {
     let time = Helper.getMarketOpenTime();
     let tvTime = Helper.jsDateToTradingViewUTC(time);
