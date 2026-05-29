@@ -127,8 +127,8 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
             Firestore.logError(`did not meet minimum volume ${maxVolume} < 150K, using 50% size`, logTags);
         }
     }
-    if (secondsSinceMarketOpen > 60 * 60) {
-        // after 1 hour, I should be busy with other things, so only allow entry for testing. 
+    if (secondsSinceMarketOpen > 90 * 60) {
+        // after 1.5 hour 8AM my time, I should be busy with other things, so only allow entry for testing. 
         // so very small size
         return finalSize * 0.02
     }
