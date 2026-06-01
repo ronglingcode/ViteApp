@@ -4,7 +4,6 @@
  * order book snapshots, heartbeats, and breakout signals.
  */
 
-import { processOrderbookSnapshot } from "./largeOrderTracker";
 import { handlePriceSelect } from "./bookmapActions";
 import * as Helper from "../utils/helper";
 import * as Models from "../models/models";
@@ -15,7 +14,6 @@ declare let window: Models.MyWindow;
 
 const BOOKMAP_WS_URL = "ws://localhost:8765";
 const RECONNECT_DELAY_MS = 3000;
-const ORDERBOOK_INTERVAL_MS = 1000;
 const CONFIG_PUSH_INTERVAL_MS = 60_000;
 
 interface BookmapKeyLevel {
@@ -47,7 +45,10 @@ export const createWebSocket = () => {
     websocket.onmessage = function (messageEvent) {
         let data = JSON.parse(messageEvent.data);
         let type = data.type;
-        if (type !== "orderbook" && type !== "custom_button_click") {
+        if (type === "orderbook") {
+            return;
+        }
+        if (type !== "custom_button_click") {
             console.log(data);
         }
         let symbol = normalizeSymbol(data.symbol || "");
@@ -58,21 +59,6 @@ export const createWebSocket = () => {
             // price tracked via heartbeat if needed later
         } else if (type === "breakout") {
             console.log(`[BookmapSocket] BREAKOUT [${symbol}]: level=${data.breakoutLevel}, timestamp=${data.timestamp}`);
-        } else if (type === "orderbook") {
-            //console.log(`[BookmapSocket] Orderbook [${symbol}]: ${data.largeBids.length} largeBids, ${data.largeAsks.length} largeAsks`);
-            let atr = 0;
-            try { atr = Models.getAtr(symbol).average; } catch (e) { /* no plan loaded yet */ }
-            const { appeared, disappeared } = processOrderbookSnapshot(data, atr);
-
-            for (const order of appeared) {
-                //Firestore.logInfo(`NEW large ${order.side} wall [${symbol}]: $${order.price} x ${order.size}`, { symbol });
-            }
-            for (const order of disappeared) {
-                //Firestore.logInfo(`GONE large ${order.side} wall [${symbol}]: $${order.price} x ${order.size}`, { symbol });
-            }
-            if (appeared.length > 0 || disappeared.length > 0) {
-                //  Helper.speak("large order update");
-            }
         } else if (type === "priceSelect") {
             handlePriceSelect({
                 symbol,
