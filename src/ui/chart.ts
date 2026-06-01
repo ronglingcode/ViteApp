@@ -679,6 +679,8 @@ const getRiskPerShare = (symbol: string, isLong: boolean,
 
 let accountUiRefreshInProgress = false;
 let pendingAccountUiRefreshSource: string | undefined;
+const maxQueuedAccountUiRefreshRuns = 1;
+let droppedAccountUiRefreshCount = 0;
 
 const mergeAccountUiRefreshSources = (current: string, incoming: string) => {
     if (current == incoming || current.includes(incoming)) {
@@ -717,11 +719,20 @@ export const updateAccountUIStatus = async (source: string) => {
     }
     accountUiRefreshInProgress = true;
     let refreshSource: string | undefined = source;
+    let queuedRefreshesRun = 0;
     try {
         while (refreshSource) {
             await runAccountUIStatusUpdate(refreshSource);
             refreshSource = pendingAccountUiRefreshSource;
             pendingAccountUiRefreshSource = undefined;
+            if (refreshSource) {
+                queuedRefreshesRun++;
+                if (queuedRefreshesRun > maxQueuedAccountUiRefreshRuns) {
+                    droppedAccountUiRefreshCount++;
+                    console.warn(`dropped queued account UI refresh (${droppedAccountUiRefreshCount} total): ${refreshSource}`);
+                    refreshSource = undefined;
+                }
+            }
         }
     } finally {
         accountUiRefreshInProgress = false;
