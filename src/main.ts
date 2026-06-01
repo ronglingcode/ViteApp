@@ -186,7 +186,8 @@ window.TradingApp.TOS.initialize().then(async () => {
 
     // open web socket
     AlpacaStreaming.createWebSocketForMarketData();
-    AlpacaStreaming.createWebSocket();
+    // Alpaca trading activity stream is disabled; Schwab is the active broker.
+    // AlpacaStreaming.createWebSocket();
     ScwabStreaming.createWebSocket();
     MassiveStreaming.createWebSocket();
     if (GlobalSettings.enableBookmapSocket) {
