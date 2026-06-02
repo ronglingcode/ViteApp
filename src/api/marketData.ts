@@ -196,6 +196,9 @@ export const getPreviousTradingDate = async () => {
   date.setDate(date.getDate() - 6);
   let startDate = TimeHelper.getDateString(date);
   let candles = await alpacaApi.getDailyChart('SPY', startDate);
+  if (candles.length < 2) {
+    return TimeHelper.getDateString(date);
+  }
   let previousDayCandle = candles[candles.length - 2];
   let nyOpen = TimeHelper.localTimeToNewYorkTime(previousDayCandle.datetime);
   let nyOpenString = TimeHelper.getDateString(nyOpen);

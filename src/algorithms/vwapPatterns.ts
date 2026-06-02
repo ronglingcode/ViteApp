@@ -19,6 +19,12 @@ export const getStatusForVwapContinuationLongWithPremarketHigh = (symbol: string
     }
     let symbolData = Models.getSymbolData(symbol);
     let premktHigh = symbolData.premktHigh;
+    if (candles.length === 0 || vwaps.length === 0) {
+        return "no data";
+    }
+    let maxUsableCount = Math.min(candles.length, vwaps.length);
+    candles = candles.slice(0, maxUsableCount);
+    vwaps = vwaps.slice(0, maxUsableCount);
     let currentPrice = candles[candles.length - 1].close;
     let currentVwap = vwaps[vwaps.length - 1].value;
     //console.log(`${maxCount}: ${currentPrice} ${premktHigh}`);
@@ -62,6 +68,13 @@ export const getStatusForVwapContinuationLongWithPremarketHigh = (symbol: string
  */
 export const getStatusForVwapBounceFail = (symbol: string) => {
     let candles = Models.getCandlesFromM1SinceOpen(symbol);
+    let vwaps = Models.getVwapsSinceOpen(symbol);
+    if (candles.length === 0 || vwaps.length === 0) {
+        return "no data";
+    }
+    let maxUsableCount = Math.min(candles.length, vwaps.length);
+    candles = candles.slice(0, maxUsableCount);
+    vwaps = vwaps.slice(0, maxUsableCount);
     // get the highest candle to start with
     let highestCandleIndex = 0;
     for (let i = 1; i < candles.length; i++) {
@@ -71,7 +84,6 @@ export const getStatusForVwapBounceFail = (symbol: string) => {
     }
     // assume highest candle is above vwap
     let current = highestCandleIndex;
-    let vwaps = Models.getVwapsSinceOpen(symbol);
     let status = "above vwap";
     while (current < candles.length) {
         let candle = candles[current];
@@ -108,6 +120,13 @@ export const getStatusForVwapBounceFail = (symbol: string) => {
  */
 export const getStatusForVwapPushdownFail = (symbol: string) => {
     let candles = Models.getCandlesFromM1SinceOpen(symbol);
+    let vwaps = Models.getVwapsSinceOpen(symbol);
+    if (candles.length === 0 || vwaps.length === 0) {
+        return "no data";
+    }
+    let maxUsableCount = Math.min(candles.length, vwaps.length);
+    candles = candles.slice(0, maxUsableCount);
+    vwaps = vwaps.slice(0, maxUsableCount);
     // get the lowest candle to start with
     let lowestCandleIndex = 0;
     for (let i = 1; i < candles.length; i++) {
@@ -117,7 +136,6 @@ export const getStatusForVwapPushdownFail = (symbol: string) => {
     }
     // assume lowest candle is below vwap
     let current = lowestCandleIndex;
-    let vwaps = Models.getVwapsSinceOpen(symbol);
     let status = "below vwap";
     while (current < candles.length) {
         let candle = candles[current];

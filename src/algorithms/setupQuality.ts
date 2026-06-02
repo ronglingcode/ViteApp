@@ -1,5 +1,7 @@
 import * as Models from '../models/models';
+
 const oneMillion = 1000 * 1000;
+
 export const getPremarketVolumeQuality = (symbol: string, premarketDollar: Models.PremarketDollarCollection) => {
     if (premarketDollar.lastDayShares >= oneMillion * 0.9) {
         return Models.PremarketVolumeQuality.Elevated;
@@ -7,7 +9,11 @@ export const getPremarketVolumeQuality = (symbol: string, premarketDollar: Model
     if (premarketDollar.lastDayDollar < 20 * oneMillion) {
         return Models.PremarketVolumeQuality.TooLow;
     }
-    let previousDaysDollar = premarketDollar.previousDaysDollar[premarketDollar.previousDaysDollar.length - 1].data;
+    let previousDaysDollar = premarketDollar.previousDaysDollar[premarketDollar.previousDaysDollar.length - 1]?.data
+        ?? premarketDollar.previousDaysDollarAverage;
+    if (!previousDaysDollar || previousDaysDollar <= 0) {
+        return Models.PremarketVolumeQuality.Ok;
+    }
     if (premarketDollar.lastDayDollar < previousDaysDollar * 0.5) {
         return Models.PremarketVolumeQuality.TooLow;
     }
@@ -24,7 +30,7 @@ export const getPremarketVolumeQuality = (symbol: string, premarketDollar: Model
 }
 
 /**
- * These stocks are still tradable when volume is not elevated. 
+ * These stocks are still tradable when volume is not elevated.
  * Just need to wait more after open for a better setup.
  */
 export const getPremarketVolumeQualityForRetailFavorites = (symbol: string, premarketDollar: Models.PremarketDollarCollection) => {

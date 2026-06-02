@@ -12,13 +12,19 @@ export const isHigherVolumeInFavor = (symbol: string) => {
     }
     let isLong = netQuantity > 0;
     let volumes = Models.getVolumesSinceOpen(symbol);
+    if (volumes.length < 2) {
+        return false;
+    }
     let currentVolume = volumes[volumes.length - 1];
     let previousVolume = volumes[volumes.length - 2];
-    let isHigherVolume = currentVolume > previousVolume;
+    let isHigherVolume = currentVolume.value > previousVolume.value;
     if (!isHigherVolume) {
         return false;
     }
     let c = Models.getCurrentCandle(symbol);
+    if (!c) {
+        return false;
+    }
     if (isLong && Patterns.isGreenBar(c) || !isLong && Patterns.isRedBar(c)) {
         return true;
     }

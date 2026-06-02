@@ -16,6 +16,10 @@ export function validateEntryThreshold(config: ThresholdValidatorConfig, logTags
     const { symbol, isLong, entryPrice, keyLevel } = config;
     const seconds = Helper.getSecondsSinceMarketOpen(new Date());
     const candles = Models.getUndefinedCandlesSinceOpen(symbol);
+    if (candles.length === 0) {
+        Firestore.logError(`no candles after open, cannot validate entry threshold`, logTags);
+        return false;
+    }
     let threshold = isLong ? candles[0].high : candles[0].low;
     let keyLevelThreshold = isLong ? keyLevel.high : keyLevel.low;
     if (entryIsLessThanThreshold(entryPrice, keyLevelThreshold, isLong)) {
@@ -56,6 +60,10 @@ export function validateEntryThreshold(config: ThresholdValidatorConfig, logTags
             return true;
         }
         let m5Candles = Models.aggregateCandles(candles, 5);
+        if (m5Candles.length === 0) {
+            Firestore.logInfo(`no 5-minute candles available for entry threshold`, logTags);
+            return false;
+        }
         let m5Threshold = isLong ? m5Candles[0].high : m5Candles[0].low;
         for (let i = 1; i < m5Candles.length - 1; i++) {
             let m5ThresholdCandidate = isLong ? m5Candles[i].high : m5Candles[i].low;
@@ -75,4 +83,4 @@ export function validateEntryThreshold(config: ThresholdValidatorConfig, logTags
 
 export function entryIsLessThanThreshold(entryPrice: number, threshold: number, isLong: boolean): boolean {
     return (isLong && entryPrice < threshold) || (!isLong && entryPrice > threshold);
-} 
+}

@@ -90,6 +90,9 @@ export const applyProfitStrategyByPercentage = (
     }
 
     let leftOver = totalShares - sum;
+    if (results.length === 0) {
+        return results;
+    }
     let pos = 0;
     while (leftOver > 0) {
         results[pos].quantity++;

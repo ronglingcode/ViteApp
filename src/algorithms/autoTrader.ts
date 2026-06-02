@@ -627,7 +627,11 @@ export const getChartAnalysis = (symbol: string) => {
     let openPrice = Models.getOpenPrice(symbol);
     let isLong = netQ > 0;
     let plan = TradingPlans.getTradingPlans(symbol);
-    let inflectionLevel = plan.analysis.singleMomentumKeyLevel[0].high;
+    let singleMomentumKeyLevel = plan.analysis.singleMomentumKeyLevel[0];
+    if (!singleMomentumKeyLevel) {
+        return "";
+    }
+    let inflectionLevel = singleMomentumKeyLevel.high;
     let openVwap = Models.getLastVwapBeforeOpen(symbol);
     let symbolData = Models.getSymbolData(symbol);
     if (symbolData.premktHigh >= openPrice && openPrice >= openVwap && openVwap >= inflectionLevel) {

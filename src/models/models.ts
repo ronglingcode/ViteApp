@@ -847,6 +847,9 @@ export const getInitialFilledPrice = (symbol: string) => {
         return 0;
     let trade = trades[trades.length - 1];
     let entry = trade.entries[0];
+    if (!entry) {
+        return 0;
+    }
     return entry.price;
 };
 
@@ -1309,6 +1312,9 @@ export const isGappedUp = (symbol: string): boolean => {
 };
 export const getPreviousCandle = (symbol: string, currentCandle: SimpleCandle) => {
     let candles = getSymbolData(symbol).candles;
+    if (candles.length === 0) {
+        return currentCandle;
+    }
     let start = 0;
     while (start + 1 < candles.length) {
         if (candles[start + 1].time >= currentCandle.time) {
@@ -1443,6 +1449,9 @@ export const aggregateVolumes = (volumes: LineSeriesData[], timeframe: number) =
     return results;
 }
 export const aggregateVwaps = (vwaps: LineSeriesData[], timeframe: number) => {
+    if (!vwaps || vwaps.length === 0) {
+        return [];
+    }
     if (timeframe == 1) {
         return vwaps;
     }
@@ -1568,8 +1577,12 @@ export const getLastVwapBeforeOpen = (symbol: string) => {
         i++;
     }
     i--;
-    let lastVwap = vwaps[i];
-    return lastVwap.value;
+    if (i >= 0) {
+        let lastVwap = vwaps[i];
+        return lastVwap.value;
+    }
+    Firestore.logError(`getLastVwapBeforeOpen last vwap not found`);
+    return 0;
 }
 export const getUndefinedCandleSinceTime = (symbol: string, time: LightweightCharts.UTCTimestamp) => {
     let symbolData = getSymbolData(symbol);
@@ -1750,7 +1763,11 @@ export const isLongForReload = (symbol: string) => {
         return true;
     }
     let lastTrade = trades[trades.length - 1];
-    return lastTrade.entries[0].isBuy;
+    let firstEntry = lastTrade.entries[0];
+    if (!firstEntry) {
+        return true;
+    }
+    return firstEntry.isBuy;
 };
 
 export const generateLogTags = (symbol: string, prefix: string) => {
@@ -2081,12 +2098,12 @@ export const getTimeframeFromEntryMethod = (entryMethod: string): number => {
 
 export const getMovingAverageCandle = (symbol: string, timeframe: number,
     lookBackStart: number, m1Candles: Candle[]) => {
-    let time = m1Candles[lookBackStart].time;
-    let sum = 0;
     let start = lookBackStart - timeframe + 1;
-    if (start < 0) {
+    if (start < 0 || lookBackStart < 0 || lookBackStart >= m1Candles.length) {
         return null;
     }
+    let time = m1Candles[lookBackStart].time;
+    let sum = 0;
     for (let i = start; i <= lookBackStart; i++) {
         sum += m1Candles[i].close;
     }

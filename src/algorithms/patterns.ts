@@ -45,9 +45,15 @@ const isReversalBarStrict = (symbol: string, bar: Models.SimpleCandle, isLong: b
     }
 }
 export const isRedBar = (bar: Models.SimpleCandle) => {
+    if (!bar) {
+        return false;
+    }
     return bar.close < bar.open;
 };
 export const isGreenBar = (bar: Models.SimpleCandle) => {
+    if (!bar) {
+        return false;
+    }
     return bar.close > bar.open;
 };
 const hasBottomWick = (bar: Models.SimpleCandle) => {
@@ -446,6 +452,9 @@ export const hasConfirmationForMarketEntry = (symbol: string, isLong: boolean) =
 }
 export const getFirstNewHighLowPrice = (symbol: string, isLong: boolean) => {
     let candles = Models.getUndefinedCandlesSinceOpen(symbol);
+    if (candles.length === 0) {
+        return 0;
+    }
     let result = isLong ? candles[0].high : candles[0].low;
     // last candle is always not closed
     for (let i = 1; i < candles.length - 1; i++) {
@@ -829,6 +838,9 @@ export const hasPullbackToVwapBeforeOpen = (symbol: string, lookBackBarsCount: n
 }
 
 export const isHigherLows = (candles: Models.Candle[], maxCount: number) => {
+    if (candles.length === 0) {
+        return false;
+    }
     let previousLow = candles[0].low;
     for (let i = 1; i < candles.length && i < maxCount; i++) {
         const c = candles[i];
@@ -841,6 +853,9 @@ export const isHigherLows = (candles: Models.Candle[], maxCount: number) => {
 }
 
 export const isLowerHighs = (candles: Models.Candle[], maxCount: number) => {
+    if (candles.length === 0) {
+        return false;
+    }
     let previousHigh = candles[0].high;
     for (let i = 1; i < candles.length && i < maxCount; i++) {
         const c = candles[i];

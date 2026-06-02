@@ -126,13 +126,17 @@ const flushTimeSaleRender = (symbol: string) => {
     updateTimeSaleDiagnosticsView();
     Chart.updateUI(symbol, "currentPrice", Helper.numberToStringWithPaddingToCents(render.lastPrice));
     UI.updateClock(render.timeAndSalesTime);
+    let m1Chart = render.allCharts[0];
+    if (!m1Chart) {
+        return;
+    }
 
     let volumeText = `${Helper.largeNumberToString(render.lastVolume.value)} $${Helper.roundToMillion(render.lastVolume.value * render.lastPrice)}M`
     Chart.updateUI(symbol, "currentVolume", volumeText);
     setColorForVolume(render.symbolData.candles, render.symbolData.volumes, render.symbolData.volumes.length - 1);
-    ChartSeries.safeUpdateSeries(render.allCharts[0].volumeSeries, render.lastVolume, `${symbol} m1 volume`);
-    ChartSeries.safeUpdateSeries(render.allCharts[0].vwapSeries, render.lastVwap, `${symbol} m1 vwap`);
-    ChartSeries.safeUpdateSeries(render.allCharts[0].candleSeries, render.lastCandle, `${symbol} m1 candle`);
+    ChartSeries.safeUpdateSeries(m1Chart.volumeSeries, render.lastVolume, `${symbol} m1 volume`);
+    ChartSeries.safeUpdateSeries(m1Chart.vwapSeries, render.lastVwap, `${symbol} m1 vwap`);
+    ChartSeries.safeUpdateSeries(m1Chart.candleSeries, render.lastCandle, `${symbol} m1 candle`);
 };
 
 // Stores the newest T&S render payload and schedules a flush only when needed.
@@ -363,6 +367,10 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
     let newVwapValue = symbolData.totalTradingAmount / symbolData.totalVolume;
     let lastVolume = symbolData.volumes[symbolData.volumes.length - 1];
     let lastVwap = symbolData.m1Vwaps[symbolData.m1Vwaps.length - 1];
+    if (!lastVolume || !lastVwap) {
+        // sometimes timesales data comes in before all chart series data is loaded.
+        return;
+    }
     if (timeframeBucket < Config.Settings.marketOpenTime) {
         // update pre-market indicators
         let haspremarketChange = false;
@@ -537,14 +545,18 @@ const setColorForVolume = (candles: Models.CandlePlus[], volumes: Models.LineSer
     if (currentIndex == 0) {
         return;
     }
-    if (candles[currentIndex].minutesSinceMarketOpen == 0) {
+    let candle = candles[currentIndex];
+    let volume = volumes[currentIndex];
+    let previousVolume = volumes[currentIndex - 1];
+    if (!candle || !volume || !previousVolume) {
+        return;
+    }
+    if (candle.minutesSinceMarketOpen == 0) {
         return;
     }
 
-    let volume = volumes[currentIndex];
-    let previousVolume = volumes[currentIndex - 1];
     if (volume.value > previousVolume.value) {
-        if (candles[currentIndex].close > candles[currentIndex].open) {
+        if (candle.close > candle.open) {
             volume.color = ChartSettings.lightGreen;
         } else {
             volume.color = ChartSettings.lightRed;

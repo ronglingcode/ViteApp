@@ -61,12 +61,12 @@ export const isAllowedForAllOrdersForAllTradebooks = (symbol: string, isLong: bo
         // first 5 minutes, use the high/low of 2nd candle
         let candles = Models.getM1ClosedCandlesSinceOpen(symbol);
         let secondCandle = candles[1];
-        if (isLong && newPrice <= secondCandle.low) {
+        if (isLong && secondCandle && newPrice <= secondCandle.low) {
             allowedReason.allowed = true;
             allowedReason.reason = "low of 2nd M1 candle";
             return allowedReason;
         }
-        if (!isLong && newPrice >= secondCandle.high) {
+        if (!isLong && secondCandle && newPrice >= secondCandle.high) {
             allowedReason.allowed = true;
             allowedReason.reason = "high of 2nd M1 candle";
             return allowedReason;
@@ -75,12 +75,12 @@ export const isAllowedForAllOrdersForAllTradebooks = (symbol: string, isLong: bo
         let candles = Models.getCandlesFromM1SinceOpen(symbol);
         let m5Candles = Models.aggregateCandles(candles, 5);
         let secondM5Candle = m5Candles[1];
-        if (isLong && newPrice <= secondM5Candle.low) {
+        if (isLong && secondM5Candle && newPrice <= secondM5Candle.low) {
             allowedReason.allowed = true;
             allowedReason.reason = "low of 2nd M5 candle";
             return allowedReason;
         }
-        if (!isLong && newPrice >= secondM5Candle.high) {
+        if (!isLong && secondM5Candle && newPrice >= secondM5Candle.high) {
             allowedReason.allowed = true;
             allowedReason.reason = "high of 2nd M5 candle";
             return allowedReason;

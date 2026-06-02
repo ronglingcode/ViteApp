@@ -226,90 +226,6 @@ export const isLongBelowLastSupport = (symbol: string, isLong: boolean, entryPri
 };
 
 /**
- * If the trade direction is against premarket vwap direction, it must wait for the first pullback to happen first. 
- * https://sunrisetrading.atlassian.net/browse/TPS-244
- * @returns true if the condition is satisfied to enter a trade that is against the premarket vwap direction
- */
-export const hasFirstPullbackIfAgainstPremarktVwapDirection = (symbol: string, isLong: boolean) => {
-    if (!Config.getProfileSettingsForSymbol(symbol).entryRules.requireVwapSameDirection) {
-        return true;
-    }
-    let premarketVwapDirection = getPremarketVwapDirection(symbol);
-    if (isLong && premarketVwapDirection.isBelowVwap) {
-        // need to have a pullback already
-        if (Patterns.hasRedBarSinceOpen(symbol)) {
-            return true;
-        } else {
-            return false;
-        }
-    } else if (!isLong && premarketVwapDirection.isAboveVwap) {
-        if (Patterns.hasGreenBarSinceOpen(symbol)) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-    return true;
-};
-
-/**
- * If the entry is within first 2 minutes and last 2 minutes was above vwap, 
- * cannot short on the breakdown. 
- * https://sunrisetrading.atlassian.net/browse/TPS-176
- * @returns the risk size between 0 and 1
- */
-export const checkPremarketVwap = (symbol: string, isLong: boolean, secondsSinceMarketOpen: number) => {
-    return true;
-    if (!Config.getProfileSettingsForSymbol(symbol).entryRules.requireVwapSameDirection) {
-        return true;
-    }
-    // only check this rule for first 2 minutes
-    if (secondsSinceMarketOpen > (60 + 55)) {
-        return true;
-    }
-
-    let premarketVwapDirection = getPremarketVwapDirection(symbol);
-    if (isLong) {
-        // if entire candle below vwap, cannot long at the open
-        if (premarketVwapDirection.isBelowVwap)
-            return false;
-        else
-            return true;
-    } else {
-        if (premarketVwapDirection.isAboveVwap)
-            return false;
-        else
-            return true;
-    }
-};
-const getPremarketVwapDirection = (symbol: string) => {
-    let symbolData = Models.getSymbolData(symbol);
-    let candles = Models.getUndefinedCandles(symbol);
-    let twoMinutesBeforeOpenCandles = [];
-    let vwap = [];
-    let timeWindow = [-2, -1];
-    for (let i = 0; i < candles.length; i++) {
-        if (timeWindow.includes(candles[i].minutesSinceMarketOpen)) {
-            twoMinutesBeforeOpenCandles.push(candles[i]);
-            vwap.push(symbolData.m1Vwaps[i].value);
-            twoMinutesBeforeOpenCandles.push(candles[i + 1]);
-            vwap.push(symbolData.m1Vwaps[i + 1].value);
-            break;
-        }
-    }
-    let isBelowVwap = twoMinutesBeforeOpenCandles[0].high < vwap[0] && twoMinutesBeforeOpenCandles[1].high < vwap[1];
-    let isAboveVwap = twoMinutesBeforeOpenCandles[0].low > vwap[0] && twoMinutesBeforeOpenCandles[1].low > vwap[1];
-    return {
-        isBelowVwap,
-        isAboveVwap,
-    };
-};
-
-
-
-
-
-/**
  * Cannot move stop to less loss
  * https://sunrisetrading.atlassian.net/browse/TPS-184
  * @returns True if allowed
@@ -623,6 +539,9 @@ export const isAllowedByMovingAverage = (symbol: string, isLong: boolean, useMar
     }
     let symbolData = Models.getSymbolData(symbol);
     let lastClosedCandle = symbolData.m1Candles[symbolData.m1Candles.length - 2];
+    if (!lastClosedCandle || symbolData.m1ma5.length < 2 || symbolData.m1ma9.length < 2) {
+        return true;
+    }
     let closePrice = lastClosedCandle.close;
     let lastClosedMa5 = symbolData.m1ma5[symbolData.m1ma5.length - 2].value;
     let lastClosedMa9 = symbolData.m1ma9[symbolData.m1ma9.length - 2].value;
@@ -641,6 +560,9 @@ export const isAllowedByMovingAverage = (symbol: string, isLong: boolean, useMar
         return true;
     }
     let currentCandle = Models.getCurrentCandle(symbol);
+    if (!currentCandle) {
+        return true;
+    }
     if (isLong) {
         if (currentCandle.high >= symbolData.highOfDay) {
             return true;

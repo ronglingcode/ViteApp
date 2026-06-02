@@ -271,4 +271,3 @@ export const debugTableStructure = (content: string): string => {
     }
     return tableSection;
 };
-

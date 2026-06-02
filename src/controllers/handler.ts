@@ -199,6 +199,10 @@ export const numberKeyPressed = async (symbol: string, keyCode: string, isFromBa
         return;
     }
     let orders = OrderFlow.chooseOrderLeg(symbol, [pair], newPrice);
+    if (orders.length === 0) {
+        Firestore.logError(`no order leg selected for ${symbol} at ${newPrice}`, logTags);
+        return;
+    }
     let netQ = Models.getPositionNetQuantity(symbol);
     let positionIsLong = netQ > 0;
     let partialsSplitted = hasSplitPartials(symbol, positionIsLong);
@@ -214,17 +218,13 @@ export const numberKeyPressed = async (symbol: string, keyCode: string, isFromBa
         Firestore.logError(`retry after split to partials`, logTags);
         return;
     }
-    let isLimitOrder = true;
-    if (orders.length > 0) {
-        if (orders[0].orderType == Models.OrderType.STOP) {
-            isLimitOrder = false;
-        }
-    }
+    let order = orders[0];
+    let isLimitOrder = order.orderType != Models.OrderType.STOP;
 
     if (isLimitOrder) {
-        AdjustExitsHandler.tryAdjustSingleLimitExit(symbol, positionIsLong, keyIndex, orders[0], pair, newPrice, isFromBatch, totalPairsCount, logTags);
+        AdjustExitsHandler.tryAdjustSingleLimitExit(symbol, positionIsLong, keyIndex, order, pair, newPrice, isFromBatch, totalPairsCount, logTags);
     } else {
-        AdjustExitsHandler.tryAdjustSingleStopExit(symbol, positionIsLong, keyIndex, orders[0], pair, newPrice, isFromBatch, totalPairsCount, logTags);
+        AdjustExitsHandler.tryAdjustSingleStopExit(symbol, positionIsLong, keyIndex, order, pair, newPrice, isFromBatch, totalPairsCount, logTags);
     }
 };
 

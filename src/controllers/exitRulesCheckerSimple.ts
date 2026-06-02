@@ -164,6 +164,10 @@ export const isLessTightThanClosedCandlesForAdjustStop = (symbol: string, positi
         }
     }
     let candles = Models.getUndefinedCandlesSinceOpen(symbol);
+    if (candles.length === 0) {
+        Firestore.logInfo(`allow moving stop because no candles are loaded`);
+        return true;
+    }
     let mostTightCandlePrice = positionIsLong ? candles[0].low : candles[0].high;
     for (let i = 1; i < candles.length && i < 5; i++) {
         if (positionIsLong) {
