@@ -5,7 +5,6 @@
 import * as WebRequest from './utils/webRequest';
 import * as Helper from './utils/helper';
 import * as TimeHelper from './utils/timeHelper';
-import * as Printer from './utils/printer';
 import * as Firestore from './firestore';
 import * as Broker from './api/broker';
 import * as MarketData from './api/marketData';
@@ -102,24 +101,6 @@ if (exportButton) {
         TvTools.exportTrades();
     });
 }
-let preparationButton = document.getElementById("prepare");
-if (preparationButton) {
-    preparationButton.addEventListener("click", () => {
-        let root = document.getElementById("print_plan");
-        if (!root) {
-            return;
-        }
-        let wl = Models.getWatchlist();
-        wl.forEach(watchlistItem => {
-            let symbol = watchlistItem.symbol;
-            let plan = TradingPlans.getTradingPlans(symbol);
-            if (root) {
-                Printer.printStockPlan(root, plan);
-            }
-        });
-    });
-}
-
 let checkQuantityButton = document.getElementById("check_quantity");
 if (checkQuantityButton) {
     checkQuantityButton.addEventListener("click", () => {
