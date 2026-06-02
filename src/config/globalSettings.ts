@@ -5,6 +5,8 @@ export const impliedMarketCapThresholdInBillions: number = 0.9;
 export const premarketVolumeThresholdInMillions: number = 0.9;
 export const competeForTimeAndSales: boolean = true;
 export const competeForTimeAndSalesWindowSeconds: number = 2 * 60;
+// false: late T&S records still flow into chart/state updates.
+export const skipLateTimeAndSalesChartUpdates: boolean = false;
 export const allowLiveStats: boolean = true;
 export const enableLeftPaneFeatures: boolean = true;
 export const showBestPlans: boolean = enableLeftPaneFeatures && false;

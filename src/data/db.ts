@@ -2,6 +2,7 @@ import * as Chart from '../ui/chart';
 import * as Helper from '../utils/helper';
 import * as TimeHelper from '../utils/timeHelper';
 import * as Config from '../config/config';
+import * as GlobalSettings from '../config/globalSettings';
 import type * as LightweightCharts from 'sunrise-tv-lightweight-charts';
 import * as Firestore from '../firestore';
 import * as Models from '../models/models';
@@ -162,6 +163,9 @@ const shouldIgnoreStaleTimeSale = (
     lastTime: LightweightCharts.UTCTimestamp,
     tradeTime?: number,
 ) => {
+    if (!GlobalSettings.skipLateTimeAndSalesChartUpdates) {
+        return false;
+    }
     if (newTime >= lastTime) {
         return false;
     }
@@ -711,11 +715,15 @@ const updateVwapCount = (symbolData: Models.SymbolData, closePrice: number) => {
 }
 
 /**
- * @returns true if the timestamp was updated, false otherwise
+ * @returns true if the record should flow into chart processing, false otherwise
  */
 export const tryUpdateMaxTimeSaleTimestamp = (record: Models.TimeSale, source: string) => {
     timeSaleDiagnostics.received++;
     updateTimeSaleDiagnosticsView();
+    if (!GlobalSettings.skipLateTimeAndSalesChartUpdates) {
+        return true;
+    }
+
     let tradeId = record.tradeID?.toString() ?? '';
     let symbolData = Models.getSymbolData(record.symbol);
     if (record.timestamp > symbolData.maxTimeSaleTimestamp.timestamp) {
