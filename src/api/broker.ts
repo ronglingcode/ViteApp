@@ -4,7 +4,6 @@ import * as schwabApi from './schwab/api';
 import * as config from '../config/config'
 import * as Models from '../models/models';
 import * as Firestore from '../firestore';
-import * as UI from '../ui/ui';
 import * as Chart from '../ui/chart';
 import * as RiskManager from '../algorithms/riskManager';
 import * as Helper from '../utils/helper';
@@ -358,7 +357,6 @@ const rebuildBrokerAccount = () => {
     window.HybridApp.AccountCache.tradesCount = tradesCount;
     window.HybridApp.AccountCache.nonBreakevenTradesCount = nonBreakevenTradesCount;
     window.HybridApp.AccountCache.realizedPnL = realizedPnL;
-    UI.updateTotalTrades();
     return window.HybridApp.AccountCache;
 };
 

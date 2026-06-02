@@ -35,19 +35,6 @@ export const addToNetwork = (source: string) => {
     */
 }
 
-export const updateTotalTrades = () => {
-    let totalTrades = 0;
-    let nonBreakevenTradesCount = 0;
-    if (window.HybridApp.AccountCache) {
-        nonBreakevenTradesCount = window.HybridApp.AccountCache.nonBreakevenTradesCount;
-        totalTrades = window.HybridApp.AccountCache.tradesCount;
-    }
-    let node = document.getElementById("totalTrades");
-    if (node) {
-        node.innerText = `${nonBreakevenTradesCount}/${totalTrades}`;
-    }
-};
-
 export const reviewChartStart = () => {
     let w = Models.getWatchlist();
     let count = w.length;
