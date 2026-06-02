@@ -2013,8 +2013,6 @@ export interface SchwabAccountActivity {
 
 export interface ExitOrderToDraw {
     price: number,
-    sequenceNumber: number,
-    legNumber: number,
     label: string,
     color: string,
     isBuyOrder: boolean,

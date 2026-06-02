@@ -11,7 +11,6 @@ import * as Broker from '../api/broker';
 import * as LightweightCharts from 'sunrise-tv-lightweight-charts';
 import * as ChartSettings from '../ui/chartSettings';
 import * as AutoTrader from '../algorithms/autoTrader';
-import * as TakeProfit from '../algorithms/takeProfit';
 import * as Handler from '../controllers/handler';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import type { Tradebook } from '../tradebooks/baseTradebook';
@@ -590,8 +589,6 @@ export const createDrawingOrder = (symbol: string, order: Models.OrderModel | un
     let result: Models.ExitOrderToDraw = {
         price: price,
         label: "",
-        sequenceNumber: 0,
-        legNumber: 0,
         color: color,
         isBuyOrder: isBuyOrder,
         orderType: order.orderType,
@@ -601,59 +598,6 @@ export const createDrawingOrder = (symbol: string, order: Models.OrderModel | un
     };
     return result;
 };
-
-const groupExitOrdersByPrice = (orders: Models.ExitOrderToDraw[]) => {
-    let map = new Map<number, Models.ExitOrderToDraw[]>();
-    for (let i = 0; i < orders.length; i++) {
-        let o = orders[i];
-        let entry = map.get(o.price);
-        if (entry) {
-            entry.push(o);
-        } else {
-            map.set(o.price, [o]);
-        }
-    }
-    let result: Models.ExitOrderToDraw[] = [];
-    map.forEach((orders, price) => {
-        const groupedOrder = combineExitOrdersByLegNumber(orders);
-        result.push(groupedOrder);
-
-    });
-    return result;
-};
-
-const combineExitOrdersByLegNumber = (orders: Models.ExitOrderToDraw[]) => {
-    let legNumberMap = new Map<number, Models.ExitOrderToDraw[]>();
-    for (let i = 0; i < orders.length; i++) {
-        let currentLegNumber = orders[i].legNumber;
-        let currentLegNumberEntry = legNumberMap.get(currentLegNumber);
-        if (currentLegNumberEntry) {
-            currentLegNumberEntry.push(orders[i]);
-        } else {
-            legNumberMap.set(currentLegNumber, [orders[i]]);
-        }
-    }
-    let text = "";
-    legNumberMap.forEach((subOrders, legNumber) => {
-        if (legNumber == 1) {
-            text += `Leg1 M1:`;
-        } else if (legNumber == 2) {
-            text += `Leg2 M5:`;
-        } else if (legNumber == 3) {
-            text += `Leg3 M15:`;
-        }
-
-        for (let i = 0; i < subOrders.length; i++) {
-            text += `${subOrders[i].sequenceNumber},`;
-        }
-    });
-    let result: Models.ExitOrderToDraw = {
-        ...orders[0],
-        label: text,
-    };
-    return result;
-
-}
 
 const getRiskMultiplesForDisplay = (symbol: string, isLongPosition: boolean,
     entryPrice: number, stopOutPrice: number | undefined, quantity: number) => {
@@ -1047,31 +991,7 @@ const drawWorkingOrders = async (
     });
     widget.exitOrderPairs = exitOrderPairs;
 
-    let exitGroupsLeg1: number[] = [];
-    let exitGroupsLeg2: number[] = [];
-    let exitGroupsLeg3: number[] = [];
-    for (let i = exitOrderPairs.length - 1; i >= 0; i--) {
-        if (exitGroupsLeg3.length < 3) {
-            exitGroupsLeg3.push(i + 1);
-        } else if (exitGroupsLeg2.length < 4) {
-            exitGroupsLeg2.push(i + 1);
-        } else {
-            exitGroupsLeg1.push(i + 1);
-        }
-    }
-    let exitOrdersString = "";
-    if (exitGroupsLeg1.length > 0) {
-        exitGroupsLeg1.reverse();
-        exitOrdersString += `leg1 M1: ${exitGroupsLeg1.join(",")}, `;
-    }
-    if (exitGroupsLeg2.length > 0) {
-        exitGroupsLeg2.reverse();
-        exitOrdersString += `leg2 M5: ${exitGroupsLeg2.join(",")}, `;
-    }
-    if (exitGroupsLeg3.length > 0) {
-        exitGroupsLeg3.reverse();
-        exitOrdersString += `leg3 M15: ${exitGroupsLeg3.join(",")}, `;
-    }
+    let exitOrdersString = exitOrderPairs.length > 0 ? `Exits: ${exitOrderPairs.length}` : "Exits:";
 
     // draw exit orders
     let ordersToDraw = [];
@@ -1086,61 +1006,20 @@ const drawWorkingOrders = async (
         let stopOutPrice = exitOrderPairs[i]['STOP']?.price;
         let drawingStopOrder = createDrawingOrder(symbol, exitOrderPairs[i]['STOP'], entryPrice, stopOutPrice);
         let drawingLimitOrder = createDrawingOrder(symbol, exitOrderPairs[i]['LIMIT'], entryPrice, stopOutPrice);
-        let takenPartialCount = TakeProfit.BatchCount - exitOrderPairs.length;
-        if (takenPartialCount < 0) {
-            takenPartialCount = 0;
-        }
-        let currentPartialNumber = i + 1 + takenPartialCount;
-        let legNumber = 1;
-        if (currentPartialNumber <= 3) {
-            legNumber = 1;
-        } else if (currentPartialNumber <= 7) {
-            legNumber = 2;
-        } else {
-            legNumber = 3;
-        }
         if (drawingStopOrder) {
-            drawingStopOrder.legNumber = legNumber;
-            drawingStopOrder.sequenceNumber = i + 1;
+            drawingStopOrder.label = `${i + 1}:STOP`;
         }
         if (drawingLimitOrder) {
-            drawingLimitOrder.legNumber = legNumber;
-            drawingLimitOrder.sequenceNumber = i + 1;
+            drawingLimitOrder.label = `${i + 1}:LIMIT`;
         }
         if (drawingStopOrder) {
-
-            //text = `${i + 1}:${drawingStopOrder.riskMultiples}%,`;
             ordersToDraw.push(drawingStopOrder);
         }
         if (drawingLimitOrder) {
             ordersToDraw.push(drawingLimitOrder);
-
-            //text = `${i + 1}:${drawingLimitOrder.riskMultiples}%,`;
         }
-        //exitOrdersString += text;
-        /*
-        ordersToDraw.forEach(orderToDraw => {
-            let hasOrdersAtSamePrice = false;
-            for (let j = 0; j < widget.exitOrdersPriceLines.length; j++) {
-                let oldPriceLine = widget.exitOrdersPriceLines[j];
-                if (oldPriceLine.options().price === orderToDraw.price) {
-                    hasOrdersAtSamePrice = true;
-                    oldPriceLine.applyOptions({
-                        ...oldPriceLine.options(),
-                        title: oldPriceLine.options().title + "," + text
-                    })
-                    break;
-                }
-            }
-            if (!hasOrdersAtSamePrice) {
-                let l = createPriceLine(widget.candleSeries, orderToDraw.price, text, orderToDraw.color, null, false, "solid");
-                widget.exitOrdersPriceLines.push(l);
-            }
-            console.log(`hasOrdersAtSamePrice: ${hasOrdersAtSamePrice}`);
-        });*/
     }
-    let groupedExitOrders = groupExitOrdersByPrice(ordersToDraw);
-    groupedExitOrders.forEach(orderToDraw => {
+    ordersToDraw.forEach(orderToDraw => {
         let l = createPriceLine(widget.candleSeries, orderToDraw.price, orderToDraw.label, orderToDraw.color, null, false, "solid");
         widget.exitOrdersPriceLines.push(l);
     });
