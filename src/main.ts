@@ -153,6 +153,47 @@ if (toggleManagementCardExitBlockButton) {
 Firestore.addToLogView('version 1.364', 'Info');
 
 let now = new Date();
+const historicalChartLoadAttemptCount = 3;
+const historicalChartRetryDelayMs = 1000;
+
+const delay = (ms: number) => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+};
+
+const getErrorMessage = (error: unknown) => {
+    if (error instanceof Error) {
+        return error.message;
+    }
+    return `${error}`;
+};
+
+const loadHistoricalChartsWithRetry = async (symbol: string, todayString: string) => {
+    let lastFailure = '';
+    for (let attempt = 1; attempt <= historicalChartLoadAttemptCount; attempt++) {
+        try {
+            let priceHistory = await MarketData.getFullPriceHistory(symbol, Helper.isFutures(symbol), todayString);
+            let initialized = DB.initialize(symbol, priceHistory.today1MinuteBars, priceHistory.dailyBars);
+            if (initialized) {
+                return priceHistory;
+            }
+            lastFailure = `initialize loaded 0 candles from ${priceHistory.today1MinuteBars.length} history bars`;
+            Firestore.logError(`${symbol} historical chart initialize failed (attempt ${attempt}/${historicalChartLoadAttemptCount}): ${lastFailure}`);
+            console.error(`${symbol} historical chart initialize failed`, { attempt, priceHistory });
+        } catch (error) {
+            lastFailure = getErrorMessage(error);
+            Firestore.logError(`${symbol} historical chart load failed (attempt ${attempt}/${historicalChartLoadAttemptCount}): ${lastFailure}`);
+            console.error(`${symbol} historical chart load failed`, error);
+        }
+
+        if (attempt < historicalChartLoadAttemptCount) {
+            await delay(historicalChartRetryDelayMs);
+        }
+    }
+
+    let finalMessage = `${symbol} HISTORICAL CHARTS FAILED after ${historicalChartLoadAttemptCount} attempts. Time and sales updates require historical candles; live chart updates are blocked. Last failure: ${lastFailure}`;
+    Firestore.logError(finalMessage);
+    throw new Error(finalMessage);
+};
 
 window.TradingApp.TOS.initialize().then(async () => {
     // tos initialized with new access token
@@ -199,9 +240,7 @@ window.TradingApp.TOS.initialize().then(async () => {
             return;
         }
         let sharesOutstandingPromise = MarketData.getSharesOutstanding(symbol);
-        MarketData.getFullPriceHistory(symbol, Helper.isFutures(symbol), todayString).then(async (priceHistory) => {
-            // populate current chart with today's 1-minute bars
-            DB.initialize(symbol, priceHistory.today1MinuteBars, priceHistory.dailyBars);
+        loadHistoricalChartsWithRetry(symbol, todayString).then(async (priceHistory) => {
             Chart.updateAccountUIStatusForSymbol(symbol);
             MarketData.setPreviousDayPremarketVolume(symbol, priceHistory.premarketDollarCollection);
 
@@ -230,6 +269,8 @@ window.TradingApp.TOS.initialize().then(async () => {
             if (now > Helper.getMarketOpenTime()) {
                 AutoTrader.onMarketOpen(symbol);
             }
+        }).catch(error => {
+            console.error(`${symbol} startup stopped because historical charts did not load`, error);
         });
     }
     UI.setupAutoSync();

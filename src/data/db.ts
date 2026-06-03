@@ -243,10 +243,11 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyC
     let data = inputCandles;
     if (!widget || !data) {
         console.log("no price history or no widget");
-        return;
+        return false;
     }
     let symbolData = Models.getSymbolData(symbol);
     let keyAreasToDraw = TradingPlans.getKeyAreasToDraw(symbol);
+    let loadedCandlesCount = 0;
     for (let i = 0; i < keyAreasToDraw.length; i++) {
         symbolData.keyAreaData.push({
             candles: [],
@@ -276,6 +277,7 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyC
         let newD = Helper.jsDateToUTC(d);
         let newCandle = Models.buildCandlePlus(symbol, element, newD, Helper.getMinutesSinceMarketOpen(d));
         symbolData.candles.push(newCandle);
+        loadedCandlesCount++;
         symbolData.volumes.push({ time: newD, value: element.volume });
 
         for (let i = 0; i < keyAreasToDraw.length; i++) {
@@ -341,6 +343,9 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyC
             //AutoTrader.onMinuteClosed(symbol, newCandle, false, symbolData);
         }
     }
+    if (loadedCandlesCount == 0) {
+        return false;
+    }
     for (let i = 1; i < symbolData.volumes.length; i++) {
         setColorForVolume(symbolData.candles, symbolData.volumes, i);
     }
@@ -394,6 +399,7 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyC
     BasicIndicators.updateIndicators(symbol, symbolData, dailyCandles);
     Chart.onPriceHistoryLoaded(symbol);
     Chart.drawLevelsAfterChartInitialize(widget);
+    return true;
 }
 const updateFromTimeSaleCore = (timesale: Models.TimeSale): TimeSaleApplyMeta | null => {
     let symbol = timesale.symbol;

@@ -2,6 +2,7 @@ import * as Secret from '../../config/secret';
 import * as Models from '../../models/models';
 import * as TimeHelper from '../../utils/timeHelper';
 import * as Helper from '../../utils/helper';
+import * as Firestore from '../../firestore';
 
 export const getPriceHistory = async (symbol: string, timeframe: number) => {
     let apiKey = Secret.massive().apiKey;
@@ -36,6 +37,16 @@ export const getBars = async (symbol: string, url: string) => {
     let responseJson = await response.json();
     let results = responseJson.results;
     let candles: Models.CandlePlus[] = [];
+    if (!response.ok || !Array.isArray(results)) {
+        let failedResponse = {
+            status: response.status,
+            statusText: response.statusText,
+            response: responseJson,
+        };
+        Firestore.logError(`[Massive] ${symbol} history API failed: ${JSON.stringify(failedResponse)}`);
+        console.error(`[Massive] ${symbol} history API failed`, failedResponse);
+        throw new Error(`[Massive] ${symbol} history API failed: ${JSON.stringify(failedResponse)}`);
+    }
     results.forEach((result: any) => {
         let startTime = result.t;
         let startDate = new Date(startTime);
