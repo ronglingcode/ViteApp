@@ -35,14 +35,14 @@ export class MarketDataState {
         }
     }
 
-    replaceHistory(symbol: string, candles: StateLite.Candle[]) {
+    replaceHistory(symbol: string, candles: StateLite.Candle[], dailyCandles: StateLite.Candle[]) {
         let state = this.getState(symbol);
         state.candles = candles;
         let lastCandle = candles[candles.length - 1];
         if (lastCandle) {
             state.lastPrice = lastCandle.close;
         }
-        this.post({ type: 'history', symbol, candles });
+        this.post({ type: 'history', symbol, candles, dailyCandles });
         this.markDirty(symbol);
     }
 

@@ -28,9 +28,24 @@ const digitKeyCodes = new Set([
 ]);
 
 const batchAdjustKeyCodes = new Set(['KeyT', 'KeyG', 'KeyH']);
+const marketActionKeyCodes = new Set(['KeyF', 'KeyM']);
+
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const guessNetQuantityFromExitOrder = (exitIsBuy: boolean) => {
     return exitIsBuy ? -1 : 1;
+};
+
+const pricesMatch = (left: number | undefined, right: number) => {
+    return left != null && Math.abs(left - right) < 0.01;
+};
+
+const getPairLeg = (pair: StateLite.LiteExitPair, stopLeg: boolean) => {
+    return stopLeg ? pair.STOP : pair.LIMIT;
+};
+
+const getMarketOutLeg = (pair: StateLite.LiteExitPair) => {
+    return pair.LIMIT ?? pair.STOP;
 };
 
 export class LiteExitAdjuster {
@@ -47,7 +62,7 @@ export class LiteExitAdjuster {
         if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) {
             return;
         }
-        if (!digitKeyCodes.has(event.code) && !batchAdjustKeyCodes.has(event.code)) {
+        if (!digitKeyCodes.has(event.code) && !batchAdjustKeyCodes.has(event.code) && !marketActionKeyCodes.has(event.code)) {
             return;
         }
         let symbol = this.callbacks.getActiveSymbol();
@@ -62,6 +77,10 @@ export class LiteExitAdjuster {
         try {
             if (digitKeyCodes.has(event.code)) {
                 await this.handleDigitAdjust(symbol, event.code);
+            } else if (event.code === 'KeyM') {
+                await this.handleMarketOutFirstPair(symbol);
+            } else if (event.code === 'KeyF') {
+                await this.handleFlatten(symbol);
             } else {
                 await this.handleBatchAdjust(symbol, event.code, event.shiftKey);
             }
@@ -134,6 +153,63 @@ export class LiteExitAdjuster {
         return newPrice;
     }
 
+    private adjustedOrderIsVisible(
+        symbol: string,
+        originalOrder: StateLite.LiteOrderModel,
+        newPrice: number,
+        stopLeg: boolean
+    ) {
+        let pairs = ChartLite.getExitOrderPairs(symbol);
+        return pairs.some(pair => {
+            let visibleOrder = getPairLeg(pair, stopLeg);
+            if (!visibleOrder) {
+                return false;
+            }
+            if (visibleOrder.orderID === originalOrder.orderID) {
+                return pricesMatch(visibleOrder.price, newPrice);
+            }
+            return visibleOrder.orderType === originalOrder.orderType &&
+                visibleOrder.isBuy === originalOrder.isBuy &&
+                pricesMatch(visibleOrder.price, newPrice);
+        });
+    }
+
+    private orderIsVisible(symbol: string, originalOrder: StateLite.LiteOrderModel) {
+        let pairs = ChartLite.getExitOrderPairs(symbol);
+        return pairs.some(pair => pair.STOP?.orderID === originalOrder.orderID || pair.LIMIT?.orderID === originalOrder.orderID);
+    }
+
+    private async refreshUntilAdjusted(
+        symbol: string,
+        originalOrder: StateLite.LiteOrderModel,
+        newPrice: number,
+        stopLeg: boolean
+    ) {
+        for (let attempt = 0; attempt < 3; attempt++) {
+            if (attempt > 0) {
+                await wait(700);
+            }
+            await this.callbacks.refreshAccount();
+            if (this.adjustedOrderIsVisible(symbol, originalOrder, newPrice, stopLeg)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private async refreshUntilOrderGone(symbol: string, originalOrder: StateLite.LiteOrderModel) {
+        for (let attempt = 0; attempt < 4; attempt++) {
+            if (attempt > 0) {
+                await wait(800);
+            }
+            await this.callbacks.refreshAccount();
+            if (!this.orderIsVisible(symbol, originalOrder)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private async replaceExitPairAtPrice(
         pair: StateLite.LiteExitPair,
         newPrice: number,
@@ -143,12 +219,65 @@ export class LiteExitAdjuster {
         if (!activeSecrets) {
             throw new Error('Not connected');
         }
-        return SchwabLite.replaceExitPairWithNewPrice(
+        let order = getPairLeg(pair, stopLeg);
+        if (!order) {
+            throw new Error(`Missing ${stopLeg ? 'STOP' : 'LIMIT'} leg for ${pair.symbol}`);
+        }
+        try {
+            await SchwabLite.replaceExitPairWithNewPrice(
+                activeSecrets.schwab,
+                activeSecrets.schwab.accessToken,
+                pair,
+                newPrice,
+                stopLeg
+            );
+        } catch (error) {
+            let adjusted = await this.refreshUntilAdjusted(pair.symbol, order, newPrice, stopLeg);
+            if (adjusted) {
+                this.callbacks.logEvent(`${pair.symbol} replace returned error, refresh confirmed order changed`, true);
+                return;
+            }
+            throw error;
+        }
+    }
+
+    private async marketOutExitPair(pair: StateLite.LiteExitPair) {
+        let activeSecrets = this.callbacks.getActiveSecrets();
+        if (!activeSecrets) {
+            throw new Error('Not connected');
+        }
+        let order = getMarketOutLeg(pair);
+        if (!order) {
+            throw new Error(`Missing exit leg for ${pair.symbol}`);
+        }
+        try {
+            await SchwabLite.replaceExitPairWithMarketOrder(
+                activeSecrets.schwab,
+                activeSecrets.schwab.accessToken,
+                pair
+            );
+        } catch (error) {
+            let adjusted = await this.refreshUntilOrderGone(pair.symbol, order);
+            if (adjusted) {
+                this.callbacks.logEvent(`${pair.symbol} market out returned error, refresh confirmed order changed`, true);
+                return order.quantity;
+            }
+            throw error;
+        }
+        return order.quantity;
+    }
+
+    private async placeClosingMarketOrder(symbol: string, quantity: number, netQuantity: number) {
+        let activeSecrets = this.callbacks.getActiveSecrets();
+        if (!activeSecrets) {
+            throw new Error('Not connected');
+        }
+        await SchwabLite.placeClosingMarketOrder(
             activeSecrets.schwab,
             activeSecrets.schwab.accessToken,
-            pair,
-            newPrice,
-            stopLeg
+            symbol,
+            quantity,
+            netQuantity
         );
     }
 
@@ -166,7 +295,60 @@ export class LiteExitAdjuster {
         await this.callbacks.refreshAccount();
     }
 
+    private async handleMarketOutFirstPair(symbol: string) {
+        let { pair, index, totalPairsCount } = this.getExitPairFromDigitKey(symbol, 'Digit1');
+        if (!pair) {
+            throw new Error(`No exit pair ${index + 1} for ${symbol}; found ${totalPairsCount}`);
+        }
+        let quantity = await this.marketOutExitPair(pair);
+        this.callbacks.setOrderStatus(`Market out ${symbol} pair 1 qty ${StateLite.formatQuantity(quantity)}`);
+        this.callbacks.logEvent(`Market out ${symbol} pair 1 qty ${StateLite.formatQuantity(quantity)}`);
+        await this.callbacks.refreshAccount();
+    }
+
+    private async handleMarketOutHalf(symbol: string) {
+        let pairs = ChartLite.getExitOrderPairs(symbol);
+        if (pairs.length === 0) {
+            throw new Error(`No exit pairs for ${symbol}`);
+        }
+        let pairsToMarketOut = pairs.slice(0, Math.ceil(pairs.length / 2));
+        let totalQuantity = 0;
+        for (let pair of pairsToMarketOut) {
+            totalQuantity += await this.marketOutExitPair(pair);
+        }
+        this.callbacks.setOrderStatus(`Market out ${pairsToMarketOut.length} ${symbol} exits qty ${StateLite.formatQuantity(totalQuantity)}`);
+        this.callbacks.logEvent(`Market out ${pairsToMarketOut.length} ${symbol} exits qty ${StateLite.formatQuantity(totalQuantity)}`);
+        await this.callbacks.refreshAccount();
+    }
+
+    private async handleFlatten(symbol: string) {
+        let netQuantity = this.callbacks.getPositionQuantity(symbol);
+        let pairs = ChartLite.getExitOrderPairs(symbol);
+        if (netQuantity === 0 && pairs.length === 0) {
+            throw new Error(`No position or exit pairs for ${symbol}`);
+        }
+
+        let remainingQuantity = Math.abs(netQuantity);
+        let marketOutQuantity = 0;
+        for (let pair of pairs) {
+            let quantity = await this.marketOutExitPair(pair);
+            marketOutQuantity += quantity;
+            remainingQuantity -= quantity;
+        }
+        if (netQuantity !== 0 && remainingQuantity > 0) {
+            await this.placeClosingMarketOrder(symbol, remainingQuantity, netQuantity);
+            marketOutQuantity += remainingQuantity;
+        }
+        this.callbacks.setOrderStatus(`Flatten ${symbol} qty ${StateLite.formatQuantity(marketOutQuantity)}`);
+        this.callbacks.logEvent(`Flatten ${symbol} qty ${StateLite.formatQuantity(marketOutQuantity)}`);
+        await this.callbacks.refreshAccount();
+    }
+
     private async handleBatchAdjust(symbol: string, code: string, shiftKey: boolean) {
+        if (shiftKey && (code === 'KeyG' || code === 'KeyH')) {
+            await this.handleMarketOutHalf(symbol);
+            return;
+        }
         if (shiftKey) {
             this.callbacks.logEvent(`${code} with shift ignored in lite`);
             return;

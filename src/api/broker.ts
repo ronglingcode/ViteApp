@@ -44,10 +44,32 @@ export const test2 = () => {
 
 let lastAccountSyncTime: Date = new Date();
 
+const isLiteRuntime = () => {
+    return Boolean((window.HybridApp.Settings as any)?.liteMode || document.getElementById('liteApp'));
+};
+
+const dispatchLiteAccountRefresh = (source: string) => {
+    setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('tradingscripts:lite-account-refresh', {
+            detail: { source },
+        }));
+    }, 500);
+    setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('tradingscripts:lite-account-refresh', {
+            detail: { source },
+        }));
+    }, 1000);
+};
+
 export const UpdateAccountUIWithDelay = (source: string) => {
     let now = new Date();
     if (now > lastAccountSyncTime) {
         lastAccountSyncTime = new Date(now.getTime() + 900);
+        if (isLiteRuntime()) {
+            console.log(`sync lite account with delay`);
+            dispatchLiteAccountRefresh(source);
+            return;
+        }
         console.log(`sync account with delay`);
         setTimeout(() => {
             Chart.updateAccountUIStatus(`update account ui with delay ${source}`);

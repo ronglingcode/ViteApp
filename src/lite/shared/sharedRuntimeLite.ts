@@ -1,8 +1,10 @@
 import * as RiskManager from '../../algorithms/riskManager';
+import * as BasicIndicators from '../../indicators/basicIndicators';
 import * as Models from '../../models/models';
 import * as TradingPlans from '../../models/tradingPlans/tradingPlans';
 import * as TradebooksManager from '../../tradebooks/tradebooksManager';
 import type { Tradebook } from '../../tradebooks/baseTradebook';
+import * as Helper from '../../utils/helper';
 import * as StateLite from '../models/stateLite';
 
 interface TradebookRenderCallbacks {
@@ -21,6 +23,7 @@ const getHybridApp = () => {
     hybridApp.AccountCache = hybridApp.AccountCache ?? createEmptyBrokerAccount();
     hybridApp.Settings = hybridApp.Settings ?? {};
     hybridApp.Settings.checkSpread = true;
+    hybridApp.Settings.liteMode = true;
     hybridApp.UIState = hybridApp.UIState ?? {
         activeTabIndex: -1,
     };
@@ -61,6 +64,10 @@ const toModelOrder = (order: StateLite.LiteOrderModel | undefined): Models.Order
     };
 };
 
+const toModelEntryOrder = (order: StateLite.LiteOrderModel): Models.EntryOrderModel => {
+    return toModelOrder(order) as Models.EntryOrderModel;
+};
+
 const toModelExitPair = (pair: StateLite.LiteExitPair): Models.ExitPair => {
     return {
         symbol: pair.symbol,
@@ -72,6 +79,8 @@ const toModelExitPair = (pair: StateLite.LiteExitPair): Models.ExitPair => {
 };
 
 const toModelCandle = (symbol: string, candle: StateLite.Candle): Models.CandlePlus => {
+    let localDate = Helper.tvTimestampToLocalJsDate(candle.time);
+    let datetime = localDate.getTime();
     return {
         symbol,
         time: candle.time as any,
@@ -80,10 +89,10 @@ const toModelCandle = (symbol: string, candle: StateLite.Candle): Models.CandleP
         low: candle.low,
         close: candle.close,
         volume: candle.volume,
-        datetime: candle.time * 1000,
+        datetime,
         vwap: candle.close,
-        minutesSinceMarketOpen: 0,
-        firstTradeTime: candle.time * 1000,
+        minutesSinceMarketOpen: Helper.getMinutesSinceMarketOpen(localDate),
+        firstTradeTime: datetime,
     };
 };
 
@@ -98,10 +107,25 @@ const updateVwapData = (symbol: string) => {
     let symbolData = Models.getSymbolData(symbol);
     let totalVolume = 0;
     let totalTradingAmount = 0;
+    let premarketDollarTraded = 0;
+    let premktAboveVwapCount = 0;
+    let premktBelowVwapCount = 0;
     symbolData.m1Vwaps = [];
     symbolData.candles.forEach(candle => {
+        let previousVwap = totalVolume > 0 ? totalTradingAmount / totalVolume : 0;
+        let tradingAmount = candle.volume * Models.getTypicalPrice(candle);
+        if (candle.minutesSinceMarketOpen < 0) {
+            premarketDollarTraded += tradingAmount;
+            if (previousVwap > 0 && candle.minutesSinceMarketOpen > -30) {
+                if (candle.close > previousVwap) {
+                    premktAboveVwapCount++;
+                } else if (candle.close < previousVwap) {
+                    premktBelowVwapCount++;
+                }
+            }
+        }
         totalVolume += candle.volume;
-        totalTradingAmount += candle.volume * Models.getTypicalPrice(candle);
+        totalTradingAmount += tradingAmount;
         symbolData.m1Vwaps.push({
             time: candle.time,
             value: totalVolume > 0 ? totalTradingAmount / totalVolume : candle.close,
@@ -109,21 +133,89 @@ const updateVwapData = (symbol: string) => {
     });
     symbolData.totalVolume = totalVolume;
     symbolData.totalTradingAmount = totalTradingAmount;
+    symbolData.premarketDollarTraded = premarketDollarTraded;
+    symbolData.premktAboveVwapCount = premktAboveVwapCount;
+    symbolData.premktBelowVwapCount = premktBelowVwapCount;
 };
 
-const updateHighLow = (symbol: string) => {
+const updateSessionHighLow = (symbol: string) => {
     let symbolData = Models.getSymbolData(symbol);
-    if (symbolData.candles.length === 0) {
-        return;
-    }
-    symbolData.highOfDay = Math.max(...symbolData.candles.map(candle => candle.high));
-    symbolData.lowOfDay = Math.min(...symbolData.candles.map(candle => candle.low));
+    symbolData.highOfDay = 0;
+    symbolData.lowOfDay = 99999999;
+    symbolData.premktHigh = 0;
+    symbolData.premktLow = 99999999;
+    symbolData.candles.forEach(candle => {
+        if (candle.minutesSinceMarketOpen < 0) {
+            symbolData.premktHigh = Math.max(symbolData.premktHigh, Math.ceil(candle.high * 100) / 100);
+            symbolData.premktLow = Math.min(symbolData.premktLow, Math.floor(candle.low * 100) / 100);
+        } else {
+            symbolData.highOfDay = Math.max(symbolData.highOfDay, Math.ceil(candle.high * 100) / 100);
+            symbolData.lowOfDay = Math.min(symbolData.lowOfDay, Math.floor(candle.low * 100) / 100);
+        }
+    });
 };
 
-const registerLiteChartWidget = (symbol: string, tradebooks: Map<string, Tradebook>) => {
+const getRequiredElement = <T extends Element>(container: ParentNode, selector: string): T => {
+    let element = container.querySelector(selector);
+    if (!element) {
+        throw new Error(`Missing lite chart element ${selector}`);
+    }
+    return element as T;
+};
+
+const getElementOrFallback = <T extends HTMLElement>(container: ParentNode, selector: string, tagName = 'span'): T => {
+    return (container.querySelector(selector) ?? document.createElement(tagName)) as T;
+};
+
+const createLiteWidgetHtmlContents = (index: number): Models.ChartWidgetHtmlContents => {
+    let container = document.getElementById(`chartContainer${index}`);
+    if (!container) {
+        throw new Error(`Missing lite chart container ${index}`);
+    }
+    let chart = getRequiredElement<HTMLElement>(container, `#chart${index}`);
+    let currentCandle = getRequiredElement<HTMLElement>(container, '.currentCandle');
+    let quantityBar = getRequiredElement<HTMLElement>(container, '.quantityBar');
+    let quantityInputs = quantityBar.getElementsByTagName('input');
+    let quantityButtons = quantityBar.getElementsByTagName('button');
+    let tradingPlans = getRequiredElement<HTMLElement>(container, '.tradingPlans');
+    let sideBar = getRequiredElement<HTMLElement>(container, '.sideBar');
+
+    return {
+        chartM1: chart,
+        symbol: getRequiredElement<HTMLElement>(container, `[id="symbol${index}"]`),
+        container,
+        positionCount: getRequiredElement<Element>(container, '.positionCount'),
+        popupWindow: document.getElementById(`chart${index}popup`) as HTMLElement,
+        exitOrders: getRequiredElement<HTMLElement>(container, '.exitOrders'),
+        exitButtonsContainer: getRequiredElement<HTMLElement>(container, '.exitButtons'),
+        timeframeButtonsContainer: document.createElement('span'),
+        currentCandle: {
+            open: getRequiredElement<HTMLElement>(currentCandle, '.ohlc_o'),
+            high: getRequiredElement<HTMLElement>(currentCandle, '.ohlc_h'),
+            low: getRequiredElement<HTMLElement>(currentCandle, '.ohlc_l'),
+            close: getRequiredElement<HTMLElement>(currentCandle, '.ohlc_c'),
+        },
+        quantityElements: {
+            input: quantityInputs[0],
+            largeOrderInput: quantityInputs[1] ?? document.createElement('input'),
+            percentageButton: quantityButtons[0],
+            fixedQuantityButton: quantityButtons[1],
+        },
+        tradingPlans: {
+            long: getElementOrFallback<HTMLElement>(tradingPlans, '.tradingPlansLong'),
+            short: getElementOrFallback<HTMLElement>(tradingPlans, '.tradingPlansShort'),
+        },
+        sideBar,
+        tradebookButtons: getRequiredElement<HTMLElement>(sideBar, '.tradebookButtons'),
+    };
+};
+
+const registerLiteChartWidget = (symbol: string, tradebooks: Map<string, Tradebook>, index: number) => {
     let existingWidget = Models.getChartWidget(symbol) as any;
     let widget = existingWidget ?? {};
     widget.symbol = symbol;
+    widget.tabIndex = index;
+    widget.htmlContents = widget.htmlContents ?? createLiteWidgetHtmlContents(index);
     widget.tradebooks = tradebooks;
     widget.entryOrders = widget.entryOrders ?? [];
     widget.exitOrderPairs = widget.exitOrderPairs ?? [];
@@ -203,6 +295,7 @@ export const initializeSharedRuntime = (
     secrets: StateLite.LiteSecrets
 ) => {
     let hybridApp = getHybridApp();
+    let liteProfileName = 'schwab';
     hybridApp.Algo.RiskManager = RiskManager;
     hybridApp.Models.Models = Models;
     hybridApp.Models.TradingPlans = TradingPlans;
@@ -213,7 +306,7 @@ export const initializeSharedRuntime = (
         marketCapInMillions: 0,
     }));
     hybridApp.TradingData = {
-        activeProfileName: config.activeProfileName,
+        activeProfileName: liteProfileName,
         tradingSettings: config.tradingSettings,
         googleDocContent: '',
     };
@@ -242,7 +335,7 @@ export const renderTradebooksForWatchlist = (
 
         sideBar.querySelectorAll('[data-lite-tradebook="true"]').forEach(element => element.remove());
         let tradebooks = TradebooksManager.createAllTradebooks(item.symbol);
-        registerLiteChartWidget(item.symbol, tradebooks);
+        registerLiteChartWidget(item.symbol, tradebooks, index);
         TradebooksManager.updateTradebooksStatus(
             item.symbol,
             tradebooks,
@@ -258,14 +351,15 @@ export const syncAccountSnapshot = (account: StateLite.LiteAccountSnapshot) => {
     let previousAccount = hybridApp.AccountCache as Models.BrokerAccount | undefined;
     let nextAccount = createEmptyBrokerAccount();
     nextAccount.orderExecutions = previousAccount?.orderExecutions ?? new Map();
-    nextAccount.entryOrders = previousAccount?.entryOrders ?? new Map();
+    nextAccount.entryOrders = new Map();
     nextAccount.trades = previousAccount?.trades ?? new Map();
-    nextAccount.currentBalance = previousAccount?.currentBalance ?? 0;
+    nextAccount.currentBalance = account.currentBalance || previousAccount?.currentBalance || 0;
     nextAccount.tradesCount = previousAccount?.tradesCount ?? 0;
     nextAccount.nonBreakevenTradesCount = previousAccount?.nonBreakevenTradesCount ?? 0;
     nextAccount.realizedPnL = previousAccount?.realizedPnL ?? 0;
 
     hybridApp.ChartWidgets.forEach((widget: any) => {
+        widget.entryOrders = [];
         widget.exitOrderPairs = [];
     });
     account.positions.forEach(position => {
@@ -282,18 +376,33 @@ export const syncAccountSnapshot = (account: StateLite.LiteAccountSnapshot) => {
             widget.exitOrderPairs = nextAccount.exitPairs.get(symbol) ?? [];
         }
     });
+    account.entryOrders.forEach((orders, symbol) => {
+        nextAccount.entryOrders.set(symbol, orders.map(toModelEntryOrder));
+        let widget = Models.getChartWidget(symbol) as any;
+        if (widget) {
+            widget.entryOrders = nextAccount.entryOrders.get(symbol) ?? [];
+        }
+    });
     hybridApp.AccountCache = nextAccount;
 };
 
-export const syncHistory = (symbol: string, candles: StateLite.Candle[]) => {
+export const syncHistory = (symbol: string, candles: StateLite.Candle[], dailyCandles: StateLite.Candle[] = []) => {
     let symbolData = Models.getSymbolData(symbol);
     let modelCandles = candles.map(candle => toModelCandle(symbol, candle));
     symbolData.candles = modelCandles;
-    symbolData.m1Candles = modelCandles;
-    symbolData.volumes = candles.map(createVolumePoint);
-    symbolData.m1Volumes = symbolData.volumes;
-    updateHighLow(symbol);
+    symbolData.m1Candles = modelCandles.slice();
+    let volumePoints = candles.map(createVolumePoint);
+    symbolData.volumes = volumePoints;
+    symbolData.m1Volumes = volumePoints.slice();
+    updateSessionHighLow(symbol);
     updateVwapData(symbol);
+    if (dailyCandles.length > 0) {
+        BasicIndicators.updateIndicators(
+            symbol,
+            symbolData,
+            dailyCandles.map(candle => toModelCandle(symbol, candle))
+        );
+    }
 };
 
 export const syncSnapshot = (snapshot: StateLite.MarketSnapshot) => {
@@ -323,7 +432,7 @@ export const syncSnapshot = (snapshot: StateLite.MarketSnapshot) => {
         symbolData.askPrice = snapshot.ask;
         symbolData.schwabLevelOneQuote.askPrice = snapshot.ask;
     }
-    updateHighLow(snapshot.symbol);
+    updateSessionHighLow(snapshot.symbol);
     updateVwapData(snapshot.symbol);
     TradebooksManager.refreshTradebooksStatusForSymbol(snapshot.symbol);
 };

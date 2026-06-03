@@ -105,7 +105,9 @@ export interface LiteExitPair {
 
 export interface LiteAccountSnapshot {
     positions: Map<string, PositionSnapshot>;
+    entryOrders: Map<string, LiteOrderModel[]>;
     exitPairs: Map<string, LiteExitPair[]>;
+    currentBalance: number;
 }
 
 export interface MarketSnapshot {
@@ -129,7 +131,7 @@ export type MainToWorkerMessage =
 
 export type WorkerToMainMessage =
     | { type: 'status'; source: string; status: string }
-    | { type: 'history'; symbol: string; candles: Candle[] }
+    | { type: 'history'; symbol: string; candles: Candle[]; dailyCandles: Candle[] }
     | { type: 'snapshot'; snapshots: MarketSnapshot[] }
     | { type: 'accountActivity'; summary: string }
     | { type: 'error'; source: string; message: string };
@@ -220,7 +222,17 @@ export const formatClock = () => {
 };
 
 export const toTradingViewTime = (timestampMs: number) => {
-    return Math.floor(timestampMs / 1000);
+    let date = new Date(timestampMs);
+    date.setSeconds(0, 0);
+    return Date.UTC(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        date.getHours(),
+        date.getMinutes(),
+        0,
+        0
+    ) / 1000;
 };
 
 export const getMinuteStartMs = (timestampMs: number) => {

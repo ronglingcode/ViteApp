@@ -1,13 +1,21 @@
 import * as LightweightCharts from 'sunrise-tv-lightweight-charts';
+import * as TradingPlans from '../../models/tradingPlans/tradingPlans';
 import * as StateLite from '../models/stateLite';
+import * as StatusLite from './statusLite';
 
 interface LiteChartWidget {
     chart: any;
-    candleSeries: any;
+    rangeSeries: any;
     resizeObserver: ResizeObserver;
     crosshairPrice: number;
     exitOrderPairs: StateLite.LiteExitPair[];
+    entryOrders: StateLite.LiteOrderModel[];
     exitOrderPriceLines: any[];
+    entryOrderPriceLines: any[];
+    currentPriceLine?: any;
+    lastPrice?: number;
+    rangeCenter?: number;
+    rangeHalfSize?: number;
 }
 
 interface ExitOrderToDraw {
@@ -17,6 +25,9 @@ interface ExitOrderToDraw {
 }
 
 const widgets = new Map<string, LiteChartWidget>();
+const rangeWarningKeys = new Set<string>();
+const recenterThresholdRatio = 0.3;
+
 const focusChartSize = {
     width: 455,
     height: 550,
@@ -60,19 +71,11 @@ const chartSettings = {
     },
     timeScale: {
         borderColor: 'rgba(197, 203, 206, 0.8)',
-        timeVisible: true,
-        rightOffset: 10,
-        barSpacing: 10,
+        timeVisible: false,
+        rightOffset: 1,
+        barSpacing: 80,
     },
 };
-
-const candleToSeriesData = (candle: StateLite.Candle) => ({
-    time: candle.time,
-    open: candle.open,
-    high: candle.high,
-    low: candle.low,
-    close: candle.close,
-});
 
 const roundPrice = (price: number) => {
     if (!Number.isFinite(price)) {
@@ -84,24 +87,69 @@ const roundPrice = (price: number) => {
     return Math.round(price * 10000) / 10000;
 };
 
-const createPriceLine = (series: any, price: number, title: string, color: string) => {
+const logRangeWarningOnce = (symbol: string, message: string) => {
+    let key = `${symbol}:${message}`;
+    if (rangeWarningKeys.has(key)) {
+        return;
+    }
+    rangeWarningKeys.add(key);
+    StatusLite.logEvent(`${symbol} ${message}`, true);
+    console.error(`[LiteChart] ${symbol} ${message}`);
+};
+
+const getAtrRange = (symbol: string) => {
+    try {
+        let atr = TradingPlans.getTradingPlans(symbol).atr.average;
+        if (!Number.isFinite(atr) || atr <= 0) {
+            logRangeWarningOnce(symbol, 'missing ATR for order chart range');
+            return undefined;
+        }
+        return atr;
+    } catch (error) {
+        logRangeWarningOnce(symbol, `failed to read ATR: ${error instanceof Error ? error.message : String(error)}`);
+        return undefined;
+    }
+};
+
+const createPriceLine = (
+    series: any,
+    price: number,
+    title: string,
+    color: string,
+    lineStyle = LightweightCharts.LineStyle.Solid,
+    lineWidth: LightweightCharts.LineWidth = 1
+) => {
     return series.createPriceLine({
         price,
         color,
         title,
-        lineStyle: LightweightCharts.LineStyle.Solid,
-        lineWidth: 1,
+        lineStyle,
+        lineWidth,
         axisLabelVisible: true,
     });
 };
 
+const removePriceLine = (widget: LiteChartWidget, line: any) => {
+    if (line) {
+        widget.rangeSeries.removePriceLine(line);
+    }
+};
+
+const clearLineList = (widget: LiteChartWidget, lines: any[]) => {
+    lines.forEach(line => removePriceLine(widget, line));
+    return [];
+};
+
 const clearPriceLines = (widget: LiteChartWidget) => {
-    widget.exitOrderPriceLines.forEach(line => {
-        if (line) {
-            widget.candleSeries.removePriceLine(line);
-        }
-    });
-    widget.exitOrderPriceLines = [];
+    widget.exitOrderPriceLines = clearLineList(widget, widget.exitOrderPriceLines);
+    widget.entryOrderPriceLines = clearLineList(widget, widget.entryOrderPriceLines);
+    removePriceLine(widget, widget.currentPriceLine);
+    widget.currentPriceLine = undefined;
+};
+
+const updateCurrentPriceLine = (widget: LiteChartWidget, currentPrice: number) => {
+    removePriceLine(widget, widget.currentPriceLine);
+    widget.currentPriceLine = createPriceLine(widget.rangeSeries, currentPrice, 'Last', '#304ffe', LightweightCharts.LineStyle.Solid, 2);
 };
 
 const sortExitPairs = (pairs: StateLite.LiteExitPair[]) => {
@@ -156,31 +204,32 @@ export const createLiteChart = (symbol: string, container: HTMLElement, tabIndex
     container.style.width = `${settings.width}px`;
     container.style.height = `${settings.height}px`;
     let chart = LightweightCharts.createChart(container, settings);
-    let candlestickSettings: any = {
-        borderVisible: false,
-        scaleMargins: {
-            top: 0,
-            bottom: 0.3,
-        },
-    };
-    let candleSeries = chart.addCandlestickSeries(candlestickSettings);
+    let rangeSeries = chart.addLineSeries({
+        color: 'rgba(0,0,0,0)',
+        lineWidth: 1,
+        crosshairMarkerVisible: false,
+        lastValueVisible: false,
+        priceLineVisible: false,
+    });
     let resizeObserver = new ResizeObserver(() => {
         chart.resize(container.clientWidth || settings.width, container.clientHeight || settings.height);
     });
     resizeObserver.observe(container);
     let widget: LiteChartWidget = {
         chart,
-        candleSeries,
+        rangeSeries,
         resizeObserver,
         crosshairPrice: 0,
         exitOrderPairs: [],
+        entryOrders: [],
         exitOrderPriceLines: [],
+        entryOrderPriceLines: [],
     };
     chart.subscribeCrosshairMove((param: any) => {
         if (!param.point) {
             return;
         }
-        let price = candleSeries.coordinateToPrice(param.point.y);
+        let price = rangeSeries.coordinateToPrice(param.point.y);
         if (price) {
             widget.crosshairPrice = price;
         }
@@ -188,24 +237,51 @@ export const createLiteChart = (symbol: string, container: HTMLElement, tabIndex
     widgets.set(symbol, widget);
 };
 
-export const setLiteChartHistory = (symbol: string, candles: StateLite.Candle[]) => {
+export const updateOrderChartRange = (symbol: string, currentPrice: number | undefined) => {
     let widget = widgets.get(symbol);
     if (!widget) {
         return;
     }
-    widget.candleSeries.setData(candles.map(candleToSeriesData));
+    if (currentPrice == null || !Number.isFinite(currentPrice) || currentPrice <= 0) {
+        logRangeWarningOnce(symbol, 'missing current price for order chart range');
+        return;
+    }
+    let atr = getAtrRange(symbol);
+    if (!atr) {
+        return;
+    }
+
+    widget.lastPrice = currentPrice;
+    updateCurrentPriceLine(widget, currentPrice);
+    if (widget.rangeCenter != null && widget.rangeHalfSize != null) {
+        let maxDistanceFromCenter = widget.rangeHalfSize * 2 * recenterThresholdRatio;
+        if (Math.abs(currentPrice - widget.rangeCenter) < maxDistanceFromCenter) {
+            return;
+        }
+    }
+
+    let lower = currentPrice - atr;
+    let upper = currentPrice + atr;
+    let time = Math.floor(Date.now() / 1000) as any;
+    widget.rangeCenter = currentPrice;
+    widget.rangeHalfSize = atr;
+    widget.rangeSeries.setData([
+        { time, value: lower },
+        { time: time + 60, value: upper },
+    ]);
     widget.chart.timeScale().fitContent();
+};
+
+export const setLiteChartHistory = (symbol: string, candles: StateLite.Candle[]) => {
+    let lastCandle = candles[candles.length - 1];
+    updateOrderChartRange(symbol, lastCandle?.close);
 };
 
 export const updateLiteChartCandle = (symbol: string, candle: StateLite.Candle | undefined) => {
     if (!candle) {
         return;
     }
-    let widget = widgets.get(symbol);
-    if (!widget) {
-        return;
-    }
-    widget.candleSeries.update(candleToSeriesData(candle));
+    updateOrderChartRange(symbol, candle?.close);
 };
 
 export const getCrossHairPrice = (symbol: string) => {
@@ -220,12 +296,35 @@ export const getExitOrderPairs = (symbol: string) => {
     return widgets.get(symbol)?.exitOrderPairs ?? [];
 };
 
+export const drawEntryOrders = (symbol: string, orders: StateLite.LiteOrderModel[]) => {
+    let widget = widgets.get(symbol);
+    if (!widget) {
+        return;
+    }
+    widget.entryOrderPriceLines = clearLineList(widget, widget.entryOrderPriceLines);
+    widget.entryOrders = orders.slice();
+    orders.forEach((order, index) => {
+        let drawingOrder = createDrawingOrder(order, `${index + 1}:ENTRY`);
+        if (!drawingOrder) {
+            return;
+        }
+        widget.entryOrderPriceLines.push(createPriceLine(
+            widget.rangeSeries,
+            drawingOrder.price,
+            drawingOrder.label,
+            drawingOrder.color,
+            LightweightCharts.LineStyle.Solid,
+            2
+        ));
+    });
+};
+
 export const drawExitPairs = (symbol: string, pairs: StateLite.LiteExitPair[]) => {
     let widget = widgets.get(symbol);
     if (!widget) {
         return 'Exits: ';
     }
-    clearPriceLines(widget);
+    widget.exitOrderPriceLines = clearLineList(widget, widget.exitOrderPriceLines);
     let sortedPairs = pairs.slice();
     sortExitPairs(sortedPairs);
     widget.exitOrderPairs = sortedPairs;
@@ -244,7 +343,7 @@ export const drawExitPairs = (symbol: string, pairs: StateLite.LiteExitPair[]) =
 
     ordersToDraw.forEach(orderToDraw => {
         let line = createPriceLine(
-            widget.candleSeries,
+            widget.rangeSeries,
             orderToDraw.price,
             orderToDraw.label,
             orderToDraw.color
@@ -262,4 +361,5 @@ export const destroyLiteCharts = () => {
         widget.chart.remove();
     });
     widgets.clear();
+    rangeWarningKeys.clear();
 };

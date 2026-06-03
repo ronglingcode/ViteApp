@@ -10,15 +10,18 @@ const formatDateToYYYYMMDD = (date: Date) => {
     return `${year}-${month}-${day}`;
 };
 
-export const getTodayMinuteBars = async (symbol: string, apiKey: string): Promise<StateLite.Candle[]> => {
-    let today = new Date();
-    let tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-    let todayString = formatDateToYYYYMMDD(today);
-    let tomorrowString = formatDateToYYYYMMDD(tomorrow);
-    let url = `${MASSIVE_API_HOST}/v2/aggs/ticker/${symbol}/range/1/minute/${todayString}/${tomorrowString}` +
-        `?adjusted=true&sort=asc&limit=1000&apiKey=${apiKey}`;
+const barsToCandles = (bars: any[]): StateLite.Candle[] => {
+    return bars.map((bar: any): StateLite.Candle => ({
+        time: StateLite.toTradingViewTime(Number(bar.t)),
+        open: Number(bar.o),
+        high: Number(bar.h),
+        low: Number(bar.l),
+        close: Number(bar.c),
+        volume: Number(bar.v ?? 0),
+    }));
+};
 
+const getBars = async (symbol: string, url: string): Promise<StateLite.Candle[]> => {
     let response = await fetch(url);
     let data = await response.json();
     if (!response.ok) {
@@ -27,14 +30,36 @@ export const getTodayMinuteBars = async (symbol: string, apiKey: string): Promis
     if (!Array.isArray(data.results)) {
         return [];
     }
-    return data.results.map((bar: any): StateLite.Candle => ({
-        time: StateLite.toTradingViewTime(Number(bar.t)),
-        open: Number(bar.o),
-        high: Number(bar.h),
-        low: Number(bar.l),
-        close: Number(bar.c),
-        volume: Number(bar.v ?? 0),
-    }));
+    return barsToCandles(data.results);
+};
+
+export const getTodayMinuteBars = async (symbol: string, apiKey: string): Promise<StateLite.Candle[]> => {
+    let today = new Date();
+    let tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    let todayString = formatDateToYYYYMMDD(today);
+    let tomorrowString = formatDateToYYYYMMDD(tomorrow);
+    let url = `${MASSIVE_API_HOST}/v2/aggs/ticker/${symbol}/range/1/minute/${todayString}/${tomorrowString}` +
+        `?adjusted=true&extendedHours=true&sort=asc&limit=1000&apiKey=${apiKey}`;
+
+    return getBars(symbol, url);
+};
+
+export const getDailyCandlesForLastNDays = async (
+    symbol: string,
+    apiKey: string,
+    nDays = 3 * 365
+): Promise<StateLite.Candle[]> => {
+    let end = new Date();
+    end.setDate(end.getDate() - 1);
+    let start = new Date(end);
+    start.setDate(start.getDate() - nDays - 1);
+    let startString = formatDateToYYYYMMDD(start);
+    let endString = formatDateToYYYYMMDD(end);
+    let url = `${MASSIVE_API_HOST}/v2/aggs/ticker/${symbol}/range/1/day/${startString}/${endString}` +
+        `?adjusted=true&sort=asc&limit=50000&apiKey=${apiKey}`;
+
+    return getBars(symbol, url);
 };
 
 interface MassiveStreamerCallbacks {

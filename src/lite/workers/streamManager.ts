@@ -36,7 +36,17 @@ export class LiteWorkerStreamManager {
         await Promise.all(payload.watchlist.map(async item => {
             try {
                 let candles = await MassiveLite.getTodayMinuteBars(item.symbol, payload.secrets.massive.apiKey);
-                this.marketState.replaceHistory(item.symbol, candles);
+                let dailyCandles: StateLite.Candle[] = [];
+                try {
+                    dailyCandles = await MassiveLite.getDailyCandlesForLastNDays(item.symbol, payload.secrets.massive.apiKey);
+                } catch (error) {
+                    this.post({
+                        type: 'error',
+                        source: 'massive daily history',
+                        message: error instanceof Error ? error.message : String(error),
+                    });
+                }
+                this.marketState.replaceHistory(item.symbol, candles, dailyCandles);
             } catch (error) {
                 this.post({
                     type: 'error',

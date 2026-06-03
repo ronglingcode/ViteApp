@@ -20,6 +20,7 @@ let tokenRefreshInterval: ReturnType<typeof setInterval> | null = null;
 let clockInterval: ReturnType<typeof setInterval> | null = null;
 let activeSecrets: StateLite.LiteSecrets | null = null;
 let positionsBySymbol = new Map<string, StateLite.PositionSnapshot>();
+let entryOrdersBySymbol = new Map<string, StateLite.LiteOrderModel[]>();
 let exitPairsBySymbol = new Map<string, StateLite.LiteExitPair[]>();
 let lastPriceBySymbol = new Map<string, number>();
 let symbolElements = new Map<string, ShellLite.SymbolElements>();
@@ -92,6 +93,18 @@ const updateExitPairsUi = () => {
     });
 };
 
+const updateEntryOrdersUi = () => {
+    symbolElements.forEach((_elements, symbol) => {
+        ChartLite.drawEntryOrders(symbol, entryOrdersBySymbol.get(symbol) ?? []);
+    });
+};
+
+const updateOrderChartRanges = () => {
+    symbolElements.forEach((_elements, symbol) => {
+        ChartLite.updateOrderChartRange(symbol, getCurrentPrice(symbol));
+    });
+};
+
 async function refreshAccount() {
     if (!activeSecrets) {
         return;
@@ -101,10 +114,13 @@ async function refreshAccount() {
         activeSecrets.schwab.accessToken
     );
     positionsBySymbol = account.positions;
+    entryOrdersBySymbol = account.entryOrders;
     exitPairsBySymbol = account.exitPairs;
     SharedRuntimeLite.syncAccountSnapshot(account);
     updatePositionsUi();
+    updateEntryOrdersUi();
     updateExitPairsUi();
+    updateOrderChartRanges();
 }
 
 function handleError(source: string, error: unknown) {
@@ -139,7 +155,7 @@ const handleWorkerMessage = (message: StateLite.WorkerToMainMessage) => {
     }
     if (message.type === 'history') {
         ChartLite.setLiteChartHistory(message.symbol, message.candles);
-        SharedRuntimeLite.syncHistory(message.symbol, message.candles);
+        SharedRuntimeLite.syncHistory(message.symbol, message.candles, message.dailyCandles);
         return;
     }
     if (message.type === 'snapshot') {
@@ -220,6 +236,7 @@ const resetRuntimeState = () => {
     ChartLite.destroyLiteCharts();
     activeSecrets = null;
     positionsBySymbol = new Map();
+    entryOrdersBySymbol = new Map();
     exitPairsBySymbol = new Map();
     lastPriceBySymbol = new Map();
     symbolElements = new Map();
@@ -263,6 +280,13 @@ const initialize = async () => {
 
 window.addEventListener('keydown', event => {
     exitAdjuster.handleKeyboardAdjust(event).catch(error => handleError('adjust exits', error));
+});
+
+window.addEventListener('tradingscripts:lite-account-refresh', event => {
+    let source = (event as CustomEvent<{ source?: string }>).detail?.source ?? 'order event';
+    refreshAccount()
+        .then(() => StatusLite.logEvent(`account refreshed ${source}`))
+        .catch(error => handleError('account refresh', error));
 });
 
 window.addEventListener('beforeunload', () => {

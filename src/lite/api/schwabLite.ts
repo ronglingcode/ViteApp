@@ -40,6 +40,12 @@ const getWithAccessToken = (url: string, accessToken: string) => {
     });
 };
 
+interface LiteAccountInfo {
+    positions: StateLite.PositionSnapshot[];
+    currentBalance: number;
+    rawAccount: any;
+}
+
 const todayString = () => {
     return new Date().toISOString().slice(0, 10);
 };
@@ -97,6 +103,20 @@ export const getSchwabStreamerInfo = async (
 };
 
 export const getPositions = async (accessToken: string): Promise<StateLite.PositionSnapshot[]> => {
+    return (await getAccountInfo(accessToken)).positions;
+};
+
+const getAccountBalance = (account: any) => {
+    let balance = Number(
+        account?.currentBalances?.liquidationValue ??
+        account?.initialBalances?.liquidationValue ??
+        account?.currentBalances?.cashBalance ??
+        0
+    );
+    return Number.isFinite(balance) ? balance : 0;
+};
+
+const getAccountInfo = async (accessToken: string): Promise<LiteAccountInfo> => {
     let response = await getWithAccessToken(`${getTraderApiHost()}/accounts?fields=positions`, accessToken);
     let data = await parseResponseBody(response);
     if (!response.ok) {
@@ -104,10 +124,8 @@ export const getPositions = async (accessToken: string): Promise<StateLite.Posit
     }
     let account = data?.[0]?.securitiesAccount;
     let rawPositions = account?.positions;
-    if (!Array.isArray(rawPositions)) {
-        return [];
-    }
-    return rawPositions
+    let positions = Array.isArray(rawPositions)
+        ? rawPositions
         .map((position: any): StateLite.PositionSnapshot => {
             let symbol = position.instrument?.symbol ?? '';
             let longQuantity = Number(position.longQuantity ?? 0);
@@ -119,7 +137,13 @@ export const getPositions = async (accessToken: string): Promise<StateLite.Posit
                 averagePrice: Number(position.averagePrice ?? 0),
             };
         })
-        .filter(position => position.symbol && position.quantity !== 0);
+            .filter(position => position.symbol && position.quantity !== 0)
+        : [];
+    return {
+        positions,
+        currentBalance: getAccountBalance(account),
+        rawAccount: account,
+    };
 };
 
 export const getTodayOrders = async (secrets: StateLite.SchwabSecrets, accessToken: string): Promise<any[]> => {
@@ -189,6 +213,18 @@ const buildOrderModel = (order: any): StateLite.LiteOrderModel => {
 
 const isFilledOto = (order: any) => {
     return order.orderStrategyType === 'TRIGGER' && order.status === 'FILLED';
+};
+
+const isWorkingSingleEntryOrder = (order: any) => {
+    return order.orderStrategyType === 'SINGLE' &&
+        workingOrderStatuses.has(order.status) &&
+        getPositionEffectIsOpen(order);
+};
+
+const isWorkingTriggerEntryOrder = (order: any) => {
+    return order.orderStrategyType === 'TRIGGER' &&
+        Boolean(order.cancelable) &&
+        getOrderSymbol(order);
 };
 
 const extractWorkingChildOrdersFromOco = (oco: any): any[] => {
@@ -274,17 +310,40 @@ export const extractWorkingExitPairs = (orders: any[]) => {
     return result;
 };
 
+export const extractWorkingEntryOrders = (orders: any[]) => {
+    let result = new Map<string, StateLite.LiteOrderModel[]>();
+    let addOrder = (order: any) => {
+        let model = buildOrderModel(order);
+        if (!model.symbol) {
+            return;
+        }
+        let existingOrders = result.get(model.symbol) ?? [];
+        existingOrders.push(model);
+        result.set(model.symbol, existingOrders);
+    };
+
+    orders.forEach(order => {
+        if (isWorkingSingleEntryOrder(order) || isWorkingTriggerEntryOrder(order)) {
+            addOrder(order);
+        }
+    });
+
+    return result;
+};
+
 export const getLiteAccountSnapshot = async (
     secrets: StateLite.SchwabSecrets,
     accessToken: string
 ): Promise<StateLite.LiteAccountSnapshot> => {
-    let [positions, orders] = await Promise.all([
-        getPositions(accessToken),
+    let [accountInfo, orders] = await Promise.all([
+        getAccountInfo(accessToken),
         getTodayOrders(secrets, accessToken),
     ]);
     return {
-        positions: new Map(positions.map(position => [position.symbol, position])),
+        positions: new Map(accountInfo.positions.map(position => [position.symbol, position])),
+        entryOrders: extractWorkingEntryOrders(orders),
         exitPairs: extractWorkingExitPairs(orders),
+        currentBalance: accountInfo.currentBalance,
     };
 };
 
@@ -302,6 +361,26 @@ const createMarketOrder = (symbol: string, quantity: number, side: StateLite.Ord
                     symbol,
                 },
                 instruction: side === 'buy' ? 'BUY' : 'SELL',
+                quantity,
+            },
+        ],
+    };
+};
+
+const createClosingMarketOrder = (symbol: string, quantity: number, netQuantity: number) => {
+    return {
+        session: 'NORMAL',
+        duration: 'DAY',
+        orderType: 'MARKET',
+        orderStrategyType: 'SINGLE',
+        orderLegCollection: [
+            {
+                orderLegType: 'EQUITY',
+                instrument: {
+                    assetType: 'EQUITY',
+                    symbol,
+                },
+                instruction: netQuantity > 0 ? 'SELL' : 'BUY_TO_COVER',
                 quantity,
             },
         ],
@@ -327,6 +406,33 @@ export const placeMarketOrder = async (
     let data = await parseResponseBody(response);
     if (!response.ok) {
         throw new Error(`Schwab order failed: ${response.status} ${JSON.stringify(data)}`);
+    }
+    return {
+        status: response.status,
+        order,
+        data,
+    };
+};
+
+export const placeClosingMarketOrder = async (
+    secrets: StateLite.SchwabSecrets,
+    accessToken: string,
+    symbol: string,
+    quantity: number,
+    netQuantity: number
+) => {
+    let order = createClosingMarketOrder(symbol, quantity, netQuantity);
+    let response = await fetch(`${getTraderApiHost()}/accounts/${secrets.accountHash}/orders`, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(order),
+    });
+    let data = await parseResponseBody(response);
+    if (!response.ok) {
+        throw new Error(`Schwab closing market order failed: ${response.status} ${JSON.stringify(data)}`);
     }
     return {
         status: response.status,
@@ -361,16 +467,36 @@ const createReplacementOrder = (oldOrder: StateLite.LiteOrderModel, newPrice: nu
     return order;
 };
 
-export const replaceSingleOrderWithNewPrice = async (
+const createMarketReplacementOrder = (oldOrder: StateLite.LiteOrderModel) => {
+    let instruction = oldOrder.rawOrder?.orderLegCollection?.[0]?.instruction ?? (oldOrder.isBuy ? 'BUY_TO_COVER' : 'SELL');
+    return {
+        session: 'NORMAL',
+        duration: 'DAY',
+        orderStrategyType: 'SINGLE',
+        orderType: 'MARKET',
+        orderLegCollection: [
+            {
+                orderLegType: 'EQUITY',
+                instrument: {
+                    assetType: 'EQUITY',
+                    symbol: oldOrder.symbol,
+                },
+                instruction,
+                quantity: oldOrder.quantity,
+            },
+        ],
+    };
+};
+
+const replaceSingleOrder = async (
     secrets: StateLite.SchwabSecrets,
     accessToken: string,
     order: StateLite.LiteOrderModel,
-    newPrice: number
+    replacementOrder: any
 ) => {
     if (!order.orderID) {
         throw new Error(`Missing Schwab order id for ${order.symbol}`);
     }
-    let replacementOrder = createReplacementOrder(order, newPrice);
     let response = await fetch(`${getTraderApiHost()}/accounts/${secrets.accountHash}/orders/${order.orderID}`, {
         method: 'PUT',
         headers: {
@@ -390,6 +516,25 @@ export const replaceSingleOrderWithNewPrice = async (
     };
 };
 
+export const replaceSingleOrderWithNewPrice = async (
+    secrets: StateLite.SchwabSecrets,
+    accessToken: string,
+    order: StateLite.LiteOrderModel,
+    newPrice: number
+) => {
+    let replacementOrder = createReplacementOrder(order, newPrice);
+    return replaceSingleOrder(secrets, accessToken, order, replacementOrder);
+};
+
+export const replaceSingleOrderWithMarketOrder = async (
+    secrets: StateLite.SchwabSecrets,
+    accessToken: string,
+    order: StateLite.LiteOrderModel
+) => {
+    let replacementOrder = createMarketReplacementOrder(order);
+    return replaceSingleOrder(secrets, accessToken, order, replacementOrder);
+};
+
 export const replaceExitPairWithNewPrice = async (
     secrets: StateLite.SchwabSecrets,
     accessToken: string,
@@ -402,6 +547,18 @@ export const replaceExitPairWithNewPrice = async (
         throw new Error(`Missing ${isStopLeg ? 'STOP' : 'LIMIT'} leg for ${pair.symbol}`);
     }
     return replaceSingleOrderWithNewPrice(secrets, accessToken, order, newPrice);
+};
+
+export const replaceExitPairWithMarketOrder = async (
+    secrets: StateLite.SchwabSecrets,
+    accessToken: string,
+    pair: StateLite.LiteExitPair
+) => {
+    let order = pair.LIMIT ?? pair.STOP;
+    if (!order) {
+        throw new Error(`Missing exit leg for ${pair.symbol}`);
+    }
+    return replaceSingleOrderWithMarketOrder(secrets, accessToken, order);
 };
 
 interface SchwabStreamerCallbacks {
