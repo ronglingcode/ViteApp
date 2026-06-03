@@ -336,6 +336,8 @@ export interface SymbolData {
     allTimeHigh: number,
     previousDayCandle: Candle,
     sharesOutstanding: number,
+    /** Once liquidity scale reaches 1, stays locked so getLiquidityScale skips volume scans. */
+    liquidityScaleLockedAtMax: boolean,
 };
 export const getDefaultCamPivots = (): CamarillaPivots => {
     let pivots: CamarillaPivots = {
@@ -1048,6 +1050,7 @@ export const getDefaultSymbolData = () => {
         camPivots: getDefaultCamPivots(),
         allTimeHigh: 0,
         sharesOutstanding: 0,
+        liquidityScaleLockedAtMax: false,
         previousDayCandle: {
             symbol: '',
             time: 0 as LightweightCharts.UTCTimestamp,
@@ -1794,7 +1797,19 @@ export const getWatchlistIndex = (symbol: string) => {
     }
     return -1;
 }
+
+const lockLiquidityScaleAtMax = (symbolData: SymbolData, scale: number) => {
+    if (scale === 1) {
+        symbolData.liquidityScaleLockedAtMax = true;
+    }
+    return scale;
+};
+
 export const getLiquidityScale = (symbol: string, debug?: boolean) => {
+    let symbolData = getSymbolData(symbol);
+    if (!debug && symbolData.liquidityScaleLockedAtMax) {
+        return 1;
+    }
     let candles = getVolumesSinceOpen(symbol);
     let price = getCurrentPrice(symbol);
     if (candles.length == 0) {
@@ -1813,12 +1828,12 @@ export const getLiquidityScale = (symbol: string, debug?: boolean) => {
             return 0;
         } else if (firstMinuteTraded > Math.min(20000000, threshold)) {
             logIf(`case 1`, debug);
-            return 1;
+            return lockLiquidityScaleAtMax(symbolData, 1);
         } else if (candles[0].value > 10 * lastMinuteVolumeBeforeOpen) {
             logIf(`case 2`, debug);
-            return 1;
+            return lockLiquidityScaleAtMax(symbolData, 1);
         } else if (candles[0].value > oneMillionShares) {
-            return 1;
+            return lockLiquidityScaleAtMax(symbolData, 1);
         } else if (firstMinuteTraded > 10000000) {
             logIf(`case 3`, debug);
             return 0.35;
@@ -1842,12 +1857,12 @@ export const getLiquidityScale = (symbol: string, debug?: boolean) => {
     if (maxVolume < lastMinuteVolumeBeforeOpen) {
         return 0;
     } else if (maxVolume > 10 * lastMinuteVolumeBeforeOpen) {
-        return 1;
+        return lockLiquidityScaleAtMax(symbolData, 1);
     } else if (maxVolume > oneMillionShares) {
-        return 1;
+        return lockLiquidityScaleAtMax(symbolData, 1);
     } else if (dollarTraded > Math.min(20000000, threshold)) {
         logIf('after case 1', debug);
-        return 1;
+        return lockLiquidityScaleAtMax(symbolData, 1);
     } else if (dollarTraded > 10000000) {
         logIf('after case 2', debug);
         return dollarTraded / 20000000;
