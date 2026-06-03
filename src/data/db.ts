@@ -91,7 +91,19 @@ const logLateTimeSaleIfNeeded = (record: Models.TimeSale, source: string, latest
     updateTimeSaleDiagnosticsView();
 };
 
-const liveTimeSaleRenderIntervalMs = 100;
+export const liveTimeSaleRenderIntervalMs = 100;
+
+interface TimeSaleApplyMeta {
+    symbol: string,
+    allCharts: Models.TimeFrameChart[],
+    symbolData: Models.SymbolData,
+    timeAndSalesTime: Date,
+    lastPrice: number,
+    lastVolume: Models.LineSeriesData,
+    lastVwap: Models.LineSeriesData,
+    lastCandle: Models.CandlePlus,
+    isNewCandleData: boolean,
+}
 
 interface PendingTimeSaleRender {
     symbol: string,
@@ -157,6 +169,51 @@ const queueTimeSaleRender = (render: PendingTimeSaleRender) => {
 
     scheduledTimeSaleRenderBySymbol.set(render.symbol, setTimeout(() => {
         flushTimeSaleRender(render.symbol);
+    }, delay));
+};
+
+interface PendingTimeSaleSideEffects {
+    lastPrice: number,
+    isNewCandleData: boolean,
+}
+
+const pendingTimeSaleSideEffectsBySymbol = new Map<string, PendingTimeSaleSideEffects>();
+const scheduledTimeSaleSideEffectsBySymbol = new Map<string, ReturnType<typeof setTimeout>>();
+const lastTimeSaleSideEffectsAtBySymbol = new Map<string, number>();
+
+const flushTimeSaleSideEffects = (symbol: string) => {
+    let pending = pendingTimeSaleSideEffectsBySymbol.get(symbol);
+    pendingTimeSaleSideEffectsBySymbol.delete(symbol);
+    scheduledTimeSaleSideEffectsBySymbol.delete(symbol);
+    if (!pending) {
+        return;
+    }
+    lastTimeSaleSideEffectsAtBySymbol.set(symbol, Date.now());
+    let widget = Models.getChartWidget(symbol);
+    if (!widget) {
+        return;
+    }
+    updateChartColor(symbol, widget);
+    AutoTrader.onNewTimeAndSalesData(symbol, pending.lastPrice, pending.isNewCandleData);
+};
+
+const scheduleTimeSaleSideEffects = (meta: TimeSaleApplyMeta) => {
+    pendingTimeSaleSideEffectsBySymbol.set(meta.symbol, {
+        lastPrice: meta.lastPrice,
+        isNewCandleData: meta.isNewCandleData,
+    });
+    if (scheduledTimeSaleSideEffectsBySymbol.has(meta.symbol)) {
+        return;
+    }
+    let now = Date.now();
+    let lastAt = lastTimeSaleSideEffectsAtBySymbol.get(meta.symbol) ?? 0;
+    let delay = Math.max(0, liveTimeSaleRenderIntervalMs - (now - lastAt));
+    if (delay == 0) {
+        flushTimeSaleSideEffects(meta.symbol);
+        return;
+    }
+    scheduledTimeSaleSideEffectsBySymbol.set(meta.symbol, setTimeout(() => {
+        flushTimeSaleSideEffects(meta.symbol);
     }, delay));
 };
 
@@ -338,11 +395,12 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyC
     Chart.onPriceHistoryLoaded(symbol);
     Chart.drawLevelsAfterChartInitialize(widget);
 }
-export const updateFromTimeSale = (timesale: Models.TimeSale) => {
+const updateFromTimeSaleCore = (timesale: Models.TimeSale): TimeSaleApplyMeta | null => {
     let symbol = timesale.symbol;
     let widget = Models.getChartWidget(symbol);
-    if (!widget)
-        return;
+    if (!widget) {
+        return null;
+    }
 
     let allCharts = Models.getChartsInAllTimeframes(symbol);
     let timeframeBucket = Helper.numberToDate(timesale.tradeTime);
@@ -355,10 +413,10 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
     let lastCandle = symbolData.candles[symbolData.candles.length - 1];
     if (!lastCandle) {
         // sometimes timesales data comes in before chart is loaded.
-        return;
+        return null;
     }
     if (shouldIgnoreStaleTimeSale(symbol, 1, newTime, lastCandle.time, timesale.tradeTime)) {
-        return;
+        return null;
     }
     let timeAndSalesTime = Helper.numberToDate(timesale.tradeTime);
     TimeHelper.setCurrentMarketTime(timeAndSalesTime);
@@ -369,7 +427,7 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
     let lastVwap = symbolData.m1Vwaps[symbolData.m1Vwaps.length - 1];
     if (!lastVolume || !lastVwap) {
         // sometimes timesales data comes in before all chart series data is loaded.
-        return;
+        return null;
     }
     if (timeframeBucket < Config.Settings.marketOpenTime) {
         // update pre-market indicators
@@ -525,7 +583,7 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
     }
     //widget.candleSeries.update(lastCandle);
 
-    queueTimeSaleRender({
+    return {
         symbol,
         allCharts,
         symbolData,
@@ -534,11 +592,54 @@ export const updateFromTimeSale = (timesale: Models.TimeSale) => {
         lastVolume,
         lastVwap,
         lastCandle,
-    });
+        isNewCandleData,
+    };
+};
 
-    updateChartColor(symbol, widget);
-    //console.log(timesale);
-    AutoTrader.onNewTimeAndSalesData(symbol, lastPrice, isNewCandleData);
+export const updateFromTimeSale = (timesale: Models.TimeSale) => {
+    let meta = updateFromTimeSaleCore(timesale);
+    if (!meta) {
+        return;
+    }
+    queueTimeSaleRender({
+        symbol: meta.symbol,
+        allCharts: meta.allCharts,
+        symbolData: meta.symbolData,
+        timeAndSalesTime: meta.timeAndSalesTime,
+        lastPrice: meta.lastPrice,
+        lastVolume: meta.lastVolume,
+        lastVwap: meta.lastVwap,
+        lastCandle: meta.lastCandle,
+    });
+    scheduleTimeSaleSideEffects(meta);
+};
+
+/** Apply multiple trades for one symbol; chart/analysis side effects run at most every 100ms. */
+export const updateFromTimeSalesBatch = (sales: Models.TimeSale[]) => {
+    if (sales.length === 0) {
+        return;
+    }
+    let meta: TimeSaleApplyMeta | null = null;
+    for (let i = 0; i < sales.length; i++) {
+        let applied = updateFromTimeSaleCore(sales[i]);
+        if (applied) {
+            meta = applied;
+        }
+    }
+    if (!meta) {
+        return;
+    }
+    queueTimeSaleRender({
+        symbol: meta.symbol,
+        allCharts: meta.allCharts,
+        symbolData: meta.symbolData,
+        timeAndSalesTime: meta.timeAndSalesTime,
+        lastPrice: meta.lastPrice,
+        lastVolume: meta.lastVolume,
+        lastVwap: meta.lastVwap,
+        lastCandle: meta.lastCandle,
+    });
+    scheduleTimeSaleSideEffects(meta);
 };
 
 const setColorForVolume = (candles: Models.CandlePlus[], volumes: Models.LineSeriesData[], currentIndex: number) => {

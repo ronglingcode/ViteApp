@@ -41,7 +41,7 @@ export type MainToWorkerMessage =
 
 export type WorkerToMainMessage =
     | { type: 'status'; source: string; status: string }
-    | { type: 'timeSale'; source: TradeSource; trades: ParsedTrade[] }
+    | { type: 'timeSaleFlush'; source: TradeSource; trades: ParsedTrade[] }
     | { type: 'quote'; source: QuoteSource; quotes: Models.Quote[] }
     | { type: 'accountActivity'; contents: any[] }
     | { type: 'error'; source: string; message: string };

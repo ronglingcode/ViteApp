@@ -46,26 +46,34 @@ export const handleTimeAndSalesData = (data: any) => {
     }
 }
 
-/**
- * Apply a time & sale record that was parsed off the main thread by the market data
- * worker. Mirrors the apply logic in handleTimeAndSalesData (alpaca) and
- * MassiveStreaming.handleTimeAndSalesData (massive); only the parsing/filtering is offloaded.
- */
-export const applyWorkerTimeSale = (record: Models.TimeSale, shouldFilter: boolean, source: 'a' | 'm') => {
-    let updated = DB.tryUpdateMaxTimeSaleTimestamp(record, source);
-    if (shouldFilter) {
-        return;
-    }
-    if (shouldCompeteForTimeAndSales()) {
-        if (updated) {
-            DB.updateFromTimeSale(record);
+/** Apply a worker flush of parsed trades (batched + merged in the worker every 100ms). */
+export const applyWorkerTimeSaleFlush = (
+    trades: { record: Models.TimeSale; shouldFilter: boolean }[],
+    source: 'a' | 'm',
+) => {
+    let bySymbol = new Map<string, Models.TimeSale[]>();
+    trades.forEach(trade => {
+        if (trade.shouldFilter) {
+            return;
         }
-        return;
-    }
-    let sourceName = source === 'a' ? 'alpaca' : 'massive';
-    if (GlobalSettings.marketDataSource == sourceName) {
-        DB.updateFromTimeSale(record);
-    }
+        let updated = DB.tryUpdateMaxTimeSaleTimestamp(trade.record, source);
+        if (shouldCompeteForTimeAndSales()) {
+            if (!updated) {
+                return;
+            }
+        } else {
+            let sourceName = source === 'a' ? 'alpaca' : 'massive';
+            if (GlobalSettings.marketDataSource != sourceName) {
+                return;
+            }
+        }
+        let list = bySymbol.get(trade.record.symbol) ?? [];
+        list.push(trade.record);
+        bySymbol.set(trade.record.symbol, list);
+    });
+    bySymbol.forEach(sales => {
+        DB.updateFromTimeSalesBatch(sales);
+    });
 };
 
 export const handleMessageData = (data: any[]) => {

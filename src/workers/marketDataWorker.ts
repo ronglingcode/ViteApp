@@ -1,5 +1,6 @@
 import * as TimeSaleParse from '../streaming/timeSaleParse';
 import * as LevelOneQuoteParse from '../streaming/levelOneQuoteParse';
+import * as TradeFlushBuffer from './tradeFlushBuffer';
 import type * as Messages from './marketDataMessages';
 
 const ALPACA_MARKET_DATA_URL = 'wss://stream.data.alpaca.markets/v2/sip';
@@ -14,13 +15,17 @@ class MarketDataStreamManager {
     private cleanupTimer: ReturnType<typeof setTimeout> | null = null;
     private symbols: string[] = [];
 
-    constructor(private readonly post: PostToMain) { }
+    constructor(
+        private readonly post: PostToMain,
+        private readonly tradeBuffer: TradeFlushBuffer.TradeFlushBuffer,
+    ) { }
 
     stop() {
         if (this.cleanupTimer) {
             clearTimeout(this.cleanupTimer);
             this.cleanupTimer = null;
         }
+        this.tradeBuffer.stop();
         this.alpacaSocket?.close();
         this.massiveSocket?.close();
         this.schwabSocket?.close();
@@ -43,6 +48,11 @@ class MarketDataStreamManager {
         if (payload.schwab) {
             this.connectSchwab(payload.schwab);
         }
+        this.tradeBuffer.start();
+    }
+
+    private enqueueTrades(trades: Messages.ParsedTrade[], source: Messages.TradeSource) {
+        trades.forEach(trade => this.tradeBuffer.push(trade, source));
     }
 
     private connectAlpaca(payload: Messages.MarketDataWorkerStartPayload) {
@@ -75,7 +85,7 @@ class MarketDataStreamManager {
                 }
             });
             if (trades.length > 0) {
-                this.post({ type: 'timeSale', source: 'a', trades });
+                this.enqueueTrades(trades, 'a');
             }
             if (quotes.length > 0) {
                 this.post({ type: 'quote', source: 'a', quotes });
@@ -107,7 +117,7 @@ class MarketDataStreamManager {
                 }
             });
             if (trades.length > 0) {
-                this.post({ type: 'timeSale', source: 'm', trades });
+                this.enqueueTrades(trades, 'm');
             }
         };
         socket.onerror = () => this.post({ type: 'error', source: 'massive', message: 'socket error' });
@@ -180,7 +190,8 @@ const workerScope = self as unknown as {
     ) => void;
 };
 
-const streams = new MarketDataStreamManager((message) => workerScope.postMessage(message));
+const tradeBuffer = new TradeFlushBuffer.TradeFlushBuffer((message) => workerScope.postMessage(message));
+const streams = new MarketDataStreamManager((message) => workerScope.postMessage(message), tradeBuffer);
 
 workerScope.addEventListener('message', (event: MessageEvent<Messages.MainToWorkerMessage>) => {
     if (event.data.type === 'stop') {

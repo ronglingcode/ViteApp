@@ -57,10 +57,8 @@ const buildStartPayload = (): Messages.MarketDataWorkerStartPayload => {
 };
 
 const handleWorkerMessage = (message: Messages.WorkerToMainMessage) => {
-    if (message.type === 'timeSale') {
-        for (let trade of message.trades) {
-            StreamingHandler.applyWorkerTimeSale(trade.record, trade.shouldFilter, message.source);
-        }
+    if (message.type === 'timeSaleFlush') {
+        StreamingHandler.applyWorkerTimeSaleFlush(message.trades, message.source);
         return;
     }
     if (message.type === 'quote') {
