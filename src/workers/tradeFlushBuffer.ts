@@ -101,12 +101,18 @@ export class TradeFlushBuffer {
                 list.push(item.record);
                 bySymbol.set(item.record.symbol, list);
             });
-            let trades: Messages.ParsedTrade[] = [];
+
+            let trades: Messages.ParsedTrade[] = items
+                .filter(item => item.shouldFilter)
+                .map(item => ({ record: item.record, shouldFilter: true }));
+
             bySymbol.forEach(records => {
                 mergeTradesInMinuteBucket(records).forEach(record => {
                     trades.push({ record, shouldFilter: false });
                 });
             });
+
+            trades.sort((a, b) => (a.record.timestamp ?? 0) - (b.record.timestamp ?? 0));
             if (trades.length > 0) {
                 this.post({ type: 'timeSaleFlush', source, trades });
             }

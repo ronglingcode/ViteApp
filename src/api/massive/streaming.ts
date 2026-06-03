@@ -74,8 +74,7 @@ export const subscribeLevelOneQuotes = (webSocket: WebSocket) => {
 const createTimeSale = (c: any) => {
     let has_non_update = false;
     let tradeTime = Helper.numberToDate(c.t);
-    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(tradeTime);
-    if (secondsSinceMarketOpen >= 0) {
+    if (Helper.isRegularMarketSessionTime(tradeTime)) {
         if (c.c) {
             for (let i = 0; i < c["c"].length; i++) {
                 let condition = c["c"][i];

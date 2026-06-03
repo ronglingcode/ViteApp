@@ -21,8 +21,7 @@ export interface ParsedTimeSale {
 export const createAlpacaTimeSale = (c: any): ParsedTimeSale => {
     let has_non_update = false;
     let tradeTime = Helper.numberToDate(c['t']);
-    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(tradeTime);
-    if (secondsSinceMarketOpen >= 0 && c['c']) {
+    if (Helper.isRegularMarketSessionTime(tradeTime) && c['c']) {
         for (let i = 0; i < c['c'].length; i++) {
             if (conditionsNotUpdateLastPrice.includes(c['c'][i])) {
                 has_non_update = true;
@@ -66,8 +65,7 @@ export const createAlpacaTimeSale = (c: any): ParsedTimeSale => {
 export const createMassiveTimeSale = (c: any): ParsedTimeSale => {
     let has_non_update = false;
     let tradeTime = Helper.numberToDate(c.t);
-    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(tradeTime);
-    if (secondsSinceMarketOpen >= 0 && c.c) {
+    if (Helper.isRegularMarketSessionTime(tradeTime) && c.c) {
         for (let i = 0; i < c.c.length; i++) {
             if (conditionsNotUpdateLastPriceNumbers.includes(c.c[i])) {
                 has_non_update = true;

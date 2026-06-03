@@ -61,6 +61,13 @@ export const isInActiveHoursOfMarket = (jsDate: Date = new Date()): boolean => {
     const minutesSinceOpen = getMinutesSinceMarketOpen(jsDate);
     return minutesSinceOpen >= 0 && minutesSinceOpen < 120;
 };
+export const isRegularMarketSessionTime = (jsDate: Date) => {
+    let openTime = getMarketOpenTime();
+    let closeTime = getMarketCloseTime();
+    openTime.setFullYear(jsDate.getFullYear(), jsDate.getMonth(), jsDate.getDate());
+    closeTime.setFullYear(jsDate.getFullYear(), jsDate.getMonth(), jsDate.getDate());
+    return openTime <= jsDate && jsDate <= closeTime;
+};
 export const roundToCents = (price: number) => {
     return Math.round(price * 100) / 100;
 };

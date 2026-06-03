@@ -53,10 +53,10 @@ export const applyWorkerTimeSaleFlush = (
 ) => {
     let bySymbol = new Map<string, Models.TimeSale[]>();
     trades.forEach(trade => {
+        let updated = DB.tryUpdateMaxTimeSaleTimestamp(trade.record, source);
         if (trade.shouldFilter) {
             return;
         }
-        let updated = DB.tryUpdateMaxTimeSaleTimestamp(trade.record, source);
         if (shouldCompeteForTimeAndSales()) {
             if (!updated) {
                 return;

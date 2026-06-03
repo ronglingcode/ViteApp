@@ -182,8 +182,7 @@ export const subscribeTradesAndQuotesRequests = (webSocket: WebSocket) => {
 export const createTimeSale = (c: any) => {
     let has_non_update = false;
     let tradeTime = Helper.numberToDate(c["t"]);
-    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(tradeTime);
-    if (secondsSinceMarketOpen >= 0) {
+    if (Helper.isRegularMarketSessionTime(tradeTime) && c["c"]) {
         for (let i = 0; i < c["c"].length; i++) {
             let condition = c["c"][i];
             if (StreamingHandler.conditionsNotUpdateLastPrice.includes(condition)) {
