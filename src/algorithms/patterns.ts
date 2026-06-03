@@ -2,48 +2,6 @@ import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as Firestore from '../firestore';
 import * as Models from '../models/models';
 import * as Helper from '../utils/helper';
-export const isReversalBar = (symbol: string, bar: Models.SimpleCandle, isLong: boolean, strictMode: boolean) => {
-    let passedStrictMode = isReversalBarStrict(symbol, bar, isLong);
-    if (strictMode) {
-        if (!passedStrictMode) {
-            //Firestore.logInfo(`not reversal yet using strict mode for checking reversal bar`);
-        }
-        return passedStrictMode;
-    } else {
-        if (passedStrictMode) {
-            return true;
-        }
-        if (isLong) {
-            return isRedBar(bar) || hasBottomWick(bar) || hasTopWick(bar);
-        } else {
-            return isGreenBar(bar) || hasTopWick(bar) || hasBottomWick(bar);
-        }
-    }
-}
-
-const isReversalBarStrict = (symbol: string, bar: Models.SimpleCandle, isLong: boolean) => {
-    let barPrint = Helper.printBar(bar.open, bar.high, bar.low, bar.close);
-    let range = bar.high - bar.low;
-    let topWick = bar.high - Math.max(bar.close, bar.open);
-    let bottomWick = Math.min(bar.close, bar.open) - bar.low;
-    let redBody = isRedBar(bar) ? bar.open - bar.close : 0;
-    let greenBodoy = isGreenBar(bar) ? bar.close - bar.open : 0;
-    if (isLong) {
-        if (isRedBar(bar) || ((redBody + bottomWick) / range > 0.45) || (bottomWick / range > 0.32)) {
-            return true;
-        } else {
-            //Firestore.logError(`${symbol} not isReversalBarStrict for long, ${barPrint}`);
-            return false;
-        }
-    } else {
-        if (isGreenBar(bar) || ((greenBodoy + topWick) / range > 0.45) || (topWick / range > 0.32)) {
-            return true;
-        } else {
-            //Firestore.logError(`${symbol} not isReversalBarStrict for short, ${barPrint}`);
-            return false;
-        }
-    }
-}
 export const isRedBar = (bar: Models.SimpleCandle) => {
     if (!bar) {
         return false;
@@ -55,16 +13,6 @@ export const isGreenBar = (bar: Models.SimpleCandle) => {
         return false;
     }
     return bar.close > bar.open;
-};
-const hasBottomWick = (bar: Models.SimpleCandle) => {
-    let wick = Math.min(bar.close, bar.open) - bar.low;
-    let range = bar.high - bar.low;
-    return wick / range > 0.33;
-};
-const hasTopWick = (bar: Models.SimpleCandle) => {
-    let wick = bar.high - Math.max(bar.close, bar.open);
-    let range = bar.high - bar.low;
-    return wick / range > 0.33;
 };
 
 const getTotalRange = (bar: Models.Candle) => {
@@ -140,35 +88,6 @@ export const firstBarIsPinBar = (symbol: string) => {
     return (body / range) <= 0.35;
 }
 
-/**
- * including current bar which may not be closed. 
- */
-export const hasReversalBarSinceOpen = (symbol: string, isLong: boolean,
-    strictMode: boolean, considerCurrentCandleAfterOneMinute: boolean,
-    caller: string) => {
-    let candles = Models.getUndefinedCandlesSinceOpen(symbol);
-    if (candles.length == 0) {
-        Firestore.logError(`${caller} no candles after open, hasReversalBarSinceOpen`);
-        return false;
-    } else if (candles.length == 1) {
-        return isReversalBar(symbol, candles[0], isLong, strictMode);
-    }
-    let end = considerCurrentCandleAfterOneMinute ? candles.length : candles.length - 1;
-
-    for (let i = 0; i < end; i++) {
-        const c = candles[i];
-        if (isLong) {
-            if (isRedBar(c)) {
-                return true;
-            }
-        } else {
-            if (isGreenBar(c)) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
 export const isPriceOutsideLevel = (isLong: boolean, price: number, level: number, strictCompare: boolean) => {
     if (strictCompare) {
         return ((isLong && price > level) || (!isLong && price < level));

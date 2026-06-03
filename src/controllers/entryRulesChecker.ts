@@ -1,6 +1,5 @@
 import * as Rules from '../algorithms/rules';
 import * as RiskManager from '../algorithms/riskManager';
-import * as Patterns from '../algorithms/patterns';
 import * as Vwap from '../algorithms/vwap';
 import * as Firestore from '../firestore';
 import * as Helper from '../utils/helper';
@@ -217,25 +216,4 @@ const getCommonInfo = (symbol: string, isLong: boolean) => {
         premarketVwapTrend: Vwap.getStrongPremarketVwapTrend(symbol),
         secondsSinceMarketOpen: Helper.getSecondsSinceMarketOpen(new Date()),
     }
-}
-
-/**
- * Returns true if either has reversal bar since open
- * or no need for this requirement
- */
-export const conditionallyHasReversalBarSinceOpen = (symbol: string,
-    isLong: boolean,
-    strictMode: boolean, considerCurrentCandleAfterOneMinute: boolean) => {
-    let plan = TradingPlans.getTradingPlans(symbol);
-    let openPrice = Models.getOpenPrice(symbol);
-    let hasReversal = Patterns.hasReversalBarSinceOpen(symbol, isLong, strictMode, considerCurrentCandleAfterOneMinute, "conditional");
-    let gap = openPrice - plan.analysis.gap.pdc;
-    let atr = plan.atr.average;
-    let threashold = atr * 0.8;
-    // if gap up more than 80% ATR, the reversal trade doesn't need to wait for reversal
-    if ((isLong && gap < 0 && Math.abs(gap) > threashold) ||
-        (!isLong && gap > 0 && gap > threashold)) {
-        return true;
-    }
-    return hasReversal;
 }

@@ -87,8 +87,7 @@ src/
 │   ├── chartSettings.ts       # Chart sizing, colors, series config
 │   ├── ui.ts                  # UI utilities, auto-sync
 │   ├── popup.ts               # Popup dialogs
-│   ├── flowchart.ts           # Trading state visualization
-│   └── liveStats.ts           # Real-time statistics display
+│   └── flowchart.ts           # Trading state visualization
 │
 ├── models/                    # Data models and state
 │   ├── models.ts              # Core models (SymbolData, ChartWidget, etc.)

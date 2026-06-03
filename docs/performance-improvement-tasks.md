@@ -51,7 +51,7 @@ Last full review: 2026-05-22.
      - `checkAlgoPendingCondition(symbol)` is currently a no-op.
      - `updatePullbackDepth(symbol, newPrice)`.
      - `alertHigherVolume(symbol)`.
-     - `saveRedToGreenState(symbol)`. Removed on 2026-06-02 (see item 14); the red/green reversal state was unused, so the twice-per-tick `conditionallyHasReversalBarSinceOpen()` since-open scan is gone.
+     - `saveRedToGreenState(symbol)`. Removed on 2026-06-02 (see item 14).
      - `TradebooksManager.onNewTimeAndSalesDataForSymbol(symbol, newPrice)`.
      - `getChartAnalysis(symbol)`.
      - `Chart.updateToolTipPriceLine(symbol, status)` when status text exists.
@@ -435,12 +435,13 @@ Removed:
 - `src/algorithms/autoTrader.ts` — the `saveRedToGreenState(symbol)` call in `onNewTimeAndSalesData()`, the `saveRedToGreenState()` and `hasReversalMove()` functions, the now-unused `EntryRulesChecker` import, and the empty `autoTriggerRedToGreen60()` stub plus its call in `onMarketJustOpened()`.
 - `src/models/models.ts` — the `redToGreenState` field on `ChartWidget`, the `RedToGreenState` interface, and the unused `getRedToGreenState()` getter.
 - `src/ui/chart.ts` — the `redToGreenState` initializer in `createChartWidget()`.
-
-Left in place: `EntryRulesChecker.conditionallyHasReversalBarSinceOpen()` (may be used by other entry logic; only its red/green callers were removed).
+- `src/controllers/entryRulesChecker.ts` — `conditionallyHasReversalBarSinceOpen()` (zero callers after item 14).
+- `src/algorithms/patterns.ts` — `hasReversalBarSinceOpen()`, `isReversalBar()`, `isReversalBarStrict()`, and wick helpers used only by that path.
+- `src/ui/liveStats.ts` — deleted (only exported unused `getLiveStatsForReversalMove()`).
 
 Acceptance:
 - [x] `npm run build` passes.
-- [x] No remaining references to `redToGreenState` / `saveRedToGreenState` / `hasReversalMove` / `getRedToGreenState`.
+- [x] No remaining references to `redToGreenState` / `saveRedToGreenState` / `hasReversalMove` / `getRedToGreenState` / `conditionallyHasReversalBarSinceOpen` / `hasReversalBarSinceOpen`.
 
 ## Verification Checklist For Each Item
 
