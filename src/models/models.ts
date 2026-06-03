@@ -245,17 +245,12 @@ export interface ChartWidget {
      */
     entryOrderLabelRiskMultiple?: number,
     tradebooks: Map<string, Tradebook>,
-    redToGreenState: RedToGreenState,
     /** no need to migrate start */
     currentCandle?: SimpleCandle,
     /** only for M1 chart */
     openPriceSeries: LightweightCharts.ISeriesApi<"Line">,
     chartState: ChartState
 
-};
-export interface RedToGreenState {
-    hasReversalForLong: boolean,
-    hasReversalForShort: boolean,
 };
 export interface SymbolFundamental {
     symbol: string,
@@ -1973,19 +1968,6 @@ export const isPriceInTradableArea = (symbol: string, isLong: boolean, price: nu
         return 1;
     } else {
         return 0;
-    }
-}
-
-export const getRedToGreenState = (symbol: string, isLong: boolean): boolean => {
-    let widget = getChartWidget(symbol);
-    if (!widget) {
-        return false;
-    }
-    let redToGreenState = widget.redToGreenState;
-    if (isLong) {
-        return redToGreenState.hasReversalForLong;
-    } else {
-        return redToGreenState.hasReversalForShort;
     }
 }
 

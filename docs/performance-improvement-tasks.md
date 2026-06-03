@@ -51,7 +51,7 @@ Last full review: 2026-05-22.
      - `checkAlgoPendingCondition(symbol)` is currently a no-op.
      - `updatePullbackDepth(symbol, newPrice)`.
      - `alertHigherVolume(symbol)`.
-     - `saveRedToGreenState(symbol)`.
+     - `saveRedToGreenState(symbol)`. Removed on 2026-06-02 (see item 14); the red/green reversal state was unused, so the twice-per-tick `conditionallyHasReversalBarSinceOpen()` since-open scan is gone.
      - `TradebooksManager.onNewTimeAndSalesDataForSymbol(symbol, newPrice)`.
      - `getChartAnalysis(symbol)`.
      - `Chart.updateToolTipPriceLine(symbol, status)` when status text exists.
@@ -229,14 +229,13 @@ Suggested split:
   - Bookmap wall pullback tracking if still needed.
 - Move to new candle or once per second:
   - `alertHigherVolume(symbol)`
-  - `saveRedToGreenState(symbol)`
   - `getChartAnalysis(symbol)`
   - tooltip price line updates
   - risk-level drawing if re-enabled later
 - Remove or stop calling `checkAlgoPendingCondition(symbol)` if it remains a no-op.
+- `saveRedToGreenState(symbol)` no longer applies; the red/green reversal state was removed on 2026-06-02 (item 14).
 
 Acceptance:
-- Red/green reversal state still becomes true, but does not scan since-open candles on every tick.
 - Tooltip status still updates, but at a bounded rate.
 - Tradebook tick callbacks only run for tradebooks that actually implement useful tick behavior.
 
@@ -423,6 +422,25 @@ Acceptance:
 - [x] `npx tsc --noEmit` passes.
 - [x] `npm run build` passes; worker emits as its own chunk.
 - [ ] Live verification during market hours: confirm trades still flow into M1/M5 charts.
+
+### 14. Remove unused red/green reversal state
+
+Status: completed on 2026-06-02.
+
+Goal: drop the per-tick red/green reversal scan, which was dead weight at market open.
+
+Finding: `AutoTrader.saveRedToGreenState()` ran on every accepted tick and called `EntryRulesChecker.conditionallyHasReversalBarSinceOpen()` twice (long + short), each scanning candles since open. The resulting `widget.redToGreenState` was no longer consumed anywhere — `AutoTrader.hasReversalMove()` and `Models.getRedToGreenState()` had zero callers.
+
+Removed:
+- `src/algorithms/autoTrader.ts` — the `saveRedToGreenState(symbol)` call in `onNewTimeAndSalesData()`, the `saveRedToGreenState()` and `hasReversalMove()` functions, the now-unused `EntryRulesChecker` import, and the empty `autoTriggerRedToGreen60()` stub plus its call in `onMarketJustOpened()`.
+- `src/models/models.ts` — the `redToGreenState` field on `ChartWidget`, the `RedToGreenState` interface, and the unused `getRedToGreenState()` getter.
+- `src/ui/chart.ts` — the `redToGreenState` initializer in `createChartWidget()`.
+
+Left in place: `EntryRulesChecker.conditionallyHasReversalBarSinceOpen()` (may be used by other entry logic; only its red/green callers were removed).
+
+Acceptance:
+- [x] `npm run build` passes.
+- [x] No remaining references to `redToGreenState` / `saveRedToGreenState` / `hasReversalMove` / `getRedToGreenState`.
 
 ## Verification Checklist For Each Item
 

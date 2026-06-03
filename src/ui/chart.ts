@@ -139,10 +139,6 @@ export const createChartWidget = (tabIndex: number, watchlistItem: Models.Watchl
         initialCost: 0,
         initialStopPrice: 0,
         tradebooks: tradebooksMap,
-        redToGreenState: {
-            hasReversalForLong: false,
-            hasReversalForShort: false,
-        },
     };
 
     /*

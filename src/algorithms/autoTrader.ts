@@ -6,7 +6,6 @@ import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as TradingState from '../models/tradingState';
 import * as Patterns from '../algorithms/patterns';
 import * as OrderFlow from '../controllers/orderFlow';
-import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import * as VwapPatterns from './vwapPatterns';
 import * as GlobalSettings from '../config/globalSettings';
@@ -279,8 +278,6 @@ export const onMarketJustOpened = () => {
     setInterval(() => {
         refreshEntryStopLoss();
     }, 1000);*/
-
-    autoTriggerRedToGreen60();
 }
 export const onMarketAlreadyOpen = () => {
     setTimeout(() => {
@@ -303,9 +300,6 @@ export const updateUIBasedOnOpenZone = () => {
         let openPrice = Models.getOpenPrice(symbol);
         updateUIBasedOnOpenZoneForSymbol(symbol, openPrice);
     });
-}
-export const autoTriggerRedToGreen60 = () => {
-    // RedToGreen60 plans (ProfitTakingFade60, OpenDriveContinuation60) removed
 }
 export const onMarketOpen = (symbol: string) => {
     // handle when market opens
@@ -535,7 +529,6 @@ export const onNewTimeAndSalesData = (symbol: string, newPrice: number, isNewCan
     checkAlgoPendingCondition(symbol);
     updatePullbackDepth(symbol, newPrice);
     alertHigherVolume(symbol);
-    saveRedToGreenState(symbol);
     TradebooksManager.onNewTimeAndSalesDataForSymbol(symbol, newPrice);
     if (!shouldUpdateLiveChartAnnotations(symbol)) {
         return;
@@ -546,47 +539,6 @@ export const onNewTimeAndSalesData = (symbol: string, newPrice: number, isNewCan
     }
     Chart.drawRiskLevels(symbol);
 }
-export const saveRedToGreenState = (symbol: string) => {
-    let seconds = Helper.getSecondsSinceMarketOpen(new Date());
-    if (seconds < 0) {
-        // market not open yet
-        return;
-    }
-    let widget = Models.getChartWidget(symbol);
-    if (!widget) {
-        return;
-    }
-    let redToGreenState = widget.redToGreenState;
-    if (!redToGreenState.hasReversalForLong) {
-        let hasReversalMovementNow = EntryRulesChecker.conditionallyHasReversalBarSinceOpen(
-            symbol, true, true, true);
-        if (hasReversalMovementNow) {
-            //Firestore.logInfo(`${symbol} has reversal movement for long`);
-            redToGreenState.hasReversalForLong = true;
-        }
-    }
-    if (!redToGreenState.hasReversalForShort) {
-        let hasReversalMovementNow = EntryRulesChecker.conditionallyHasReversalBarSinceOpen(
-            symbol, false, true, true);
-        if (hasReversalMovementNow) {
-            //Firestore.logInfo(`${symbol} has reversal movement for short`);
-            redToGreenState.hasReversalForShort = true;
-        }
-    }
-}
-export const hasReversalMove = (symbol: string, isLong: boolean) => {
-    let widget = Models.getChartWidget(symbol);
-    if (!widget) {
-        return false;
-    }
-    let redToGreenState = widget.redToGreenState;
-    if (isLong) {
-        return redToGreenState.hasReversalForLong;
-    } else {
-        return redToGreenState.hasReversalForShort;
-    }
-}
-
 export const checkTimingForEntry = (symbol: string) => {
     let seconds = Helper.getSecondsSinceMarketOpen(new Date());
     if (seconds > 120) {
