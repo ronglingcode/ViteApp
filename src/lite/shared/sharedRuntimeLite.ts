@@ -1,0 +1,329 @@
+import * as RiskManager from '../../algorithms/riskManager';
+import * as Models from '../../models/models';
+import * as TradingPlans from '../../models/tradingPlans/tradingPlans';
+import * as TradebooksManager from '../../tradebooks/tradebooksManager';
+import type { Tradebook } from '../../tradebooks/baseTradebook';
+import * as StateLite from '../models/stateLite';
+
+interface TradebookRenderCallbacks {
+    onStatus: (message: string, isError?: boolean) => void;
+    onAfterEntry: () => Promise<void>;
+}
+
+const getHybridApp = () => {
+    let appWindow = window as any;
+    appWindow.HybridApp = appWindow.HybridApp ?? {};
+    let hybridApp = appWindow.HybridApp;
+    hybridApp.Algo = hybridApp.Algo ?? {};
+    hybridApp.Models = hybridApp.Models ?? {};
+    hybridApp.ChartWidgets = hybridApp.ChartWidgets ?? new Map<string, any>();
+    hybridApp.SymbolData = hybridApp.SymbolData ?? new Map<string, Models.SymbolData>();
+    hybridApp.AccountCache = hybridApp.AccountCache ?? createEmptyBrokerAccount();
+    hybridApp.Settings = hybridApp.Settings ?? {};
+    hybridApp.Settings.checkSpread = true;
+    hybridApp.UIState = hybridApp.UIState ?? {
+        activeTabIndex: -1,
+    };
+    hybridApp.Secrets = hybridApp.Secrets ?? {};
+    hybridApp.Secrets.schwab = hybridApp.Secrets.schwab ?? {};
+    hybridApp.TradingData = hybridApp.TradingData ?? {
+        activeProfileName: '',
+        tradingSettings: {
+            useSingleOrderForEntry: false,
+            snapMode: true,
+        },
+        googleDocContent: '',
+    };
+    return hybridApp;
+};
+
+const createEmptyBrokerAccount = (): Models.BrokerAccount => {
+    return {
+        orderExecutions: new Map(),
+        entryOrders: new Map(),
+        exitPairs: new Map(),
+        positions: new Map(),
+        currentBalance: 0,
+        trades: new Map(),
+        tradesCount: 0,
+        nonBreakevenTradesCount: 0,
+        realizedPnL: 0,
+    };
+};
+
+const toModelOrder = (order: StateLite.LiteOrderModel | undefined): Models.OrderModel | undefined => {
+    if (!order) {
+        return undefined;
+    }
+    return {
+        ...order,
+        orderType: order.orderType as Models.OrderType,
+    };
+};
+
+const toModelExitPair = (pair: StateLite.LiteExitPair): Models.ExitPair => {
+    return {
+        symbol: pair.symbol,
+        STOP: toModelOrder(pair.STOP),
+        LIMIT: toModelOrder(pair.LIMIT),
+        source: pair.source,
+        parentOrderID: pair.parentOrderID,
+    };
+};
+
+const toModelCandle = (symbol: string, candle: StateLite.Candle): Models.CandlePlus => {
+    return {
+        symbol,
+        time: candle.time as any,
+        open: candle.open,
+        high: candle.high,
+        low: candle.low,
+        close: candle.close,
+        volume: candle.volume,
+        datetime: candle.time * 1000,
+        vwap: candle.close,
+        minutesSinceMarketOpen: 0,
+        firstTradeTime: candle.time * 1000,
+    };
+};
+
+const createVolumePoint = (candle: StateLite.Candle) => {
+    return {
+        time: candle.time as any,
+        value: candle.volume,
+    };
+};
+
+const updateVwapData = (symbol: string) => {
+    let symbolData = Models.getSymbolData(symbol);
+    let totalVolume = 0;
+    let totalTradingAmount = 0;
+    symbolData.m1Vwaps = [];
+    symbolData.candles.forEach(candle => {
+        totalVolume += candle.volume;
+        totalTradingAmount += candle.volume * Models.getTypicalPrice(candle);
+        symbolData.m1Vwaps.push({
+            time: candle.time,
+            value: totalVolume > 0 ? totalTradingAmount / totalVolume : candle.close,
+        });
+    });
+    symbolData.totalVolume = totalVolume;
+    symbolData.totalTradingAmount = totalTradingAmount;
+};
+
+const updateHighLow = (symbol: string) => {
+    let symbolData = Models.getSymbolData(symbol);
+    if (symbolData.candles.length === 0) {
+        return;
+    }
+    symbolData.highOfDay = Math.max(...symbolData.candles.map(candle => candle.high));
+    symbolData.lowOfDay = Math.min(...symbolData.candles.map(candle => candle.low));
+};
+
+const registerLiteChartWidget = (symbol: string, tradebooks: Map<string, Tradebook>) => {
+    let existingWidget = Models.getChartWidget(symbol) as any;
+    let widget = existingWidget ?? {};
+    widget.symbol = symbol;
+    widget.tradebooks = tradebooks;
+    widget.entryOrders = widget.entryOrders ?? [];
+    widget.exitOrderPairs = widget.exitOrderPairs ?? [];
+    Models.setChartWidget(symbol, widget as Models.ChartWidget);
+};
+
+const createButton = (text: string, className: string, parent: HTMLElement) => {
+    let button = document.createElement('div');
+    button.textContent = text;
+    button.classList.add(className);
+    parent.appendChild(button);
+    return button;
+};
+
+const createEntryParameters = (entryMethod: string): Models.TradebookEntryParameters => {
+    return {
+        entryMethod,
+        useFirstNewHigh: false,
+        useCurrentCandleHigh: false,
+        useMarketOrderWithTightStop: false,
+    };
+};
+
+const renderTradebook = (
+    tradebook: Tradebook,
+    sideBar: HTMLElement,
+    callbacks: TradebookRenderCallbacks
+) => {
+    let entryMethods = tradebook.getEntryMethods();
+    let container = document.createElement('div');
+    container.dataset.liteTradebook = 'true';
+
+    let title = document.createElement('div');
+    title.textContent = tradebook.buttonLabel;
+    title.classList.add(tradebook.isLong ? 'longButtonTitle' : 'shortButtonTitle');
+    container.appendChild(title);
+
+    let stats = document.createElement('div');
+    container.appendChild(stats);
+
+    let entryMethodButtons = document.createElement('div');
+    entryMethodButtons.classList.add('entryMethodButtons');
+    if (entryMethods.length > 1 && entryMethods.every(entryMethod => entryMethod.trim().length < 10)) {
+        entryMethodButtons.classList.add('twoButtonsPerRow');
+    }
+    container.appendChild(entryMethodButtons);
+
+    let buttonClassName = tradebook.isLong ? 'longButton' : 'shortButton';
+    let buttons: HTMLElement[] = [];
+    let methodsToRender = entryMethods.length > 0 ? entryMethods : [tradebook.buttonLabel];
+    methodsToRender.forEach(entryMethod => {
+        let button = createButton(entryMethod, buttonClassName, entryMethodButtons);
+        buttons.push(button);
+        button.addEventListener('click', pointerEvent => {
+            try {
+                let size = tradebook.startEntry(
+                    pointerEvent.shiftKey,
+                    false,
+                    createEntryParameters(entryMethods.length > 0 ? entryMethod : '')
+                );
+                callbacks.onStatus(`${tradebook.symbol} ${tradebook.buttonLabel} size ${size}`);
+                callbacks.onAfterEntry().catch(error => callbacks.onStatus(String(error), true));
+            } catch (error) {
+                callbacks.onStatus(error instanceof Error ? error.message : String(error), true);
+            }
+        });
+    });
+
+    tradebook.linkButton(buttons, stats, container);
+    container.style.display = tradebook.isEnabled() || tradebook.enableByDefault ? 'block' : 'none';
+    sideBar.appendChild(container);
+};
+
+export const initializeSharedRuntime = (
+    config: StateLite.LiteConfigData,
+    watchlist: StateLite.LiteWatchlistItem[],
+    secrets: StateLite.LiteSecrets
+) => {
+    let hybridApp = getHybridApp();
+    hybridApp.Algo.RiskManager = RiskManager;
+    hybridApp.Models.Models = Models;
+    hybridApp.Models.TradingPlans = TradingPlans;
+    hybridApp.TradingPlans = config.tradingPlans;
+    hybridApp.StockSelections = config.stockSelections;
+    hybridApp.Watchlist = watchlist.map(item => ({
+        symbol: item.symbol,
+        marketCapInMillions: 0,
+    }));
+    hybridApp.TradingData = {
+        activeProfileName: config.activeProfileName,
+        tradingSettings: config.tradingSettings,
+        googleDocContent: '',
+    };
+    hybridApp.Secrets.schwab = {
+        ...hybridApp.Secrets.schwab,
+        accessToken: secrets.schwab.accessToken,
+        accountHash: secrets.schwab.accountHash,
+        schwabClientChannel: secrets.streamerInfo?.schwabClientChannel ?? '',
+        schwabClientCorrelId: secrets.streamerInfo?.schwabClientCorrelId ?? '',
+        schwabClientCustomerId: secrets.streamerInfo?.schwabClientCustomerId ?? '',
+        schwabClientFunctionId: secrets.streamerInfo?.schwabClientFunctionId ?? '',
+        streamerSocketUrl: secrets.streamerInfo?.streamerSocketUrl ?? '',
+    };
+};
+
+export const renderTradebooksForWatchlist = (
+    watchlist: StateLite.LiteWatchlistItem[],
+    callbacks: TradebookRenderCallbacks
+) => {
+    watchlist.slice(0, 4).forEach((item, index) => {
+        let panel = document.getElementById(`chartContainer${index}`);
+        let sideBar = panel?.querySelector('.tradebookButtons') as HTMLElement | null;
+        if (!sideBar) {
+            return;
+        }
+
+        sideBar.querySelectorAll('[data-lite-tradebook="true"]').forEach(element => element.remove());
+        let tradebooks = TradebooksManager.createAllTradebooks(item.symbol);
+        registerLiteChartWidget(item.symbol, tradebooks);
+        TradebooksManager.updateTradebooksStatus(
+            item.symbol,
+            tradebooks,
+            Models.getCurrentPrice(item.symbol),
+            0
+        );
+        tradebooks.forEach(tradebook => renderTradebook(tradebook, sideBar, callbacks));
+    });
+};
+
+export const syncAccountSnapshot = (account: StateLite.LiteAccountSnapshot) => {
+    let hybridApp = getHybridApp();
+    let previousAccount = hybridApp.AccountCache as Models.BrokerAccount | undefined;
+    let nextAccount = createEmptyBrokerAccount();
+    nextAccount.orderExecutions = previousAccount?.orderExecutions ?? new Map();
+    nextAccount.entryOrders = previousAccount?.entryOrders ?? new Map();
+    nextAccount.trades = previousAccount?.trades ?? new Map();
+    nextAccount.currentBalance = previousAccount?.currentBalance ?? 0;
+    nextAccount.tradesCount = previousAccount?.tradesCount ?? 0;
+    nextAccount.nonBreakevenTradesCount = previousAccount?.nonBreakevenTradesCount ?? 0;
+    nextAccount.realizedPnL = previousAccount?.realizedPnL ?? 0;
+
+    hybridApp.ChartWidgets.forEach((widget: any) => {
+        widget.exitOrderPairs = [];
+    });
+    account.positions.forEach(position => {
+        nextAccount.positions.set(position.symbol, {
+            symbol: position.symbol,
+            averagePrice: position.averagePrice,
+            netQuantity: position.quantity,
+        });
+    });
+    account.exitPairs.forEach((pairs, symbol) => {
+        nextAccount.exitPairs.set(symbol, pairs.map(toModelExitPair));
+        let widget = Models.getChartWidget(symbol) as any;
+        if (widget) {
+            widget.exitOrderPairs = nextAccount.exitPairs.get(symbol) ?? [];
+        }
+    });
+    hybridApp.AccountCache = nextAccount;
+};
+
+export const syncHistory = (symbol: string, candles: StateLite.Candle[]) => {
+    let symbolData = Models.getSymbolData(symbol);
+    let modelCandles = candles.map(candle => toModelCandle(symbol, candle));
+    symbolData.candles = modelCandles;
+    symbolData.m1Candles = modelCandles;
+    symbolData.volumes = candles.map(createVolumePoint);
+    symbolData.m1Volumes = symbolData.volumes;
+    updateHighLow(symbol);
+    updateVwapData(symbol);
+};
+
+export const syncSnapshot = (snapshot: StateLite.MarketSnapshot) => {
+    if (!snapshot.candle) {
+        return;
+    }
+    let symbolData = Models.getSymbolData(snapshot.symbol);
+    let modelCandle = toModelCandle(snapshot.symbol, snapshot.candle);
+    let lastIndex = symbolData.candles.length - 1;
+    if (lastIndex >= 0 && symbolData.candles[lastIndex].time === modelCandle.time) {
+        symbolData.candles[lastIndex] = modelCandle;
+        symbolData.m1Candles[lastIndex] = modelCandle;
+        symbolData.volumes[lastIndex] = createVolumePoint(snapshot.candle);
+        symbolData.m1Volumes[lastIndex] = symbolData.volumes[lastIndex];
+    } else {
+        symbolData.candles.push(modelCandle);
+        symbolData.m1Candles.push(modelCandle);
+        let volumePoint = createVolumePoint(snapshot.candle);
+        symbolData.volumes.push(volumePoint);
+        symbolData.m1Volumes.push(volumePoint);
+    }
+    if (snapshot.bid != null) {
+        symbolData.bidPrice = snapshot.bid;
+        symbolData.schwabLevelOneQuote.bidPrice = snapshot.bid;
+    }
+    if (snapshot.ask != null) {
+        symbolData.askPrice = snapshot.ask;
+        symbolData.schwabLevelOneQuote.askPrice = snapshot.ask;
+    }
+    updateHighLow(snapshot.symbol);
+    updateVwapData(snapshot.symbol);
+    TradebooksManager.refreshTradebooksStatusForSymbol(snapshot.symbol);
+};

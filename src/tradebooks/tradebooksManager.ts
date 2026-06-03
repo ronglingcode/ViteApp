@@ -177,8 +177,15 @@ export const getBookmapTradebookButtonDefinitions = (symbol: string): BookmapTra
         return [];
     }
 
+    return getBookmapTradebookButtonDefinitionsFromMap(symbol, widget.tradebooks);
+}
+
+export const getBookmapTradebookButtonDefinitionsFromMap = (
+    symbol: string,
+    tradebooksMap: Map<string, Tradebook>
+): BookmapTradebookButtonDefinition[] => {
     let tradebooks: BookmapTradebookButtonDefinition[] = [];
-    widget.tradebooks.forEach(tradebook => {
+    tradebooksMap.forEach(tradebook => {
         if (!tradebook.isEnabled() && !tradebook.enableByDefault) {
             return;
         }

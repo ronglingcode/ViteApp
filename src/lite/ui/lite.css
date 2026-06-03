@@ -1,0 +1,37 @@
+.liteRoot .chartContainer.liteVisible {
+    display: block;
+}
+
+.liteRoot .liteChartsCell {
+    vertical-align: top;
+}
+
+.liteRoot .statusRow {
+    margin-left: 10px;
+}
+
+.liteRoot .statusChip {
+    display: inline-block;
+    margin: 0 2px;
+    border: solid 1px grey;
+    padding: 1px 2px;
+    font-size: 13px;
+}
+
+.liteRoot .sideBar .longButton.disabled,
+.liteRoot .sideBar .shortButton.disabled {
+    background-color: #CCCCCC;
+    cursor: not-allowed;
+}
+
+.liteRoot #orderStatus {
+    margin-bottom: 6px;
+}
+
+.liteRoot #eventLog .eventLine {
+    margin: 0 0 4px;
+}
+
+.liteRoot .errorText {
+    color: #c62828;
+}
