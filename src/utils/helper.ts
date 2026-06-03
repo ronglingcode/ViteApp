@@ -143,6 +143,10 @@ export const playNotificationSound = () => {
 export const playOrderSubmissionSound = () => {
     playNotificationSound();
 }
+
+const spokenMessages = new Map<string, number>();
+const speechMessageCooldownInMs = 60 * 1000;
+
 export const jsDateToUTC = (jsDateObj: Date) => {
     let result = Date.UTC(jsDateObj.getFullYear(), jsDateObj.getMonth(), jsDateObj.getDate(), jsDateObj.getHours(), jsDateObj.getMinutes(), jsDateObj.getSeconds(), jsDateObj.getMilliseconds()) / 1000;
     return result as LightweightCharts.UTCTimestamp;
@@ -217,11 +221,22 @@ export const isMarketOpenTime = (jsDatdeObj: Date, currentDay: Date) => {
 };
 
 export const speak = (message: string) => {
-    // disable for testing
-    return;
+    let now = Date.now();
+    let lastSpokenAt = spokenMessages.get(message);
+    if (lastSpokenAt && now - lastSpokenAt < speechMessageCooldownInMs) {
+        return;
+    }
+
+    spokenMessages.set(message, now);
+    spokenMessages.forEach((spokenAt, spokenMessage) => {
+        if (now - spokenAt >= speechMessageCooldownInMs && spokenMessage != message) {
+            spokenMessages.delete(spokenMessage);
+        }
+    });
+
     let minutes = getMinutesSinceMarketOpen(new Date());
     if (minutes < 85) {
-        var msg = new SpeechSynthesisUtterance();
+        let msg = new SpeechSynthesisUtterance();
         msg.text = message;
         window.speechSynthesis.speak(msg);
     }
