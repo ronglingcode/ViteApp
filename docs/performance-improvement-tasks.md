@@ -129,6 +129,7 @@ Status: partially completed.
 Progress:
 - Completed current primary config path on 2026-05-22: when `marketDataSource == "massive"`, Alpaca trades unsubscribe after the competition window while Alpaca quotes remain active.
 - Still pending if needed later: when `marketDataSource == "alpaca"`, close or unsubscribe Massive after the competition window.
+- 2026-06-02: trade-stream socket receipt, parsing, and competition-window cleanup now run inside the market data worker (see item 13). The worker still unsubscribes Alpaca trades after the window; this work no longer happens on the main thread.
 
 Goal: after the first configured window, only the main trade source should continue delivering trade messages to the app.
 
@@ -383,6 +384,45 @@ Acceptance:
 - M1/M5 initial charts work.
 - M15 appears after gate.
 - No null chart access before M15 creation.
+
+### 13. Offload time & sales socket + parsing to a Web Worker
+
+Status: completed on 2026-06-02.
+
+Goal: move the highest-frequency open-time work — Alpaca/Massive trade WebSocket receipt, `JSON.parse`, per-trade parsing, condition filtering, and Alpaca level-one quote parsing — off the browser main thread into a Web Worker. Candle aggregation, chart/DOM rendering, quote application, and tradebook evaluation stay on the main thread because they touch `window.HybridApp` and the charts.
+
+The worker owns the **entire Alpaca market-data socket** (trades + level-one quotes), the **Massive trades socket**, and the **Schwab streamer socket** (account activity + level-one quotes); when `useMarketDataWorker` is on, none of these sockets are created on the main thread. Parsed quotes are applied on the main thread via `AlpacaStreaming.applyLevelOneQuote()` / `SchwabStreaming.applyLevelOneQuote()`, and Schwab account-activity content is relayed raw to `SchwabStreaming.handleAccountActivity()` (low frequency, kept on main), so spread-monitor / order-flow / account-UI consumers see identical data.
+
+Schwab is wired through the worker now even though it is not the active level-one quote source today (`levelOneQuoteSource == alpaca`): its account-activity stream is always active, and level-one is subscribed only when `levelOneQuoteSource == schwab`, so flipping that flag routes Schwab quotes through the worker with no further changes.
+
+Design:
+- The worker owns the trade sockets, authenticates/subscribes, parses each frame, and posts parsed records back. The main thread only runs the existing `DB` apply path.
+- Batching is per WebSocket frame: one inbound frame (already an array of N trades) produces one outbound `postMessage`. No artificial flush timer, so there is no added latency for trade-driven chart updates.
+- Behavior is preserved: records are forwarded with their `shouldFilter` flag and `source`, and `DB.tryUpdateMaxTimeSaleTimestamp()` + filtering still run on the main thread, so competition/dedup/diagnostics are identical to the pre-worker path.
+- Feature-flagged via `GlobalSettings.useMarketDataWorker` (default `true`); set to `false` to fall back to the original main-thread sockets.
+- Communication uses `postMessage` / structured clone only (Date is cloneable). `SharedArrayBuffer` is intentionally avoided: it requires cross-origin isolation (`COOP: same-origin` + `COEP: require-corp`), which would block the remote scripts from `tradingdata-15425.web.app` and the localhost proxy, and `TimeSale` is a variable-length object with strings rather than a fixed numeric buffer.
+
+New files:
+- `src/streaming/timeSaleParse.ts` — worker-safe ports of `createAlpacaTimeSale` / `createMassiveTimeSale`; reuses `Helper`; keeps the trade-condition constants local so it does not import `StreamingHandler` (which pulls in DB/charts/broker).
+- `src/streaming/levelOneQuoteParse.ts` — worker-safe ports of `createAlpacaLevelOneQuote` / `createSchwabLevelOneQuote`.
+- `src/workers/marketDataMessages.ts` — shared message contract: `start` / `stop` in; `timeSale`, `quote`, `accountActivity`, `status`, `error` out.
+- `src/workers/marketDataWorker.ts` — worker entry; owns the Alpaca market-data socket (trades + quotes), Massive trades socket, and Schwab streamer socket, auth/subscribe, per-frame parse + batched post, and Alpaca competition-window unsubscribe.
+- `src/controllers/marketDataWorkerBridge.ts` — main-thread side; builds the start payload from `Secret` / `Models.getWatchlist()` / `GlobalSettings` / `DB.levelOneQuoteSource` (including the pre-built Schwab login/subscribe requests), applies trades via `StreamingHandler.applyWorkerTimeSale()`, quotes via the per-source `applyLevelOneQuote()`, and account activity via `SchwabStreaming.handleAccountActivity()`; stops the worker on `beforeunload`.
+
+Modified files:
+- `src/config/globalSettings.ts` — added `useMarketDataWorker` flag.
+- `src/controllers/streamingHandler.ts` — added `applyWorkerTimeSale(record, shouldFilter, source)`, which mirrors the apply logic of the Alpaca and Massive `handleTimeAndSalesData()` functions in one place.
+- `src/api/alpaca/streaming.ts` — extracted `applyLevelOneQuote(quote)` from `handleQuoteUpdates()` so the worker and the main socket share the same apply path; the main socket also no longer subscribes to trades when the worker is on.
+- `src/api/schwab/streaming.ts` — extracted `applyLevelOneQuote(quote)` and `handleAccountActivity(contents)`, and added `getStreamerSocketUrl()` / `createActivitySubscribeRequest()` / `createLevelOneSubscribeRequest()` builders so the bridge can assemble the Schwab worker config and both paths share the same apply logic.
+- `src/main.ts` — when the flag is on, starts the worker and skips the now-redundant main-thread Alpaca, Massive, and Schwab sockets; otherwise uses the original sockets.
+
+Other streaming sources evaluated and intentionally left on the main thread:
+- Bookmap socket: `orderbook` frames are discarded on arrival; remaining messages are low-frequency user actions that must run on main.
+
+Acceptance:
+- [x] `npx tsc --noEmit` passes.
+- [x] `npm run build` passes; worker emits as its own chunk.
+- [ ] Live verification during market hours: confirm trades still flow into M1/M5 charts.
 
 ## Verification Checklist For Each Item
 

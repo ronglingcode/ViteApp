@@ -42,6 +42,11 @@ export const createWebSocketForMarketData = async () => {
 
 export const handleQuoteUpdates = (data: any) => {
     let quote = createLevelOneQuote(data);
+    applyLevelOneQuote(quote);
+}
+
+/** Apply an already-parsed alpaca level-one quote (used by the main socket and the market data worker). */
+export const applyLevelOneQuote = (quote: Models.Quote) => {
     if (DB.levelOneQuoteSource == 'alpaca') {
         DB.updateFromLevelOneQuote(quote);
     }
@@ -103,6 +108,10 @@ const getWatchlistSymbols = () => {
 }
 
 const shouldUseAlpacaTradeStream = () => {
+    if (GlobalSettings.useMarketDataWorker) {
+        // The market data worker owns the trade stream; main socket only carries quotes.
+        return false;
+    }
     return GlobalSettings.marketDataSource == "alpaca" || StreamingHandler.shouldCompeteForTimeAndSales();
 }
 

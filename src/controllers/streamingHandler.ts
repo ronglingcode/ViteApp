@@ -46,6 +46,28 @@ export const handleTimeAndSalesData = (data: any) => {
     }
 }
 
+/**
+ * Apply a time & sale record that was parsed off the main thread by the market data
+ * worker. Mirrors the apply logic in handleTimeAndSalesData (alpaca) and
+ * MassiveStreaming.handleTimeAndSalesData (massive); only the parsing/filtering is offloaded.
+ */
+export const applyWorkerTimeSale = (record: Models.TimeSale, shouldFilter: boolean, source: 'a' | 'm') => {
+    let updated = DB.tryUpdateMaxTimeSaleTimestamp(record, source);
+    if (shouldFilter) {
+        return;
+    }
+    if (shouldCompeteForTimeAndSales()) {
+        if (updated) {
+            DB.updateFromTimeSale(record);
+        }
+        return;
+    }
+    let sourceName = source === 'a' ? 'alpaca' : 'massive';
+    if (GlobalSettings.marketDataSource == sourceName) {
+        DB.updateFromTimeSale(record);
+    }
+};
+
 export const handleMessageData = (data: any[]) => {
     data.forEach(element => {
         let service = element.service;

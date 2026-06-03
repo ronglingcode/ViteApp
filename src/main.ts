@@ -32,6 +32,7 @@ import * as KeyboardHandler from './controllers/keyboardHandler';
 import * as AlpacaStreaming from './api/alpaca/streaming';
 import * as ScwabStreaming from './api/schwab/streaming';
 import * as MassiveStreaming from './api/massive/streaming';
+import * as MarketDataWorkerBridge from './controllers/marketDataWorkerBridge';
 import * as BookmapSocket from './bookmap/bookmapSocket';
 import * as DB from './data/db';
 import './tosClient';
@@ -166,11 +167,19 @@ window.TradingApp.TOS.initialize().then(async () => {
     TraderFocus.updateTradeManagementUI();
 
     // open web socket
-    AlpacaStreaming.createWebSocketForMarketData();
     // Alpaca trading activity stream is disabled; Schwab is the active broker.
     // AlpacaStreaming.createWebSocket();
-    ScwabStreaming.createWebSocket();
-    MassiveStreaming.createWebSocket();
+    if (GlobalSettings.useMarketDataWorker) {
+        // The worker owns the Alpaca market-data socket (trades + quotes), the Massive
+        // trades socket, and the Schwab streamer socket (account activity + level-one
+        // quotes); their parsing runs off the main thread.
+        MarketDataWorkerBridge.startMarketDataWorker();
+        MarketDataWorkerBridge.registerMarketDataWorkerLifecycle();
+    } else {
+        AlpacaStreaming.createWebSocketForMarketData();
+        ScwabStreaming.createWebSocket();
+        MassiveStreaming.createWebSocket();
+    }
     if (GlobalSettings.enableBookmapSocket) {
         BookmapSocket.createWebSocket();
     }

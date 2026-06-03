@@ -58,15 +58,7 @@ export const createWebSocket = async () => {
                     }
                 } else if (service === "ACCT_ACTIVITY") {
                     if (command == "SUBS") {
-                        let contents = element.content;
-                        // received account activity
-                        let act: Models.SchwabAccountActivity[] = [];
-                        contents.forEach((c: any) => {
-                            let activity = createAccountAcitivity(c);
-                            act.push(activity);
-                        });
-                        showActivitySummary(act);
-                        Chart.updateAccountUIStatus('account activity');
+                        handleAccountActivity(element.content);
                     }
                 } else {
                     console.log('unknown service');
@@ -83,12 +75,27 @@ export const createWebSocket = async () => {
 export const handleQuoteUpdates = (data: any, receivedTime: Date) => {
     //console.log(TimeHelper.getPreciseTimeString(receivedTime));
     let quote = createLevelOneQuote(data);
+    applyLevelOneQuote(quote);
+}
+
+/** Apply an already-parsed schwab level-one quote (used by the main socket and the market data worker). */
+export const applyLevelOneQuote = (quote: Models.Quote) => {
     if (DB.levelOneQuoteSource == DB.levelOneQuoteSourceSchwab) {
         DB.updateFromLevelOneQuote(quote);
     }
     let symbolData = Models.getSymbolData(quote.symbol);
     let quoteData = symbolData.schwabLevelOneQuote;
     LevelOneQuote.updateQuoteIfNotEmpty(quoteData, quote);
+}
+
+/** Parse + apply a batch of raw schwab account-activity contents (used by the main socket and the worker). */
+export const handleAccountActivity = (contents: any[]) => {
+    let act: Models.SchwabAccountActivity[] = [];
+    (contents ?? []).forEach((c: any) => {
+        act.push(createAccountAcitivity(c));
+    });
+    showActivitySummary(act);
+    Chart.updateAccountUIStatus('account activity');
 }
 
 const sendWebsocketRequest = (socket: WebSocket, request: any) => {
@@ -114,9 +121,14 @@ export const createLoginRequest = () => {
         }
     }
 }
-export const subscribeActivity = (webSocket: WebSocket) => {
+/** URL of the schwab streamer socket (empty string when streamer info is not yet available). */
+export const getStreamerSocketUrl = (): string => {
+    return window.HybridApp.Secrets?.schwab?.streamerSocketUrl ?? '';
+}
+
+export const createActivitySubscribeRequest = () => {
     let streamerInfo = window.HybridApp.Secrets.schwab;
-    let request = {
+    return {
         "service": "ACCT_ACTIVITY",
         "requestid": "3",
         "command": "SUBS",
@@ -127,11 +139,11 @@ export const subscribeActivity = (webSocket: WebSocket) => {
             "fields": "0,1,2,3"
         }
     }
-    sendWebsocketRequest(webSocket, request);
 }
-export const subscribeLevelOneQuotes = (webSocket: WebSocket) => {
+
+export const createLevelOneSubscribeRequest = () => {
     let streamerInfo = window.HybridApp.Secrets.schwab;
-    let request = {
+    return {
         "service": "LEVELONE_EQUITIES",
         "requestid": "2",
         "command": "SUBS",
@@ -142,7 +154,13 @@ export const subscribeLevelOneQuotes = (webSocket: WebSocket) => {
             "fields": "0,1,2,4,5"
         }
     }
-    sendWebsocketRequest(webSocket, request);
+}
+
+export const subscribeActivity = (webSocket: WebSocket) => {
+    sendWebsocketRequest(webSocket, createActivitySubscribeRequest());
+}
+export const subscribeLevelOneQuotes = (webSocket: WebSocket) => {
+    sendWebsocketRequest(webSocket, createLevelOneSubscribeRequest());
 }
 
 export const createLevelOneQuote = (c: any) => {
