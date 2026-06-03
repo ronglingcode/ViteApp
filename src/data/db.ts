@@ -468,7 +468,6 @@ const updateFromTimeSaleCore = (timesale: Models.TimeSale): TimeSaleApplyMeta | 
         if (timesale.tradeTime && timesale.tradeTime < lastCandle.firstTradeTime) {
             lastCandle.open = lastPrice;
             lastCandle.firstTradeTime = timesale.tradeTime;
-            Firestore.logInfo("received out of order timesale " + symbol + ": " + timesale.tradeTime);
         }
         if (lastPrice > lastCandle.high) {
             lastCandle.high = lastPrice;
