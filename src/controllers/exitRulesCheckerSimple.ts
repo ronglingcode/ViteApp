@@ -104,14 +104,7 @@ export const checkFlattenRules = (symbol: string, logTags: Models.LogTags) => {
 
 
 export const checkTrailStopRules = (symbol: string, timeFrame: number, logTags: Models.LogTags) => {
-    let { trail5Count, trail15Count } = getCommonInfo(symbol);
-    if (timeFrame == 15) {
-        return trail15Count;
-    } else if (timeFrame == 5) {
-        return trail5Count;
-    } else {
-        return 4;
-    }
+    return TakeProfit.BatchCount;
 }
 export const checkTrailStopSingleRules = (symbol: string, batchIndex: number, timeFrame: number, logTags: Models.LogTags) => {
     if (timeFrame == 1) {
@@ -122,28 +115,11 @@ export const checkTrailStopSingleRules = (symbol: string, batchIndex: number, ti
             return false;
         }
     }
-    if (timeFrame > 15) {
+    if (timeFrame >= 5) {
         return true;
     }
-    let { trail5Count, trail15Count } = getCommonInfo(symbol);
-    if (timeFrame == 5) {
-        if (batchIndex >= trail5Count) {
-            Firestore.logError(`only allow first ${trail5Count}, this is ${batchIndex} + 1`, logTags);
-            return false;
-        } else {
-            return true;
-        }
-    } else if (timeFrame == 15) {
-        if (batchIndex > trail15Count) {
-            Firestore.logError(`only allow first ${trail15Count}, this is ${batchIndex} + 1`, logTags);
-            return false;
-        } else {
-            return true;
-        }
-    } else {
-        Firestore.logError(`unknown time frame ${timeFrame}`, logTags);
-        return false;
-    }
+    Firestore.logError(`unknown time frame ${timeFrame}`, logTags);
+    return false;
 }
 /**
  * if it's not the first 1 minute or the entry candle and it's 
@@ -190,10 +166,6 @@ export const getCommonInfo = (symbol: string) => {
     let symbolState = TradingState.getSymbolState(symbol);
     let breakoutTradeState = TradingState.getBreakoutTradeState(symbol, isLong);
     let planConfigs = symbolState.activeBasePlan?.planConfigs;
-    let exitTargets = symbolState.activeBasePlan?.targets;
-    let minimumExitTargets = exitTargets?.minimumTargets;
-    let trail5Count = exitTargets ? exitTargets.trail5Count : 0;
-    let trail15Count = exitTargets ? exitTargets.trail15Count : 0;
     let exitPairs = Models.getExitPairs(symbol);
     let atr = TradingState.getAtrInTrade(symbol);
     let isHigherTimeFrame = breakoutTradeState.plan.timeframe && breakoutTradeState.plan.timeframe > 1;
@@ -207,10 +179,7 @@ export const getCommonInfo = (symbol: string) => {
         todayRange: Models.getTodayRange(atr),
         averageRange: atr.average,
         simpleExitRules: true,
-        minimumExitTargets: minimumExitTargets,
         atr: atr,
-        trail5Count: trail5Count,
-        trail15Count: trail15Count,
         isHigherTimeFrame: isHigherTimeFrame,
     }
 }

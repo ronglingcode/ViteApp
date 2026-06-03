@@ -217,12 +217,6 @@ export const validateTargets = (targets: TradingPlansModels.ExitTargets) => {
     if (!noZero(targets.initialTargets.dailyRanges)) {
         return "zero in initial targets using ATR";
     }
-    if (!targets.minimumTargets) {
-        return "no minimum targets";
-    }
-    if (!noZero(targets.minimumTargets.dailyRanges)) {
-        return "zero in minimum targets using ATR";
-    }
     return "";
 }
 

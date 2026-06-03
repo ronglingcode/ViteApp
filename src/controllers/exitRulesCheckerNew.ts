@@ -164,10 +164,6 @@ export const getCommonInfo = (symbol: string) => {
     let symbolState = TradingState.getSymbolState(symbol);
     let breakoutTradeState = TradingState.getBreakoutTradeState(symbol, isLong);
     let planConfigs = symbolState.activeBasePlan?.planConfigs;
-    let exitTargets = symbolState.activeBasePlan?.targets;
-    let minimumExitTargets = exitTargets?.minimumTargets;
-    let trail5Count = exitTargets ? exitTargets.trail5Count : 0;
-    let trail15Count = exitTargets ? exitTargets.trail15Count : 0;
     let exitPairs = Models.getExitPairs(symbol);
     let atr = TradingState.getAtrInTrade(symbol);
     let isHigherTimeFrame = breakoutTradeState.plan.timeframe && breakoutTradeState.plan.timeframe > 1;
@@ -181,10 +177,7 @@ export const getCommonInfo = (symbol: string) => {
         todayRange: Models.getTodayRange(atr),
         averageRange: atr.average,
         simpleExitRules: true,
-        minimumExitTargets: minimumExitTargets,
         atr: atr,
-        trail5Count: trail5Count,
-        trail15Count: trail15Count,
         isHigherTimeFrame: isHigherTimeFrame,
         tradebookID: tradebookID,
     }

@@ -233,9 +233,6 @@ export interface ProfitTargets {
 }
 export interface ExitTargets {
     initialTargets: ExitTargetsSet,
-    minimumTargets?: ExitTargetsSet,
-    trail5Count: number,
-    trail15Count: number,
 }
 export interface SingleExitTarget {
     partialCount: number,

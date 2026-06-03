@@ -51,8 +51,6 @@ const getDefaultBreakoutTradeState = (isLong: boolean) => {
                     rrr: [],
                     dailyRanges: [],
                 },
-                trail5Count: 0,
-                trail15Count: 0,
             },
             planConfigs: {
                 size: 0,

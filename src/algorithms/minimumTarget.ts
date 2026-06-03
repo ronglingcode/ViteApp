@@ -2,12 +2,6 @@ import * as Helper from '../utils/helper';
 import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as Models from '../models/models';
 
-export const defaultMinimumTargets: TradingPlansModels.ExitTargetsSet = {
-    rrr: [0.85, 0.85, 0.9, 1.5, 1.8, 1.8, 1.8, 1.8, 2.4, 2.8],
-    dailyRanges: [0.4, 0.4, 0.45, 0.7, 0.75, 0.9, 0.9, 0.9, 0.9, 0.9],
-    priceLevels: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-};
-
 export const getProfitTargetsListFromConfig = (
     symbol: string, isLong: boolean, entryPrice: number, stopLossPrice: number, batchCount: number,
     atr: TradingPlansModels.AverageTrueRange, applyMinAtr: boolean, config: TradingPlansModels.ExitTargetsSet,
