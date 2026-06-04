@@ -525,16 +525,16 @@ export const reloadPartialAtMarket = async (symbol: string) => {
     reloadPartial(symbol, isLong, entryPrice, Models.OrderType.MARKET, logTags)
 };
 
-const reloadPartial = async (
-    symbol: string, isLong: boolean, entryPrice: number, orderType: Models.OrderType, logTags: Models.LogTags) => {
-    let stopOutPrice = Chart.getStopLossPrice(symbol, isLong, true, null);
-    let quantity = getPartialQuantity(symbol, isLong);
-    if (quantity == 0) {
-        Firestore.logError(`getPartialQuantity() returns 0`, logTags)
-        return;
+const canReloadPartial = (
+    symbol: string, isLong: boolean, quantity: number, entryPrice: number,
+    stopOutPrice: number, logTags: Models.LogTags) => {
+    let lowRiskAddOverride = RiskManager.getAllowedReasonToAddIfCurrentPositionRiskIsBelowThreshold(symbol, isLong, logTags);
+    if (lowRiskAddOverride.allowed) {
+        return true;
     }
+
     if (!EntryRulesChecker.checkPartialEntry(symbol, isLong, quantity, entryPrice, stopOutPrice, logTags)) {
-        return;
+        return false;
     }
 
     let breakoutTradeState = TradingState.getBreakoutTradeState(symbol, isLong);
@@ -546,7 +546,7 @@ const reloadPartial = async (
             if (!addCheck.allowed) {
                 Firestore.logError(`Cannot add to ${symbol}: ${addCheck.reason}`, logTags);
                 Helper.speak(`warning state, no adds, tighten stop`);
-                return;
+                return false;
             }
         }
     }
@@ -554,6 +554,22 @@ const reloadPartial = async (
     if (PartialStopDiscipline.getPhase(symbol, isLong) === 'needs_tighten') {
         Firestore.logError(`Cannot add to ${symbol}: tighten stop first`, logTags);
         Helper.speak('tighten your stop before adding');
+        return false;
+    }
+
+    return true;
+};
+
+const reloadPartial = async (
+    symbol: string, isLong: boolean, entryPrice: number, orderType: Models.OrderType, logTags: Models.LogTags) => {
+    let stopOutPrice = Chart.getStopLossPrice(symbol, isLong, true, null);
+    let quantity = getPartialQuantity(symbol, isLong);
+    if (quantity == 0) {
+        Firestore.logError(`getPartialQuantity() returns 0`, logTags)
+        return;
+    }
+
+    if (!canReloadPartial(symbol, isLong, quantity, entryPrice, stopOutPrice, logTags)) {
         return;
     }
 

@@ -4,13 +4,15 @@ import * as TradingState from '../models/tradingState';
 import * as Firestore from '../firestore';
 import * as Helper from '../utils/helper';
 
+export const dailyMax = 5000;
+export const allowAddIfBelow = dailyMax / 5;
 export const getMaxDailyLossLimit = () => {
     let initialBalance = TradingState.getInitialBalance();
     if (initialBalance > 120000) {
         // each trade risk 0.0575*0.21 = 1.2% of the entire cash account
         return initialBalance * 0.0575;
     } else {
-        return 5000; // each trade use 21%
+        return dailyMax; // each trade use 21%
     }
 }
 
@@ -159,6 +161,42 @@ export const getRiskInDollarFromExistingEntries = (symbol: string) => {
 export const getRiskMultiplesFromExistingPosition = (symbol: string) => {
     let risk = getRiskInDollarFromExistingPosition(symbol);
     return riskInDollarToMultiples(risk);
+}
+
+export const getAllowedReasonToAddIfCurrentPositionRiskIsBelowThreshold = (
+    symbol: string, isLong: boolean, logTags: Models.LogTags): Models.CheckRulesResult => {
+    let netQuantity = Models.getPositionNetQuantity(symbol);
+    if (netQuantity == 0) {
+        return {
+            allowed: false,
+            reason: "no current position",
+        };
+    }
+    let positionIsLong = netQuantity > 0;
+    if (positionIsLong != isLong) {
+        return {
+            allowed: false,
+            reason: "current position is in the opposite direction",
+        };
+    }
+
+    let currentPositionRisk = getRiskInDollarFromExistingPosition(symbol);
+    if (currentPositionRisk < allowAddIfBelow) {
+        let roundedRisk = Math.round(currentPositionRisk * 100) / 100;
+        let roundedThreshold = Math.round(allowAddIfBelow * 100) / 100;
+        let riskMultiples = riskInDollarToMultiples(currentPositionRisk);
+        let reason = `allow add because current position risk ${roundedRisk} (${riskMultiples}R) is below ${roundedThreshold}`;
+        Firestore.logInfo(reason, logTags);
+        return {
+            allowed: true,
+            reason: reason,
+        };
+    }
+
+    return {
+        allowed: false,
+        reason: `current position risk ${currentPositionRisk} is not below ${allowAddIfBelow}`,
+    };
 }
 export const getQuanityWithoutStopLoss = (symbol: string) => {
     let filledPrice = Models.getAveragePrice(symbol);
