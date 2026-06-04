@@ -62,16 +62,18 @@ export class BookmapWallBreak extends Tradebook {
             return;
         }
 
-        let symbol = this.symbol;
-        let symbolData = Models.getSymbolData(symbol);
-        let defaultPullbackPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
-        let recentPullbackPrice = this.recentPullbackPrice || defaultPullbackPrice;
-        let pullbackPrice = Helper.roundPrice(symbol, recentPullbackPrice);
-        let pullbackLabel = this.isLong ? 'pullback low' : 'popup high';
         let liveStats = this.getCommonLiveStats();
-        liveStats += `${pullbackLabel}: ${pullbackPrice}`;
-        if (this.inPullbackPhase) {
-            liveStats += ' (pulling back)';
+        if (GlobalSettings.enableBookmapWallBreakSwingPullback) {
+            let symbol = this.symbol;
+            let symbolData = Models.getSymbolData(symbol);
+            let defaultPullbackPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
+            let recentPullbackPrice = this.recentPullbackPrice || defaultPullbackPrice;
+            let pullbackPrice = Helper.roundPrice(symbol, recentPullbackPrice);
+            let pullbackLabel = this.isLong ? 'pullback low' : 'popup high';
+            liveStats += `${pullbackLabel}: ${pullbackPrice}`;
+            if (this.inPullbackPhase) {
+                liveStats += ' (pulling back)';
+            }
         }
         Helper.updateHtmlIfChanged(this.htmlStats, liveStats);
     }
@@ -122,7 +124,7 @@ export class BookmapWallBreak extends Tradebook {
 
         let entryPrice = Chart.getBreakoutEntryPrice(symbol, this.isLong, useMarketOrder, Models.getDefaultEntryParameters());
         let stopOutPrice = Chart.getCustomStopLossPrice(symbol, this.isLong);
-        if (stopOutPrice == 0) {
+        if (stopOutPrice == 0 && GlobalSettings.enableBookmapWallBreakSwingPullback) {
             // default to swing high/low
             stopOutPrice = this.recentPullbackPrice;
         }
@@ -336,6 +338,10 @@ export class BookmapWallBreak extends Tradebook {
     }
 
     onNewTimeSalesData(newPrice: number): void {
+        if (!GlobalSettings.enableBookmapWallBreakSwingPullback) {
+            return;
+        }
+
         let secondsSinceOpen = Helper.getSecondsSinceMarketOpen(new Date());
         if (secondsSinceOpen < 60) {
             return;

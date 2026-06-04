@@ -16,6 +16,8 @@ export const showTradebooksForPosition: boolean = enableLeftPaneFeatures && fals
 export const checkMaxEntryThreshold: boolean = false;
 export const m15ChartEnabledAfterSeconds: number = 15 * 60;
 export const enableBookmapSocket: boolean = true;
+// Track and use the pre-breakout swing pullback low/high for Bookmap wall breaks.
+export const enableBookmapWallBreakSwingPullback: boolean = false;
 // false: remind only. true: block core/runner exit adjustments until coreInvalidationLevel is set.
 export const blockExitAdjustmentsWithoutCoreInvalidationLevel: boolean = false;
 // false: do not block. true: block exit adjustments until the active trade management card is committed.
