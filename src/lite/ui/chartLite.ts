@@ -2,6 +2,7 @@ import * as LightweightCharts from 'sunrise-tv-lightweight-charts';
 import * as TradingPlans from '../../models/tradingPlans/tradingPlans';
 import * as StateLite from '../models/stateLite';
 import * as StatusLite from './statusLite';
+import * as ChartSeries from '../../utils/chartSeries';
 
 interface LiteChartWidget {
     chart: any;
@@ -341,7 +342,7 @@ export const drawExitPairs = (symbol: string, pairs: StateLite.LiteExitPair[]) =
         }
     });
 
-    ordersToDraw.forEach(orderToDraw => {
+    ChartSeries.aggregateExitOrdersByPrice(ordersToDraw).forEach(orderToDraw => {
         let line = createPriceLine(
             widget.rangeSeries,
             orderToDraw.price,

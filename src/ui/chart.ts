@@ -1015,7 +1015,7 @@ const drawWorkingOrders = async (
             ordersToDraw.push(drawingLimitOrder);
         }
     }
-    ordersToDraw.forEach(orderToDraw => {
+    ChartSeries.aggregateExitOrdersByPrice(ordersToDraw).forEach(orderToDraw => {
         let l = createPriceLine(widget.candleSeries, orderToDraw.price, orderToDraw.label, orderToDraw.color, null, false, "solid");
         widget.exitOrdersPriceLines.push(l);
     });
