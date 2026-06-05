@@ -150,7 +150,7 @@ if (toggleManagementCardExitBlockButton) {
     });
 }
 
-Firestore.addToLogView('version 1.364', 'Info');
+Firestore.addToLogView('version 1.365', 'Info');
 
 let now = new Date();
 const historicalChartLoadAttemptCount = 3;
