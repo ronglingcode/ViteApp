@@ -10,6 +10,7 @@ import * as Models from "../models/models";
 import * as TradingPlans from "../models/tradingPlans/tradingPlans";
 import * as TradebooksManager from "../tradebooks/tradebooksManager";
 import * as KeyboardHandler from "../controllers/keyboardHandler";
+import * as ExitOrderPairs from "../utils/exitOrderPairs";
 declare let window: Models.MyWindow;
 
 const BOOKMAP_WS_URL = "ws://localhost:8765";
@@ -30,9 +31,11 @@ const normalizeSymbol = (raw: string): string => {
 
 let websocket: WebSocket | null = null;
 let configPushIntervalId: ReturnType<typeof setInterval> | null = null;
+let accountUiRefreshListenerRegistered = false;
 
 export const createWebSocket = () => {
     console.log(`[BookmapSocket] Connecting to ${BOOKMAP_WS_URL}...`);
+    registerAccountUiRefreshListener();
     websocket = new WebSocket(BOOKMAP_WS_URL);
 
     websocket.onopen = function () {
@@ -105,6 +108,7 @@ const subscribeToOrderbook = () => {
 const pushBookmapConfigsForAllSymbols = () => {
     sendTradeButtonConfigsForAllSymbols();
     sendKeyLevelConfigsForAllSymbols();
+    sendExitOrderPairConfigsForAllSymbols();
 };
 
 const startPeriodicConfigPush = () => {
@@ -164,6 +168,41 @@ export const sendKeyLevelConfigForSymbol = (symbol: string) => {
         timestamp: Date.now(),
     }));
     console.log(`[BookmapSocket] Sent ${levels.length} key levels for ${symbol}`);
+};
+
+export const sendExitOrderPairConfigsForAllSymbols = () => {
+    let watchlist = Models.getWatchlist();
+    for (let i = 0; i < watchlist.length; i++) {
+        sendExitOrderPairConfigForSymbol(watchlist[i].symbol);
+    }
+};
+
+export const sendExitOrderPairConfigForSymbol = (symbol: string) => {
+    if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+        return;
+    }
+
+    let pairs = ExitOrderPairs.buildExitOrderPairConfigs(Models.getExitPairs(symbol));
+    websocket.send(JSON.stringify({
+        type: "exit_order_pairs_config",
+        symbol: symbol,
+        pairs: pairs,
+        timestamp: Date.now(),
+    }));
+    console.log(`[BookmapSocket] Sent ${pairs.length} exit order pairs for ${symbol}`);
+};
+
+const registerAccountUiRefreshListener = () => {
+    if (accountUiRefreshListenerRegistered) {
+        return;
+    }
+    accountUiRefreshListenerRegistered = true;
+    window.addEventListener('tradingscripts:account-ui-symbol-updated', event => {
+        let symbol = (event as CustomEvent<{ symbol?: string }>).detail?.symbol;
+        if (symbol) {
+            sendExitOrderPairConfigForSymbol(symbol);
+        }
+    });
 };
 
 const getBookmapKeyLevelsForSymbol = (symbol: string): BookmapKeyLevel[] => {

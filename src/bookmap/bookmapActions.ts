@@ -53,18 +53,10 @@ export const handlePriceSelect = (event: PriceSelectEvent) => {
     } else if (key === "s") {
         bookmapEntry(symbol, false, price);
     } else if (key === "g") {
-        let logTags = Models.generateLogTags(symbol, `${symbol}-bookmap-g`);
-        let positionIsLong = Models.getPositionNetQuantity(symbol) > 0;
-        let isStopLeg = OrderFlow.isStopLeg(symbol, newPrice);
-        let exitPairs = Models.getExitPairs(symbol);
-        for (let i = 0; i < exitPairs.length / 2; i++) {
-            let pair = exitPairs[i];
-            OrderFlow.adjustExitPairsWithNewPrice(symbol, [pair], newPrice, isStopLeg, positionIsLong, logTags);
-        }
+        Handler.adjustBatchExitsAtPrice(symbol, "KeyG", false, newPrice);
     } else if (key === "t") {
         console.log("trying bookmap actions for t");
-        let logTags = Models.generateLogTags(symbol, `${symbol}-bookmap-t`);
-        Handler.adjustAllExits(symbol, newPrice, logTags);
+        Handler.adjustBatchExitsAtPrice(symbol, "KeyT", false, newPrice);
     } else if (digit !== null) {
         adjustSingleExitFromBookmap(symbol, price, digit);
     } else {
@@ -196,28 +188,8 @@ const parseDigitHotkey = (key: string): number | null => {
 };
 
 const adjustSingleExitFromBookmap = (symbol: string, newPrice: number, digit: number) => {
-    let logTags = Models.generateLogTags(symbol, `${symbol}-bookmap-alt-${digit}`);
-    Firestore.logInfo("adjustSingleExitFromBookmap", logTags);
-    let widget = Models.getChartWidget(symbol);
-    if (!widget || !widget.exitOrderPairs || widget.exitOrderPairs.length <= 0) {
-        return;
-    }
-
     // Match keyboard behavior: 1->first pair ... 9->ninth pair, 0->tenth pair
-    let number = digit === 0 ? 10 : digit;
-    let index = number - 1;
-    if (index < 0 || widget.exitOrderPairs.length <= index) {
-        Firestore.logError(`exit pair index out of range for ${symbol}: digit=${digit}, pairs=${widget.exitOrderPairs.length}`, logTags);
-        return;
-    }
-
-    let pair = widget.exitOrderPairs[index];
-
-    Firestore.logInfo(`[Bookmap] Adjust exit pair ${number}: $${newPrice}`, logTags);
-
-    let positionIsLong = Models.getPositionNetQuantity(symbol) > 0;
-    let useStopLeg = OrderFlow.isStopLeg(symbol, newPrice);
-    OrderFlow.adjustExitPairsWithNewPrice(symbol, [pair], newPrice, useStopLeg, positionIsLong, logTags);
+    Handler.numberKeyPressedAtPrice(symbol, `Digit${digit}`, newPrice, false);
 };
 
 /** Cmd+Click or Ctrl+Click: set stop loss at the selected price. */
@@ -231,4 +203,3 @@ const setStopLossFromBookmap = (symbol: string, newPrice: number) => {
         OrderFlow.adjustExitPairsWithNewPrice(symbol, [pair], newPrice, true, positionIsLong, logTags);
     }
 };
-

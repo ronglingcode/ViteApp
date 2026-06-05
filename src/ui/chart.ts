@@ -20,6 +20,7 @@ import * as TraderFocus from '../controllers/traderFocus';
 import * as QuestionPopup from './questionPopup';
 import * as GlobalSettings from '../config/globalSettings';
 import * as ChartSeries from '../utils/chartSeries';
+import * as ExitOrderPairs from '../utils/exitOrderPairs';
 declare let window: Models.MyWindow;
 
 const updateUiTargetCache = new WeakMap<HTMLElement, Map<string, HTMLElement>>();
@@ -747,6 +748,9 @@ export const updateAccountUIStatusForSymbol = (symbol: string) => {
     drawProfitRatio(symbol, position, widget, riskMultiple);
     drawWorkingOrders(symbol, position, widget);
     drawOrderExecutions(symbol, widget);
+    window.dispatchEvent(new CustomEvent('tradingscripts:account-ui-symbol-updated', {
+        detail: { symbol },
+    }));
     //drawMomentumLevels(widget);
     //AutoTrader.onAccountDataRefresh(symbol);
 };
@@ -968,23 +972,7 @@ const drawWorkingOrders = async (
     if (entryOrders.length === 0 && exitOrderPairs.length === 0)
         return;
 
-    exitOrderPairs.sort(function (a, b) {
-        if (!a.LIMIT || !b.LIMIT) {
-            return 1;
-        }
-        let limitA = a['LIMIT'];
-        let limitB = b['LIMIT'];
-        let isBuyOrder = limitB.isBuy;
-        let isLong = !isBuyOrder;
-
-        let priceA = limitA.price ?? 0;
-        let priceB = limitB.price ?? 0;
-        if (isLong) {
-            return priceA - priceB;
-        } else {
-            return priceB - priceA;
-        }
-    });
+    ExitOrderPairs.sortExitOrderPairsForDisplay(exitOrderPairs);
     widget.exitOrderPairs = exitOrderPairs;
 
     let exitOrdersString = exitOrderPairs.length > 0 ? `Exits: ${exitOrderPairs.length}` : "Exits:";

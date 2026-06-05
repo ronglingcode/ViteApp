@@ -187,17 +187,26 @@ export const trailStopBatch = async (symbol: string, timeFrame: number) => {
 
 export const numberKeyPressed = async (symbol: string, keyCode: string, isFromBatch: boolean) => {
     let logTags = Models.generateLogTags(symbol, `${symbol}-adjust_exit`);
-    // "Digit1" -> 1, "Digit2" -> 2
-    Firestore.logInfo(logTags.logSessionName, logTags);
-    let { pair, keyIndex, totalPairsCount } = getExitPairFromKeyCode(symbol, keyCode, "Digit", logTags);
-    if (!pair)
-        return;
-
     let newPrice = Chart.getCrossHairPrice(symbol);
     if (!newPrice) {
         Firestore.logError(`no cross hair price for ${symbol}`, logTags);
         return;
     }
+    return numberKeyPressedAtPrice(symbol, keyCode, newPrice, isFromBatch);
+};
+
+export const numberKeyPressedAtPrice = async (symbol: string, keyCode: string, newPrice: number, isFromBatch: boolean) => {
+    let logTags = Models.generateLogTags(symbol, `${symbol}-adjust_exit`);
+    // "Digit1" -> 1, "Digit2" -> 2
+    Firestore.logInfo(logTags.logSessionName, logTags);
+    if (!Number.isFinite(newPrice) || newPrice <= 0) {
+        Firestore.logError(`invalid adjustment price for ${symbol}: ${newPrice}`, logTags);
+        return;
+    }
+    let { pair, keyIndex, totalPairsCount } = getExitPairFromKeyCode(symbol, keyCode, "Digit", logTags);
+    if (!pair)
+        return;
+
     let orders = OrderFlow.chooseOrderLeg(symbol, [pair], newPrice);
     if (orders.length === 0) {
         Firestore.logError(`no order leg selected for ${symbol} at ${newPrice}`, logTags);
@@ -289,9 +298,19 @@ const getExitPairFromKeyCode = (symbol: string, keyCode: string, prefix: string,
 };
 
 export const keyGPressed = async (symbol: string) => {
+    let logTags = Models.generateLogTags(symbol, `${symbol}-adjust_batch_exits_g_false`);
+    let newPrice = Chart.getCrossHairPrice(symbol);
+    if (!newPrice) {
+        Firestore.logError(`no cross hair price for ${symbol}`, logTags);
+        return;
+    }
+    return keyGPressedAtPrice(symbol, newPrice);
+};
+
+export const keyGPressedAtPrice = async (symbol: string, newPrice: number) => {
     let exitPairs = Models.getExitPairs(symbol);
     for (let i = 0; i < exitPairs.length / 2; i++) {
-        numberKeyPressed(symbol, `Digit${i + 1}`, true);
+        numberKeyPressedAtPrice(symbol, `Digit${i + 1}`, newPrice, true);
     }
 };
 
@@ -313,10 +332,14 @@ export const keyGPressedWithShift = async (symbol: string) => {
     }
 };
 export const adjustBatchExits = async (symbol: string, code: string, shiftKey: boolean) => {
+    let newPrice = Chart.getCrossHairPrice(symbol);
+    return adjustBatchExitsAtPrice(symbol, code, shiftKey, newPrice);
+};
+
+export const adjustBatchExitsAtPrice = async (symbol: string, code: string, shiftKey: boolean, newPrice?: number) => {
     let shortCode = code[code.length - 1];
     let logTags = Models.generateLogTags(symbol, `${symbol}-adjust_batch_exits_${shortCode}_${shiftKey}`);
     Firestore.logInfo(logTags.logSessionName, logTags);
-    let newPrice = Chart.getCrossHairPrice(symbol);
     if (!shiftKey && !newPrice) {
         Firestore.logError(`no cross hair price for ${symbol}`, logTags);
         return;
@@ -332,7 +355,7 @@ export const adjustBatchExits = async (symbol: string, code: string, shiftKey: b
             if (!ExitRulesCheckerNew.isAllowedToAdjustBatchExitPairs(symbol, logTags)) {
                 return;
             }
-            keyGPressed(symbol);
+            keyGPressedAtPrice(symbol, newPrice ?? 0);
         }
         return;
     }
