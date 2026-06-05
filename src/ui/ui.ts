@@ -78,7 +78,7 @@ export const setupAutoSync = () => {
     if (Config.getProfileSettings().brokerName == "TradeStation") {
         setInterval(() => {
             syncAndUpdate(0);
-        }, 5000);
+        }, 15000);
     }
 };
 

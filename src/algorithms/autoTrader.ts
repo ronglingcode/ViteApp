@@ -132,9 +132,9 @@ export const scheduleEvents = () => {
     scheduleHigherTimeFrameRefreshEvent(now);
     setInterval(refreshAlgoPeriodically, 2 * 1000);
     setInterval(() => {
-        Chart.updateAccountUIStatus('every 5 seconds');
+        Chart.updateAccountUIStatus('every 15 seconds');
         Patterns.checkWave(false);
-    }, 5000);
+    }, 15000);
     setInterval(() => {
         TradebooksManager.refreshTradebooksStatus();
     }, 1000);
