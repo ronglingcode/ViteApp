@@ -32,10 +32,12 @@ const normalizeSymbol = (raw: string): string => {
 let websocket: WebSocket | null = null;
 let configPushIntervalId: ReturnType<typeof setInterval> | null = null;
 let accountUiRefreshListenerRegistered = false;
+let actionLogListenerRegistered = false;
 
 export const createWebSocket = () => {
     console.log(`[BookmapSocket] Connecting to ${BOOKMAP_WS_URL}...`);
     registerAccountUiRefreshListener();
+    registerActionLogListener();
     websocket = new WebSocket(BOOKMAP_WS_URL);
 
     websocket.onopen = function () {
@@ -203,6 +205,29 @@ const registerAccountUiRefreshListener = () => {
             sendExitOrderPairConfigForSymbol(symbol);
         }
     });
+};
+
+const registerActionLogListener = () => {
+    if (actionLogListenerRegistered) {
+        return;
+    }
+    actionLogListenerRegistered = true;
+    window.addEventListener('tradingscripts:bookmap-action-log', event => {
+        let detail = (event as CustomEvent<{ symbol?: string, message?: string }>).detail;
+        sendActionLog(detail?.symbol, detail?.message);
+    });
+};
+
+const sendActionLog = (symbol: string | undefined, message: string | undefined) => {
+    if (!message || !websocket || websocket.readyState !== WebSocket.OPEN) {
+        return;
+    }
+    websocket.send(JSON.stringify({
+        type: "action_log",
+        symbol,
+        message,
+        timestamp: Date.now(),
+    }));
 };
 
 const getBookmapKeyLevelsForSymbol = (symbol: string): BookmapKeyLevel[] => {

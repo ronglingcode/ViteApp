@@ -26,6 +26,12 @@ const cleanKeys = (keys: string[]) => {
     return keys.filter(k => k !== "ctrl" && k !== "control" && k !== "meta" && k !== "alt");
 };
 
+const emitBookmapActionLog = (symbol: string, message: string) => {
+    window.dispatchEvent(new CustomEvent('tradingscripts:bookmap-action-log', {
+        detail: { symbol, message },
+    }));
+};
+
 /**
  * Main router for priceSelect events from Bookmap.
  * Dispatches to the appropriate handler based on keyCode.
@@ -53,11 +59,15 @@ export const handlePriceSelect = (event: PriceSelectEvent) => {
     } else if (key === "s") {
         bookmapEntry(symbol, false, price);
     } else if (key === "g") {
+        emitBookmapActionLog(symbol, `Adjust half exits @ ${newPrice}`);
         Handler.adjustBatchExitsAtPrice(symbol, "KeyG", false, newPrice);
     } else if (key === "t") {
         console.log("trying bookmap actions for t");
+        emitBookmapActionLog(symbol, `Adjust all exits @ ${newPrice}`);
         Handler.adjustBatchExitsAtPrice(symbol, "KeyT", false, newPrice);
     } else if (digit !== null) {
+        let number = digit === 0 ? 10 : digit;
+        emitBookmapActionLog(symbol, `Adjust exit ${number} @ ${newPrice}`);
         adjustSingleExitFromBookmap(symbol, price, digit);
     } else {
         console.log(`[BookmapActions] unhandled Price selected [${symbol}]: $${price} keyCode=${keyCode}`);
