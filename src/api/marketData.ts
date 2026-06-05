@@ -35,28 +35,6 @@ export const testGetQuote = async (symbol: string) => {
   return tradeStationApi.getQuote(symbol);
 };
 
-export const testTradeStationStreamBar = async () => {
-  let url = 'https://api.tradestation.com/v3/marketdata/stream/barcharts/MESM23?unit=Minute';
-  const options = {
-    method: 'GET',
-    url: url,
-    headers: { Authorization: 'Bearer ' + window.HybridApp.Secrets.tradeStation.accessToken }
-  };
-
-  const response = await fetch(url, options);
-  if (response.body) {
-    const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      console.log(value);
-      let j = JSON.parse(value);
-      //console.log(j);
-    }
-
-    console.log('Response fully received');
-  }
-}
 export const setPreviousDayPremarketVolume = async (symbol: string, premarketDollarCollection: Models.PremarketDollarCollection) => {
   let symbolData = Models.getSymbolData(symbol);
   symbolData.premarketDollarCollection = premarketDollarCollection;
