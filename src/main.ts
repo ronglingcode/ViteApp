@@ -248,9 +248,11 @@ window.TradingApp.TOS.initialize().then(async () => {
             await sharesOutstandingPromise;
             let impliedMarketCapInBillions = MarketData.getImpliedMarketCapInBillions(symbol);
             if (impliedMarketCapInBillions > 0 && impliedMarketCapInBillions < GlobalSettings.impliedMarketCapThresholdInBillions) {
-                Firestore.logError(`${symbol} blocked: implied market cap $${impliedMarketCapInBillions}B, below $${GlobalSettings.impliedMarketCapThresholdInBillions}B threshold`);
-                Chart.hideChart(symbol);
-                return;
+                if (symbol != 'STI') {
+                    Firestore.logError(`${symbol} blocked: implied market cap $${impliedMarketCapInBillions}B, below $${GlobalSettings.impliedMarketCapThresholdInBillions}B threshold`);
+                    Chart.hideChart(symbol);
+                    return;
+                }
             }
 
             // check premarket volume threshold
