@@ -225,6 +225,7 @@ const sendActionLog = (symbol: string | undefined, message: string | undefined) 
     websocket.send(JSON.stringify({
         type: "action_log",
         symbol,
+        source: "ViteApp",
         message,
         timestamp: Date.now(),
     }));
