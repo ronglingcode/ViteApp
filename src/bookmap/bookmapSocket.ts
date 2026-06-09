@@ -11,6 +11,7 @@ import * as TradingPlans from "../models/tradingPlans/tradingPlans";
 import * as TradebooksManager from "../tradebooks/tradebooksManager";
 import * as KeyboardHandler from "../controllers/keyboardHandler";
 import * as ExitOrderPairs from "../utils/exitOrderPairs";
+import * as RiskManager from "../algorithms/riskManager";
 declare let window: Models.MyWindow;
 
 const BOOKMAP_WS_URL = "ws://localhost:8765";
@@ -26,6 +27,7 @@ interface BookmapPositionConfig {
     symbol: string;
     netQuantity: number;
     averagePrice: number;
+    riskPercent: number;
 }
 
 interface BookmapOpenOrderConfig {
@@ -301,7 +303,17 @@ const buildPositionConfig = (symbol: string): BookmapPositionConfig | undefined 
         symbol: position.symbol,
         netQuantity: position.netQuantity,
         averagePrice: position.averagePrice,
+        riskPercent: getPositionRiskPercent(symbol),
     };
+};
+
+const getPositionRiskPercent = (symbol: string) => {
+    let riskMultiples = RiskManager.getRiskMultiplesFromExistingPosition(symbol);
+    let percent = riskMultiples * 100;
+    if (percent > 2) {
+        return Math.round(percent);
+    }
+    return Math.round(percent * 10) / 10;
 };
 
 const buildOpenOrderConfigs = (symbol: string): BookmapOpenOrderConfig[] => {
