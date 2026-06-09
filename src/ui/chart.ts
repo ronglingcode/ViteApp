@@ -649,6 +649,9 @@ const runAccountUIStatusUpdate = async (source: string) => {
         wl.forEach(element => {
             updateAccountUIStatusForSymbol(element.symbol);
         });
+        window.dispatchEvent(new CustomEvent('tradingscripts:account-ui-updated', {
+            detail: { source },
+        }));
         TraderFocus.updateTradeManagementUI();
     }
 };

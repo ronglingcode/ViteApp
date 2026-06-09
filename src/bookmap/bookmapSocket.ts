@@ -22,6 +22,24 @@ interface BookmapKeyLevel {
     label?: string;
 }
 
+interface BookmapPositionConfig {
+    symbol: string;
+    netQuantity: number;
+    averagePrice: number;
+}
+
+interface BookmapOpenOrderConfig {
+    orderID: string;
+    role: string;
+    orderType: string;
+    quantity: number;
+    isBuy: boolean;
+    price?: number;
+    source?: string;
+    parentOrderID?: string;
+    pairIndex?: number;
+}
+
 /** Normalize symbol e.g. "ADBE:NASDAQ:STOCKS@BMD" -> "ADBE" */
 const normalizeSymbol = (raw: string): string => {
     if (!raw) return "???";
@@ -33,6 +51,7 @@ let websocket: WebSocket | null = null;
 let configPushIntervalId: ReturnType<typeof setInterval> | null = null;
 let accountUiRefreshListenerRegistered = false;
 let actionLogListenerRegistered = false;
+const knownAccountSnapshotSymbols = new Set<string>();
 
 export const createWebSocket = () => {
     console.log(`[BookmapSocket] Connecting to ${BOOKMAP_WS_URL}...`);
@@ -111,6 +130,7 @@ const pushBookmapConfigsForAllSymbols = () => {
     sendTradeButtonConfigsForAllSymbols();
     sendKeyLevelConfigsForAllSymbols();
     sendExitOrderPairConfigsForAllSymbols();
+    sendAccountStatesForAllSymbols();
 };
 
 const startPeriodicConfigPush = () => {
@@ -194,6 +214,30 @@ export const sendExitOrderPairConfigForSymbol = (symbol: string) => {
     console.log(`[BookmapSocket] Sent ${pairs.length} exit order pairs for ${symbol}`);
 };
 
+export const sendAccountStatesForAllSymbols = () => {
+    let symbols = getAccountSnapshotSymbols();
+    for (let i = 0; i < symbols.length; i++) {
+        sendAccountStateForSymbol(symbols[i]);
+    }
+};
+
+export const sendAccountStateForSymbol = (symbol: string) => {
+    if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+        return;
+    }
+
+    knownAccountSnapshotSymbols.add(symbol);
+    let position = buildPositionConfig(symbol);
+    let openOrders = buildOpenOrderConfigs(symbol);
+    websocket.send(JSON.stringify({
+        type: "account_state",
+        symbol: symbol,
+        position: position,
+        openOrders: openOrders,
+        timestamp: Date.now(),
+    }));
+};
+
 const registerAccountUiRefreshListener = () => {
     if (accountUiRefreshListenerRegistered) {
         return;
@@ -203,7 +247,11 @@ const registerAccountUiRefreshListener = () => {
         let symbol = (event as CustomEvent<{ symbol?: string }>).detail?.symbol;
         if (symbol) {
             sendExitOrderPairConfigForSymbol(symbol);
+            sendAccountStateForSymbol(symbol);
         }
+    });
+    window.addEventListener('tradingscripts:account-ui-updated', () => {
+        sendAccountStatesForAllSymbols();
     });
 };
 
@@ -229,6 +277,83 @@ const sendActionLog = (symbol: string | undefined, message: string | undefined) 
         message,
         timestamp: Date.now(),
     }));
+};
+
+const getAccountSnapshotSymbols = () => {
+    const symbols = new Set<string>();
+    knownAccountSnapshotSymbols.forEach(symbol => symbols.add(symbol));
+    Models.getWatchlist().forEach(item => symbols.add(item.symbol));
+
+    const account = Models.getBrokerAccount();
+    account?.positions.forEach((_position, symbol) => symbols.add(symbol));
+    account?.entryOrders.forEach((_orders, symbol) => symbols.add(symbol));
+    account?.exitPairs.forEach((_pairs, symbol) => symbols.add(symbol));
+
+    return Array.from(symbols).sort();
+};
+
+const buildPositionConfig = (symbol: string): BookmapPositionConfig | undefined => {
+    const position = Models.getPosition(symbol);
+    if (!position || position.netQuantity === 0) {
+        return undefined;
+    }
+    return {
+        symbol: position.symbol,
+        netQuantity: position.netQuantity,
+        averagePrice: position.averagePrice,
+    };
+};
+
+const buildOpenOrderConfigs = (symbol: string): BookmapOpenOrderConfig[] => {
+    const orders: BookmapOpenOrderConfig[] = [];
+
+    Models.getEntryOrders(symbol).forEach(order => {
+        const config = createOpenOrderConfig(order, "ENTRY");
+        if (config) {
+            orders.push(config);
+        }
+    });
+
+    ExitOrderPairs.getExitOrderPairsForDisplay(Models.getExitPairs(symbol)).forEach((pair, index) => {
+        const pairIndex = index + 1;
+        const stopConfig = createOpenOrderConfig(pair.STOP, "STOP", pair.source, pair.parentOrderID, pairIndex);
+        if (stopConfig) {
+            orders.push(stopConfig);
+        }
+        const limitConfig = createOpenOrderConfig(pair.LIMIT, "LIMIT", pair.source, pair.parentOrderID, pairIndex);
+        if (limitConfig) {
+            orders.push(limitConfig);
+        }
+    });
+
+    return orders;
+};
+
+const createOpenOrderConfig = (
+    order: Models.OrderModel | undefined,
+    role: string,
+    source?: string,
+    parentOrderID?: string,
+    pairIndex?: number,
+): BookmapOpenOrderConfig | undefined => {
+    if (!order) {
+        return undefined;
+    }
+
+    const config: BookmapOpenOrderConfig = {
+        orderID: order.orderID,
+        role,
+        orderType: order.orderType,
+        quantity: order.quantity,
+        isBuy: order.isBuy,
+        source,
+        parentOrderID,
+        pairIndex,
+    };
+    if (order.price !== undefined && Number.isFinite(order.price) && order.price > 0) {
+        config.price = order.price;
+    }
+    return config;
 };
 
 const getBookmapKeyLevelsForSymbol = (symbol: string): BookmapKeyLevel[] => {
