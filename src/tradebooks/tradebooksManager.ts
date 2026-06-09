@@ -17,6 +17,10 @@ export interface BookmapTradebookButtonDefinition {
     entryMethods: string[],
 }
 
+const isDirectionEnabled = (directionPlan: TradingPlansModels.SingleDirectionPlans) => {
+    return directionPlan.enabled !== false;
+}
+
 export const createTradebooksForGapAndGo = (symbol: string, gapAndGoPlan: TradingPlansModels.GapAndGoPlan, tradebooksMap: Map<string, Tradebook>) => {
     let gapAndGoBookmapOfferWallBreakout = new BookmapWallBreak(
         symbol, TradebookID.GapAndGoBookmapOfferWallBreakout, gapAndGoPlan, gapAndGoPlan.support.low);
@@ -97,20 +101,24 @@ export const createAllTradebooks = (symbol: string) => {
     let plan = TradingPlans.getTradingPlans(symbol);
     let tradebooksMap = new Map<string, Tradebook>();
 
-    if (plan.long.gapAndGoPlan) {
-        createTradebooksForGapAndGo(symbol, plan.long.gapAndGoPlan, tradebooksMap);
+    if (isDirectionEnabled(plan.long)) {
+        if (plan.long.gapAndGoPlan) {
+            createTradebooksForGapAndGo(symbol, plan.long.gapAndGoPlan, tradebooksMap);
+        }
+
+        if (plan.long.gapDownAndGoUpPlan) {
+            createTradebooksForGapDownAndGoUp(symbol, plan.long.gapDownAndGoUpPlan, tradebooksMap);
+        }
     }
 
-    if (plan.short.gapAndCrapPlan) {
-        createTradebooksForGapAndCrap(symbol, plan.short.gapAndCrapPlan, tradebooksMap);
-    }
+    if (isDirectionEnabled(plan.short)) {
+        if (plan.short.gapAndCrapPlan) {
+            createTradebooksForGapAndCrap(symbol, plan.short.gapAndCrapPlan, tradebooksMap);
+        }
 
-    if (plan.short.gapDownAndGoDownPlan) {
-        createTradebooksForGapDownAndGoDown(symbol, plan.short.gapDownAndGoDownPlan, tradebooksMap);
-    }
-
-    if (plan.long.gapDownAndGoUpPlan) {
-        createTradebooksForGapDownAndGoUp(symbol, plan.long.gapDownAndGoUpPlan, tradebooksMap);
+        if (plan.short.gapDownAndGoDownPlan) {
+            createTradebooksForGapDownAndGoDown(symbol, plan.short.gapDownAndGoDownPlan, tradebooksMap);
+        }
     }
 
     return tradebooksMap;
