@@ -168,7 +168,8 @@ export class BookmapWallBreak extends Tradebook {
     }
 
     getEntryMethods(): string[] {
-        return ["0.25R", "0.5R", "1R"];
+        //return ["0.25R", "0.5R", "1R"];
+        return Helper.returnDefaultEntryMethods();
     }
 
     getDisallowedReasonToAdjustSingleLimitOrder(

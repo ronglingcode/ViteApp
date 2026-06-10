@@ -1,5 +1,9 @@
 import type * as LightweightCharts from 'sunrise-tv-lightweight-charts'
 import * as TimeHelper from './timeHelper';
+
+export const returnDefaultEntryMethods = () => {
+    return ["0.25 R"];
+}
 export const numberToString = (n: number | null | undefined) => {
     if (!n)
         return "";

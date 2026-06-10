@@ -185,6 +185,7 @@ export class BookmapWallReversal extends Tradebook {
     }
 
     getEntryMethods(): string[] {
+        /*
         let patterns = [];
         if (this.isLong) {
             patterns = ['bid step up', 'bid reappear'];
@@ -196,7 +197,9 @@ export class BookmapWallReversal extends Tradebook {
             entryMethods.push(`${pattern} 0.15R`);
             entryMethods.push(`${pattern} 0.25R`);
         });
-        return entryMethods;
+                return entryMethods;
+*/
+        return Helper.returnDefaultEntryMethods();
     }
 
 
