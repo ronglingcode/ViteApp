@@ -6,6 +6,10 @@
     vertical-align: top;
 }
 
+.liteRoot .chartContainer.liteNoSimpleChart .liteChartHost {
+    display: none !important;
+}
+
 .liteRoot .statusRow {
     margin-left: 10px;
 }

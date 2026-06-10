@@ -18,15 +18,22 @@ interface RenderShellCallbacks {
     onReconnect: () => void;
 }
 
+interface RenderShellOptions {
+    showSimpleChart: boolean;
+}
+
 const renderChartContainer = (
     index: number,
-    symbolsByIndex: Map<number, StateLite.LiteWatchlistItem>
+    symbolsByIndex: Map<number, StateLite.LiteWatchlistItem>,
+    showSimpleChart: boolean
 ) => {
     let item = symbolsByIndex.get(index);
     let symbol = item?.symbol ?? '';
+    let simpleChartClass = showSimpleChart ? 'liteSimpleChartVisible' : 'liteNoSimpleChart';
+    let chartHostStyle = showSimpleChart ? '' : ' style="display: none;"';
     return `
         <td>
-          <div id="chartContainer${index}" class="chartContainer ${item ? 'liteVisible' : ''}">
+          <div id="chartContainer${index}" class="chartContainer ${item ? 'liteVisible' : ''} ${simpleChartClass}">
             <div id="topbar${index}" class="topbar">
               <span id="symbol${index}">${symbol}</span>
               <span class="currentPrice" data-field="price">-</span>
@@ -58,7 +65,7 @@ const renderChartContainer = (
                   <span class="exitButtons"></span>
                   <span class="exitOrders">Exits: </span>
                 </div>
-                <div id="chart${index}" class="tvchart"></div>
+                <div id="chart${index}" class="tvchart liteChartHost"${chartHostStyle}></div>
                 <div id="chart${index}popup" class="tvchart" style="display: none;">
                   <div class="question">question</div>
                   <textarea class="answer">answer</textarea>
@@ -111,9 +118,11 @@ const renderControls = () => {
 export const renderShell = (
     root: HTMLElement,
     watchlist: StateLite.LiteWatchlistItem[],
-    callbacks: RenderShellCallbacks
+    callbacks: RenderShellCallbacks,
+    options: RenderShellOptions = { showSimpleChart: true }
 ) => {
     let totalChartCount = Math.min(watchlist.length, 4);
+    let showSimpleChart = options.showSimpleChart;
     let symbolsByIndex = new Map<number, StateLite.LiteWatchlistItem>();
     watchlist.slice(0, 4).forEach((item, index) => {
         symbolsByIndex.set(index, item);
@@ -147,14 +156,14 @@ export const renderShell = (
               <td class="liteChartsCell">
                 <table>
                   <tr>
-                    ${renderChartContainer(0, symbolsByIndex)}
-                    ${renderChartContainer(2, symbolsByIndex)}
+                    ${renderChartContainer(0, symbolsByIndex, showSimpleChart)}
+                    ${renderChartContainer(2, symbolsByIndex, showSimpleChart)}
                   </tr>
                 </table>
                 <table>
                   <tr>
-                    ${renderChartContainer(1, symbolsByIndex)}
-                    ${renderChartContainer(3, symbolsByIndex)}
+                    ${renderChartContainer(1, symbolsByIndex, showSimpleChart)}
+                    ${renderChartContainer(3, symbolsByIndex, showSimpleChart)}
                   </tr>
                 </table>
               </td>
@@ -179,7 +188,9 @@ export const renderShell = (
             return;
         }
         let chartHost = document.getElementById(`chart${index}`) as HTMLElement;
-        ChartLite.createLiteChart(item.symbol, chartHost, index, totalChartCount);
+        if (showSimpleChart) {
+            ChartLite.createLiteChart(item.symbol, chartHost, index, totalChartCount);
+        }
 
         let elements: SymbolElements = {
             price: panel.querySelector('[data-field="price"]') as HTMLElement,

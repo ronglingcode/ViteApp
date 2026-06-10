@@ -1,5 +1,6 @@
 import './ui/lite.css';
 import * as ConfigDataLite from './api/configDataLite';
+import * as GlobalSettings from '../config/globalSettings';
 import * as SchwabLite from './api/schwabLite';
 import * as ExitAdjustmentsLite from './controllers/exitAdjustmentsLite';
 import * as StateLite from './models/stateLite';
@@ -25,6 +26,7 @@ let exitPairsBySymbol = new Map<string, StateLite.LiteExitPair[]>();
 let lastPriceBySymbol = new Map<string, number>();
 let symbolElements = new Map<string, ShellLite.SymbolElements>();
 let activeSymbol = '';
+const showSimpleChart = GlobalSettings.showSimpleChart;
 
 const shouldEnableSchwabStreamer = () => {
     return localStorage.getItem('tradingscripts.lite.enableSchwabStreamer') === 'true';
@@ -58,7 +60,7 @@ const renderShell = (watchlist: StateLite.LiteWatchlistItem[]) => {
             }
             startWorker(watchlist, activeSecrets);
         },
-    });
+    }, { showSimpleChart });
 
     ControlButtonsLite.setupMainAppControlButtons({
         setOrderStatus: StatusLite.setOrderStatus,
@@ -89,17 +91,25 @@ const updatePositionsUi = () => {
 const updateExitPairsUi = () => {
     symbolElements.forEach((elements, symbol) => {
         let pairs = exitPairsBySymbol.get(symbol) ?? [];
-        elements.exitOrders.textContent = ChartLite.drawExitPairs(symbol, pairs);
+        elements.exitOrders.textContent = showSimpleChart
+            ? ChartLite.drawExitPairs(symbol, pairs)
+            : ChartLite.buildExitOrdersSummary(pairs);
     });
 };
 
 const updateEntryOrdersUi = () => {
+    if (!showSimpleChart) {
+        return;
+    }
     symbolElements.forEach((_elements, symbol) => {
         ChartLite.drawEntryOrders(symbol, entryOrdersBySymbol.get(symbol) ?? []);
     });
 };
 
 const updateOrderChartRanges = () => {
+    if (!showSimpleChart) {
+        return;
+    }
     symbolElements.forEach((_elements, symbol) => {
         ChartLite.updateOrderChartRange(symbol, getCurrentPrice(symbol));
     });
@@ -154,7 +164,9 @@ const handleWorkerMessage = (message: StateLite.WorkerToMainMessage) => {
         return;
     }
     if (message.type === 'history') {
-        ChartLite.setLiteChartHistory(message.symbol, message.candles);
+        if (showSimpleChart) {
+            ChartLite.setLiteChartHistory(message.symbol, message.candles);
+        }
         SharedRuntimeLite.syncHistory(message.symbol, message.candles, message.dailyCandles);
         return;
     }
@@ -172,7 +184,9 @@ const handleWorkerMessage = (message: StateLite.WorkerToMainMessage) => {
             elements.bid.textContent = StateLite.formatPrice(snapshot.bid);
             elements.ask.textContent = StateLite.formatPrice(snapshot.ask);
             elements.spread.textContent = StateLite.formatPrice(snapshot.spread);
-            ChartLite.updateLiteChartCandle(snapshot.symbol, snapshot.candle);
+            if (showSimpleChart) {
+                ChartLite.updateLiteChartCandle(snapshot.symbol, snapshot.candle);
+            }
             SharedRuntimeLite.syncSnapshot(snapshot);
         });
         return;

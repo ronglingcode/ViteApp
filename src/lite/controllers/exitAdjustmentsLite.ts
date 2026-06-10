@@ -57,6 +57,11 @@ export class LiteExitAdjuster {
         this.busySymbols.clear();
     }
 
+    private getExitPairsForSymbol(symbol: string) {
+        let chartPairs = ChartLite.getExitOrderPairs(symbol);
+        return chartPairs.length > 0 ? chartPairs : this.callbacks.getExitPairs(symbol);
+    }
+
     async handleKeyboardAdjust(event: KeyboardEvent) {
         let target = event.target;
         if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) {
@@ -96,7 +101,7 @@ export class LiteExitAdjuster {
         if (positionQuantity !== 0) {
             return positionQuantity;
         }
-        let firstPair = ChartLite.getExitOrderPairs(symbol)[0] ?? this.callbacks.getExitPairs(symbol)[0];
+        let firstPair = this.getExitPairsForSymbol(symbol)[0];
         if (firstPair?.STOP) {
             return guessNetQuantityFromExitOrder(firstPair.STOP.isBuy);
         }
@@ -137,7 +142,7 @@ export class LiteExitAdjuster {
             number = 10;
         }
         let index = number - 1;
-        let pairs = ChartLite.getExitOrderPairs(symbol);
+        let pairs = this.getExitPairsForSymbol(symbol);
         return {
             pair: pairs[index],
             index,
@@ -159,7 +164,7 @@ export class LiteExitAdjuster {
         newPrice: number,
         stopLeg: boolean
     ) {
-        let pairs = ChartLite.getExitOrderPairs(symbol);
+        let pairs = this.getExitPairsForSymbol(symbol);
         return pairs.some(pair => {
             let visibleOrder = getPairLeg(pair, stopLeg);
             if (!visibleOrder) {
@@ -175,7 +180,7 @@ export class LiteExitAdjuster {
     }
 
     private orderIsVisible(symbol: string, originalOrder: StateLite.LiteOrderModel) {
-        let pairs = ChartLite.getExitOrderPairs(symbol);
+        let pairs = this.getExitPairsForSymbol(symbol);
         return pairs.some(pair => pair.STOP?.orderID === originalOrder.orderID || pair.LIMIT?.orderID === originalOrder.orderID);
     }
 
@@ -307,7 +312,7 @@ export class LiteExitAdjuster {
     }
 
     private async handleMarketOutHalf(symbol: string) {
-        let pairs = ChartLite.getExitOrderPairs(symbol);
+        let pairs = this.getExitPairsForSymbol(symbol);
         if (pairs.length === 0) {
             throw new Error(`No exit pairs for ${symbol}`);
         }
@@ -323,7 +328,7 @@ export class LiteExitAdjuster {
 
     private async handleFlatten(symbol: string) {
         let netQuantity = this.callbacks.getPositionQuantity(symbol);
-        let pairs = ChartLite.getExitOrderPairs(symbol);
+        let pairs = this.getExitPairsForSymbol(symbol);
         if (netQuantity === 0 && pairs.length === 0) {
             throw new Error(`No position or exit pairs for ${symbol}`);
         }
@@ -353,7 +358,7 @@ export class LiteExitAdjuster {
             this.callbacks.logEvent(`${code} with shift ignored in lite`);
             return;
         }
-        let pairs = ChartLite.getExitOrderPairs(symbol);
+        let pairs = this.getExitPairsForSymbol(symbol);
         if (pairs.length === 0) {
             throw new Error(`No exit pairs for ${symbol}`);
         }
