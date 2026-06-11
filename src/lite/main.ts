@@ -179,12 +179,12 @@ const handleWorkerMessage = (message: StateLite.WorkerToMainMessage) => {
             if (snapshot.lastPrice != null) {
                 lastPriceBySymbol.set(snapshot.symbol, snapshot.lastPrice);
             }
-            elements.price.textContent = StateLite.formatPrice(snapshot.lastPrice);
-            elements.volume.textContent = snapshot.candle ? StateLite.formatQuantity(snapshot.candle.volume) : '';
-            elements.bid.textContent = StateLite.formatPrice(snapshot.bid);
-            elements.ask.textContent = StateLite.formatPrice(snapshot.ask);
-            elements.spread.textContent = StateLite.formatPrice(snapshot.spread);
             if (showSimpleChart) {
+                elements.price.textContent = StateLite.formatPrice(snapshot.lastPrice);
+                elements.volume.textContent = snapshot.candle ? StateLite.formatQuantity(snapshot.candle.volume) : '';
+                elements.bid.textContent = StateLite.formatPrice(snapshot.bid);
+                elements.ask.textContent = StateLite.formatPrice(snapshot.ask);
+                elements.spread.textContent = StateLite.formatPrice(snapshot.spread);
                 ChartLite.updateLiteChartCandle(snapshot.symbol, snapshot.candle);
             }
             SharedRuntimeLite.syncSnapshot(snapshot);
