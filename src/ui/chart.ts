@@ -42,6 +42,24 @@ const getUpdateUiTarget = (container: HTMLElement, className: string): HTMLEleme
     return target;
 };
 
+const createStoredPriceLine = (price: number): LightweightCharts.IPriceLine => {
+    return {
+        options: () => ({ price } as any),
+        applyOptions: () => { },
+    } as LightweightCharts.IPriceLine;
+};
+
+const getRenderableCandleSeries = (widget: Models.ChartWidget) => {
+    return (widget as any).candleSeries as LightweightCharts.ISeriesApi<"Candlestick"> | undefined;
+};
+
+const removeWidgetPriceLine = (widget: Models.ChartWidget, line: LightweightCharts.IPriceLine | undefined) => {
+    let candleSeries = getRenderableCandleSeries(widget);
+    if (candleSeries && line) {
+        candleSeries.removePriceLine(line);
+    }
+};
+
 export const setup = () => {
     let watchlist = window.HybridApp.Watchlist;
     if (!watchlist)
@@ -1128,15 +1146,15 @@ export const clearPriceLines = (symbol: string) => {
     if (!widget)
         return;
     if (widget.entryPriceLine) {
-        widget.candleSeries.removePriceLine(widget.entryPriceLine);
+        removeWidgetPriceLine(widget, widget.entryPriceLine);
         widget.entryPriceLine = undefined;
     }
     if (widget.stopLossOfPendingEntryPriceLine) {
-        widget.candleSeries.removePriceLine(widget.stopLossOfPendingEntryPriceLine);
+        removeWidgetPriceLine(widget, widget.stopLossOfPendingEntryPriceLine);
         widget.stopLossOfPendingEntryPriceLine = undefined;
     }
     if (widget.stopLossPriceLine) {
-        widget.candleSeries.removePriceLine(widget.stopLossPriceLine);
+        removeWidgetPriceLine(widget, widget.stopLossPriceLine);
         widget.stopLossPriceLine = undefined;
     }
 };
@@ -1158,15 +1176,21 @@ export const drawRiskLevel = (symbol: string, price: number) => {
         return;
 
     if (!widget.riskLevelPriceLine) {
-        widget.riskLevelPriceLine = createPriceLine(widget.candleSeries, price, "Risk Level", null, null, false, "solid");
+        let candleSeries = getRenderableCandleSeries(widget);
+        widget.riskLevelPriceLine = candleSeries
+            ? createPriceLine(candleSeries, price, "Risk Level", null, null, false, "solid")
+            : createStoredPriceLine(price);
         return;
     }
 
     let currentLevel = widget.riskLevelPriceLine.options().price;
-    widget.candleSeries.removePriceLine(widget.riskLevelPriceLine);
+    removeWidgetPriceLine(widget, widget.riskLevelPriceLine);
     widget.riskLevelPriceLine = undefined;
     if (currentLevel != price) {
-        widget.riskLevelPriceLine = createPriceLine(widget.candleSeries, price, "Risk Level", null, null, false, "solid");
+        let candleSeries = getRenderableCandleSeries(widget);
+        widget.riskLevelPriceLine = candleSeries
+            ? createPriceLine(candleSeries, price, "Risk Level", null, null, false, "solid")
+            : createStoredPriceLine(price);
     }
 };
 export const drawStopLoss = (symbol: string, price: number) => {
@@ -1175,18 +1199,24 @@ export const drawStopLoss = (symbol: string, price: number) => {
         return;
 
     if (widget.stopLossPriceLine) {
-        widget.candleSeries.removePriceLine(widget.stopLossPriceLine);
+        removeWidgetPriceLine(widget, widget.stopLossPriceLine);
     }
-    widget.stopLossPriceLine = createPriceLine(widget.candleSeries, price, "S/L", null, null, false, "solid");
+    let candleSeries = getRenderableCandleSeries(widget);
+    widget.stopLossPriceLine = candleSeries
+        ? createPriceLine(candleSeries, price, "S/L", null, null, false, "solid")
+        : createStoredPriceLine(price);
 };
 export const drawEntry = (symbol: string, price: number) => {
     let widget = Models.getChartWidget(symbol);
     if (!widget)
         return;
     if (widget.entryPriceLine) {
-        widget.candleSeries.removePriceLine(widget.entryPriceLine);
+        removeWidgetPriceLine(widget, widget.entryPriceLine);
     }
-    widget.entryPriceLine = createPriceLine(widget.candleSeries, price, "Entry", null, null, false, "solid");
+    let candleSeries = getRenderableCandleSeries(widget);
+    widget.entryPriceLine = candleSeries
+        ? createPriceLine(candleSeries, price, "Entry", null, null, false, "solid")
+        : createStoredPriceLine(price);
 };
 
 

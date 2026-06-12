@@ -10,6 +10,7 @@ import * as Models from "../models/models";
 import * as TradingPlans from "../models/tradingPlans/tradingPlans";
 import * as TradebooksManager from "../tradebooks/tradebooksManager";
 import * as KeyboardHandler from "../controllers/keyboardHandler";
+import * as Handler from "../controllers/handler";
 import * as ExitOrderPairs from "../utils/exitOrderPairs";
 import * as RiskManager from "../algorithms/riskManager";
 declare let window: Models.MyWindow;
@@ -50,12 +51,21 @@ const normalizeSymbol = (raw: string): string => {
 };
 
 let websocket: WebSocket | null = null;
+let reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
 let configPushIntervalId: ReturnType<typeof setInterval> | null = null;
 let accountUiRefreshListenerRegistered = false;
 let actionLogListenerRegistered = false;
 const knownAccountSnapshotSymbols = new Set<string>();
 
 export const createWebSocket = () => {
+    if (websocket && (websocket.readyState === WebSocket.CONNECTING || websocket.readyState === WebSocket.OPEN)) {
+        return websocket;
+    }
+    if (reconnectTimeoutId !== null) {
+        clearTimeout(reconnectTimeoutId);
+        reconnectTimeoutId = null;
+    }
+
     console.log(`[BookmapSocket] Connecting to ${BOOKMAP_WS_URL}...`);
     registerAccountUiRefreshListener();
     registerActionLogListener();
@@ -109,7 +119,12 @@ export const createWebSocket = () => {
         console.log(`[BookmapSocket] Disconnected, reconnecting in ${RECONNECT_DELAY_MS}ms...`);
         stopPeriodicConfigPush();
         websocket = null;
-        setTimeout(createWebSocket, RECONNECT_DELAY_MS);
+        if (reconnectTimeoutId === null) {
+            reconnectTimeoutId = setTimeout(() => {
+                reconnectTimeoutId = null;
+                createWebSocket();
+            }, RECONNECT_DELAY_MS);
+        }
     };
 
     websocket.onerror = function (error) {
@@ -386,6 +401,12 @@ const getBookmapKeyLevelsForSymbol = (symbol: string): BookmapKeyLevel[] => {
 
 const handleCustomButtonClick = (data: any) => {
     let symbol = normalizeSymbol(data.symbol || "");
+    let action = getString(data.action);
+    if (action === "adjust_exit_limit_to_bookmap_wall") {
+        handleExitLimitWallAdjustment(symbol, data);
+        return;
+    }
+
     let keyCode = getString(data.keyCode || data.key_code);
     if (keyCode) {
         console.log(`[BookmapSocket] Handling ${data.button_name || data.button_id || "button"} as ${keyCode} for ${symbol}`);
@@ -417,4 +438,22 @@ const handleCustomButtonClick = (data: any) => {
 
 const getString = (value: any): string => {
     return typeof value === "string" ? value : "";
+};
+
+const getNumber = (value: any): number => {
+    let parsed = typeof value === "number" ? value : Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const handleExitLimitWallAdjustment = (symbol: string, data: any) => {
+    let pairIndex = Math.trunc(getNumber(data.pair_index || data.pairIndex));
+    let targetPrice = getNumber(data.target_price || data.targetPrice || data.price);
+    if (pairIndex < 1 || pairIndex > 10 || targetPrice <= 0) {
+        console.warn("[BookmapSocket] invalid wall adjustment request", data);
+        return;
+    }
+
+    let keyCode = pairIndex === 10 ? "Digit0" : `Digit${pairIndex}`;
+    console.log(`[BookmapSocket] Wall adjustment ${symbol} pair ${pairIndex} @ ${targetPrice}`);
+    Handler.numberKeyPressedAtPrice(symbol, keyCode, targetPrice, false);
 };

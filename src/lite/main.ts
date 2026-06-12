@@ -1,6 +1,7 @@
 import './ui/lite.css';
 import * as ConfigDataLite from './api/configDataLite';
 import * as GlobalSettings from '../config/globalSettings';
+import * as BookmapSocket from '../bookmap/bookmapSocket';
 import * as SchwabLite from './api/schwabLite';
 import * as ExitAdjustmentsLite from './controllers/exitAdjustmentsLite';
 import * as StateLite from './models/stateLite';
@@ -29,7 +30,9 @@ let activeSymbol = '';
 const showSimpleChart = GlobalSettings.showSimpleChart;
 
 const shouldEnableSchwabStreamer = () => {
-    return localStorage.getItem('tradingscripts.lite.enableSchwabStreamer') === 'true';
+    // Lite is allowed to hide chart rendering, but it should still run every live-trading stream.
+    // Schwab streaming provides account activity and level-one quotes; keep it on by default.
+    return true;
 };
 
 const setActiveSymbol = (symbol: string) => {
@@ -115,6 +118,31 @@ const updateOrderChartRanges = () => {
     });
 };
 
+const pushBookmapAccountSnapshot = () => {
+    if (!GlobalSettings.enableBookmapSocket) {
+        return;
+    }
+    BookmapSocket.sendExitOrderPairConfigsForAllSymbols();
+    BookmapSocket.sendAccountStatesForAllSymbols();
+};
+
+const pushBookmapRuntimeSnapshot = () => {
+    if (!GlobalSettings.enableBookmapSocket) {
+        return;
+    }
+    BookmapSocket.sendTradeButtonConfigsForAllSymbols();
+    BookmapSocket.sendKeyLevelConfigsForAllSymbols();
+    pushBookmapAccountSnapshot();
+};
+
+const startBookmapSocket = () => {
+    if (!GlobalSettings.enableBookmapSocket) {
+        return;
+    }
+    BookmapSocket.createWebSocket();
+    pushBookmapRuntimeSnapshot();
+};
+
 async function refreshAccount() {
     if (!activeSecrets) {
         return;
@@ -131,6 +159,7 @@ async function refreshAccount() {
     updateEntryOrdersUi();
     updateExitPairsUi();
     updateOrderChartRanges();
+    pushBookmapAccountSnapshot();
 }
 
 function handleError(source: string, error: unknown) {
@@ -288,6 +317,7 @@ const initialize = async () => {
     SharedRuntimeLite.initializeSharedRuntime(config, watchlist, activeSecrets);
     renderTradebookButtons(watchlist);
     await refreshAccount();
+    startBookmapSocket();
     startWorker(watchlist, activeSecrets);
     StatusLite.setOrderStatus('Ready');
 };
