@@ -1,4 +1,5 @@
 import type * as TradingPlansModels from '../../models/tradingPlans/tradingPlansModels';
+import type * as Models from '../../models/models';
 
 export type OrderSide = 'buy' | 'sell';
 
@@ -107,6 +108,7 @@ export interface LiteAccountSnapshot {
     positions: Map<string, PositionSnapshot>;
     entryOrders: Map<string, LiteOrderModel[]>;
     exitPairs: Map<string, LiteExitPair[]>;
+    orderExecutions: Map<string, Models.OrderExecution[]>;
     currentBalance: number;
 }
 

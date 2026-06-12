@@ -49,18 +49,21 @@ const checkQuantityWithoutStops = (callbacks: ControlButtonCallbacks) => {
 export const setupMainAppControlButtons = (callbacks: ControlButtonCallbacks) => {
     document.getElementById('show_execution')?.addEventListener('click', () => {
         runControlAction('Generated execution script in console', callbacks, async () => {
+            await callbacks.refreshAccount();
             let Broker = await import('../../api/broker');
             Broker.generateExecutionScript(false);
         });
     });
     document.getElementById('show_execution_detail')?.addEventListener('click', () => {
         runControlAction('Generated detailed execution script in console', callbacks, async () => {
+            await callbacks.refreshAccount();
             let Broker = await import('../../api/broker');
             Broker.generateExecutionScript(true);
         });
     });
     document.getElementById('export_trades')?.addEventListener('click', () => {
         runControlAction('Exported trades in console', callbacks, async () => {
+            await callbacks.refreshAccount();
             let TvTools = await import('../../tools/tradingview');
             TvTools.exportTrades();
         });

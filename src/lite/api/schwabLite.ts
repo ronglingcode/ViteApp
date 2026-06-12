@@ -331,6 +331,11 @@ export const extractWorkingEntryOrders = (orders: any[]) => {
     return result;
 };
 
+const extractOrderExecutionsForExport = async (orders: any[]) => {
+    let SchwabOrderFactory = await import('../../api/schwab/orderFactory');
+    return SchwabOrderFactory.extractOrderExecutionsFromAllSymbols(orders);
+};
+
 export const getLiteAccountSnapshot = async (
     secrets: StateLite.SchwabSecrets,
     accessToken: string
@@ -339,10 +344,12 @@ export const getLiteAccountSnapshot = async (
         getAccountInfo(accessToken),
         getTodayOrders(secrets, accessToken),
     ]);
+    let orderExecutions = await extractOrderExecutionsForExport(orders);
     return {
         positions: new Map(accountInfo.positions.map(position => [position.symbol, position])),
         entryOrders: extractWorkingEntryOrders(orders),
         exitPairs: extractWorkingExitPairs(orders),
+        orderExecutions,
         currentBalance: accountInfo.currentBalance,
     };
 };

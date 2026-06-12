@@ -350,7 +350,7 @@ export const syncAccountSnapshot = (account: StateLite.LiteAccountSnapshot) => {
     let hybridApp = getHybridApp();
     let previousAccount = hybridApp.AccountCache as Models.BrokerAccount | undefined;
     let nextAccount = createEmptyBrokerAccount();
-    nextAccount.orderExecutions = previousAccount?.orderExecutions ?? new Map();
+    nextAccount.orderExecutions = account.orderExecutions;
     nextAccount.entryOrders = new Map();
     nextAccount.trades = previousAccount?.trades ?? new Map();
     nextAccount.currentBalance = account.currentBalance || previousAccount?.currentBalance || 0;
