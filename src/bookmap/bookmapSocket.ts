@@ -24,6 +24,17 @@ interface BookmapKeyLevel {
     label?: string;
 }
 
+interface BookmapPricePair {
+    high?: number;
+    low?: number;
+}
+
+interface BookmapMarketLevels {
+    camPivots?: Partial<Models.CamarillaPivots>;
+    previousDay?: BookmapPricePair;
+    premarket?: BookmapPricePair;
+}
+
 interface BookmapPositionConfig {
     symbol: string;
     netQuantity: number;
@@ -43,6 +54,14 @@ interface BookmapOpenOrderConfig {
     pairIndex?: number;
 }
 
+interface BookmapExecutionConfig {
+    price: number;
+    quantity: number;
+    isBuy: boolean;
+    positionEffectIsOpen: boolean;
+    timeMs: number;
+}
+
 /** Normalize symbol e.g. "ADBE:NASDAQ:STOCKS@BMD" -> "ADBE" */
 const normalizeSymbol = (raw: string): string => {
     if (!raw) return "???";
@@ -55,6 +74,7 @@ let reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
 let configPushIntervalId: ReturnType<typeof setInterval> | null = null;
 let accountUiRefreshListenerRegistered = false;
 let actionLogListenerRegistered = false;
+let marketLevelRefreshListenerRegistered = false;
 const knownAccountSnapshotSymbols = new Set<string>();
 
 export const createWebSocket = () => {
@@ -69,6 +89,7 @@ export const createWebSocket = () => {
     console.log(`[BookmapSocket] Connecting to ${BOOKMAP_WS_URL}...`);
     registerAccountUiRefreshListener();
     registerActionLogListener();
+    registerMarketLevelRefreshListener();
     websocket = new WebSocket(BOOKMAP_WS_URL);
 
     websocket.onopen = function () {
@@ -200,13 +221,20 @@ export const sendKeyLevelConfigForSymbol = (symbol: string) => {
     }
 
     const levels = getBookmapKeyLevelsForSymbol(symbol);
+    const marketLevels = getBookmapMarketLevelsForSymbol(symbol);
     websocket.send(JSON.stringify({
         type: "key_levels_config",
         symbol: symbol,
         levels: levels,
+        camPivots: marketLevels.camPivots,
+        previousDay: marketLevels.previousDay,
+        premarket: marketLevels.premarket,
         timestamp: Date.now(),
     }));
-    console.log(`[BookmapSocket] Sent ${levels.length} key levels for ${symbol}`);
+    console.log(`[BookmapSocket] Sent ${levels.length} key levels for ${symbol}`
+        + ` with market levels: cam=${Object.keys(marketLevels.camPivots ?? {}).length}`
+        + ` prev=${marketLevels.previousDay ? 1 : 0}`
+        + ` pm=${marketLevels.premarket ? 1 : 0}`);
 };
 
 export const sendExitOrderPairConfigsForAllSymbols = () => {
@@ -246,11 +274,13 @@ export const sendAccountStateForSymbol = (symbol: string) => {
     knownAccountSnapshotSymbols.add(symbol);
     let position = buildPositionConfig(symbol);
     let openOrders = buildOpenOrderConfigs(symbol);
+    let executions = buildExecutionConfigs(symbol);
     websocket.send(JSON.stringify({
         type: "account_state",
         symbol: symbol,
         position: position,
         openOrders: openOrders,
+        executions: executions,
         timestamp: Date.now(),
     }));
 };
@@ -280,6 +310,19 @@ const registerActionLogListener = () => {
     window.addEventListener('tradingscripts:bookmap-action-log', event => {
         let detail = (event as CustomEvent<{ symbol?: string, message?: string }>).detail;
         sendActionLog(detail?.symbol, detail?.message);
+    });
+};
+
+const registerMarketLevelRefreshListener = () => {
+    if (marketLevelRefreshListenerRegistered) {
+        return;
+    }
+    marketLevelRefreshListenerRegistered = true;
+    window.addEventListener('tradingscripts:bookmap-market-levels-updated', event => {
+        let symbol = (event as CustomEvent<{ symbol?: string }>).detail?.symbol;
+        if (symbol) {
+            sendKeyLevelConfigForSymbol(symbol);
+        }
     });
 };
 
@@ -356,6 +399,38 @@ const buildOpenOrderConfigs = (symbol: string): BookmapOpenOrderConfig[] => {
     return orders;
 };
 
+const buildExecutionConfigs = (symbol: string): BookmapExecutionConfig[] => {
+    const executions: BookmapExecutionConfig[] = [];
+
+    Models.getAllOrderExecutions(symbol).forEach(execution => {
+        const price = Number(execution.price);
+        const quantity = Number(execution.quantity);
+        const timeMs = getExecutionTimeMs(execution);
+        if (!Number.isFinite(price) || price <= 0 || !Number.isFinite(quantity) || quantity <= 0 || timeMs <= 0) {
+            return;
+        }
+
+        executions.push({
+            price,
+            quantity,
+            isBuy: execution.isBuy,
+            positionEffectIsOpen: execution.positionEffectIsOpen,
+            timeMs,
+        });
+    });
+
+    return executions;
+};
+
+const getExecutionTimeMs = (execution: Models.OrderExecution): number => {
+    const time = execution.time;
+    if (time instanceof Date) {
+        return time.getTime();
+    }
+    const parsed = new Date(time as unknown as string | number).getTime();
+    return Number.isFinite(parsed) ? parsed : 0;
+};
+
 const createOpenOrderConfig = (
     order: Models.OrderModel | undefined,
     role: string,
@@ -399,6 +474,58 @@ const getBookmapKeyLevelsForSymbol = (symbol: string): BookmapKeyLevel[] => {
     return levels;
 };
 
+const getBookmapMarketLevelsForSymbol = (symbol: string): BookmapMarketLevels => {
+    const symbolData = Models.getSymbolData(symbol);
+    const marketLevels: BookmapMarketLevels = {};
+
+    const camPivots = getValidCamPivots(symbolData.camPivots);
+    if (Object.keys(camPivots).length > 0) {
+        marketLevels.camPivots = camPivots;
+    }
+
+    const previousDay = getValidPricePair(symbolData.previousDayCandle?.high, symbolData.previousDayCandle?.low);
+    if (previousDay) {
+        marketLevels.previousDay = previousDay;
+    }
+
+    const premarket = getValidPricePair(symbolData.premktHigh, symbolData.premktLow);
+    if (premarket) {
+        marketLevels.premarket = premarket;
+    }
+
+    return marketLevels;
+};
+
+const getValidCamPivots = (pivots: Models.CamarillaPivots): Partial<Models.CamarillaPivots> => {
+    const result: Partial<Models.CamarillaPivots> = {};
+    const keys: (keyof Models.CamarillaPivots)[] = [
+        "R1", "R2", "R3", "R4", "R5", "R6",
+        "S1", "S2", "S3", "S4", "S5", "S6",
+    ];
+    for (const key of keys) {
+        const price = pivots[key];
+        if (isValidBookmapPrice(price)) {
+            result[key] = price;
+        }
+    }
+    return result;
+};
+
+const getValidPricePair = (high: number | undefined, low: number | undefined): BookmapPricePair | undefined => {
+    const pair: BookmapPricePair = {};
+    if (isValidBookmapPrice(high)) {
+        pair.high = high;
+    }
+    if (isValidBookmapPrice(low)) {
+        pair.low = low;
+    }
+    return pair.high !== undefined || pair.low !== undefined ? pair : undefined;
+};
+
+const isValidBookmapPrice = (price: number | undefined): price is number => {
+    return typeof price === "number" && Number.isFinite(price) && price > 0 && price < 999999;
+};
+
 const handleCustomButtonClick = (data: any) => {
     let symbol = normalizeSymbol(data.symbol || "");
     let action = getString(data.action);
@@ -409,8 +536,9 @@ const handleCustomButtonClick = (data: any) => {
 
     let keyCode = getString(data.keyCode || data.key_code);
     if (keyCode) {
-        console.log(`[BookmapSocket] Handling ${data.button_name || data.button_id || "button"} as ${keyCode} for ${symbol}`);
-        KeyboardHandler.handleKeyPressed(keyCode, false, symbol);
+        let shiftKey = data.shiftKey === true || data.shift_key === true;
+        console.log(`[BookmapSocket] Handling ${data.button_name || data.button_id || "button"} as ${shiftKey ? "Shift+" : ""}${keyCode} for ${symbol}`);
+        KeyboardHandler.handleKeyPressed(keyCode, shiftKey, symbol);
         return;
     }
 

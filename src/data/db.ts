@@ -450,6 +450,9 @@ const updateFromTimeSaleCore = (timesale: Models.TimeSale): TimeSaleApplyMeta | 
         }
         if (haspremarketChange) {
             Chart.drawMomentumLevels(widget);
+            window.dispatchEvent(new CustomEvent('tradingscripts:bookmap-market-levels-updated', {
+                detail: { symbol },
+            }));
         }
     } else {
         // update in-market indicators
