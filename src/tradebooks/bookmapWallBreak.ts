@@ -133,12 +133,8 @@ export class BookmapWallBreak extends Tradebook {
             let symbolData = Models.getSymbolData(symbol);
             stopOutPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
         }
-        let riskReduction = 1;
-        if (parameters.entryMethod == "0.25R") {
-            riskReduction = 0.25;
-        } else if (parameters.entryMethod == "0.5R") {
-            riskReduction = 0.5;
-        }
+        let riskReduction = Helper.getRiskMultiplierFromEntryMethod(parameters.entryMethod);
+        Firestore.logInfo(`risk multiplier: ${riskReduction}`, logTags);
         return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskReduction, logTags);
     }
 

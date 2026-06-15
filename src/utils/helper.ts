@@ -4,6 +4,20 @@ import * as TimeHelper from './timeHelper';
 export const returnDefaultEntryMethods = () => {
     return ["0.25 R"];
 }
+export const getRiskMultiplierFromEntryMethod = (entryMethod: string | undefined, defaultMultiplier = 1) => {
+    if (!entryMethod) {
+        return defaultMultiplier;
+    }
+    let match = entryMethod.trim().match(/(?:^|\s)(\d+(?:\.\d+)?)\s*R$/i);
+    if (!match) {
+        return defaultMultiplier;
+    }
+    let multiplier = Number(match[1]);
+    if (!Number.isFinite(multiplier) || multiplier <= 0) {
+        return defaultMultiplier;
+    }
+    return multiplier;
+};
 export const numberToString = (n: number | null | undefined) => {
     if (!n)
         return "";

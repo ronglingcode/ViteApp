@@ -134,20 +134,9 @@ export class BookmapWallReversal extends Tradebook {
             stopOutPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
         }
         let entryMethod = parameters.entryMethod;
-        let riskReduction = 1;
+        let riskReduction = Helper.getRiskMultiplierFromEntryMethod(entryMethod);
         let mustAlignVwap = true;
-        if (entryMethod) {
-            if (entryMethod.endsWith("0.15R")) {
-                riskReduction = 0.15;
-                Firestore.logInfo(`reduce risk to 0.15R`);
-            } else if (entryMethod.endsWith("0.25R")) {
-                riskReduction = 0.25;
-                Firestore.logInfo(`reduce risk to 0.25R`);
-            } else if (entryMethod.endsWith("0.5R")) {
-                riskReduction = 0.5;
-                Firestore.logInfo(`reduce risk to 0.5R`);
-            }
-        }
+        Firestore.logInfo(`risk multiplier: ${riskReduction}`, logTags);
         if (this.tradebookID == TradebookID.GapAndCrapOfferStepDownReappear ||
             this.tradebookID == TradebookID.GapDownAndGoDownOfferStepDownReappear ||
             this.tradebookID == TradebookID.GapGiveAndGoBookmapReversal ||
