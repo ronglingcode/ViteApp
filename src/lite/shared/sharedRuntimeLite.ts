@@ -1,8 +1,29 @@
+import * as WebRequest from '../../utils/webRequest';
+import * as Config from '../../config/config';
+import * as Firestore from '../../firestore';
+import * as TimeHelper from '../../utils/timeHelper';
+import * as Broker from '../../api/broker';
+import * as MarketData from '../../api/marketData';
+import * as tdaApi from '../../api/tdAmeritrade/api';
+import * as schwabApi from '../../api/schwab/api';
+import * as alpacaApi from '../../api/alpaca/api';
+import * as googleDocsApi from '../../api/googleDocs/googleDocsApi';
+import * as TakeProfit from '../../algorithms/takeProfit';
 import * as RiskManager from '../../algorithms/riskManager';
+import * as Watchlist from '../../algorithms/watchlist';
+import * as AutoTrader from '../../algorithms/autoTrader';
+import * as Handler from '../../controllers/handler';
+import * as OrderFlow from '../../controllers/orderFlow';
+import * as OrderFlowManager from '../../controllers/orderFlowManager';
+import * as TraderFocus from '../../controllers/traderFocus';
 import * as BasicIndicators from '../../indicators/basicIndicators';
 import * as Models from '../../models/models';
 import * as TradingPlans from '../../models/tradingPlans/tradingPlans';
+import * as TradingState from '../../models/tradingState';
 import * as TradebooksManager from '../../tradebooks/tradebooksManager';
+import * as Chart from '../../ui/chart';
+import * as QuestionPopup from '../../ui/questionPopup';
+import * as UI from '../../ui/ui';
 import type { Tradebook } from '../../tradebooks/baseTradebook';
 import * as Helper from '../../utils/helper';
 import * as StateLite from '../models/stateLite';
@@ -17,7 +38,14 @@ const getHybridApp = () => {
     appWindow.HybridApp = appWindow.HybridApp ?? {};
     let hybridApp = appWindow.HybridApp;
     hybridApp.Algo = hybridApp.Algo ?? {};
+    hybridApp.Algo.TakeProfit = TakeProfit;
     hybridApp.Models = hybridApp.Models ?? {};
+    hybridApp.UI = hybridApp.UI ?? {};
+    hybridApp.Api = hybridApp.Api ?? {};
+    hybridApp.Config = Config;
+    hybridApp.Controllers = hybridApp.Controllers ?? {};
+    hybridApp.Utils = hybridApp.Utils ?? {};
+    hybridApp.Firestore = Firestore;
     hybridApp.ChartWidgets = hybridApp.ChartWidgets ?? new Map<string, any>();
     hybridApp.SymbolData = hybridApp.SymbolData ?? new Map<string, Models.SymbolData>();
     hybridApp.AccountCache = hybridApp.AccountCache ?? createEmptyBrokerAccount();
@@ -28,6 +56,8 @@ const getHybridApp = () => {
         activeTabIndex: -1,
     };
     hybridApp.Secrets = hybridApp.Secrets ?? {};
+    hybridApp.Secrets.tdameritrade = hybridApp.Secrets.tdameritrade ?? {};
+    hybridApp.Secrets.tradeStation = hybridApp.Secrets.tradeStation ?? {};
     hybridApp.Secrets.schwab = hybridApp.Secrets.schwab ?? {};
     hybridApp.TradingData = hybridApp.TradingData ?? {
         activeProfileName: '',
@@ -37,6 +67,28 @@ const getHybridApp = () => {
         },
         googleDocContent: '',
     };
+    hybridApp.Algo.RiskManager = RiskManager;
+    hybridApp.Algo.Watchlist = Watchlist;
+    hybridApp.Algo.AutoTrader = AutoTrader;
+    hybridApp.Api.Broker = Broker;
+    hybridApp.Api.MarketData = MarketData;
+    hybridApp.Api.TdaApi = tdaApi;
+    hybridApp.Api.SchwabApi = schwabApi;
+    hybridApp.Api.AlpacaApi = alpacaApi;
+    hybridApp.Api.GoogleDocsApi = googleDocsApi;
+    hybridApp.Controllers.Handler = Handler;
+    hybridApp.Controllers.OrderFlow = OrderFlow;
+    hybridApp.Controllers.OrderFlowManager = OrderFlowManager;
+    hybridApp.Controllers.TraderFocus = TraderFocus;
+    hybridApp.Models.Models = Models;
+    hybridApp.Models.TradingState = TradingState;
+    hybridApp.Models.TradingPlans = TradingPlans;
+    hybridApp.UI.Chart = Chart;
+    hybridApp.UI.UI = UI;
+    hybridApp.UI.QuestionPopup = QuestionPopup;
+    hybridApp.Utils.Helper = Helper;
+    hybridApp.Utils.WebRequest = WebRequest;
+    hybridApp.Utils.TimeHelper = TimeHelper;
     return hybridApp;
 };
 
@@ -295,10 +347,7 @@ export const initializeSharedRuntime = (
     secrets: StateLite.LiteSecrets
 ) => {
     let hybridApp = getHybridApp();
-    let liteProfileName = 'schwab';
-    hybridApp.Algo.RiskManager = RiskManager;
-    hybridApp.Models.Models = Models;
-    hybridApp.Models.TradingPlans = TradingPlans;
+    let googleDocContent = hybridApp.TradingData?.googleDocContent ?? '';
     hybridApp.TradingPlans = config.tradingPlans;
     hybridApp.StockSelections = config.stockSelections;
     hybridApp.Watchlist = watchlist.map(item => ({
@@ -306,9 +355,9 @@ export const initializeSharedRuntime = (
         marketCapInMillions: item.marketCapInMillions ?? 0,
     }));
     hybridApp.TradingData = {
-        activeProfileName: liteProfileName,
+        activeProfileName: config.activeProfileName,
         tradingSettings: config.tradingSettings,
-        googleDocContent: '',
+        googleDocContent,
     };
     hybridApp.Secrets.schwab = {
         ...hybridApp.Secrets.schwab,

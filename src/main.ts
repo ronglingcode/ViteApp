@@ -37,6 +37,7 @@ import * as BookmapSocket from './bookmap/bookmapSocket';
 import * as DB from './data/db';
 import './tosClient';
 import * as GlobalSettings from './config/globalSettings';
+import * as AppVersion from './config/appVersion';
 import * as Rules from './algorithms/rules';
 declare let window: Models.MyWindow;
 
@@ -150,7 +151,7 @@ if (toggleManagementCardExitBlockButton) {
     });
 }
 
-Firestore.addToLogView('app version 1.367', 'Info');
+Firestore.addToLogView(AppVersion.appVersionLogMessage, 'Info');
 
 let now = new Date();
 const historicalChartLoadAttemptCount = 3;

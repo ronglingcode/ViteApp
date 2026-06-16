@@ -1,7 +1,11 @@
 import './ui/lite.css';
 import * as ConfigDataLite from './api/configDataLite';
+import * as AppVersion from '../config/appVersion';
 import * as GlobalSettings from '../config/globalSettings';
 import * as BookmapSocket from '../bookmap/bookmapSocket';
+import * as googleDocsApi from '../api/googleDocs/googleDocsApi';
+import * as KeyboardHandler from '../controllers/keyboardHandler';
+import * as TraderFocus from '../controllers/traderFocus';
 import * as SchwabLite from './api/schwabLite';
 import * as ExitAdjustmentsLite from './controllers/exitAdjustmentsLite';
 import * as StateLite from './models/stateLite';
@@ -37,6 +41,13 @@ const shouldEnableSchwabStreamer = () => {
 
 const setActiveSymbol = (symbol: string) => {
     activeSymbol = symbol;
+    let appWindow = window as any;
+    appWindow.HybridApp = appWindow.HybridApp ?? {};
+    appWindow.HybridApp.UIState = appWindow.HybridApp.UIState ?? {
+        activeTabIndex: -1,
+    };
+    appWindow.HybridApp.UIState.activeSymbol = symbol;
+    appWindow.HybridApp.UIState.activeTabIndex = symbol ? 0 : -1;
 };
 
 const getActiveSymbol = () => {
@@ -71,6 +82,12 @@ const renderShell = (watchlist: StateLite.LiteWatchlistItem[]) => {
         handleError,
         refreshAccount,
     });
+    StatusLite.logEvent(AppVersion.appVersionLogMessage);
+    let googleDocContent = (window as any).HybridApp?.TradingData?.googleDocContent ?? '';
+    if (googleDocContent) {
+        let { bestIdeas } = googleDocsApi.parseGoogleDoc(googleDocContent);
+        TraderFocus.populateBestIdeas(bestIdeas);
+    }
 };
 
 const renderTradebookButtons = (watchlist: StateLite.LiteWatchlistItem[]) => {
@@ -159,6 +176,7 @@ async function refreshAccount() {
     updateEntryOrdersUi();
     updateExitPairsUi();
     updateOrderChartRanges();
+    TraderFocus.updateTradeManagementUI();
     pushBookmapAccountSnapshot();
 }
 
@@ -208,12 +226,18 @@ const handleWorkerMessage = (message: StateLite.WorkerToMainMessage) => {
             if (snapshot.lastPrice != null) {
                 lastPriceBySymbol.set(snapshot.symbol, snapshot.lastPrice);
             }
+            elements.price.textContent = StateLite.formatPrice(snapshot.lastPrice);
+            elements.volume.textContent = snapshot.candle ? StateLite.formatQuantity(snapshot.candle.volume) : '';
+            elements.bid.textContent = StateLite.formatPrice(snapshot.bid);
+            elements.ask.textContent = StateLite.formatPrice(snapshot.ask);
+            elements.spread.textContent = StateLite.formatPrice(snapshot.spread);
+            if (snapshot.candle) {
+                elements.currentCandle.open.textContent = `O:${StateLite.formatPrice(snapshot.candle.open)}`;
+                elements.currentCandle.high.textContent = `H:${StateLite.formatPrice(snapshot.candle.high)}`;
+                elements.currentCandle.low.textContent = `L:${StateLite.formatPrice(snapshot.candle.low)}`;
+                elements.currentCandle.close.textContent = `C:${StateLite.formatPrice(snapshot.candle.close)}`;
+            }
             if (showSimpleChart) {
-                elements.price.textContent = StateLite.formatPrice(snapshot.lastPrice);
-                elements.volume.textContent = snapshot.candle ? StateLite.formatQuantity(snapshot.candle.volume) : '';
-                elements.bid.textContent = StateLite.formatPrice(snapshot.bid);
-                elements.ask.textContent = StateLite.formatPrice(snapshot.ask);
-                elements.spread.textContent = StateLite.formatPrice(snapshot.spread);
                 ChartLite.updateLiteChartCandle(snapshot.symbol, snapshot.candle);
             }
             SharedRuntimeLite.syncSnapshot(snapshot);
@@ -289,7 +313,7 @@ const resetRuntimeState = () => {
 const initialize = async () => {
     resetRuntimeState();
     let config = await ConfigDataLite.fetchConfigData();
-    let watchlist = ConfigDataLite.createLiteWatchlistFromConfig(config);
+    let watchlist = await ConfigDataLite.createLiteWatchlistFromConfig(config);
     renderShell(watchlist);
     startClock();
 
@@ -324,6 +348,20 @@ const initialize = async () => {
 
 window.addEventListener('keydown', event => {
     exitAdjuster.handleKeyboardAdjust(event).catch(error => handleError('adjust exits', error));
+    if (event.defaultPrevented) {
+        return;
+    }
+
+    let target = event.target;
+    if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) {
+        return;
+    }
+
+    let symbol = getActiveSymbol();
+    if (!symbol) {
+        return;
+    }
+    KeyboardHandler.handleKeyPressed(event.code, event.shiftKey, symbol);
 });
 
 window.addEventListener('tradingscripts:lite-account-refresh', event => {

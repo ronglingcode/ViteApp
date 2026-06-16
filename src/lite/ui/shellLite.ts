@@ -7,6 +7,12 @@ export interface SymbolElements {
     bid: HTMLElement;
     ask: HTMLElement;
     spread: HTMLElement;
+    currentCandle: {
+        open: HTMLElement;
+        high: HTMLElement;
+        low: HTMLElement;
+        close: HTMLElement;
+    };
     position: HTMLElement;
     avg: HTMLElement;
     exitOrders: HTMLElement;
@@ -198,6 +204,12 @@ export const renderShell = (
             bid: panel.querySelector('[data-field="bid"]') as HTMLElement,
             ask: panel.querySelector('[data-field="ask"]') as HTMLElement,
             spread: panel.querySelector('[data-field="spread"]') as HTMLElement,
+            currentCandle: {
+                open: panel.querySelector('.ohlc_o') as HTMLElement,
+                high: panel.querySelector('.ohlc_h') as HTMLElement,
+                low: panel.querySelector('.ohlc_l') as HTMLElement,
+                close: panel.querySelector('.ohlc_c') as HTMLElement,
+            },
             position: panel.querySelector('[data-field="position"]') as HTMLElement,
             avg: panel.querySelector('[data-field="avg"]') as HTMLElement,
             exitOrders: panel.querySelector('.exitOrders') as HTMLElement,

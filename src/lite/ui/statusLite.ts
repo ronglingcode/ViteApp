@@ -1,4 +1,5 @@
 import * as StateLite from '../models/stateLite';
+import * as AppVersion from '../../config/appVersion';
 
 const hiddenStatusSources = new Set(['auth', 'lite', 'massive']);
 
@@ -55,6 +56,7 @@ export const showRootError = (root: HTMLElement, source: string, message: string
     root.innerHTML = `
         <div class="liteRoot">
           <div id="logs">
+            <div class="Info">${AppVersion.appVersionLogMessage}</div>
             <div class="Error">${source}: ${message}</div>
           </div>
         </div>

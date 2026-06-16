@@ -83,8 +83,8 @@ const prepareHybridAppForWatchlist = (config: StateLite.LiteConfigData, googleDo
     let appWindow = window as any;
     appWindow.TradingData = appWindow.TradingData ?? {};
     appWindow.TradingData.StockSelection = appWindow.TradingData.StockSelection ?? {};
-    appWindow.TradingData.StockSelection.futures = appWindow.TradingData.StockSelection.futures ?? config.stockSelections;
-    appWindow.TradingData.StockSelection.index = appWindow.TradingData.StockSelection.index ?? config.stockSelections;
+    appWindow.TradingData.StockSelection.futures = config.stockSelections;
+    appWindow.TradingData.StockSelection.index = config.stockSelections;
     appWindow.TradingData.StockSelection.StockCandidates = appWindow.TradingData.StockSelection.StockCandidates ?? {};
     appWindow.TradingData.Settings = appWindow.TradingData.Settings ?? {};
 
