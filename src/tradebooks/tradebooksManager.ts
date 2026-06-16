@@ -22,13 +22,17 @@ const isDirectionEnabled = (directionPlan: TradingPlansModels.SingleDirectionPla
 }
 
 export const createTradebooksForGapAndGo = (symbol: string, gapAndGoPlan: TradingPlansModels.GapAndGoPlan, tradebooksMap: Map<string, Tradebook>) => {
-    let gapAndGoBookmapOfferWallBreakout = new BookmapWallBreak(
-        symbol, TradebookID.GapAndGoBookmapOfferWallBreakout, gapAndGoPlan, gapAndGoPlan.support.low, gapAndGoPlan.waitForPullback);
-    tradebooksMap.set(gapAndGoBookmapOfferWallBreakout.getID(), gapAndGoBookmapOfferWallBreakout);
-    let gapGiveAndGo = new BookmapWallReversal(
-        symbol, TradebookID.GapGiveAndGoBookmapReversal, gapAndGoPlan, gapAndGoPlan.support.low,
-    );
-    tradebooksMap.set(TradebookID.GapGiveAndGoBookmapReversal, gapGiveAndGo);
+    if (gapAndGoPlan.enableOfferBreakout) {
+        let gapAndGoBookmapOfferWallBreakout = new BookmapWallBreak(
+            symbol, TradebookID.GapAndGoBookmapOfferWallBreakout, gapAndGoPlan, gapAndGoPlan.support.low, gapAndGoPlan.waitForPullback);
+        tradebooksMap.set(gapAndGoBookmapOfferWallBreakout.getID(), gapAndGoBookmapOfferWallBreakout);
+    }
+    if (gapAndGoPlan.enableBidReversal) {
+        let gapGiveAndGo = new BookmapWallReversal(
+            symbol, TradebookID.GapGiveAndGoBookmapReversal, gapAndGoPlan, gapAndGoPlan.support.low,
+        );
+        tradebooksMap.set(TradebookID.GapGiveAndGoBookmapReversal, gapGiveAndGo);
+    }
 };
 export const createTradebooksForGapAndCrap = (symbol: string, gapAndCrapPlan: TradingPlansModels.GapAndCrapPlan, tradebooksMap: Map<string, Tradebook>) => {
     let maxPrice = gapAndCrapPlan.aboveThisLevelNoMoreShort;

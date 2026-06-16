@@ -175,6 +175,8 @@ export interface GapAndGoPlan extends BasePlan {
     /** price of all time high */
     allTimeHigh?: number,
     waitForPullback: boolean,
+    enableOfferBreakout: boolean,
+    enableBidReversal: boolean,
 }
 export interface GapAndCrapPlan extends BasePlan {
     /** the max resistance on daily chart, above it, we cannot short. -1: no limit when it's not based on resistance, but more due to extended rally */
