@@ -303,7 +303,7 @@ export const initializeSharedRuntime = (
     hybridApp.StockSelections = config.stockSelections;
     hybridApp.Watchlist = watchlist.map(item => ({
         symbol: item.symbol,
-        marketCapInMillions: 0,
+        marketCapInMillions: item.marketCapInMillions ?? 0,
     }));
     hybridApp.TradingData = {
         activeProfileName: liteProfileName,

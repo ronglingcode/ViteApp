@@ -5,6 +5,7 @@ export type OrderSide = 'buy' | 'sell';
 
 export interface LiteWatchlistItem {
     symbol: string;
+    marketCapInMillions?: number;
 }
 
 export interface SchwabSecrets {

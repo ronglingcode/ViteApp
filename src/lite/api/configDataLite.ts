@@ -1,5 +1,8 @@
 import * as FirebaseApp from 'firebase/app';
 import * as Firestore from 'firebase/firestore';
+import * as Watchlist from '../../algorithms/watchlist';
+import * as googleDocsApi from '../../api/googleDocs/googleDocsApi';
+import type * as Models from '../../models/models';
 import * as StateLite from '../models/stateLite';
 
 const CONFIG_COLLECTION = 'configDataSnapshot';
@@ -59,20 +62,54 @@ export const fetchConfigData = async (): Promise<StateLite.LiteConfigData> => {
     };
 };
 
-export const createLiteWatchlistFromConfig = (config: StateLite.LiteConfigData): StateLite.LiteWatchlistItem[] => {
-    let seen = new Set<string>();
-    let watchlist = config.stockSelections
-        .map(symbol => symbol.trim().toUpperCase())
-        .filter(symbol => {
-            if (!symbol || seen.has(symbol)) {
-                return false;
-            }
-            seen.add(symbol);
-            return true;
-        })
-        .slice(0, 4)
-        .map(symbol => ({ symbol }));
+const getHybridAppForWatchlist = () => {
+    let appWindow = window as unknown as Models.MyWindow;
+    appWindow.HybridApp = appWindow.HybridApp ?? {} as Models.MyWindow['HybridApp'];
+    let hybridApp = appWindow.HybridApp;
+    hybridApp.TradingPlans = hybridApp.TradingPlans ?? [];
+    hybridApp.StockSelections = hybridApp.StockSelections ?? [];
+    hybridApp.TradingData = hybridApp.TradingData ?? {
+        activeProfileName: '',
+        tradingSettings: {
+            useSingleOrderForEntry: false,
+            snapMode: true,
+        },
+        googleDocContent: '',
+    };
+    return hybridApp;
+};
 
+const prepareHybridAppForWatchlist = (config: StateLite.LiteConfigData, googleDocContent: string) => {
+    let appWindow = window as any;
+    appWindow.TradingData = appWindow.TradingData ?? {};
+    appWindow.TradingData.StockSelection = appWindow.TradingData.StockSelection ?? {};
+    appWindow.TradingData.StockSelection.futures = appWindow.TradingData.StockSelection.futures ?? config.stockSelections;
+    appWindow.TradingData.StockSelection.index = appWindow.TradingData.StockSelection.index ?? config.stockSelections;
+    appWindow.TradingData.StockSelection.StockCandidates = appWindow.TradingData.StockSelection.StockCandidates ?? {};
+    appWindow.TradingData.Settings = appWindow.TradingData.Settings ?? {};
+
+    let hybridApp = getHybridAppForWatchlist();
+    hybridApp.TradingPlans = config.tradingPlans;
+    hybridApp.StockSelections = config.stockSelections;
+    hybridApp.TradingData = {
+        activeProfileName: config.activeProfileName,
+        tradingSettings: config.tradingSettings,
+        googleDocContent,
+    };
+};
+
+const toLiteWatchlist = (watchlist: Models.WatchlistItem[]): StateLite.LiteWatchlistItem[] => {
+    return watchlist.map(item => ({
+        symbol: item.symbol,
+        marketCapInMillions: item.marketCapInMillions,
+    }));
+};
+
+export const createLiteWatchlistFromConfig = async (config: StateLite.LiteConfigData): Promise<StateLite.LiteWatchlistItem[]> => {
+    let googleDocContent = await googleDocsApi.fetchDocumentContent(config.googleDocId);
+    prepareHybridAppForWatchlist(config, googleDocContent);
+    let fullWatchlist = await Watchlist.createWatchlist();
+    let watchlist = toLiteWatchlist(fullWatchlist);
     if (watchlist.length === 0) {
         throw new Error(`Firestore config has no stockSelections for ${config.activeProfileName || 'active profile'}`);
     }
@@ -81,5 +118,5 @@ export const createLiteWatchlistFromConfig = (config: StateLite.LiteConfigData):
 
 export const getLiteWatchlistFromConfig = async (): Promise<StateLite.LiteWatchlistItem[]> => {
     let config = await fetchConfigData();
-    return createLiteWatchlistFromConfig(config);
+    return await createLiteWatchlistFromConfig(config);
 };
