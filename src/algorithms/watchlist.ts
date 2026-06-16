@@ -114,11 +114,32 @@ export const createWatchlist = async () => {
         watchlist = watchlist.slice(0, 1);
     }
 
+    let blockReason = getSingleStockWatchlistBlockReason(watchlist);
+    if (blockReason != "") {
+        Firestore.logError(blockReason);
+        throw new Error(blockReason);
+    }
+
     window.HybridApp.Watchlist = watchlist;
     populateBestIdeas(bestIdeas);
     return watchlist;
 };
 
+const getWatchlistSymbolsText = (watchlist: Models.WatchlistItem[]) => {
+    return watchlist.map(item => item.symbol).join(', ');
+};
+
+const getSingleStockWatchlistMessage = (watchlist: Models.WatchlistItem[]) => {
+    return `more than 1 stock in watchlist: ${getWatchlistSymbolsText(watchlist)}`;
+};
+
+export const getSingleStockWatchlistBlockReason = (watchlist: Models.WatchlistItem[] = window.HybridApp.Watchlist ?? []) => {
+    if (watchlist.length <= 1) {
+        return "";
+    }
+
+    return getSingleStockWatchlistMessage(watchlist);
+};
 
 
 const buildDefaultWatchlistItem = (symbol: string) => {

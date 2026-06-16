@@ -8,7 +8,18 @@ import * as TradingState from '../models/tradingState';
 import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as VwapPatterns from '../algorithms/vwapPatterns';
+import * as Watchlist from '../algorithms/watchlist';
 declare let window: Models.MyWindow;
+
+const isBlockedBySingleStockWatchlistRule = (logTags: Models.LogTags) => {
+    let blockReason = Watchlist.getSingleStockWatchlistBlockReason();
+    if (blockReason == "") {
+        return false;
+    }
+
+    Firestore.logError(`checkRule: ${blockReason}`, logTags);
+    return true;
+};
 
 /**
  * Return a number between 0 to 1 for share size multiplier. 
@@ -20,6 +31,9 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
     entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, basePlan: TradingPlansModels.BasePlan,
     shouldCheckEntryDistance: boolean,
     logTags: Models.LogTags,) => {
+    if (isBlockedBySingleStockWatchlistRule(logTags)) {
+        return 0;
+    }
     if (Rules.isOverDailyMaxLoss()) {
         Firestore.logError(`checkRule: Daily max loss exceeded`, logTags);
         return 0;
@@ -132,6 +146,9 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
 
 export const checkPartialEntry = (symbol: string, isLong: boolean, quantity: number,
     entryPrice: number, stopLossPrice: number, logTags: Models.LogTags) => {
+    if (isBlockedBySingleStockWatchlistRule(logTags)) {
+        return false;
+    }
     let { todayRange } = getCommonInfo(symbol, isLong);
 
 
