@@ -121,6 +121,19 @@ export class BookmapWallBreak extends Tradebook {
         }
 
         allowedSize = allowedSize * riskReduction;
+        // if entry against vwap, further reduce size by half
+        let currentVwap = Models.getCurrentVwap(symbol);
+        if (this.isLong) {
+            if (entryPrice < currentVwap) {
+                Firestore.logInfo(`entry below vwap, reduce size by half`, logTags);
+                allowedSize = allowedSize / 2;
+            }
+        } else {
+            if (entryPrice > currentVwap) {
+                Firestore.logInfo(`entry above vwap, reduce size by half`, logTags);
+                allowedSize = allowedSize / 2;
+            }
+        }
         let planCopy = JSON.parse(JSON.stringify(this.basePlan)) as TradingPlansModels.BasePlan;
         this.submitEntryOrdersBase(
             dryRun, useMarketOrder, entryPrice, stopOutPrice, stopOutPrice, allowedSize, planCopy, logTags);
