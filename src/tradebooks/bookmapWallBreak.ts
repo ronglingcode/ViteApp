@@ -22,9 +22,10 @@ export class BookmapWallBreak extends Tradebook {
     private inPullbackPhase = false;
     private hasPullbackPhase = false;
     private recentPullbackPrice = 0;
+    public waitForPullback: boolean = true;
 
     constructor(symbol: string, tradebookID: string, basePlan: TradingPlansModels.BasePlan,
-        minMaxEntryLevel: number) {
+        minMaxEntryLevel: number, waitForPullback: boolean) {
         let isLong = true;
         let tradebookName = "unknown";
         let buttonLabel = "unknown";
@@ -50,6 +51,7 @@ export class BookmapWallBreak extends Tradebook {
         super(symbol, tradebookID, isLong, tradebookName, buttonLabel);
         this.basePlan = basePlan;
         this.enableByDefault = true;
+        this.waitForPullback = waitForPullback;
         let scalpCount = GlobalSettings.batchCount - basePlan.coreCount - basePlan.runnerCount;
         this.scalpMinCount = GlobalSettings.batchCount - scalpCount;
         this.coreMinCount = GlobalSettings.batchCount - scalpCount - basePlan.coreCount;
@@ -110,6 +112,14 @@ export class BookmapWallBreak extends Tradebook {
             Firestore.logError(`${symbol} not allowed entry`, logTags);
             return 0;
         }
+        if (this.waitForPullback) {
+            if (this.isLong) {
+                Helper.speak('wait for pullback to below the wall');
+            } else {
+                Helper.speak('wait for pullback to above the wall');
+            }
+        }
+
         allowedSize = allowedSize * riskReduction;
         let planCopy = JSON.parse(JSON.stringify(this.basePlan)) as TradingPlansModels.BasePlan;
         this.submitEntryOrdersBase(
