@@ -28,14 +28,10 @@ export const submitBreakoutOrders = (
     symbol: string, entryPrice: number, stopOut: number, riskLevel: number, isLong: boolean, multiplier: number,
     plan: TradingPlansModels.BasePlan, tradebookID: string,
     logTags: Models.LogTags,
-    orderIdToReplace: string
+    orderIdToReplace: string,
+    entryParameters?: Models.TradebookEntryParameters
 ) => {
     Firestore.logInfo("Submitting breakout orders!!! submitBreakoutOrders()", logTags);
-    let sizingCount = TakeProfit.BatchCount;
-    if (plan.planConfigs.sizingCount) {
-        sizingCount = plan.planConfigs.sizingCount;
-    }
-    let exitTargets = plan.targets;
     let orderType = Models.OrderType.STOP;
     let currentPrice = Models.getCurrentPrice(symbol);
     if ((isLong && currentPrice > entryPrice) || (!isLong && currentPrice < entryPrice)) {
@@ -47,14 +43,16 @@ export const submitBreakoutOrders = (
         let submitEntryResult = submitEntryOrdersWithFixedQuantity(
             symbol, orderType, isLong,
             entryPrice, stopOut,
-            fixedQuantity, exitTargets, tradebookID, logTags, orderIdToReplace
+            fixedQuantity, tradebookID, logTags, orderIdToReplace,
+            entryParameters?.bookmapOrderbook
         );
         return submitEntryResult;
     } else {
         //Firestore.logInfo(`fixed risk ${multiplier}`, logTags);
         let submitEntryResult = submitEntryOrdersWithFixedRisk(
             symbol, orderType, isLong, entryPrice, stopOut, riskLevel, "default quality",
-            multiplier, sizingCount, exitTargets, tradebookID, logTags, orderIdToReplace
+            multiplier, tradebookID, logTags, orderIdToReplace,
+            entryParameters?.bookmapOrderbook
         );
         Firestore.logDebug(`entry with quantity ${submitEntryResult.totalQuantity}`, logTags);
         return submitEntryResult;
@@ -64,26 +62,24 @@ export const submitBreakoutOrders = (
 export const submitMarketEntryOrders = (
     symbol: string, estimatedEntryPrice: number, stopOutPrice: number, riskLevel: number, isLong: boolean, multiplier: number,
     plan: TradingPlansModels.BasePlan,
-    tradebookID: string, logTags: Models.LogTags) => {
+    tradebookID: string, logTags: Models.LogTags,
+    entryParameters?: Models.TradebookEntryParameters) => {
     Firestore.logInfo("Submitting market orders!!! submitMarketEntryOrders()", logTags);
     let orderIdToReplace = '';
-    let sizingCount = TakeProfit.BatchCount;
-    if (plan.planConfigs.sizingCount) {
-        sizingCount = plan.planConfigs.sizingCount;
-    }
-    let exitTargets = plan.targets;
     let fixedQuantity = Models.getFixedQuantityFromInput(symbol);
     if (fixedQuantity > 0) {
         let submitEntryResult = submitEntryOrdersWithFixedQuantity(
             symbol, Models.OrderType.MARKET, isLong, estimatedEntryPrice, stopOutPrice,
-            fixedQuantity, exitTargets, tradebookID, logTags, orderIdToReplace
+            fixedQuantity, tradebookID, logTags, orderIdToReplace,
+            entryParameters?.bookmapOrderbook
         );
         return submitEntryResult;
     } else {
         let submitEntryResult = submitEntryOrdersWithFixedRisk(
             symbol, Models.OrderType.MARKET, isLong, estimatedEntryPrice,
             stopOutPrice, riskLevel,
-            "A", multiplier, sizingCount, exitTargets, tradebookID, logTags, orderIdToReplace
+            "A", multiplier, tradebookID, logTags, orderIdToReplace,
+            entryParameters?.bookmapOrderbook
         );
         return submitEntryResult;
     }
@@ -92,9 +88,9 @@ export const submitMarketEntryOrders = (
 export const submitEntryOrdersWithFixedRisk = (
     symbol: string, orderType: Models.OrderType, isLong: boolean,
     entryPrice: number, stopOutPrice: number, riskLevel: number, setupQuality: string, multiplier: number,
-    sizingCount: number,
-    exitTargets: TradingPlansModels.ExitTargets, tradebookID: string, logTags: Models.LogTags,
-    orderIdToReplace: string
+    tradebookID: string, logTags: Models.LogTags,
+    orderIdToReplace: string,
+    bookmapOrderbook?: Models.BookmapOrderbookSnapshot
 ) => {
     let isEquity = Config.getProfileSettingsForSymbol(symbol).isEquity;
     let afterSplippage = addSlippage(symbol, isLong, entryPrice, stopOutPrice, isEquity);
@@ -110,22 +106,18 @@ export const submitEntryOrdersWithFixedRisk = (
             totalShares = atr.maxQuantity;
         }
     }
-    let profitTargets = TakeProfit.getInitialProfitTargets(symbol, totalShares, entryPrice, riskLevel, exitTargets.initialTargets, logTags);
-    let sizedProfitTargets: Models.ProfitTarget[] = [];
-    for (let i = 0; i < profitTargets.length && i < sizingCount; i++) {
-        sizedProfitTargets.push(profitTargets[i]);
-    }
-
-    let submitResult = submitEntryOrders(symbol, isLong, orderType, entryPrice, stopOutPrice, sizedProfitTargets, tradebookID, logTags, orderIdToReplace);
+    let profitTargets = TakeProfit.getEntryProfitTargets(
+        symbol, totalShares, entryPrice, riskLevel, isLong, bookmapOrderbook, logTags);
+    let submitResult = submitEntryOrders(symbol, isLong, orderType, entryPrice, stopOutPrice, profitTargets, tradebookID, logTags, orderIdToReplace);
     return submitResult;
 };
 
 export const submitEntryOrdersWithFixedQuantity = (
     symbol: string, orderType: Models.OrderType, isLong: boolean,
     entryPrice: number, stopOutPrice: number, quantity: number,
-    exitTargets: TradingPlansModels.ExitTargets,
     tradebookID: string, logTags: Models.LogTags,
-    orderIdToReplace: string
+    orderIdToReplace: string,
+    bookmapOrderbook?: Models.BookmapOrderbookSnapshot
 ) => {
     let isEquity = Config.getProfileSettingsForSymbol(symbol).isEquity;
     let afterSplippage = addSlippage(symbol, isLong, entryPrice, stopOutPrice, isEquity);
@@ -134,7 +126,8 @@ export const submitEntryOrdersWithFixedQuantity = (
 
     let totalShares = quantity;
 
-    let profitTargets = TakeProfit.getProfitTargetsForFixedQuantity(symbol, totalShares, entryPrice, stopOutPrice, exitTargets);
+    let profitTargets = TakeProfit.getEntryProfitTargets(
+        symbol, totalShares, entryPrice, stopOutPrice, isLong, bookmapOrderbook, logTags);
     let submitResult = submitEntryOrders(symbol, isLong, orderType, entryPrice, stopOutPrice, profitTargets, tradebookID, logTags, orderIdToReplace);
     return submitResult;
 };

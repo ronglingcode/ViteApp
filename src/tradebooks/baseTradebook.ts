@@ -224,7 +224,8 @@ export abstract class Tradebook {
 
     submitEntryOrdersBase(
         dryRun: boolean, useMarketOrder: boolean, entryPrice: number, stopOutPrice: number, riskLevel: number,
-        allowedSize: number, basePlan: TradingPlansModels.BasePlan, logTags: Models.LogTags): void {
+        allowedSize: number, basePlan: TradingPlansModels.BasePlan, logTags: Models.LogTags,
+        entryParameters?: Models.TradebookEntryParameters): void {
         if (dryRun) {
             Helper.speak(`${this.symbol} dry run, not submitting orders`);
             return;
@@ -235,10 +236,12 @@ export abstract class Tradebook {
 
         if (useMarketOrder) {
             EntryHandler.marketEntryWithoutRules(
-                this.symbol, this.isLong, stopOutPrice, riskLevel, logTags, allowedSize, basePlan, this.getID());
+                this.symbol, this.isLong, stopOutPrice, riskLevel, logTags, allowedSize, basePlan, this.getID(),
+                entryParameters);
         } else {
             EntryHandler.breakoutEntryWithoutRules(
-                this.symbol, this.isLong, entryPrice, stopOutPrice, riskLevel, logTags, allowedSize, basePlan, this.getID(), "");
+                this.symbol, this.isLong, entryPrice, stopOutPrice, riskLevel, logTags, allowedSize, basePlan, this.getID(), "",
+                entryParameters);
         }
     }
 

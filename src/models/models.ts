@@ -1986,11 +1986,24 @@ export const isPriceInTradableArea = (symbol: string, isLong: boolean, price: nu
     }
 }
 
+export type BookmapOrderbookLevel = [number, number];
+
+export interface BookmapOrderbookSnapshot {
+    symbol?: string,
+    timestamp?: number,
+    wallThreshold?: number,
+    bestBid?: number,
+    bestAsk?: number,
+    largeBids?: BookmapOrderbookLevel[],
+    largeAsks?: BookmapOrderbookLevel[],
+}
+
 export interface TradebookEntryParameters {
     useFirstNewHigh: boolean,
     useCurrentCandleHigh: boolean,
     useMarketOrderWithTightStop: boolean,
     entryMethod?: string,
+    bookmapOrderbook?: BookmapOrderbookSnapshot,
 }
 export const getDefaultEntryParameters = () => {
     let ret: TradebookEntryParameters = {

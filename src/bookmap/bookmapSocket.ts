@@ -545,6 +545,7 @@ const handleCustomButtonClick = (data: any) => {
     let tradebookId = getString(data.tradebook_id || data.tradebookId);
     let entryMethod = getString(data.entry_method || data.entryMethod);
     let useMarketOrder = data.use_market_order === true || data.useMarketOrder === true;
+    let bookmapOrderbook = normalizeBookmapOrderbook(data.orderbook, symbol);
 
     if (!tradebookId) {
         console.warn("[BookmapSocket] custom_button_click missing tradebook_id", data);
@@ -561,6 +562,7 @@ const handleCustomButtonClick = (data: any) => {
     tradebook.startEntry(useMarketOrder, false, {
         ...Models.getDefaultEntryParameters(),
         entryMethod: entryMethod || undefined,
+        bookmapOrderbook: bookmapOrderbook,
     });
 };
 
@@ -571,6 +573,59 @@ const getString = (value: any): string => {
 const getNumber = (value: any): number => {
     let parsed = typeof value === "number" ? value : Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const normalizeBookmapOrderbook = (value: any, fallbackSymbol: string): Models.BookmapOrderbookSnapshot | undefined => {
+    if (!value || typeof value !== "object") {
+        return undefined;
+    }
+
+    let largeBids = normalizeBookmapLevels(value.largeBids);
+    let largeAsks = normalizeBookmapLevels(value.largeAsks);
+    let bestBid = getNumber(value.bestBid);
+    let bestAsk = getNumber(value.bestAsk);
+    let wallThreshold = getNumber(value.wallThreshold);
+    let timestamp = getNumber(value.timestamp);
+    if (largeBids.length === 0 && largeAsks.length === 0 && bestBid <= 0 && bestAsk <= 0) {
+        return undefined;
+    }
+
+    let snapshot: Models.BookmapOrderbookSnapshot = {
+        symbol: getString(value.symbol) || fallbackSymbol,
+        largeBids,
+        largeAsks,
+    };
+    if (timestamp > 0) {
+        snapshot.timestamp = timestamp;
+    }
+    if (wallThreshold > 0) {
+        snapshot.wallThreshold = wallThreshold;
+    }
+    if (bestBid > 0) {
+        snapshot.bestBid = bestBid;
+    }
+    if (bestAsk > 0) {
+        snapshot.bestAsk = bestAsk;
+    }
+    return snapshot;
+};
+
+const normalizeBookmapLevels = (value: any): Models.BookmapOrderbookLevel[] => {
+    if (!Array.isArray(value)) {
+        return [];
+    }
+    let levels: Models.BookmapOrderbookLevel[] = [];
+    value.forEach(level => {
+        if (!Array.isArray(level) || level.length < 2) {
+            return;
+        }
+        let price = getNumber(level[0]);
+        let size = Math.trunc(getNumber(level[1]));
+        if (price > 0 && size > 0) {
+            levels.push([price, size]);
+        }
+    });
+    return levels;
 };
 
 const handleExitLimitWallAdjustment = (symbol: string, data: any) => {

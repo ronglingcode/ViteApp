@@ -100,7 +100,7 @@ export class VwapContinuationFailed extends SingleKeyLevelTradebook {
             return 0;
         }
 
-        this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, stopOutPrice, allowedSize, entryMethod, logTags);
+        this.submitEntryOrders(dryRun, useMarketOrder, entryPrice, stopOutPrice, allowedSize, entryMethod, logTags, parameters);
         return allowedSize;
     }
     private validateEntryForHigherTimeframe(entryPrice: number, stopOutPrice: number, useMarketOrder: boolean,

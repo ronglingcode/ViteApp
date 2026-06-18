@@ -90,7 +90,8 @@ export class BookmapWallBreak extends Tradebook {
         entryPrice: number,
         stopOutPrice: number,
         riskReduction: number,
-        logTags: Models.LogTags
+        logTags: Models.LogTags,
+        entryParameters?: Models.TradebookEntryParameters
     ): number {
         let symbol = this.symbol;
         if (this.isLong) {
@@ -136,7 +137,8 @@ export class BookmapWallBreak extends Tradebook {
         }
         let planCopy = JSON.parse(JSON.stringify(this.basePlan)) as TradingPlansModels.BasePlan;
         this.submitEntryOrdersBase(
-            dryRun, useMarketOrder, entryPrice, stopOutPrice, stopOutPrice, allowedSize, planCopy, logTags);
+            dryRun, useMarketOrder, entryPrice, stopOutPrice, stopOutPrice, allowedSize, planCopy, logTags,
+            entryParameters);
 
         return allowedSize;
     }
@@ -158,7 +160,7 @@ export class BookmapWallBreak extends Tradebook {
         }
         let riskReduction = Helper.getRiskMultiplierFromEntryMethod(parameters.entryMethod);
         Firestore.logInfo(`risk multiplier: ${riskReduction}`, logTags);
-        return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskReduction, logTags);
+        return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskReduction, logTags, parameters);
     }
 
     triggerEntryFromBookmap(useMarketOrder: boolean, stopOutPrice: number): number {

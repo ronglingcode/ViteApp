@@ -62,7 +62,8 @@ export const breakoutEntryWithoutRules = (symbol: string, isLong: boolean,
     entryPrice: number, stopOutPrice: number, riskLevel: number, logTags: Models.LogTags,
     allowedSizeMutiplier: number, plan: TradingPlansModels.BasePlan,
     tradebookID: string,
-    orderIdToReplace: string
+    orderIdToReplace: string,
+    entryParameters?: Models.TradebookEntryParameters
 ) => {
     let logMessage = createEntryLogMessage('stop', isLong, entryPrice, stopOutPrice, riskLevel, allowedSizeMutiplier);
     Firestore.logInfo(logMessage, logTags);
@@ -77,7 +78,9 @@ export const breakoutEntryWithoutRules = (symbol: string, isLong: boolean,
     }
 
     let oldEntries = Models.getEntryOrdersInSameDirection(symbol, isLong);
-    let submitEntryResult = OrderFlow.submitBreakoutOrders(symbol, entryPrice, stopOutPrice, riskLevel, isLong, allowedSizeMutiplier, plan, tradebookID, logTags, orderIdToReplace);
+    let submitEntryResult = OrderFlow.submitBreakoutOrders(
+        symbol, entryPrice, stopOutPrice, riskLevel, isLong, allowedSizeMutiplier,
+        plan, tradebookID, logTags, orderIdToReplace, entryParameters);
     if (oldEntries.length > 0) {
         Broker.cancelOrders(oldEntries);
     }
@@ -88,7 +91,8 @@ export const marketEntryWithoutRules = (symbol: string, isLong: boolean,
     stopOutPrice: number, riskLevel: number, logTags: Models.LogTags,
     allowedSizeMutiplier: number,
     plan: TradingPlansModels.BasePlan,
-    tradebookID: string
+    tradebookID: string,
+    entryParameters?: Models.TradebookEntryParameters
 ) => {
     let estimatedEntryPrice = Models.getCurrentPrice(symbol);
     let logMessage = createEntryLogMessage('market', isLong, estimatedEntryPrice, stopOutPrice, riskLevel, allowedSizeMutiplier);
@@ -105,7 +109,8 @@ export const marketEntryWithoutRules = (symbol: string, isLong: boolean,
 
     let oldEntries = Models.getEntryOrdersInSameDirection(symbol, isLong);
     let submitEntryResult = OrderFlow.submitMarketEntryOrders(
-        symbol, estimatedEntryPrice, stopOutPrice, riskLevel, isLong, allowedSizeMutiplier, plan, tradebookID, logTags
+        symbol, estimatedEntryPrice, stopOutPrice, riskLevel, isLong, allowedSizeMutiplier,
+        plan, tradebookID, logTags, entryParameters
     );
     if (oldEntries.length > 0) {
         Broker.cancelOrders(oldEntries);

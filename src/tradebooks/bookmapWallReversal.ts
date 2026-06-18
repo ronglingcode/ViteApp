@@ -82,7 +82,8 @@ export class BookmapWallReversal extends Tradebook {
         stopOutPrice: number,
         riskReduction: number,
         mustAlignVwap: boolean,
-        logTags: Models.LogTags
+        logTags: Models.LogTags,
+        entryParameters?: Models.TradebookEntryParameters
     ): number {
         let symbol = this.symbol;
         let currentVwap = Models.getCurrentVwap(symbol);
@@ -117,7 +118,8 @@ export class BookmapWallReversal extends Tradebook {
         allowedSize = allowedSize * riskReduction;
         let planCopy = JSON.parse(JSON.stringify(this.basePlan)) as TradingPlansModels.BasePlan;
         this.submitEntryOrdersBase(
-            dryRun, useMarketOrder, entryPrice, stopOutPrice, stopOutPrice, allowedSize, planCopy, logTags);
+            dryRun, useMarketOrder, entryPrice, stopOutPrice, stopOutPrice, allowedSize, planCopy, logTags,
+            entryParameters);
 
         return allowedSize;
     }
@@ -144,7 +146,7 @@ export class BookmapWallReversal extends Tradebook {
         ) {
             mustAlignVwap = false;
         }
-        return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskReduction, mustAlignVwap, logTags);
+        return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskReduction, mustAlignVwap, logTags, parameters);
 
     }
 

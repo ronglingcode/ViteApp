@@ -2,15 +2,13 @@ import * as Helper from '../utils/helper';
 import * as Models from '../models/models';
 import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as TradingState from '../models/tradingState';
-import * as MinimumTarget from './minimumTarget';
 import * as GlobalSettings from '../config/globalSettings';
-export interface ProfitTargetByPercentage {
-    price: number,
-    percentage: number,
-}
+import * as Firestore from '../firestore';
 
 export const BatchCount = GlobalSettings.batchCount;
-export const SizePerBatch = 1 / BatchCount;
+const BookmapWallTargetCount = 5;
+const BookmapWallMinSize = 5_000;
+const DefaultRiskReward = 3;
 
 export const getTargetPriceByRiskReward = (symbol: string, isLong: boolean,
     basePrice: number, stopOut: number, ratio: number) => {
@@ -19,85 +17,95 @@ export const getTargetPriceByRiskReward = (symbol: string, isLong: boolean,
     return Helper.roundPrice(symbol, target);
 }
 
-export const getInitialProfitTargets = (symbol: string, totalShares: number, basePrice: number, stopOut: number,
-    exitTargets: TradingPlansModels.ExitTargetsSet, logTags: Models.LogTags) => {
-    let isLong = basePrice > stopOut;
-    let atr = Models.getAtr(symbol);
+export const getEntryProfitTargets = (
+    symbol: string,
+    totalShares: number,
+    entryPrice: number,
+    riskReferencePrice: number,
+    isLong: boolean,
+    bookmapOrderbook: Models.BookmapOrderbookSnapshot | undefined,
+    logTags: Models.LogTags) => {
+    const targetPrices = getEntryTargetPrices(symbol, entryPrice, riskReferencePrice, isLong, bookmapOrderbook, logTags);
+    return splitTargetsEvenly(symbol, totalShares, targetPrices, logTags);
+};
 
-    let initialTargets = MinimumTarget.getProfitTargetsListFromConfig(
-        symbol, isLong, basePrice, stopOut, BatchCount, atr, false, exitTargets, "initial profit", logTags,
-    );
-    let minTarget = getTargetPriceByRiskReward(symbol, isLong, basePrice, stopOut, 0.5);
-    let profitTargets: ProfitTargetByPercentage[] = [];
-    initialTargets.forEach(t => {
-        let finalTarget = isLong ? Math.max(t, minTarget) : Math.min(t, minTarget);
-        profitTargets.push({
-            price: finalTarget,
-            percentage: SizePerBatch,
-        });
+const getEntryTargetPrices = (
+    symbol: string,
+    entryPrice: number,
+    riskReferencePrice: number,
+    isLong: boolean,
+    bookmapOrderbook: Models.BookmapOrderbookSnapshot | undefined,
+    logTags: Models.LogTags) => {
+    const target3R = getTargetPriceByRiskReward(symbol, isLong, entryPrice, riskReferencePrice, DefaultRiskReward);
+    const wallTargets = getBookmapWallTargets(symbol, entryPrice, isLong, bookmapOrderbook);
+    const targets = wallTargets.slice(0, BookmapWallTargetCount);
+
+    while (targets.length < BatchCount) {
+        targets.push(target3R);
+    }
+
+    if (wallTargets.length > 0) {
+        Firestore.logInfo(`${symbol} initial targets use ${Math.min(wallTargets.length, BookmapWallTargetCount)} Bookmap wall(s), rest 3R @ ${target3R}`, logTags);
+    } else {
+        Firestore.logInfo(`${symbol} initial targets use 3R only @ ${target3R}`, logTags);
+    }
+    return targets.slice(0, BatchCount);
+};
+
+const getBookmapWallTargets = (
+    symbol: string,
+    entryPrice: number,
+    isLong: boolean,
+    bookmapOrderbook: Models.BookmapOrderbookSnapshot | undefined) => {
+    if (!bookmapOrderbook) {
+        return [];
+    }
+
+    const rawLevels = isLong ? bookmapOrderbook.largeAsks : bookmapOrderbook.largeBids;
+    if (!rawLevels || rawLevels.length === 0) {
+        return [];
+    }
+
+    const seenPrices = new Set<number>();
+    const targets: number[] = [];
+    rawLevels.forEach(([price, size]) => {
+        if (!Number.isFinite(price) || !Number.isFinite(size) || size <= BookmapWallMinSize) {
+            return;
+        }
+        if ((isLong && price <= entryPrice) || (!isLong && price >= entryPrice)) {
+            return;
+        }
+        const roundedPrice = Helper.roundPrice(symbol, price);
+        if (seenPrices.has(roundedPrice)) {
+            return;
+        }
+        seenPrices.add(roundedPrice);
+        targets.push(roundedPrice);
     });
 
-    return applyProfitStrategyByPercentage(symbol, totalShares, basePrice, stopOut, profitTargets);
+    targets.sort((a, b) => isLong ? a - b : b - a);
+    return targets;
 };
 
-// split into 3. all use about 3R because it's meant for trading breaking news with large range.
-// meant to be adjusted manually after the trade entry without restrictions
-export const getProfitTargetsForFixedQuantity = (
-    symbol: string, totalShares: number, entryPrice: number, stopOutPrice: number,
-    exitTargets: TradingPlansModels.ExitTargets) => {
-    let rrr = [2.5, 3.0, 3.5];
-    let percentage = [0.34, 0.33, 0.33];
-    let risk = entryPrice - stopOutPrice;
-    let profitTargetByPercentage: ProfitTargetByPercentage[] = [];
-
-    for (let i = 0; i < rrr.length; i++) {
-        let target = entryPrice + risk * rrr[i];
-        target = Helper.roundPrice(symbol, target);
-        profitTargetByPercentage.push({
-            price: target,
-            percentage: percentage[i]
-        })
-    }
-    return applyProfitStrategyByPercentage(symbol, totalShares, entryPrice, stopOutPrice, profitTargetByPercentage);
-};
-
-export const applyProfitStrategyByPercentage = (
-    symbol: string, totalShares: number, basePrice: number, stopOut: number, profitTargets: ProfitTargetByPercentage[]) => {
-    console.log(`total shares ${totalShares}`);
-    console.log(profitTargets);
-    let totalPercentages = 0.0;
+const splitTargetsEvenly = (
+    symbol: string,
+    totalShares: number,
+    targetPrices: number[],
+    logTags: Models.LogTags) => {
+    const normalizedShares = Math.floor(totalShares);
+    const baseQuantity = Math.floor(normalizedShares / BatchCount);
+    const remainder = normalizedShares % BatchCount;
     let results: Models.ProfitTarget[] = [];
-    let sum = 0;
-    for (let i = 0; i < profitTargets.length; i++) {
-        let target = profitTargets[i].price;
-        let percent = profitTargets[i].percentage;
-        totalPercentages += percent;
-        let shares = Math.floor(totalShares * percent);
+
+    for (let i = 0; i < targetPrices.length && i < BatchCount; i++) {
+        const shares = baseQuantity + (i < remainder ? 1 : 0);
         if (shares <= 0) {
-            if (i == 0)
-                shares = 1;
-            else
-                continue;
-        }
-        if (sum + shares > totalShares) {
             continue;
         }
         results.push({
-            target: target,
+            target: targetPrices[i],
             quantity: shares
         });
-        sum += shares;
-    }
-
-    let leftOver = totalShares - sum;
-    if (results.length === 0) {
-        return results;
-    }
-    let pos = 0;
-    while (leftOver > 0) {
-        results[pos].quantity++;
-        pos = (pos + 1) % results.length;
-        leftOver--;
     }
 
     return results;
