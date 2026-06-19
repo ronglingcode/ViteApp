@@ -48,7 +48,6 @@ const getDefaultBreakoutTradeState = (isLong: boolean) => {
             planConfigs: {
                 size: 0,
                 requireReversal: true,
-                setupQuality: TradingPlansModels.SetupQuality.Move2Move,
             },
             coreTarget: 0,
             coreCount: 0,

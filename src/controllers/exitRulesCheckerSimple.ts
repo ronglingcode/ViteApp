@@ -1,5 +1,4 @@
 import * as Models from '../models/models';
-import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as Rules from '../algorithms/rules';
 import * as RiskManager from '../algorithms/riskManager';
 import * as TakeProfit from '../algorithms/takeProfit';
@@ -20,11 +19,6 @@ export const isAllowedForAll = (symbol: string, logTags: Models.LogTags) => {
     }
     if (hours >= 6) {
         Firestore.logInfo(`allow in the last 30 minutes before market close (12:30 PM)`, logTags);
-        return true;
-    }
-
-    let { planConfigs, breakoutTradeState, isHigherTimeFrame } = getCommonInfo(symbol);
-    if (breakoutTradeState.plan.planConfigs.setupQuality == TradingPlansModels.SetupQuality.Scalp) {
         return true;
     }
 
