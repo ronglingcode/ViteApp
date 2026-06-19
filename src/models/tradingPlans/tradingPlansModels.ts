@@ -124,7 +124,6 @@ export enum PlanType {
     VwapCrossSuccess = 'VwapCrossSuccess',
 };
 export interface BasePlan {
-    targets: ExitTargets,
     planConfigs: PlanConfigs,
     planType?: PlanType,
     timeframe?: number,

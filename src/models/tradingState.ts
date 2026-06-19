@@ -45,13 +45,6 @@ const getDefaultBreakoutTradeState = (isLong: boolean) => {
             tradeBookID: "",
         },
         plan: {
-            targets: {
-                initialTargets: {
-                    priceLevels: [],
-                    rrr: [],
-                    dailyRanges: [],
-                },
-            },
             planConfigs: {
                 size: 0,
                 requireReversal: true,

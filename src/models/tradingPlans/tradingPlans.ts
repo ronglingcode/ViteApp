@@ -137,33 +137,6 @@ export const validateTradingPlans = (symbol: string, tradingPlans: TradingPlansM
     if (atr.maxRisk <= 0) {
         return "miss max risk in ATR";
     }*/
-    let keyLevels = tradingPlans.keyLevels;
-
-
-    let longPlans = flattenPlans(tradingPlans.long);
-    for (let i = 0; i < longPlans.length; i++) {
-        let onePlan = longPlans[i];
-        let checkResult = validateTargets(onePlan.targets);
-        if (checkResult) {
-            return checkResult;
-        }
-        if (onePlan.planConfigs.setupQuality == TradingPlansModels.SetupQuality.Unknown) {
-            return `${symbol} has plan of Unknown setup quality`;
-        }
-    }
-
-    let shortPlans = flattenPlans(tradingPlans.short);
-    for (let i = 0; i < shortPlans.length; i++) {
-        let onePlan = shortPlans[i];
-        let checkResult = validateTargets(onePlan.targets);
-        if (checkResult) {
-            return checkResult;
-        }
-        if (onePlan.planConfigs.setupQuality == TradingPlansModels.SetupQuality.Unknown) {
-            return `${symbol} has plan of Unknown setup quality`;
-        }
-    }
-
 
     let longPlanInvalidReason = validateTradingPlansForOneDirection(tradingPlans.long, true);
     if (longPlanInvalidReason.length > 0) {
@@ -176,20 +149,6 @@ export const validateTradingPlans = (symbol: string, tradingPlans: TradingPlansM
 
     return "";
 };
-
-export const validateProfitTargets = (p: TradingPlansModels.ProfitTargets) => {
-    return "";
-    if (p.targets.length < 2) {
-        return "need at least 2 target levels";
-    }
-    if (p.willBlowPastThoseLevels == -1) {
-        return "missing score for willBlowPastThoseLevels";
-    }
-    if (p.summary.length == 0) {
-        return "missing summary";
-    }
-    return "";
-}
 
 export const validateTradingPlansForOneDirection = (
     plan: TradingPlansModels.SingleDirectionPlans, isLong: boolean) => {
