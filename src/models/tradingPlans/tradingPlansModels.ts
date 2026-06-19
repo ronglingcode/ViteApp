@@ -137,7 +137,6 @@ export interface PlanConfigs {
     size: number,
     sizingCount?: number,
     requireReversal: boolean,
-    alwaysAllowFlatten: boolean,
     alwaysAllowMoveStop: boolean,
     setupQuality: SetupQuality,
 }

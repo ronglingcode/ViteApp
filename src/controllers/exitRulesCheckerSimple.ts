@@ -77,21 +77,7 @@ export const checkFlattenRules = (symbol: string, logTags: Models.LogTags) => {
         // If tradebook allows it, continue with additional checks below
     }
 
-    let { exitPairsCount, isLong, breakoutTradeState, planConfigs, isHigherTimeFrame } = getCommonInfo(symbol);
-    if (planConfigs?.alwaysAllowFlatten) {
-        if (isHigherTimeFrame) {
-            let secondsSinceEntry = Models.getFirstEntryTimeFromNowInSeconds(symbol);
-            if (secondsSinceEntry > 8 * 60) {
-                Firestore.logInfo(`allow after 8 minutes`, logTags);
-                return true;
-            } else {
-                return false;
-            }
-        }
-        else {
-            return true;
-        }
-    }
+    let { exitPairsCount, isLong, breakoutTradeState, isHigherTimeFrame } = getCommonInfo(symbol);
     let currentPrice = Models.getCurrentPrice(symbol);
 
     if (Rules.isAllowedAsPaperCut(symbol, breakoutTradeState.entryPrice, breakoutTradeState.stopLossPrice, currentPrice)) {
