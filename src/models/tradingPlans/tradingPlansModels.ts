@@ -137,7 +137,6 @@ export interface PlanConfigs {
     size: number,
     sizingCount?: number,
     requireReversal: boolean,
-    alwaysAllowMoveStop: boolean,
     setupQuality: SetupQuality,
 }
 export interface LevelMomentumPlan extends BasePlan {
