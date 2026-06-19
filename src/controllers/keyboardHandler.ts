@@ -9,7 +9,13 @@ import * as Broker from '../api/broker';
 import * as Firestore from '../firestore';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 
-export const handleKeyPressed = (code: string, shiftKey: boolean, symbolOverride?: string) => {
+export const handleKeyPressed = (
+    code: string,
+    shiftKey: boolean,
+    symbolOverride?: string,
+    priceOverride?: number,
+    source?: string,
+) => {
     let uiState = Models.getUIState();
     let symbol = symbolOverride || uiState.activeSymbol;
 
@@ -17,6 +23,7 @@ export const handleKeyPressed = (code: string, shiftKey: boolean, symbolOverride
         console.log("no active symbol, skip");
         return;
     }
+    let sourcePrice = getValidSourcePrice(symbol, priceOverride);
     //console.log(keyboardEvent);
     let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
     console.log(code);
@@ -41,20 +48,28 @@ export const handleKeyPressed = (code: string, shiftKey: boolean, symbolOverride
     } else if (code === "KeyF") {
         Handler.flattenPostionKeyPressed(symbol);
     } else if (["Digit1", "Digit2", "Digit3", "Digit4", "Digit5", "Digit6", "Digit7", "Digit8", "Digit9", "Digit0"].includes(code)) {
-        Handler.numberKeyPressed(symbol, code, false);
+        if (sourcePrice !== undefined) {
+            Handler.numberKeyPressedAtPrice(symbol, code, sourcePrice, false);
+        } else {
+            Handler.numberKeyPressed(symbol, code, false);
+        }
     } else if (["Numpad1", "Numpad2", "Numpad3", "Numpad4", "Numpad5", "Numpad6", "Numpad7", "Numpad8", "Numpad9", "Numpad0"].includes(code)) {
         Handler.numberPadPressed(symbol, code);
     } else if (code == 'KeyM') {
         Handler.numberPadPressed(symbol, "Numpad1");
     } else if (code === 'KeyT' || code === 'KeyG' || code === 'KeyH') {
-        Handler.adjustBatchExits(symbol, code, shiftKey);
+        if (sourcePrice !== undefined) {
+            Handler.adjustBatchExitsAtPrice(symbol, code, shiftKey, sourcePrice);
+        } else {
+            Handler.adjustBatchExits(symbol, code, shiftKey);
+        }
     }
     else if (code === 'KeyW') {
         Handler.swapPositionKeyPressed(symbol);
     } else if (code === 'KeyV') {
         Handler.vwapBounceFail(symbol, shiftKey);
     } else if (code === 'KeyA') {
-        Handler.reloadPartialPressed(symbol, shiftKey);
+        Handler.reloadPartialPressed(symbol, shiftKey, sourcePrice);
     } else if (code === 'KeyR') {
         Handler.setRiskLevel(symbol);
     } else if (code === 'KeyE') {
@@ -81,9 +96,18 @@ export const handleKeyPressed = (code: string, shiftKey: boolean, symbolOverride
 
     if (codeIsUsed) {
         let hasShiftKey = shiftKey ? 'with shift key' : 'without shift key';
-        Firestore.logInfo(`${symbol} ${code} pressed ${hasShiftKey}`);
+        let sourceText = source ? ` from ${source}` : "";
+        let priceText = sourcePrice !== undefined ? ` at ${sourcePrice}` : "";
+        Firestore.logInfo(`${symbol} ${code} pressed ${hasShiftKey}${sourceText}${priceText}`);
         UI.syncAndUpdate(1);
     }
+};
+
+const getValidSourcePrice = (symbol: string, price: number | undefined): number | undefined => {
+    if (price === undefined || !Number.isFinite(price) || price <= 0) {
+        return undefined;
+    }
+    return Helper.roundPrice(symbol, price);
 };
 
 const handleEntry = (symbol: string, isLong: boolean, secondsSinceMarketOpen: number, shiftKey: boolean) => {

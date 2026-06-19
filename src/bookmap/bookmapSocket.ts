@@ -109,7 +109,8 @@ export const createWebSocket = () => {
             console.log(data);
         }
         let symbol = normalizeSymbol(data.symbol || "");
-        let newPrice = Helper.roundPrice(symbol, data.price || 0);
+        let rawPrice = getNumber(data.price);
+        let newPrice = rawPrice > 0 ? Helper.roundPrice(symbol, rawPrice) : 0;
 
 
         if (type === "heartbeat") {
@@ -537,8 +538,17 @@ const handleCustomButtonClick = (data: any) => {
     let keyCode = getString(data.keyCode || data.key_code);
     if (keyCode) {
         let shiftKey = data.shiftKey === true || data.shift_key === true;
-        console.log(`[BookmapSocket] Handling ${data.button_name || data.button_id || "button"} as ${shiftKey ? "Shift+" : ""}${keyCode} for ${symbol}`);
-        KeyboardHandler.handleKeyPressed(keyCode, shiftKey, symbol);
+        let eventPrice = getNumber(data.price);
+        let sourcePrice = eventPrice > 0 ? Helper.roundPrice(symbol, eventPrice) : undefined;
+        let source = getString(data.source);
+        let isChartHotkey = source === "bookmap_chart_hotkey"
+            || getString(data.button_id).startsWith("chart_hotkey:");
+        let priceText = sourcePrice !== undefined ? ` @ ${sourcePrice}` : "";
+        console.log(`[BookmapSocket] Handling ${data.button_name || data.button_id || "button"} as ${shiftKey ? "Shift+" : ""}${keyCode}${priceText} for ${symbol}`);
+        if (isChartHotkey) {
+            sendActionLog(symbol, `Received hotkey ${shiftKey ? "Shift+" : ""}${keyCode}${priceText}`);
+        }
+        KeyboardHandler.handleKeyPressed(keyCode, shiftKey, symbol, sourcePrice, isChartHotkey ? "Bookmap" : undefined);
         return;
     }
 

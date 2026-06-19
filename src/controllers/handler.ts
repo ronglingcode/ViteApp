@@ -506,11 +506,11 @@ export const twoWayBreakout = async (symbol: string) => {
     */
 };
 
-export const reloadPartialAtPrice = async (symbol: string) => {
+export const reloadPartialAtPrice = async (symbol: string, priceOverride?: number) => {
     let logTags = Models.generateLogTags(symbol, `${symbol}-reload_at_price`);
     Firestore.logInfo(logTags.logSessionName, logTags);
 
-    let entryPrice = Chart.getCrossHairPrice(symbol);
+    let entryPrice = getPriceOverrideOrCrosshair(symbol, priceOverride);
     if (!entryPrice) {
         Firestore.logError(`no cross hair price for ${symbol}`, logTags);
         return;
@@ -530,14 +530,22 @@ export const reloadPartialAtPrice = async (symbol: string) => {
 
     reloadPartial(symbol, isLong, entryPrice, orderType, logTags);
 };
-export const reloadPartialPressed = async (symbol: string, shiftKey: boolean) => {
+
+const getPriceOverrideOrCrosshair = (symbol: string, priceOverride?: number) => {
+    if (priceOverride !== undefined && Number.isFinite(priceOverride) && priceOverride > 0) {
+        return Helper.roundPrice(symbol, priceOverride);
+    }
+    return Chart.getCrossHairPrice(symbol);
+};
+
+export const reloadPartialPressed = async (symbol: string, shiftKey: boolean, priceOverride?: number) => {
     let isLong = Models.isLongForReload(symbol);
     let exitCount = Models.getExitOrdersPairs(symbol).length;
     TradingState.setLowestExitBatchCount(symbol, isLong, exitCount);
     if (shiftKey) {
         reloadPartialAtMarket(symbol);
     } else {
-        reloadPartialAtPrice(symbol);
+        reloadPartialAtPrice(symbol, priceOverride);
     }
 };
 export const reloadPartialAtMarket = async (symbol: string) => {
