@@ -46,9 +46,7 @@ export const createWatchlist = async () => {
         bestStocksToTradeToday = getFutures();
     }
     let googleDocContent = window.HybridApp.TradingData.googleDocContent;
-    let { gradingList, detailedPlans, bestIdeas } = googleDocsApi.parseGoogleDoc(googleDocContent);
-    console.log("best ideas");
-    console.log(bestIdeas);
+    let bestIdeas = googleDocsApi.parseBestIdeas(googleDocContent);
 
     let watchlist: Models.WatchlistItem[] = [];
     for (let i = 0; i < bestStocksToTradeToday.length; i++) {
@@ -70,12 +68,6 @@ export const createWatchlist = async () => {
             watchlist = [];
             break;
         }
-        if (!verifyGoogleDoc(symbol, gradingList, detailedPlans)) {
-            watchlist = [];
-            break;
-        }
-
-
         if (!finishedStockAnalysis(symbol, tradingPlans)) {
             Firestore.logError(`must finish all analysis for ${symbol}`);
             watchlist = [];
@@ -279,39 +271,6 @@ const verifyTradingPlansForSingleDirection = (symbol: string, plan: TradingPlans
     }
     if (!hasBestTradebook) {
         Firestore.logError(`${symbol} missing best tradebook`);
-        return false;
-    }
-    return true;
-}
-
-const getIndexFromList = (list: any[], symbol: string) => {
-    for (let i = 0; i < list.length; i++) {
-        let item = list[i];
-        if (item.symbol == symbol) {
-            return i;
-        }
-    }
-    return -1;
-}
-const verifyGoogleDoc = (symbol: string, gradingList: googleDocsApi.StockGrading[], detailedPlans: googleDocsApi.DetailedPlan[]) => {
-    let index = getIndexFromList(gradingList, symbol);
-    if (index == -1) {
-        Firestore.logError(`${symbol} not found in initial grading list`);
-        return false;
-    }
-    let grading = gradingList[index];
-    if (grading.selected.toLowerCase() != "yes") {
-        Firestore.logError(`${symbol} not selected in initial grading list`);
-        return false;
-    }
-    let planIndex = getIndexFromList(detailedPlans, symbol);
-    if (planIndex == -1) {
-        Firestore.logError(`${symbol} not found in detailed plans`);
-        return false;
-    }
-    let plan = detailedPlans[planIndex];
-    if (plan.notes.length < 300) {
-        Firestore.logError(`${symbol} has less than 300 characters in notes + best setups ${plan.notes.length}`);
         return false;
     }
     return true;
