@@ -90,7 +90,6 @@ export const fetchConfigData = async () => {
     let stockSelections: string[] = [];
     let tradingPlans: TradingPlansModels.TradingPlans[] = [];
     let activeProfileName = '';
-    let googleDocId = '';
     let tradingSettings: TradingPlansModels.TradingSettings = {
         useSingleOrderForEntry: false,
         snapMode: true,
@@ -100,14 +99,12 @@ export const fetchConfigData = async () => {
         stockSelections = data.stockSelections as string[];
         activeProfileName = data.activeProfileName;
         tradingSettings = data.tradingSettings;
-        googleDocId = data.googleDocId;
     }
     return {
         tradingPlans: tradingPlans,
         stockSelections: stockSelections,
         activeProfileName: activeProfileName,
         tradingSettings: tradingSettings,
-        googleDocId: googleDocId,
     };
 }
 

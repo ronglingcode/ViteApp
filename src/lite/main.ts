@@ -3,7 +3,6 @@ import * as ConfigDataLite from './api/configDataLite';
 import * as AppVersion from '../config/appVersion';
 import * as GlobalSettings from '../config/globalSettings';
 import * as BookmapSocket from '../bookmap/bookmapSocket';
-import * as googleDocsApi from '../api/googleDocs/googleDocsApi';
 import * as KeyboardHandler from '../controllers/keyboardHandler';
 import * as TraderFocus from '../controllers/traderFocus';
 import * as SchwabLite from './api/schwabLite';
@@ -83,11 +82,6 @@ const renderShell = (watchlist: StateLite.LiteWatchlistItem[]) => {
         refreshAccount,
     });
     StatusLite.logEvent(AppVersion.appVersionLogMessage);
-    let googleDocContent = (window as any).HybridApp?.TradingData?.googleDocContent ?? '';
-    if (googleDocContent) {
-        let { bestIdeas } = googleDocsApi.parseGoogleDoc(googleDocContent);
-        TraderFocus.populateBestIdeas(bestIdeas);
-    }
 };
 
 const renderTradebookButtons = (watchlist: StateLite.LiteWatchlistItem[]) => {

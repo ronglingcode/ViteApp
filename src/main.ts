@@ -11,7 +11,6 @@ import * as MarketData from './api/marketData';
 import * as tdaApi from './api/tdAmeritrade/api';
 import * as schwabApi from './api/schwab/api';
 import * as alpacaApi from './api/alpaca/api';
-import * as googleDocsApi from './api/googleDocs/googleDocsApi';
 import * as Handler from './controllers/handler';
 import * as OrderFlow from './controllers/orderFlow';
 import * as OrderFlowManager from './controllers/orderFlowManager';
@@ -55,7 +54,6 @@ window.HybridApp.Api = {
     TdaApi: tdaApi,
     SchwabApi: schwabApi,
     AlpacaApi: alpacaApi,
-    GoogleDocsApi: googleDocsApi,
 };
 window.HybridApp.Config = Config;
 window.HybridApp.Controllers = {

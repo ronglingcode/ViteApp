@@ -35,7 +35,6 @@ export interface LiteConfigData {
     stockSelections: string[];
     tradingPlans: TradingPlansModels.TradingPlans[];
     tradingSettings: TradingPlansModels.TradingSettings;
-    googleDocId: string;
 }
 
 export interface SchwabStreamerInfo {

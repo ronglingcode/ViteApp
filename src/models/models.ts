@@ -7,7 +7,6 @@ import * as Watchlist from '../algorithms/watchlist';
 import * as Firestore from '../firestore';
 import * as Calculator from '../utils/calculator';
 import type { Tradebook } from '../tradebooks/baseTradebook';
-import * as googleDocsApi from '../api/googleDocs/googleDocsApi';
 let usedTimeframe = 1;
 
 export interface PremarketPerDayData {
@@ -52,7 +51,6 @@ export interface MyWindow extends Window {
             TdaApi: any,
             SchwabApi: any,
             AlpacaApi: any,
-            GoogleDocsApi: any,
         },
         Config: any,
         Controllers: {
@@ -119,7 +117,6 @@ declare let window: MyWindow;
 export interface TradingData {
     activeProfileName: string,
     tradingSettings: TradingPlansModels.TradingSettings,
-    googleDocContent: string,
 }
 export interface UIState {
     activeSymbol: string,
@@ -1690,12 +1687,10 @@ export const setConfigData = async () => {
     let config = await TradingPlans.fetchConfigData();
     window.HybridApp.TradingPlans = config.tradingPlans;
     window.HybridApp.StockSelections = config.stockSelections;
-    let googleDocContent = await googleDocsApi.fetchDocumentContent(config.googleDocId);
     console.log('set active profile name ' + config.activeProfileName);
     window.HybridApp.TradingData = {
         activeProfileName: config.activeProfileName,
         tradingSettings: config.tradingSettings,
-        googleDocContent: googleDocContent,
     };
     refreshTradingPlanEveryMinute();
     return true;

@@ -7,7 +7,6 @@ import * as MarketData from '../../api/marketData';
 import * as tdaApi from '../../api/tdAmeritrade/api';
 import * as schwabApi from '../../api/schwab/api';
 import * as alpacaApi from '../../api/alpaca/api';
-import * as googleDocsApi from '../../api/googleDocs/googleDocsApi';
 import * as TakeProfit from '../../algorithms/takeProfit';
 import * as RiskManager from '../../algorithms/riskManager';
 import * as Watchlist from '../../algorithms/watchlist';
@@ -65,7 +64,6 @@ const getHybridApp = () => {
             useSingleOrderForEntry: false,
             snapMode: true,
         },
-        googleDocContent: '',
     };
     hybridApp.Algo.RiskManager = RiskManager;
     hybridApp.Algo.Watchlist = Watchlist;
@@ -75,7 +73,6 @@ const getHybridApp = () => {
     hybridApp.Api.TdaApi = tdaApi;
     hybridApp.Api.SchwabApi = schwabApi;
     hybridApp.Api.AlpacaApi = alpacaApi;
-    hybridApp.Api.GoogleDocsApi = googleDocsApi;
     hybridApp.Controllers.Handler = Handler;
     hybridApp.Controllers.OrderFlow = OrderFlow;
     hybridApp.Controllers.OrderFlowManager = OrderFlowManager;
@@ -347,7 +344,6 @@ export const initializeSharedRuntime = (
     secrets: StateLite.LiteSecrets
 ) => {
     let hybridApp = getHybridApp();
-    let googleDocContent = hybridApp.TradingData?.googleDocContent ?? '';
     hybridApp.TradingPlans = config.tradingPlans;
     hybridApp.StockSelections = config.stockSelections;
     hybridApp.Watchlist = watchlist.map(item => ({
@@ -357,7 +353,6 @@ export const initializeSharedRuntime = (
     hybridApp.TradingData = {
         activeProfileName: config.activeProfileName,
         tradingSettings: config.tradingSettings,
-        googleDocContent,
     };
     hybridApp.Secrets.schwab = {
         ...hybridApp.Secrets.schwab,

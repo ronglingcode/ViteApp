@@ -1,7 +1,6 @@
 import * as FirebaseApp from 'firebase/app';
 import * as Firestore from 'firebase/firestore';
 import * as Watchlist from '../../algorithms/watchlist';
-import * as googleDocsApi from '../../api/googleDocs/googleDocsApi';
 import type * as Models from '../../models/models';
 import * as StateLite from '../models/stateLite';
 
@@ -58,7 +57,6 @@ export const fetchConfigData = async (): Promise<StateLite.LiteConfigData> => {
             useSingleOrderForEntry: false,
             snapMode: true,
         },
-        googleDocId: latest.googleDocId ?? '',
     };
 };
 
@@ -74,12 +72,11 @@ const getHybridAppForWatchlist = () => {
             useSingleOrderForEntry: false,
             snapMode: true,
         },
-        googleDocContent: '',
     };
     return hybridApp;
 };
 
-const prepareHybridAppForWatchlist = (config: StateLite.LiteConfigData, googleDocContent: string) => {
+const prepareHybridAppForWatchlist = (config: StateLite.LiteConfigData) => {
     let appWindow = window as any;
     appWindow.TradingData = appWindow.TradingData ?? {};
     appWindow.TradingData.StockSelection = appWindow.TradingData.StockSelection ?? {};
@@ -94,7 +91,6 @@ const prepareHybridAppForWatchlist = (config: StateLite.LiteConfigData, googleDo
     hybridApp.TradingData = {
         activeProfileName: config.activeProfileName,
         tradingSettings: config.tradingSettings,
-        googleDocContent,
     };
 };
 
@@ -106,8 +102,7 @@ const toLiteWatchlist = (watchlist: Models.WatchlistItem[]): StateLite.LiteWatch
 };
 
 export const createLiteWatchlistFromConfig = async (config: StateLite.LiteConfigData): Promise<StateLite.LiteWatchlistItem[]> => {
-    let googleDocContent = await googleDocsApi.fetchDocumentContent(config.googleDocId);
-    prepareHybridAppForWatchlist(config, googleDocContent);
+    prepareHybridAppForWatchlist(config);
     let fullWatchlist = await Watchlist.createWatchlist();
     let watchlist = toLiteWatchlist(fullWatchlist);
     if (watchlist.length === 0) {

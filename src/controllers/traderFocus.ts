@@ -1,5 +1,3 @@
-import * as googleDocsApi from '../api/googleDocs/googleDocsApi';
-import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as Models from '../models/models';
 import * as TradingState from '../models/tradingState';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
@@ -7,35 +5,8 @@ import * as UI from '../ui/ui';
 import * as Firestore from '../firestore';
 import * as ManagementCard from './managementCard';
 
-export const updateUI = async () => {
-    let config = await TradingPlans.fetchConfigData();
-    let googleDocContent = await googleDocsApi.fetchDocumentContent(config.googleDocId);
-    let { bestIdeas } = googleDocsApi.parseGoogleDoc(googleDocContent);
-    populateBestIdeas(bestIdeas);
+export const updateUI = () => {
     updateTradeManagementUI();
-}
-export const populateBestIdeas = (bestIdeas: Map<string, string[]>) => {
-    let traderFocusPlansContent = document.getElementById("traderFocusPlansContent");
-    if (!traderFocusPlansContent) {
-        return;
-    }
-    traderFocusPlansContent.innerHTML = "";
-    bestIdeas.forEach((ideasList, symbol) => {
-        if (!traderFocusPlansContent) {
-            return;
-        }
-        let container = document.createElement("div");
-        container.className = "ticker";
-        UI.addOneLineDiv(container, symbol, "symbolTitle");
-        traderFocusPlansContent.appendChild(container);
-        let ul = document.createElement("ul");
-        for (let i = 0; i < ideasList.length; i++) {
-            let li = document.createElement("li");
-            li.textContent = ideasList[i];
-            ul.appendChild(li);
-        }
-        container.appendChild(ul);
-    });
 }
 
 export const updateTradeManagementUI = () => {

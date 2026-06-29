@@ -141,16 +141,6 @@ export const renderShell = (
             <tr>
               <td id="traderFocus">
                 <div id="traderFocusColumn">
-                  <div id="traderFocusPlans" class="collapsibleSection">
-                    <div class="sectionTitle clickableSectionTitle" data-section="traderFocusPlans">
-                      A+ Setups <span class="collapseIcon">-</span>
-                    </div>
-                    <div class="sectionContent" id="traderFocusPlansContent">
-                      <div class="ticker">
-                        <div class="symbolTitle">Trading Lite</div>
-                      </div>
-                    </div>
-                  </div>
                   <div id="traderFocusInstructions" class="collapsibleSection">
                     <div class="sectionTitle">
                       Trade Management

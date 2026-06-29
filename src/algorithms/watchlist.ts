@@ -4,8 +4,6 @@ import type * as Models from '../models/models';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as Helper from '../utils/helper';
-import * as googleDocsApi from '../api/googleDocs/googleDocsApi';
-import { populateBestIdeas } from '../controllers/traderFocus';
 import * as GapAndGoAlgo from './gapAndGoAlgo';
 import * as GapAndCrapAlgo from './gapAndCrapAlgo';
 import * as GapGiveAndGoAlgo from './gapGiveAndGoAlgo';
@@ -45,8 +43,6 @@ export const createWatchlist = async () => {
     } else if (Config.getProfileSettings().isFutures) {
         bestStocksToTradeToday = getFutures();
     }
-    let googleDocContent = window.HybridApp.TradingData.googleDocContent;
-    let bestIdeas = googleDocsApi.parseBestIdeas(googleDocContent);
 
     let watchlist: Models.WatchlistItem[] = [];
     for (let i = 0; i < bestStocksToTradeToday.length; i++) {
@@ -113,7 +109,6 @@ export const createWatchlist = async () => {
     }
 
     window.HybridApp.Watchlist = watchlist;
-    populateBestIdeas(bestIdeas);
     return watchlist;
 };
 
