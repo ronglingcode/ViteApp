@@ -257,7 +257,8 @@ window.TradingApp.TOS.initialize().then(async () => {
 
             // check premarket volume threshold
             let premarketSharesInMillions = priceHistory.premarketDollarCollection.lastDayShares / 1000000;
-            if (premarketSharesInMillions < GlobalSettings.premarketVolumeThresholdInMillions) {
+            if (!GlobalSettings.premarketVolumeThresholdWhitelist.includes(symbol)
+                && premarketSharesInMillions < GlobalSettings.premarketVolumeThresholdInMillions) {
                 Firestore.logError(`${symbol} blocked: premarket volume ${premarketSharesInMillions.toFixed(2)}M shares, below ${GlobalSettings.premarketVolumeThresholdInMillions}M threshold`);
                 Chart.hideChart(symbol);
                 return;
