@@ -24,6 +24,13 @@ interface BookmapKeyLevel {
     label?: string;
 }
 
+interface BookmapKeyZone {
+    low: number;
+    high: number;
+    label?: string;
+    color?: string;
+}
+
 interface BookmapPricePair {
     high?: number;
     low?: number;
@@ -222,17 +229,19 @@ export const sendKeyLevelConfigForSymbol = (symbol: string) => {
     }
 
     const levels = getBookmapKeyLevelsForSymbol(symbol);
+    const zones = getBookmapKeyZonesForSymbol(symbol);
     const marketLevels = getBookmapMarketLevelsForSymbol(symbol);
     websocket.send(JSON.stringify({
         type: "key_levels_config",
         symbol: symbol,
         levels: levels,
+        zones: zones,
         camPivots: marketLevels.camPivots,
         previousDay: marketLevels.previousDay,
         premarket: marketLevels.premarket,
         timestamp: Date.now(),
     }));
-    console.log(`[BookmapSocket] Sent ${levels.length} key levels for ${symbol}`
+    console.log(`[BookmapSocket] Sent ${levels.length} key levels and ${zones.length} key zones for ${symbol}`
         + ` with market levels: cam=${Object.keys(marketLevels.camPivots ?? {}).length}`
         + ` prev=${marketLevels.previousDay ? 1 : 0}`
         + ` pm=${marketLevels.premarket ? 1 : 0}`);
@@ -476,6 +485,38 @@ const getBookmapKeyLevelsForSymbol = (symbol: string): BookmapKeyLevel[] => {
     return levels;
 };
 
+const getBookmapKeyZonesForSymbol = (symbol: string): BookmapKeyZone[] => {
+    const plan = TradingPlans.getTradingPlansWithoutDefault(symbol);
+    const rawZones = plan?.keyLevels?.zones ?? [];
+    const seen = new Set<string>();
+    const zones: BookmapKeyZone[] = [];
+
+    for (const zone of rawZones) {
+        if (!isValidBookmapPrice(zone.low) || !isValidBookmapPrice(zone.high) || zone.low === zone.high) {
+            continue;
+        }
+        const low = Math.min(zone.low, zone.high);
+        const high = Math.max(zone.low, zone.high);
+        const key = `${low}:${high}`;
+        if (seen.has(key)) {
+            continue;
+        }
+        seen.add(key);
+
+        const config: BookmapKeyZone = { low, high };
+        const label = normalizeOptionalString(zone.label);
+        const color = normalizeOptionalString(zone.color);
+        if (label) {
+            config.label = label;
+        }
+        if (color) {
+            config.color = color;
+        }
+        zones.push(config);
+    }
+    return zones;
+};
+
 const getBookmapMarketLevelsForSymbol = (symbol: string): BookmapMarketLevels => {
     const symbolData = Models.getSymbolData(symbol);
     const marketLevels: BookmapMarketLevels = {};
@@ -526,6 +567,14 @@ const getValidPricePair = (high: number | undefined, low: number | undefined): B
 
 const isValidBookmapPrice = (price: number | undefined): price is number => {
     return typeof price === "number" && Number.isFinite(price) && price > 0 && price < 999999;
+};
+
+const normalizeOptionalString = (value: string | undefined): string | undefined => {
+    if (typeof value !== "string") {
+        return undefined;
+    }
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
 };
 
 const handleCustomButtonClick = (data: any) => {

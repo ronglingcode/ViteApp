@@ -108,8 +108,15 @@ export interface KeyLevel {
     price: number,
     label: string,
 }
+export interface KeyZone {
+    high: number,
+    low: number,
+    label?: string,
+    color?: string,
+}
 export interface keyLevels {
     otherLevels?: KeyLevel[];
+    zones?: KeyZone[];
 };
 export enum PlanType {
     LevelMomentum = 'LevelMomentum',
