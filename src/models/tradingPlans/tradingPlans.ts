@@ -152,29 +152,6 @@ export const validateTradingPlansForOneDirection = (
     return "";
 }
 
-export const flattenPlans = (plan: TradingPlansModels.SingleDirectionPlans) => {
-    let results: TradingPlansModels.BasePlan[] = [];
-    if (plan.firstBreakoutPlan) {
-        results.push(plan.firstBreakoutPlan);
-    }
-    if (plan.firstNewHighPlan) {
-        results.push(plan.firstNewHighPlan);
-    }
-    if (plan.levelBreakout) {
-        results.push(plan.levelBreakout);
-    }
-    if (plan.premarketPlan) {
-        results.push(plan.premarketPlan);
-    }
-
-    return results;
-}
-export const validateTargets = (targets: TradingPlansModels.ExitTargets) => {
-    if (!noZero(targets.initialTargets.dailyRanges)) {
-        return "zero in initial targets using ATR";
-    }
-    return "";
-}
 
 export const noZero = (numbers: number[]) => {
     for (let i = 0; i < numbers.length; i++) {

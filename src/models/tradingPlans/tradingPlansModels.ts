@@ -98,12 +98,6 @@ export interface SingleDirectionPlans {
     bookmapBigWallBreakdownFailLongPlan?: BookmapBigWallBreakdownFailLongPlan,
     /* used strategies end */
 
-    levelBreakout?: LevelBreakoutPlan,
-
-    firstBreakoutPlan?: FirstBreakoutPlan,
-    firstNewHighPlan?: FirstNewHighPlan,
-    premarketPlan?: PremarketPlan,
-
 };
 
 export interface VwapBounceFailPlan extends BasePlan { }
@@ -223,9 +217,7 @@ export interface FirstRetracementPlan extends BasePlan { }
 export interface FirstBreakoutPlan extends BasePlan {
 
 }
-export interface FirstNewHighPlan extends BasePlan {
-    enableAutoTrigger: boolean,
-}
+
 export interface ProfitTargets {
     targets: number[],
     /**
