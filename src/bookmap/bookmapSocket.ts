@@ -465,12 +465,13 @@ const getBookmapKeyLevelsForSymbol = (symbol: string): BookmapKeyLevel[] => {
     const seen = new Set<number>();
     const levels: BookmapKeyLevel[] = [];
 
-    for (const price of rawLevels) {
+    for (const level of rawLevels) {
+        const price = level.price;
         if (!Number.isFinite(price) || price <= 0 || seen.has(price)) {
             continue;
         }
         seen.add(price);
-        levels.push({ price });
+        levels.push({ price, label: level.label });
     }
     return levels;
 };

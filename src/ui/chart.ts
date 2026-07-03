@@ -1397,8 +1397,8 @@ export const drawLevelsAfterChartInitialize = (widget: Models.ChartWidget) => {
 export const drawKeyLevels = (widget: Models.ChartWidget, keyLevels: TradingPlansModels.keyLevels,
     lastSupport: number[], lastResistance: number[]) => {
     if (keyLevels.otherLevels) {
-        keyLevels.otherLevels.forEach(price => {
-            createPriceLine(widget.candleSeries, price, "", "black", 2, true, "solid");
+        keyLevels.otherLevels.forEach(level => {
+            createPriceLine(widget.candleSeries, level.price, level.label, "black", 2, false, "solid");
         });
     }
 

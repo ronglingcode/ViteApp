@@ -110,8 +110,12 @@ export interface VwapBounceFailPlan extends BasePlan { }
 export interface AllTimeHighVwapContinuationPlan extends BasePlan {
     allTimeHigh: number,
 }
+export interface KeyLevel {
+    price: number,
+    label: string,
+}
 export interface keyLevels {
-    otherLevels?: number[];
+    otherLevels?: KeyLevel[];
 };
 export enum PlanType {
     LevelMomentum = 'LevelMomentum',
