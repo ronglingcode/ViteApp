@@ -37,7 +37,6 @@ export interface TradingPlans {
     marketCapInMillions: number,
     fixedQuantity?: number,
     keyLevels: keyLevels,
-    defaultTargets: ExitTargets,
     defaultConfigs: PlanConfigs,
     tradebooksConfig: TradebooksConfig,
     long: SingleDirectionPlans,
