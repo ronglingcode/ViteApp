@@ -17,50 +17,6 @@ export interface ParsedTimeSale {
     shouldFilter: boolean;
 }
 
-/** Worker-safe port of AlpacaStreaming.createTimeSale. */
-export const createAlpacaTimeSale = (c: any): ParsedTimeSale => {
-    let has_non_update = false;
-    let tradeTime = Helper.numberToDate(c['t']);
-    if (Helper.isRegularMarketSessionTime(tradeTime) && c['c']) {
-        for (let i = 0; i < c['c'].length; i++) {
-            if (conditionsNotUpdateLastPrice.includes(c['c'][i])) {
-                has_non_update = true;
-                break;
-            }
-        }
-    }
-
-    let record: Models.TimeSale = {
-        symbol: c['S'],
-        receivedTime: new Date(),
-        conditions: [],
-        timestamp: 0,
-    };
-    if (c['t'] != null) {
-        record.tradeTime = c['t'];
-    }
-    if (c['p'] != null) {
-        record.lastPrice = c['p'];
-    }
-    if (c['s'] != null) {
-        record.lastSize = c['s'];
-    }
-    if (c['i'] != null) {
-        record.tradeID = c['i'];
-    }
-    record.rawTimestamp = '';
-    if (c['t'] != null) {
-        let nanoTime = new Date(c['t']);
-        let timeStr = nanoTime.getHours() + ':' + nanoTime.getMinutes() + ':' + nanoTime.getSeconds() + '.' + nanoTime.getMilliseconds();
-        record.rawTimestamp = `${timeStr} ${nanoTime.getTime()}`;
-        record.timestamp = nanoTime.getTime();
-    }
-    if (c['c'] != null) {
-        record.conditions = c['c'];
-    }
-    return { record, shouldFilter: has_non_update };
-};
-
 /** Worker-safe port of MassiveStreaming.createTimeSale. */
 export const createMassiveTimeSale = (c: any): ParsedTimeSale => {
     let has_non_update = false;

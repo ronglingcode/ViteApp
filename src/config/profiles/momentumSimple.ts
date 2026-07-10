@@ -1,8 +1,8 @@
-// day trading equities in tdameritrade
+// day trading equities in Schwab
 import type { Profile } from "./profiles";
 export const settings: Profile = {
     name: "momentumSimple",
-    brokerName: "Alpaca",
+    brokerName: "Schwab",
     isEquity: true,
     isFutures: false,
     indexOnly: false,

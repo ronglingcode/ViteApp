@@ -23,14 +23,10 @@ const throttledCancelAllEntryOrders = Helper.executeOncePerInterval(
     1000 // 1 second interval
 );
 
-export const levelOneQuoteSourceAlpaca: string = 'alpaca';
 export const levelOneQuoteSourceSchwab: string = 'schwab';
-export const levelOneQuoteSource: string = levelOneQuoteSourceAlpaca;
+export const levelOneQuoteSource: string = levelOneQuoteSourceSchwab;
 
 const getTimeSaleSourceName = (source: string) => {
-    if (source == 'a') {
-        return 'alpaca';
-    }
     if (source == 'm') {
         return 'massive';
     }

@@ -1,15 +1,12 @@
 import { SimpleRollingWindow } from "./simpleRollingWindow";
-import * as DB from '../data/db';
 
 export const spreadMonitors = new Map<string, SimpleRollingWindow<number>>();
 
-const alpacaWindowSize = 10;
 const schwabWindowSize = 6;
 
 export const getOrCreateSpreadMonitor = (symbol: string) => {
-    let windowSize = DB.levelOneQuoteSource == DB.levelOneQuoteSourceAlpaca ? alpacaWindowSize : schwabWindowSize;
     if (!spreadMonitors.has(symbol)) {
-        spreadMonitors.set(symbol, new SimpleRollingWindow<number>(windowSize));
+        spreadMonitors.set(symbol, new SimpleRollingWindow<number>(schwabWindowSize));
     }
     return spreadMonitors.get(symbol)!;
 }

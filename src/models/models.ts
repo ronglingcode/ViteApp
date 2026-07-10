@@ -50,7 +50,6 @@ export interface MyWindow extends Window {
             MarketData: any,
             TdaApi: any,
             SchwabApi: any,
-            AlpacaApi: any,
         },
         Config: any,
         Controllers: {
@@ -327,7 +326,6 @@ export interface SymbolData {
     totalVolume: number,
     totalTradingAmount: number,
     schwabLevelOneQuote: LevelOneQuote,
-    alpacaLevelOneQuote: LevelOneQuote,
     maxTimeSaleTimestamp: MaxTimeSaleTimestamp,
     camPivots: CamarillaPivots,
     allTimeHigh: number,
@@ -1019,12 +1017,6 @@ export const getDefaultSymbolData = () => {
         totalVolume: 0,
         totalTradingAmount: 0,
         schwabLevelOneQuote: {
-            bidPrice: 0,
-            askPrice: 0,
-            bidSize: 0,
-            askSize: 0,
-        },
-        alpacaLevelOneQuote: {
             bidPrice: 0,
             askPrice: 0,
             bidSize: 0,

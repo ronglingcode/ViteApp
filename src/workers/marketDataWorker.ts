@@ -1,18 +1,15 @@
-import * as TimeSaleParse from '../streaming/timeSaleParse';
 import * as LevelOneQuoteParse from '../streaming/levelOneQuoteParse';
+import * as TimeSaleParse from '../streaming/timeSaleParse';
 import * as TradeFlushBuffer from './tradeFlushBuffer';
 import type * as Messages from './marketDataMessages';
 
-const ALPACA_MARKET_DATA_URL = 'wss://stream.data.alpaca.markets/v2/sip';
 const MASSIVE_URL = 'wss://socket.massive.com/stocks';
 
 type PostToMain = (message: Messages.WorkerToMainMessage) => void;
 
 class MarketDataStreamManager {
-    private alpacaSocket: WebSocket | null = null;
     private massiveSocket: WebSocket | null = null;
     private schwabSocket: WebSocket | null = null;
-    private cleanupTimer: ReturnType<typeof setTimeout> | null = null;
     private symbols: string[] = [];
 
     constructor(
@@ -21,15 +18,9 @@ class MarketDataStreamManager {
     ) { }
 
     stop() {
-        if (this.cleanupTimer) {
-            clearTimeout(this.cleanupTimer);
-            this.cleanupTimer = null;
-        }
         this.tradeBuffer.stop();
-        this.alpacaSocket?.close();
         this.massiveSocket?.close();
         this.schwabSocket?.close();
-        this.alpacaSocket = null;
         this.massiveSocket = null;
         this.schwabSocket = null;
         this.symbols = [];
@@ -39,9 +30,6 @@ class MarketDataStreamManager {
         this.stop();
         this.symbols = payload.symbols;
         this.post({ type: 'status', source: 'worker', status: `starting ${payload.symbols.length} symbols` });
-        if (payload.useAlpacaTradeStream || payload.useAlpacaQuoteStream) {
-            this.connectAlpaca(payload);
-        }
         if (payload.useMassiveTradeStream) {
             this.connectMassive(payload);
         }
@@ -53,45 +41,6 @@ class MarketDataStreamManager {
 
     private enqueueTrades(trades: Messages.ParsedTrade[], source: Messages.TradeSource) {
         trades.forEach(trade => this.tradeBuffer.push(trade, source));
-    }
-
-    private connectAlpaca(payload: Messages.MarketDataWorkerStartPayload) {
-        let socket = new WebSocket(ALPACA_MARKET_DATA_URL);
-        this.alpacaSocket = socket;
-        socket.onmessage = (messageEvent) => {
-            let messageData = JSON.parse(String(messageEvent.data));
-            if (!Array.isArray(messageData)) {
-                return;
-            }
-            let trades: Messages.ParsedTrade[] = [];
-            let quotes: import('../models/models').Quote[] = [];
-            messageData.forEach((element: any) => {
-                if (element.T === 'success') {
-                    if (element.msg === 'connected') {
-                        this.send(socket, { action: 'auth', key: payload.alpaca.apiKey, secret: payload.alpaca.apiSecret });
-                    } else if (element.msg === 'authenticated') {
-                        if (payload.useAlpacaTradeStream) {
-                            this.send(socket, { action: 'subscribe', trades: payload.symbols });
-                            this.scheduleAlpacaCleanup(payload.alpacaTradeCleanupDelayMs);
-                        }
-                        if (payload.useAlpacaQuoteStream) {
-                            this.send(socket, { action: 'subscribe', quotes: payload.symbols });
-                        }
-                    }
-                } else if (element.T === 't') {
-                    trades.push(TimeSaleParse.createAlpacaTimeSale(element));
-                } else if (element.T === 'q') {
-                    quotes.push(LevelOneQuoteParse.createAlpacaLevelOneQuote(element));
-                }
-            });
-            if (trades.length > 0) {
-                this.enqueueTrades(trades, 'a');
-            }
-            if (quotes.length > 0) {
-                this.post({ type: 'quote', source: 'a', quotes });
-            }
-        };
-        socket.onerror = () => this.post({ type: 'error', source: 'alpaca', message: 'socket error' });
     }
 
     private connectMassive(payload: Messages.MarketDataWorkerStartPayload) {
@@ -162,17 +111,6 @@ class MarketDataStreamManager {
             }
         };
         socket.onerror = () => this.post({ type: 'error', source: 'schwab', message: 'socket error' });
-    }
-
-    private scheduleAlpacaCleanup(delayMs: number) {
-        if (delayMs < 0) {
-            return;
-        }
-        this.cleanupTimer = setTimeout(() => {
-            if (this.alpacaSocket?.readyState === WebSocket.OPEN) {
-                this.send(this.alpacaSocket, { action: 'unsubscribe', trades: this.symbols });
-            }
-        }, delayMs);
     }
 
     private send(socket: WebSocket, request: unknown) {

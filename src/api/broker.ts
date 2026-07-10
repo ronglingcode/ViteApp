@@ -1,5 +1,4 @@
 import * as tradeStationApi from "./tradeStation/api";
-import * as alpacaApi from './alpaca/api';
 import * as schwabApi from './schwab/api';
 import * as config from '../config/config'
 import * as Models from '../models/models';
@@ -69,6 +68,10 @@ const emitBookmapActionLog = (symbol: string, message: string) => {
 
 const formatOrderPrice = (orderType: Models.OrderType, price: number) => {
     return orderType == Models.OrderType.MARKET || price <= 0 ? 'MKT' : `$${price}`;
+};
+
+const logUnsupportedBroker = (brokerName: string, action: string, logTags: Models.LogTags = {}) => {
+    Firestore.logError(`${action} not supported for broker ${brokerName}`, logTags);
 };
 
 const createExecutionKey = (execution: Models.OrderExecution) => {
@@ -143,14 +146,12 @@ const submitEntryOrderWithBracketCore = (
         schwabApi.entryWithBracket(
             symbol, quantity, isLong, orderType, entryPrice, limitPrice, stopPrice, logTags
         );
-    } else if (brokerName == "Alpaca") {
-        alpacaApi.entryWithBracket(
-            symbol, quantity, isLong, orderType, entryPrice, limitPrice, stopPrice, logTags
-        );
     } else if (brokerName == "TradeStation") {
         tradeStationApi.entryWithBracket(
             symbol, quantity, isLong, isEquity, orderType, entryPrice, limitPrice, stopPrice, logTags
         );
+    } else {
+        logUnsupportedBroker(brokerName, 'submitEntryOrderWithBracket', logTags);
     }
 };
 export const submitEntryOrderWithBracket = (
@@ -173,7 +174,7 @@ export const submitEntryOrderWithMultipleBrackets = (
             symbol, quantity, isLong, orderType, entryPrice, profitTargets, stopPrice, logTags,
             orderIdToReplace
         );
-    } else {
+    } else if (brokerName == "TradeStation") {
         profitTargets.forEach((profitTarget: any) => {
             let partialQuantity = profitTarget.quantity;
             let limitPrice = profitTarget.target;
@@ -181,6 +182,8 @@ export const submitEntryOrderWithMultipleBrackets = (
                 symbol, partialQuantity, isLong, orderType, entryPrice, limitPrice, stopPrice, logTags
             );
         });
+    } else {
+        logUnsupportedBroker(brokerName, 'submitEntryOrderWithMultipleBrackets', logTags);
     }
     onOrderEvent();
 }
@@ -196,9 +199,7 @@ export const submitExitOrderWithBroker = (
     } else if (brokerName == "TradeStation") {
         Firestore.logError(`not implemented submitExitOrderWithBroker()`);
     } else {
-        alpacaApi.exitWithBracket(
-            symbol, quantity, positionIsLong, targetPrice, stopLossPrice, logTags
-        );
+        logUnsupportedBroker(brokerName, 'submitExitOrderWithBroker', logTags);
     }
     onOrderEvent();
 };
@@ -219,7 +220,7 @@ export const submitSingleOrder = async (symbol: string, orderType: Models.OrderT
             symbol, isEquity, orderType, quantity, price, isLong, positionEffectIsOpen, logTags
         );
     } else {
-        alpacaApi.submitSingleOrder(symbol, orderType, quantity, price, isLong, logTags);
+        logUnsupportedBroker(brokerName, 'submitSingleOrder', logTags);
     }
     onOrderEvent();
 }
@@ -277,7 +278,7 @@ export const cancelOrders = async (orderIds: string[]) => {
     } else if (brokerName == "TradeStation") {
         tradeStationApi.cancelOrders(orderIds);
     } else {
-        alpacaApi.cancelOrders(orderIds);
+        logUnsupportedBroker(brokerName, 'cancelOrders');
     }
     onOrderEvent();
 };
@@ -298,15 +299,10 @@ export const replaceSimpleOrderWithNewPrice = async (order: Models.OrderModel, n
     let brokerName = config.getProfileSettings().brokerName;
     if (brokerName == 'Schwab') {
         schwabApi.replaceSingleOrderWithNewPrice(order, newPrice, logTags);
-    }
-    if (brokerName == "TradeStation") {
+    } else if (brokerName == "TradeStation") {
         tradeStationApi.replaceSingleOrderWithNewPrice(order, newPrice, logTags);
     } else {
-        if (order.orderType == Models.OrderType.LIMIT) {
-            alpacaApi.replaceOrderWithNewTarget(order.orderID, newPrice, logTags);
-        } else {
-            alpacaApi.replaceOrderWithNewStopLoss(order.orderID, newPrice, logTags);
-        }
+        logUnsupportedBroker(brokerName, 'replaceSimpleOrderWithNewPrice', logTags);
     }
     onOrderEvent();
 };
@@ -324,15 +320,7 @@ export const replaceExitPairWithNewPrice = async (
             tradeStationApi.replaceSingleOrderWithNewPrice(orderToReplace, newPrice, logTags);
         }
     } else {
-        if (isStopLeg) {
-            if (pair.STOP) {
-                alpacaApi.replaceOrderWithNewStopLoss(pair.STOP.orderID, newPrice, logTags);
-            }
-        } else {
-            if (pair.LIMIT) {
-                alpacaApi.replaceOrderWithNewTarget(pair.LIMIT.orderID, newPrice, logTags);
-            }
-        }
+        logUnsupportedBroker(brokerName, 'replaceExitPairWithNewPrice', logTags);
     }
     onOrderEvent();
 }
@@ -355,26 +343,10 @@ export const instantOutOneExitPair = (
     if (brokerName == 'Schwab') {
         schwabApi.replaceExitPairWithOneMarketOrderLeg(symbol, positionIsLong, pair, logTags);
         //schwabApi.cancelAndReplaceWithMarketOrder(symbol, positionIsLong, pair, logTags);
-    } else if (brokerName == 'Alpaca') {
-        let toCancel: string[] = [];
-        let quantity = 0;
-        let isLong = false;
-        if (pair.LIMIT) {
-            toCancel.push(pair.LIMIT.orderID);
-            quantity = pair.LIMIT.quantity;
-            isLong = pair.LIMIT.isBuy;
-        } else if (pair.STOP) {
-            toCancel.push(pair.STOP.orderID);
-            quantity = pair.STOP.quantity;
-            isLong = pair.STOP.isBuy;
-        }
-        cancelOrders(toCancel);
-        setTimeout(() => {
-            alpacaApi.submitSingleOrder(pair.symbol, Models.OrderType.MARKET, quantity, 0, isLong, {});
-        }, 200);
-
-    } else {
+    } else if (brokerName == 'TradeStation') {
         instantOutOneExitPairByReplace(pair, logTags);
+    } else {
+        logUnsupportedBroker(brokerName, 'instantOutOneExitPair', logTags);
     }
     if (emitActionLog) {
         emitBookmapActionLog(symbol, `Submit market out ${quantity}`);
@@ -402,16 +374,13 @@ export const syncAccount = async (source: string) => {
         if (!result) {
             console.error('cannot sync ts account');
         }
-    } else if (brokerName == 'Alpaca') {
-        let result = await alpacaApi.getAccountInfo();
-        if (!result) {
-            console.error('cannot sync alpaca account')
-        }
     } else if (brokerName == 'Schwab') {
         let result = await schwabApi.getAccountInfo();
         if (!result) {
             Firestore.logError('cannot sync schwab account');
         }
+    } else {
+        logUnsupportedBroker(brokerName, 'syncAccount');
     }
     let account = rebuildBrokerAccount();
     emitNewOrderFills(previousExecutionKeys);

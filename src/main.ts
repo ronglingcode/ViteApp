@@ -10,7 +10,6 @@ import * as Broker from './api/broker';
 import * as MarketData from './api/marketData';
 import * as tdaApi from './api/tdAmeritrade/api';
 import * as schwabApi from './api/schwab/api';
-import * as alpacaApi from './api/alpaca/api';
 import * as Handler from './controllers/handler';
 import * as OrderFlow from './controllers/orderFlow';
 import * as OrderFlowManager from './controllers/orderFlowManager';
@@ -28,7 +27,6 @@ import * as TradingPlans from './models/tradingPlans/tradingPlans';
 import * as TvTools from './tools/tradingview';
 import * as TraderFocus from './controllers/traderFocus';
 import * as KeyboardHandler from './controllers/keyboardHandler';
-import * as AlpacaStreaming from './api/alpaca/streaming';
 import * as ScwabStreaming from './api/schwab/streaming';
 import * as MassiveStreaming from './api/massive/streaming';
 import * as MarketDataWorkerBridge from './controllers/marketDataWorkerBridge';
@@ -53,7 +51,6 @@ window.HybridApp.Api = {
     MarketData: MarketData,
     TdaApi: tdaApi,
     SchwabApi: schwabApi,
-    AlpacaApi: alpacaApi,
 };
 window.HybridApp.Config = Config;
 window.HybridApp.Controllers = {
@@ -208,16 +205,12 @@ window.TradingApp.TOS.initialize().then(async () => {
     TraderFocus.updateTradeManagementUI();
 
     // open web socket
-    // Alpaca trading activity stream is disabled; Schwab is the active broker.
-    // AlpacaStreaming.createWebSocket();
     if (GlobalSettings.useMarketDataWorker) {
-        // The worker owns the Alpaca market-data socket (trades + quotes), the Massive
-        // trades socket, and the Schwab streamer socket (account activity + level-one
-        // quotes); their parsing runs off the main thread.
+        // The worker owns the Massive trades socket and the Schwab streamer socket
+        // (account activity + level-one quotes); their parsing runs off the main thread.
         MarketDataWorkerBridge.startMarketDataWorker();
         MarketDataWorkerBridge.registerMarketDataWorkerLifecycle();
     } else {
-        AlpacaStreaming.createWebSocketForMarketData();
         ScwabStreaming.createWebSocket();
         MassiveStreaming.createWebSocket();
     }

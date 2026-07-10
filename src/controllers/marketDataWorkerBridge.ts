@@ -1,26 +1,12 @@
-import * as Secret from '../config/secret';
 import * as GlobalSettings from '../config/globalSettings';
 import * as Models from '../models/models';
-import * as Helper from '../utils/helper';
 import * as DB from '../data/db';
-import * as AlpacaStreaming from '../api/alpaca/streaming';
 import * as MassiveStreaming from '../api/massive/streaming';
 import * as SchwabStreaming from '../api/schwab/streaming';
 import * as StreamingHandler from './streamingHandler';
 import type * as Messages from '../workers/marketDataMessages';
 
 let worker: Worker | null = null;
-
-const shouldCompete = () => StreamingHandler.shouldCompeteForTimeAndSales();
-
-const getAlpacaTradeCleanupDelayMs = (): number => {
-    if (GlobalSettings.marketDataSource === 'alpaca') {
-        return -1;
-    }
-    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
-    let secondsUntilCleanup = GlobalSettings.competeForTimeAndSalesWindowSeconds - secondsSinceMarketOpen;
-    return Math.max(0, secondsUntilCleanup) * 1000;
-};
 
 const buildSchwabConfig = (): Messages.SchwabWorkerConfig | undefined => {
     let socketUrl = SchwabStreaming.getStreamerSocketUrl();
@@ -37,22 +23,13 @@ const buildSchwabConfig = (): Messages.SchwabWorkerConfig | undefined => {
 };
 
 const buildStartPayload = (): Messages.MarketDataWorkerStartPayload => {
-    let alpacaSecrets = Secret.alpaca();
-    let competing = shouldCompete();
     return {
         symbols: Models.getWatchlist().map(item => item.symbol),
-        alpaca: {
-            apiKey: alpacaSecrets.apiKey,
-            apiSecret: alpacaSecrets.apiSecret,
-        },
         massive: {
             authParams: MassiveStreaming.createLoginRequest().params,
         },
         schwab: buildSchwabConfig(),
-        useAlpacaTradeStream: GlobalSettings.marketDataSource === 'alpaca' || competing,
-        useAlpacaQuoteStream: DB.levelOneQuoteSource === DB.levelOneQuoteSourceAlpaca,
-        useMassiveTradeStream: GlobalSettings.marketDataSource === 'massive' || competing,
-        alpacaTradeCleanupDelayMs: getAlpacaTradeCleanupDelayMs(),
+        useMassiveTradeStream: GlobalSettings.marketDataSource === 'massive',
     };
 };
 
@@ -62,9 +39,8 @@ const handleWorkerMessage = (message: Messages.WorkerToMainMessage) => {
         return;
     }
     if (message.type === 'quote') {
-        let apply = message.source === 's' ? SchwabStreaming.applyLevelOneQuote : AlpacaStreaming.applyLevelOneQuote;
         for (let quote of message.quotes) {
-            apply(quote);
+            SchwabStreaming.applyLevelOneQuote(quote);
         }
         return;
     }

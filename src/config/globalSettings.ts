@@ -1,6 +1,7 @@
 export const localhostWithPort: string = "http://localhost:3000";
 export const batchCount: number = 10;
-export const marketDataSource: string = "massive"; // alpaca, massive
+export type MarketDataSource = "massive";
+export const marketDataSource: MarketDataSource = "massive";
 export const impliedMarketCapThresholdInBillions: number = 0.9;
 export const premarketVolumeThresholdInMillions: number = 0.9;
 export const premarketVolumeThresholdWhitelist: string[] = ['AVAV'];

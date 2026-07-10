@@ -1,5 +1,4 @@
 import * as DB from '../data/db';
-import * as AlpacaStreaming from '../api/alpaca/streaming';
 import * as Firestore from '../firestore';
 import * as Broker from '../api/broker';
 import * as GlobalSettings from '../config/globalSettings';
@@ -27,29 +26,10 @@ export const shouldCompeteForTimeAndSales = () => {
     return secondsSinceMarketOpen < GlobalSettings.competeForTimeAndSalesWindowSeconds;
 }
 
-export const handleTimeAndSalesData = (data: any) => {
-    let { record, shouldFilter } = AlpacaStreaming.createTimeSale(data);
-    let updated = DB.tryUpdateMaxTimeSaleTimestamp(record, 'a');
-
-    if (shouldFilter) {
-        return;
-    }
-
-    if (shouldCompeteForTimeAndSales()) {
-        if (updated) {
-            DB.updateFromTimeSale(record);
-        }
-    } else {
-        if (GlobalSettings.marketDataSource == "alpaca") {
-            DB.updateFromTimeSale(record);
-        }
-    }
-}
-
 /** Apply a worker flush of parsed trades (batched + merged in the worker every 100ms). */
 export const applyWorkerTimeSaleFlush = (
     trades: { record: Models.TimeSale; shouldFilter: boolean }[],
-    source: 'a' | 'm',
+    source: 'm',
 ) => {
     let bySymbol = new Map<string, Models.TimeSale[]>();
     trades.forEach(trade => {
@@ -62,8 +42,7 @@ export const applyWorkerTimeSaleFlush = (
                 return;
             }
         } else {
-            let sourceName = source === 'a' ? 'alpaca' : 'massive';
-            if (GlobalSettings.marketDataSource != sourceName) {
+            if (GlobalSettings.marketDataSource != "massive") {
                 return;
             }
         }

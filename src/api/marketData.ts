@@ -1,14 +1,12 @@
 import * as tradeStationApi from "./tradeStation/api";
 import * as tdAmeritradeApi from "./tdAmeritrade/api";
 import * as schwabApi from "./schwab/api";
-import * as alpacaApi from "./alpaca/api";
 import * as massiveApi from "./massive/api";
 import * as Helper from '../utils/helper';
 import * as TimeHelper from '../utils/timeHelper';
 import type { Quote, Candle } from '../models/models';
 import * as Models from '../models/models';
 import * as Firestore from '../firestore';
-import * as GlobalSettings from '../config/globalSettings';
 import * as Calculator from '../utils/calculator';
 import * as SetupQuality from '../algorithms/setupQuality';
 
@@ -81,21 +79,8 @@ export const getFullPriceHistory = async (symbol: string, isFutures: boolean, to
     };
   }
 
-  // 1. Get 1-minute bars for today
-  let today1MinuteBars: Candle[] = [];
-  // For stocks, use current market data source
-  if (GlobalSettings.marketDataSource == "alpaca") {
-    let bars = await alpacaApi.getPriceHistory(symbol, 1);
-    // Filter to only today's bars
-    let today = new Date();
-    today1MinuteBars = bars.filter(candle => {
-      let candleDate = new Date(candle.datetime);
-      return candleDate.toDateString() === today.toDateString();
-    });
-  } else if (GlobalSettings.marketDataSource == "massive") {
-    // massiveApi.getPriceHistory() already returns only today's bars (today to tomorrow)
-    today1MinuteBars = await massiveApi.getPriceHistory(symbol, 1);
-  }
+  // massiveApi.getPriceHistory() already returns only today's bars (today to tomorrow)
+  let today1MinuteBars: Candle[] = await massiveApi.getPriceHistory(symbol, 1);
 
   // 2. Get daily bars excluding today, starting from 3 years ago
   let dailyBars: Candle[] = [];
@@ -146,13 +131,7 @@ export const getPriceHistory = async (symbol: string, isFutures: boolean, timefr
       // console.log(`${symbol}: ${bar.IsEndOfHistory}, ${bar.IsRealtime}`);
     });
   } else {
-    if (GlobalSettings.marketDataSource == "alpaca") {
-      let bars = await alpacaApi.getPriceHistory(symbol, timeframe);
-      candles = bars;
-    } else if (GlobalSettings.marketDataSource == "massive") {
-      let bars = await massiveApi.getPriceHistory(symbol, timeframe);
-      candles = bars;
-    }
+    candles = await massiveApi.getPriceHistory(symbol, timeframe);
   }
   return candles;
 };
@@ -172,13 +151,13 @@ export const hasWeeklyOptions = async (symbol: string) => {
 export const getPreviousTradingDate = async () => {
   let date = new Date();
   date.setDate(date.getDate() - 6);
-  let startDate = TimeHelper.getDateString(date);
-  let candles = await alpacaApi.getDailyChart('SPY', startDate);
-  if (candles.length < 2) {
+  let todayString = TimeHelper.getTodayString();
+  let candles = await massiveApi.getDailyCandlesForLastNDays('SPY', 6, todayString);
+  if (candles.length < 1) {
     return TimeHelper.getDateString(date);
   }
-  let previousDayCandle = candles[candles.length - 2];
-  let nyOpen = TimeHelper.localTimeToNewYorkTime(previousDayCandle.datetime);
+  let previousDayCandle = candles[candles.length - 1];
+  let nyOpen = TimeHelper.localTimeToNewYorkTime(new Date(previousDayCandle.datetime));
   let nyOpenString = TimeHelper.getDateString(nyOpen);
   return nyOpenString;
 }

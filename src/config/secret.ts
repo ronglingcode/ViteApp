@@ -1,16 +1,3 @@
-export const alpaca = () => {
-    let td = localStorage.getItem('tradingscripts.alpaca');
-    if (td == null) {
-        console.error(`no secrets in local storage`)
-        td = '{}';
-    }
-
-    let data = JSON.parse(td);
-    return {
-        apiKey: data.apiKey,
-        apiSecret: data.apiSecret,
-    }
-};
 export const openai = () => {
     let td = localStorage.getItem('tradingscripts.openai');
     if (td == null) {

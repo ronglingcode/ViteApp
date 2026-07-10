@@ -66,7 +66,7 @@ Uses a **pure canvas chart** (no TradingView LWC) for continuous time axis rende
 
 ### Volume Dots (trades)
 ```
-Massive/Alpaca WebSocket → streamingHandler.ts → BookmapManager.onTrade()
+Massive WebSocket → streamingHandler.ts → BookmapManager.onTrade()
                                                        ↓
                                                TradeClusterer.addTrade()
                                                        ↓
@@ -216,7 +216,7 @@ Chart heights are reduced when bookmap is enabled (see `chartSettings.ts` `*With
 
 ### Phase 1: Volume Dots (DONE)
 - Custom canvas chart with continuous time axis
-- Trade clustering from Massive/Alpaca real-time feeds
+- Trade clustering from Massive real-time feeds
 - Green (uptick) / red (downtick) dots with sqrt-scaled radius
 - Mouse zoom, pan, crosshair
 

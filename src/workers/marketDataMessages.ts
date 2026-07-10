@@ -1,10 +1,10 @@
 import type * as Models from '../models/models';
 
-/** Trade source: 'a' = alpaca, 'm' = massive (matches DB.tryUpdateMaxTimeSaleTimestamp). */
-export type TradeSource = 'a' | 'm';
+/** Trade source: 'm' = massive (matches DB.tryUpdateMaxTimeSaleTimestamp). */
+export type TradeSource = 'm';
 
-/** Quote source: 'a' = alpaca, 's' = schwab. */
-export type QuoteSource = 'a' | 's';
+/** Quote source: 's' = schwab. */
+export type QuoteSource = 's';
 
 export interface ParsedTrade {
     record: Models.TimeSale;
@@ -25,14 +25,9 @@ export interface SchwabWorkerConfig {
 
 export interface MarketDataWorkerStartPayload {
     symbols: string[];
-    alpaca: { apiKey: string; apiSecret: string };
     massive: { authParams: string };
     schwab?: SchwabWorkerConfig;
-    useAlpacaTradeStream: boolean;
-    useAlpacaQuoteStream: boolean;
     useMassiveTradeStream: boolean;
-    /** ms after which the worker unsubscribes alpaca trades; <0 means never. */
-    alpacaTradeCleanupDelayMs: number;
 }
 
 export type MainToWorkerMessage =

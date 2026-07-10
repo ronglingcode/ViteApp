@@ -6,7 +6,6 @@ import * as Broker from '../../api/broker';
 import * as MarketData from '../../api/marketData';
 import * as tdaApi from '../../api/tdAmeritrade/api';
 import * as schwabApi from '../../api/schwab/api';
-import * as alpacaApi from '../../api/alpaca/api';
 import * as TakeProfit from '../../algorithms/takeProfit';
 import * as RiskManager from '../../algorithms/riskManager';
 import * as Watchlist from '../../algorithms/watchlist';
@@ -72,7 +71,6 @@ const getHybridApp = () => {
     hybridApp.Api.MarketData = MarketData;
     hybridApp.Api.TdaApi = tdaApi;
     hybridApp.Api.SchwabApi = schwabApi;
-    hybridApp.Api.AlpacaApi = alpacaApi;
     hybridApp.Controllers.Handler = Handler;
     hybridApp.Controllers.OrderFlow = OrderFlow;
     hybridApp.Controllers.OrderFlowManager = OrderFlowManager;
