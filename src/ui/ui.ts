@@ -126,7 +126,7 @@ export const updateClock = (timeAndSalesTime: Date) => {
         clock.style.color = 'red';
         if (!clockSyncWarningSpoken) {
             clockSyncWarningSpoken = true;
-            let msg = `warning, local clock out of sync with market time by ${timeDiffString} seconds`;
+            let msg = 'warning, local clock out of sync with market time';
             setTimeout(() => Helper.speak(msg), 1000);
         }
     } else {
