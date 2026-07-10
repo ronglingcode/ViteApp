@@ -17,6 +17,8 @@ let refreshInprogress: Map<string, boolean> = new Map<string, boolean>();
 let higherVolumeAlerts: Map<string, Set<number>> = new Map<string, Set<number>>();
 const liveChartAnnotationIntervalMs = 300;
 const lastLiveChartAnnotationAtBySymbol = new Map<string, number>();
+const entryStopDayExtremeWarningIntervalMs = 60 * 1000;
+const entryStopDayExtremeWarnings = new Map<string, number>();
 
 const shouldUpdateLiveChartAnnotations = (symbol: string) => {
     let now = Date.now();
@@ -417,6 +419,67 @@ export const refreshAlgoPeriodically = () => {
     }
 }
 const refreshAlgoPeriodicallyForSymbol = (symbol: string, secondsSinceMarketOpen: number) => {
+    warnIfEntryStopIsInsideDayExtreme(symbol, secondsSinceMarketOpen);
+}
+
+/**
+ * A pending bracket entry can become riskier after submission as a new LOD/HOD is
+ * printed. Warn once for each order/stop combination, then repeat once a minute
+ * during the first three minutes after the regular-session open.
+ */
+export const warnIfEntryStopIsInsideDayExtreme = (symbol: string, secondsSinceMarketOpen: number) => {
+    const entryOrders = Models.getEntryOrders(symbol);
+    if (entryOrders.length === 0) {
+        return;
+    }
+    const symbolData = Models.getSymbolData(symbol);
+    const activeWarningKeys = new Set<string>();
+    const shouldRepeat = secondsSinceMarketOpen >= 0 && secondsSinceMarketOpen < 3 * 60;
+    const now = Date.now();
+
+    entryOrders.forEach(order => {
+        const stopPrice = Models.getEntryOrderStopLossPrice(symbol);
+        if (!stopPrice || stopPrice <= 0) {
+            return;
+        }
+
+        const dayExtreme = order.isBuy ? symbolData.lowOfDay : symbolData.highOfDay;
+
+        const stopIsInsideDayExtreme = order.isBuy
+            ? stopPrice > dayExtreme
+            : stopPrice < dayExtreme;
+        if (!stopIsInsideDayExtreme) {
+            return;
+        }
+
+        // Including the stop allows a replacement of the same broker order to
+        // produce a fresh warning when its risk has materially changed.
+        const warningKey = `${symbol}:${order.orderID}:${stopPrice}`;
+        activeWarningKeys.add(warningKey);
+        const lastWarningAt = entryStopDayExtremeWarnings.get(warningKey);
+        if (lastWarningAt !== undefined && (!shouldRepeat || now - lastWarningAt < entryStopDayExtremeWarningIntervalMs)) {
+            return;
+        }
+
+        const direction = order.isBuy ? 'long' : 'short';
+        const extremeName = order.isBuy ? 'low of day' : 'high of day';
+        const message = `${symbol} ${direction} entry stop ${stopPrice} is inside ${extremeName} ${dayExtreme}`;
+        entryStopDayExtremeWarnings.set(warningKey, now);
+        Firestore.logError(message, {
+            symbol,
+            logSessionName: 'entry-stop-day-extreme-warning',
+        });
+        Helper.speak(message);
+    });
+
+    // Do not retain stale orders indefinitely, and allow a cleared condition to
+    // warn again if a later order/account refresh reintroduces it.
+    const symbolPrefix = `${symbol}:`;
+    entryStopDayExtremeWarnings.forEach((_lastWarningAt, warningKey) => {
+        if (warningKey.startsWith(symbolPrefix) && !activeWarningKeys.has(warningKey)) {
+            entryStopDayExtremeWarnings.delete(warningKey);
+        }
+    });
 }
 export const refreshEntryStopLoss = () => {
     let items = Models.getWatchlist();
