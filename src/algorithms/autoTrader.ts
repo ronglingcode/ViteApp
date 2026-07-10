@@ -13,7 +13,11 @@ import { TradebookID } from '../tradebooks/tradebookIds';
 
 declare let window: Models.MyWindow;
 
-let refreshInprogress: Map<string, boolean> = new Map<string, boolean>();
+// Keep the old entry ID locked through the broker's cancel/replace propagation.
+// An empty entry-order snapshot is not completion; completion is observing a
+// new, non-empty entry-order snapshot whose ID differs from the locked ID.
+const entryOrderRefreshInProgress = new Map<string, string>();
+let refreshEntryStopLossInterval: ReturnType<typeof setInterval> | undefined;
 let higherVolumeAlerts: Map<string, Set<number>> = new Map<string, Set<number>>();
 const liveChartAnnotationIntervalMs = 300;
 const lastLiveChartAnnotationAtBySymbol = new Map<string, number>();
@@ -276,16 +280,25 @@ const scheduleSecondMinuteCloseEvent = (now: Date) => {
 }
 
 export const onMarketJustOpened = () => {
-    /*
-    setInterval(() => {
-        refreshEntryStopLoss();
-    }, 1000);*/
+    startRefreshingEntryStopLoss();
 }
 export const onMarketAlreadyOpen = () => {
+    startRefreshingEntryStopLoss();
     setTimeout(() => {
         // wait 2 seconds for data to load
         updateUIBasedOnOpenZone();
     }, 2000);
+}
+
+const startRefreshingEntryStopLoss = () => {
+    if (refreshEntryStopLossInterval !== undefined) {
+        return;
+    }
+    const secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
+    if (secondsSinceMarketOpen < 0 || secondsSinceMarketOpen >= 5 * 60) {
+        return;
+    }
+    refreshEntryStopLossInterval = setInterval(refreshEntryStopLoss, 1000);
 }
 
 export const updateUIBasedOnOpenZoneForSymbol = (symbol: string, openPrice: number) => {
@@ -482,6 +495,14 @@ export const warnIfEntryStopIsInsideDayExtreme = (symbol: string, secondsSinceMa
     });
 }
 export const refreshEntryStopLoss = () => {
+    const secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
+    if (secondsSinceMarketOpen < 0 || secondsSinceMarketOpen >= 5 * 60) {
+        if (refreshEntryStopLossInterval !== undefined) {
+            clearInterval(refreshEntryStopLossInterval);
+            refreshEntryStopLossInterval = undefined;
+        }
+        return;
+    }
     let items = Models.getWatchlist();
     items.forEach(item => {
         if (!Helper.isFutures(item.symbol)) {
@@ -494,12 +515,6 @@ export const refreshEntryStopLoss = () => {
     });
 }
 export const refreshEntryStopLossForSymbol = (symbol: string, logTags: Models.LogTags) => {
-    if (hasRefreshInProgress(symbol)) {
-        setTimeout(() => {
-            refreshEntryStopLossForSymbol(symbol, logTags);
-        }, 1000);
-        return;
-    }
     let exitOrders = Models.getExitOrdersPairs(symbol);
     if (exitOrders.length > 0) {
         // already filled entry, exiting algo
@@ -507,52 +522,67 @@ export const refreshEntryStopLossForSymbol = (symbol: string, logTags: Models.Lo
     }
     let entryOrders = Models.getEntryOrders(symbol);
     if (entryOrders.length == 0) {
-        // no entry orders yet
+        // This is also the expected temporary state while a replacement is
+        // propagating. Keep any order-ID lock and wait for the new order.
         return;
     }
-    let stopLoss = Models.getEntryOrderStopLossPrice(symbol);
-    if (stopLoss == 0) {
+
+    if (entryOrders.length != 1) {
+        const refreshingOrderID = entryOrderRefreshInProgress.get(symbol);
+        if (refreshingOrderID !== undefined && entryOrders.some(order => order.orderID === refreshingOrderID)) {
+            return;
+        }
+        Firestore.logError(`refreshEntryStopLossForSymbol: expected 1 entry order, got ${entryOrders.length}`, logTags);
+        return;
+    }
+
+    const entryOrder = entryOrders[0];
+    const stopLoss = entryOrder.exitStopPrice;
+    if (!stopLoss || stopLoss <= 0) {
         // no stop loss from entry orders, nothing to update
         return;
     }
-    let entryPrice = entryOrders[0].price;
+    const entryPrice = entryOrder.price;
     if (!entryPrice) {
-        // no entry price
         return;
     }
-    let symbolData = Models.getSymbolData(symbol);
-    let isLong = entryOrders[0].isBuy;
-    let newStopLoss = isLong ? symbolData.lowOfDay : symbolData.highOfDay;
-    if ((isLong && newStopLoss < stopLoss) || (
-        !isLong && newStopLoss > stopLoss)) {
-        Firestore.logInfo(`refresh with new stop ${newStopLoss}`, logTags);
-        let breakoutTradeState = TradingState.getBreakoutTradeState(symbol, isLong);
-        setRefreshInProgress(symbol, true);
-        let useReplacement = true;
-        if (useReplacement) {
-            OrderFlow.replaceEntryWithNewStopByReplacement(
-                symbol, isLong, entryPrice, newStopLoss,
-                breakoutTradeState.sizeMultipler, breakoutTradeState.plan, breakoutTradeState.submitEntryResult.tradeBookID, logTags,
-            );
-        } else {
-            OrderFlow.replaceEntryWithNewStopByCancelAndResubmit(
-                symbol, isLong, entryPrice, newStopLoss,
-                breakoutTradeState.sizeMultipler, breakoutTradeState.plan, breakoutTradeState.submitEntryResult.tradeBookID, logTags
-            );
-        }
 
-        setTimeout(() => {
-            setRefreshInProgress(symbol, false);
-        }, 1500);
+    const symbolData = Models.getSymbolData(symbol);
+    const isLong = entryOrder.isBuy;
+    const newStopLoss = isLong ? symbolData.lowOfDay : symbolData.highOfDay;
+    const needsRefresh = isLong ? newStopLoss < stopLoss : newStopLoss > stopLoss;
+    if (!needsRefresh) {
+        // Normal path: the entry stop is still at the current LOD/HOD.
+        return;
+    }
+
+    const refreshingOrderID = entryOrderRefreshInProgress.get(symbol);
+    if (refreshingOrderID !== undefined) {
+        if (entryOrder.orderID === refreshingOrderID) {
+            // The old order still exists, so its replacement is not complete.
+            return;
+        }
+        Firestore.logInfo(`entry refresh completed: ${refreshingOrderID} replaced by ${entryOrder.orderID}`, logTags);
+        entryOrderRefreshInProgress.delete(symbol);
+    }
+
+
+    Firestore.logInfo(`refresh with new stop ${newStopLoss}`, logTags);
+    const breakoutTradeState = TradingState.getBreakoutTradeState(symbol, isLong);
+    entryOrderRefreshInProgress.set(symbol, entryOrder.orderID);
+    const useReplacement = true;
+    if (useReplacement) {
+        OrderFlow.replaceEntryWithNewStopByReplacement(
+            symbol, isLong, entryPrice, newStopLoss,
+            breakoutTradeState.sizeMultipler, breakoutTradeState.plan, breakoutTradeState.submitEntryResult.tradeBookID, logTags,
+        );
+    } else {
+        OrderFlow.replaceEntryWithNewStopByCancelAndResubmit(
+            symbol, isLong, entryPrice, newStopLoss,
+            breakoutTradeState.sizeMultipler, breakoutTradeState.plan, breakoutTradeState.submitEntryResult.tradeBookID, logTags,
+        );
     }
 };
-export const hasRefreshInProgress = (symbol: string) => {
-    let result = refreshInprogress.get(symbol);
-    return result == true;
-}
-export const setRefreshInProgress = (symbol: string, isInProgress: boolean) => {
-    refreshInprogress.set(symbol, isInProgress);
-}
 
 export const checkAlgoPendingCondition = (symbol: string) => {
     let seconds = Helper.getSecondsSinceMarketOpen(new Date());
