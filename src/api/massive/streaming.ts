@@ -3,7 +3,6 @@ import * as StreamingHandler from '../../controllers/streamingHandler';
 import * as Helper from '../../utils/helper';
 import * as DB from '../../data/db';
 import * as Firestore from '../../firestore';
-import * as GlobalSettings from '../../config/globalSettings';
 declare let window: Models.MyWindow;
 
 
@@ -129,17 +128,9 @@ export const handleTimeAndSalesData = (data: any) => {
     //console.log(data);
     let { record, shouldFilter } = createTimeSale(data);
     let updated = DB.tryUpdateMaxTimeSaleTimestamp(record, 'm');
-    if (shouldFilter) {
+    if (shouldFilter || !updated) {
         return;
     }
 
-    if (StreamingHandler.shouldCompeteForTimeAndSales()) {
-        if (updated) {
-            DB.updateFromTimeSale(record);
-        }
-    } else {
-        if (GlobalSettings.marketDataSource == "massive") {
-            DB.updateFromTimeSale(record);
-        }
-    }
+    DB.updateFromTimeSale(record);
 }

@@ -29,7 +29,6 @@ const buildStartPayload = (): Messages.MarketDataWorkerStartPayload => {
             authParams: MassiveStreaming.createLoginRequest().params,
         },
         schwab: buildSchwabConfig(),
-        useMassiveTradeStream: GlobalSettings.marketDataSource === 'massive',
     };
 };
 

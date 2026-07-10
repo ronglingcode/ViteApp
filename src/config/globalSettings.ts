@@ -1,14 +1,10 @@
 export const localhostWithPort: string = "http://localhost:3000";
 export const batchCount: number = 10;
-export type MarketDataSource = "massive";
-export const marketDataSource: MarketDataSource = "massive";
 export const impliedMarketCapThresholdInBillions: number = 0.9;
 export const premarketVolumeThresholdInMillions: number = 0.9;
 export const premarketVolumeThresholdWhitelist: string[] = ['AVAV'];
-export const competeForTimeAndSales: boolean = true;
 // true: offload time & sales socket receipt + parsing to a Web Worker (main app).
 export const useMarketDataWorker: boolean = true;
-export const competeForTimeAndSalesWindowSeconds: number = 2 * 60;
 // false: late T&S records still flow into chart/state updates.
 export const skipLateTimeAndSalesChartUpdates: boolean = false;
 export const allowLiveStats: boolean = true;

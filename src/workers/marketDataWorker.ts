@@ -30,9 +30,7 @@ class MarketDataStreamManager {
         this.stop();
         this.symbols = payload.symbols;
         this.post({ type: 'status', source: 'worker', status: `starting ${payload.symbols.length} symbols` });
-        if (payload.useMassiveTradeStream) {
-            this.connectMassive(payload);
-        }
+        this.connectMassive(payload);
         if (payload.schwab) {
             this.connectSchwab(payload.schwab);
         }

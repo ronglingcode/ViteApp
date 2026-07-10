@@ -27,7 +27,6 @@ export interface MarketDataWorkerStartPayload {
     symbols: string[];
     massive: { authParams: string };
     schwab?: SchwabWorkerConfig;
-    useMassiveTradeStream: boolean;
 }
 
 export type MainToWorkerMessage =

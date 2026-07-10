@@ -1,8 +1,6 @@
 import * as DB from '../data/db';
 import * as Firestore from '../firestore';
 import * as Broker from '../api/broker';
-import * as GlobalSettings from '../config/globalSettings';
-import * as Helper from '../utils/helper';
 import type * as Models from '../models/models';
 // https://polygon.io/glossary/conditions-indicators
 export const conditionsNotUpdateHighLow = [
@@ -18,14 +16,6 @@ export const conditionsNotUpdateVolume = [
     "M", "Q", "9"
 ];
 
-export const shouldCompeteForTimeAndSales = () => {
-    if (!GlobalSettings.competeForTimeAndSales) {
-        return false;
-    }
-    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
-    return secondsSinceMarketOpen < GlobalSettings.competeForTimeAndSalesWindowSeconds;
-}
-
 /** Apply a worker flush of parsed trades (batched + merged in the worker every 100ms). */
 export const applyWorkerTimeSaleFlush = (
     trades: { record: Models.TimeSale; shouldFilter: boolean }[],
@@ -34,17 +24,8 @@ export const applyWorkerTimeSaleFlush = (
     let bySymbol = new Map<string, Models.TimeSale[]>();
     trades.forEach(trade => {
         let updated = DB.tryUpdateMaxTimeSaleTimestamp(trade.record, source);
-        if (trade.shouldFilter) {
+        if (trade.shouldFilter || !updated) {
             return;
-        }
-        if (shouldCompeteForTimeAndSales()) {
-            if (!updated) {
-                return;
-            }
-        } else {
-            if (GlobalSettings.marketDataSource != "massive") {
-                return;
-            }
         }
         let list = bySymbol.get(trade.record.symbol) ?? [];
         list.push(trade.record);
