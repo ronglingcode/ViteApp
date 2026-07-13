@@ -115,7 +115,7 @@ export interface KeyZone {
 }
 export interface keyLevels {
     otherLevels?: KeyLevel[];
-    zones?: KeyZone[];
+    zones: KeyZone[];
 };
 export enum PlanType {
     LevelMomentum = 'LevelMomentum',
