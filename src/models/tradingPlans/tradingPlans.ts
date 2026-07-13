@@ -143,6 +143,9 @@ export const validateTradingPlans = (symbol: string, tradingPlans: TradingPlansM
     if (shortPlanInvalidReason.length > 0) {
         return shortPlanInvalidReason;
     }
+    if (tradingPlans.keyLevels.zones.length == 0) {
+        return "missing key zones";
+    }
 
     return "";
 };
