@@ -577,7 +577,8 @@ const canReloadPartial = (
             if (!addCheck.allowed) {
                 Firestore.logError(`Cannot add to ${symbol}: ${addCheck.reason}`, logTags);
                 Helper.speak(`warning state, no adds, tighten stop`);
-                return false;
+                // disable for now since I will just trade full size as a new trade
+                // return false;
             }
         }
     }
