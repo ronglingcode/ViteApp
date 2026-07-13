@@ -2,7 +2,7 @@ import type * as LightweightCharts from 'sunrise-tv-lightweight-charts'
 import * as TimeHelper from './timeHelper';
 
 export const returnDefaultEntryMethods = () => {
-    return ["0.25 R"];
+    return ["0.25 R", "0.025 R"];
 }
 export const getRiskMultiplierFromEntryMethod = (entryMethod: string | undefined, defaultMultiplier = 1) => {
     if (!entryMethod) {
