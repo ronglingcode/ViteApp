@@ -21,6 +21,10 @@ export enum TradebookID {
     GapDownAndGoUpBookmapOfferWallBreakout = 'GapDownAndGoUpBookmapOfferWallBreakout',
     GapDownAndGoUpBookmapReversal = 'GapDownAndGoUpBookmapReversal',
 
+    // Range Bound Reversal
+    RangeBoundBidReversal = 'RangeBoundBidReversal',
+    RangeBoundOfferReversal = 'RangeBoundOfferReversal',
+
     // Generic
     ShortVwapBounceFailed = 'ShortVwapBounceFailed',
 }

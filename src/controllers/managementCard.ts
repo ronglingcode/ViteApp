@@ -106,7 +106,8 @@ const getSetupIdFromTradebookID = (tradebookID: string | undefined): ManagementS
         return 'bookmap_offer_breakout';
     }
     if (tradebookID === TradebookID.GapGiveAndGoBookmapReversal ||
-        tradebookID === TradebookID.GapDownAndGoUpBookmapReversal) {
+        tradebookID === TradebookID.GapDownAndGoUpBookmapReversal ||
+        tradebookID === TradebookID.RangeBoundBidReversal) {
         return 'bookmap_bid_reappear';
     }
     if (tradebookID === TradebookID.GapAndCrapBookmapBidWallBreakdown ||
@@ -116,7 +117,8 @@ const getSetupIdFromTradebookID = (tradebookID: string | undefined): ManagementS
         return 'bookmap_bid_breakdown';
     }
     if (tradebookID === TradebookID.GapAndCrapOfferStepDownReappear ||
-        tradebookID === TradebookID.GapDownAndGoDownOfferStepDownReappear) {
+        tradebookID === TradebookID.GapDownAndGoDownOfferStepDownReappear ||
+        tradebookID === TradebookID.RangeBoundOfferReversal) {
         return 'bookmap_offer_reappear';
     }
     return undefined;

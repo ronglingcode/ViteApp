@@ -7,6 +7,7 @@
 import { handlePriceSelect } from "./bookmapActions";
 import * as Helper from "../utils/helper";
 import * as Models from "../models/models";
+import type * as TradingPlansModels from "../models/tradingPlans/tradingPlansModels";
 import * as TradingPlans from "../models/tradingPlans/tradingPlans";
 import * as TradebooksManager from "../tradebooks/tradebooksManager";
 import * as KeyboardHandler from "../controllers/keyboardHandler";
@@ -492,29 +493,45 @@ const getBookmapKeyZonesForSymbol = (symbol: string): BookmapKeyZone[] => {
     const zones: BookmapKeyZone[] = [];
 
     for (const zone of rawZones) {
-        if (!isValidBookmapPrice(zone.low) || !isValidBookmapPrice(zone.high) || zone.low === zone.high) {
-            continue;
-        }
-        const low = Math.min(zone.low, zone.high);
-        const high = Math.max(zone.low, zone.high);
-        const key = `${low}:${high}`;
-        if (seen.has(key)) {
-            continue;
-        }
-        seen.add(key);
+        addBookmapKeyZone(zones, seen, zone, zone.label, zone.color);
+    }
 
-        const config: BookmapKeyZone = { low, high };
-        const label = normalizeOptionalString(zone.label);
-        const color = normalizeOptionalString(zone.color);
-        if (label) {
-            config.label = label;
-        }
-        if (color) {
-            config.color = color;
-        }
-        zones.push(config);
+    const rangeBoundPlan = plan?.rangeBoundReversalPlan;
+    if (rangeBoundPlan) {
+        addBookmapKeyZone(zones, seen, rangeBoundPlan.support, "support", "green");
+        addBookmapKeyZone(zones, seen, rangeBoundPlan.resistance, "resistance", "red");
     }
     return zones;
+};
+
+const addBookmapKeyZone = (
+    zones: BookmapKeyZone[],
+    seen: Set<string>,
+    zone: TradingPlansModels.LevelArea | undefined,
+    label?: string,
+    color?: string,
+) => {
+    if (!zone || !isValidBookmapPrice(zone.low) || !isValidBookmapPrice(zone.high) || zone.low === zone.high) {
+        return;
+    }
+    const low = Math.min(zone.low, zone.high);
+    const high = Math.max(zone.low, zone.high);
+    const key = `${low}:${high}`;
+    if (seen.has(key)) {
+        return;
+    }
+    seen.add(key);
+
+    const config: BookmapKeyZone = { low, high };
+    const normalizedLabel = normalizeOptionalString(label);
+    const normalizedColor = normalizeOptionalString(color);
+    if (normalizedLabel) {
+        config.label = normalizedLabel;
+    }
+    if (normalizedColor) {
+        config.color = normalizedColor;
+    }
+    zones.push(config);
 };
 
 const getBookmapMarketLevelsForSymbol = (symbol: string): BookmapMarketLevels => {

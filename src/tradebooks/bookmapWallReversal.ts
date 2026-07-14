@@ -47,6 +47,14 @@ export class BookmapWallReversal extends Tradebook {
             isLong = true;
             tradebookName = 'Gap Down & Go Up Bookmap Reversal';
             buttonLabel = `gap down & go up bookmap bid reversal`;
+        } else if (tradebookID == TradebookID.RangeBoundBidReversal) {
+            isLong = true;
+            tradebookName = 'Range Bound Bid Reversal';
+            buttonLabel = 'Range Bound bid reversal';
+        } else if (tradebookID == TradebookID.RangeBoundOfferReversal) {
+            isLong = false;
+            tradebookName = 'Range Bound Offer Reversal';
+            buttonLabel = 'Range Bound offer reversal';
         } else {
             Firestore.logError(`unknow tradebook id ${tradebookID}`)
         }
@@ -137,16 +145,8 @@ export class BookmapWallReversal extends Tradebook {
         }
         let entryMethod = parameters.entryMethod;
         let riskReduction = Helper.getRiskMultiplierFromEntryMethod(entryMethod);
-        let mustAlignVwap = true;
         Firestore.logInfo(`risk multiplier: ${riskReduction}`, logTags);
-        if (this.tradebookID == TradebookID.GapAndCrapOfferStepDownReappear ||
-            this.tradebookID == TradebookID.GapDownAndGoDownOfferStepDownReappear ||
-            this.tradebookID == TradebookID.GapGiveAndGoBookmapReversal ||
-            this.tradebookID == TradebookID.GapDownAndGoUpBookmapReversal
-        ) {
-            mustAlignVwap = false;
-        }
-        return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskReduction, mustAlignVwap, logTags, parameters);
+        return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskReduction, false, logTags, parameters);
 
     }
 

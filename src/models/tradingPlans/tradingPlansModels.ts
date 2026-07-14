@@ -39,6 +39,7 @@ export interface TradingPlans {
     keyLevels: keyLevels,
     defaultConfigs: PlanConfigs,
     tradebooksConfig: TradebooksConfig,
+    rangeBoundReversalPlan?: RangeBoundReversalPlan,
     long: SingleDirectionPlans,
     short: SingleDirectionPlans,
 };
@@ -137,6 +138,12 @@ export interface BasePlan {
     runnerCount: number,
     runnerTriggerCondition: string,
 };
+export interface RangeBoundReversalPlan extends BasePlan {
+    /** Support zone for long Bookmap bid reversals. */
+    support: LevelArea,
+    /** Resistance zone for short Bookmap offer rejections. */
+    resistance: LevelArea,
+}
 export interface PlanConfigs {
     size: number,
     sizingCount?: number,

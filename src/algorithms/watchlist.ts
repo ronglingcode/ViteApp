@@ -193,10 +193,39 @@ const checkStockSelection = (watchlist: Models.WatchlistItem[]) => {
 const verifyTradingPlans = (symbol: string, plan: TradingPlansModels.TradingPlans) => {
     let longPlan = plan.long;
     let shortPlan = plan.short;
-    if (!verifyTradingPlansForSingleDirection(symbol, longPlan)) {
+    let hasRangeBoundReversalPlan = !!plan.rangeBoundReversalPlan;
+    if (plan.rangeBoundReversalPlan) {
+        let rawSupport = plan.rangeBoundReversalPlan.support;
+        let rawResistance = plan.rangeBoundReversalPlan.resistance;
+        if (!rawSupport || !Number.isFinite(rawSupport.low) || !Number.isFinite(rawSupport.high) ||
+            Math.min(rawSupport.low, rawSupport.high) <= 0 ||
+            rawSupport.low === rawSupport.high) {
+            Firestore.logError(`${symbol} missing support zone for range bound reversal`);
+            return false;
+        }
+        if (!rawResistance || !Number.isFinite(rawResistance.low) || !Number.isFinite(rawResistance.high) ||
+            Math.min(rawResistance.low, rawResistance.high) <= 0 ||
+            rawResistance.low === rawResistance.high) {
+            Firestore.logError(`${symbol} missing resistance zone for range bound reversal`);
+            return false;
+        }
+        let support = {
+            low: Math.min(rawSupport.low, rawSupport.high),
+            high: Math.max(rawSupport.low, rawSupport.high),
+        };
+        let resistance = {
+            low: Math.min(rawResistance.low, rawResistance.high),
+            high: Math.max(rawResistance.low, rawResistance.high),
+        };
+        if (support.high >= resistance.low) {
+            Firestore.logError(`${symbol} range bound reversal support zone must be below resistance zone`);
+            return false;
+        }
+    }
+    if (!verifyTradingPlansForSingleDirection(symbol, longPlan, hasRangeBoundReversalPlan)) {
         return false;
     }
-    if (!verifyTradingPlansForSingleDirection(symbol, shortPlan)) {
+    if (!verifyTradingPlansForSingleDirection(symbol, shortPlan, hasRangeBoundReversalPlan)) {
         return false;
     }
 
@@ -205,7 +234,10 @@ const verifyTradingPlans = (symbol: string, plan: TradingPlansModels.TradingPlan
 /**
  * @returns false if trading plans for a single direction are not valid.
  */
-const verifyTradingPlansForSingleDirection = (symbol: string, plan: TradingPlansModels.SingleDirectionPlans) => {
+const verifyTradingPlansForSingleDirection = (
+    symbol: string,
+    plan: TradingPlansModels.SingleDirectionPlans,
+    hasTopLevelTradebook = false) => {
     if (!plan.enabled) {
         return true;
     }
@@ -264,7 +296,7 @@ const verifyTradingPlansForSingleDirection = (symbol: string, plan: TradingPlans
         }
         hasBestTradebook = true;
     }
-    if (!hasBestTradebook) {
+    if (!hasBestTradebook && !hasTopLevelTradebook) {
         Firestore.logError(`${symbol} missing best tradebook`);
         return false;
     }

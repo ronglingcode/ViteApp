@@ -90,6 +90,39 @@ export const createTradebooksForGapDownAndGoUp = (symbol: string, gapPlan: Tradi
     tradebooksMap.set(gapDownAndGoUpBookmapWallReversal.getID(), gapDownAndGoUpBookmapWallReversal);
 }
 
+export const createTradebooksForRangeBoundReversal = (
+    symbol: string,
+    rangeBoundPlan: TradingPlansModels.RangeBoundReversalPlan,
+    tradebooksMap: Map<string, Tradebook>) => {
+    let rawSupport = rangeBoundPlan.support;
+    let rawResistance = rangeBoundPlan.resistance;
+    if (!rawSupport || !Number.isFinite(rawSupport.low) || !Number.isFinite(rawSupport.high) ||
+        !rawResistance || !Number.isFinite(rawResistance.low) || !Number.isFinite(rawResistance.high)) {
+        return;
+    }
+    let support: TradingPlansModels.LevelArea = {
+        low: Math.min(rawSupport.low, rawSupport.high),
+        high: Math.max(rawSupport.low, rawSupport.high),
+    };
+    let resistance: TradingPlansModels.LevelArea = {
+        low: Math.min(rawResistance.low, rawResistance.high),
+        high: Math.max(rawResistance.low, rawResistance.high),
+    };
+    if (support.low <= 0 || support.low === support.high ||
+        resistance.low <= 0 || resistance.low === resistance.high ||
+        support.high >= resistance.low) {
+        return;
+    }
+
+    let bidReversal = new BookmapWallReversal(
+        symbol, TradebookID.RangeBoundBidReversal, rangeBoundPlan, support.low);
+    tradebooksMap.set(bidReversal.getID(), bidReversal);
+
+    let offerRejection = new BookmapWallReversal(
+        symbol, TradebookID.RangeBoundOfferReversal, rangeBoundPlan, resistance.high);
+    tradebooksMap.set(offerRejection.getID(), offerRejection);
+}
+
 export const createAllTradebooks = (symbol: string) => {
     let plan = TradingPlans.getTradingPlans(symbol);
     let tradebooksMap = new Map<string, Tradebook>();
@@ -112,6 +145,10 @@ export const createAllTradebooks = (symbol: string) => {
         if (plan.short.gapDownAndGoDownPlan) {
             createTradebooksForGapDownAndGoDown(symbol, plan.short.gapDownAndGoDownPlan, tradebooksMap);
         }
+    }
+
+    if (plan.rangeBoundReversalPlan) {
+        createTradebooksForRangeBoundReversal(symbol, plan.rangeBoundReversalPlan, tradebooksMap);
     }
 
     return tradebooksMap;
