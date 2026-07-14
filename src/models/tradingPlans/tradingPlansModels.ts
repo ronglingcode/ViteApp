@@ -111,8 +111,8 @@ export interface KeyLevel {
 export interface KeyZone {
     high: number,
     low: number,
-    label?: string,
-    color?: string,
+    label: string,
+    color: string,
 }
 export interface keyLevels {
     otherLevels?: KeyLevel[];
