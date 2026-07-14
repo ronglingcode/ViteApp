@@ -555,7 +555,7 @@ const addBookmapKeyZone = (
     seen.add(key);
 
     const config: BookmapKeyZone = { low, high };
-    const normalizedLabel = normalizeOptionalString(label);
+    const normalizedLabel = normalizeOptionalString(zone.label) ?? normalizeOptionalString(label);
     const normalizedColor = normalizeOptionalString(color);
     if (normalizedLabel) {
         config.label = normalizedLabel;

@@ -252,6 +252,7 @@ export interface PriceArea {
 export interface LevelArea {
     high: number,
     low: number,
+    label?: string,
 }
 
 export enum PremarketVolumeScore {
