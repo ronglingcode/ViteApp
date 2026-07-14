@@ -35,7 +35,7 @@ export const createTradebooksForGapAndGo = (symbol: string, gapAndGoPlan: Tradin
     }
 };
 export const createTradebooksForGapAndCrap = (symbol: string, gapAndCrapPlan: TradingPlansModels.GapAndCrapPlan, tradebooksMap: Map<string, Tradebook>) => {
-    let maxPrice = gapAndCrapPlan.aboveThisLevelNoMoreShort;
+    let maxPrice = gapAndCrapPlan.resistance.high;
     let maxPriceKeyLevel: TradingPlansModels.LevelArea = {
         high: maxPrice,
         low: maxPrice
@@ -79,7 +79,7 @@ export const createTradebooksForGapDownAndGoDown = (symbol: string, gapPlan: Tra
 }
 
 export const createTradebooksForGapDownAndGoUp = (symbol: string, gapPlan: TradingPlansModels.GapDownAndGoUpPlan, tradebooksMap: Map<string, Tradebook>) => {
-    let minSupport = gapPlan.support.length > 0 ? gapPlan.support[0].low : 0;
+    let minSupport = gapPlan.support.low;
 
     let gapDownAndGoUpBookmapOfferWallBreakout = new BookmapWallBreak(
         symbol, TradebookID.GapDownAndGoUpBookmapOfferWallBreakout, gapPlan, minSupport, gapPlan.waitForPullback);
