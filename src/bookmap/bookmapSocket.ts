@@ -501,7 +501,39 @@ const getBookmapKeyZonesForSymbol = (symbol: string): BookmapKeyZone[] => {
         addBookmapKeyZone(zones, seen, rangeBoundPlan.support, "support", "green");
         addBookmapKeyZone(zones, seen, rangeBoundPlan.resistance, "resistance", "red");
     }
+
+    addGapTradePlanKeyZones(zones, seen, plan);
     return zones;
+};
+
+const addGapTradePlanKeyZones = (
+    zones: BookmapKeyZone[],
+    seen: Set<string>,
+    plan: TradingPlansModels.TradingPlans | undefined,
+) => {
+    if (!plan) {
+        return;
+    }
+
+    const gapAndGoPlan = plan.long.gapAndGoPlan;
+    if (gapAndGoPlan) {
+        addBookmapKeyZone(zones, seen, gapAndGoPlan.support, "gap & go support", "green");
+    }
+
+    const gapDownAndGoUpPlan = plan.long.gapDownAndGoUpPlan;
+    if (gapDownAndGoUpPlan) {
+        addBookmapKeyZone(zones, seen, gapDownAndGoUpPlan.support, "gap down & go up support", "green");
+    }
+
+    const gapAndCrapPlan = plan.short.gapAndCrapPlan;
+    if (gapAndCrapPlan) {
+        addBookmapKeyZone(zones, seen, gapAndCrapPlan.resistance, "gap & crap resistance", "red");
+    }
+
+    const gapDownAndGoDownPlan = plan.short.gapDownAndGoDownPlan;
+    if (gapDownAndGoDownPlan) {
+        addBookmapKeyZone(zones, seen, gapDownAndGoDownPlan.resistance, "gap down & go down resistance", "red");
+    }
 };
 
 const addBookmapKeyZone = (
