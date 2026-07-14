@@ -7,18 +7,3 @@ const R2Target: TradingPlansModels.ExitTargets = {
         dailyRanges: [1, 1, 10, 10, 10, 10, 10, 10, 10, 10],
     },
 };
-export const overrideTradingPlans = (plan: TradingPlansModels.BasePlan,
-    planType: TradingPlansModels.PlanType) => {
-    plan.planType = planType;
-    // https://sunrisetrading.atlassian.net/browse/TPS-393
-    // be consistent with sizing to keep it simple
-    //plan.planConfigs.size = 0.27;
-    /*
-    plan.planConfigs.alwaysAllowStopOutOrFlatten = false;
-    
-    for (let i = 5; i < plan.targets.initialTargets.dailyRanges.length; i++) {
-        plan.targets.initialTargets.dailyRanges[i] = 2;
-        plan.targets.initialTargets.rrr[i] = 1.9;
-    }
-        */
-}

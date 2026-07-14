@@ -118,19 +118,9 @@ export interface keyLevels {
     otherLevels?: KeyLevel[];
     zones: KeyZone[];
 };
-export enum PlanType {
-    LevelMomentum = 'LevelMomentum',
-    OpenChase = 'OpenChase',
-    Retracement = 'Retracement',
-    NewsBreakout = 'NewsBreakout',
-    FirstNewHigh = 'FirstNewHigh',
-    LevelBreakout = 'LevelBreakout',
-    VwapBounceFail = 'VwapBounceFail',
-    VwapCrossSuccess = 'VwapCrossSuccess',
-};
+
 export interface BasePlan {
     planConfigs: PlanConfigs,
-    planType?: PlanType,
     timeframe?: number,
     entryMethod?: string,
     coreTarget: number,

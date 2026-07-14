@@ -111,28 +111,3 @@ const splitTargetsEvenly = (
     return results;
 };
 
-export const isCurrentTradeFirstSignal = (symbol: string, isLong: boolean) => {
-    let currentTrade = Models.getCurrentOpenTrade(symbol);
-    if (!currentTrade || currentTrade.entries.length == 0) {
-        return false;
-    }
-    let entryTime = currentTrade.entries[0].time;
-    let firstEntry = currentTrade.entries[0];
-    for (let i = 1; i < currentTrade.entries.length; i++) {
-        let newTime = currentTrade.entries[i].time;
-        if (newTime < entryTime) {
-            entryTime = newTime;
-            firstEntry = currentTrade.entries[i];
-        }
-    }
-    let secondsSinceOpen = Helper.getSecondsSinceMarketOpen(entryTime);
-    if (secondsSinceOpen < 60) {
-        return true;
-    }
-
-    let state = TradingState.getSymbolState(symbol);
-    if (state.activeBasePlan?.planType == TradingPlansModels.PlanType.FirstNewHigh) {
-        return true;
-    }
-    return false;
-}
