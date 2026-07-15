@@ -628,6 +628,8 @@ const normalizeOptionalString = (value: string | undefined): string | undefined 
 
 const handleCustomButtonClick = (data: any) => {
     let symbol = normalizeSymbol(data.symbol || "");
+    mergeBookmapHighLowOfDay(symbol, data);
+
     let action = getString(data.action);
     if (action === "adjust_exit_limit_to_bookmap_wall") {
         handleExitLimitWallAdjustment(symbol, data);
@@ -673,6 +675,54 @@ const handleCustomButtonClick = (data: any) => {
         entryMethod: entryMethod || undefined,
         bookmapOrderbook: bookmapOrderbook,
     });
+};
+
+const mergeBookmapHighLowOfDay = (symbol: string, data: any) => {
+    if (!symbol || symbol === "???") {
+        return;
+    }
+
+    let bookmapHighLow = getBookmapDayHighLow(data);
+    if (!bookmapHighLow) {
+        return;
+    }
+
+    let symbolData = Models.getSymbolData(symbol);
+    let oldHigh = symbolData.highOfDay;
+    let oldLow = symbolData.lowOfDay;
+    let changed = false;
+
+    let bookmapHigh = Helper.roundPriceWithDirection(symbol, bookmapHighLow.high, true);
+    if (bookmapHigh > 0 && bookmapHigh > symbolData.highOfDay) {
+        symbolData.highOfDay = bookmapHigh;
+        changed = true;
+    }
+
+    let bookmapLow = Helper.roundPriceWithDirection(symbol, bookmapHighLow.low, false);
+    if (bookmapLow > 0 && bookmapLow < symbolData.lowOfDay) {
+        symbolData.lowOfDay = bookmapLow;
+        changed = true;
+    }
+
+    if (changed) {
+        console.log(`[BookmapSocket] merged Bookmap HOD/LOD for ${symbol}: `
+            + `${oldHigh}/${oldLow} -> ${symbolData.highOfDay}/${symbolData.lowOfDay}`);
+    }
+};
+
+const getBookmapDayHighLow = (data: any): { high: number, low: number } | undefined => {
+    let bookmapDayHighLow = data.bookmapDayHighLow;
+    if (!bookmapDayHighLow || typeof bookmapDayHighLow !== "object") {
+        return undefined;
+    }
+
+    let high = getNumber(bookmapDayHighLow.high);
+    let low = getNumber(bookmapDayHighLow.low);
+
+    if (high <= 0 || low <= 0) {
+        return undefined;
+    }
+    return { high, low };
 };
 
 const getString = (value: any): string => {
