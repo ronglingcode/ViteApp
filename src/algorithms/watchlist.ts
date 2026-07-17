@@ -9,6 +9,7 @@ import * as GapAndCrapAlgo from './gapAndCrapAlgo';
 import * as GapGiveAndGoAlgo from './gapGiveAndGoAlgo';
 import * as GapDownAndGoDownAlgo from './gapDownAndGoDownAlgo';
 import * as GapDownAndGoUpAlgo from './gapDownAndGoUpAlgo';
+import * as SupportResistance from '../models/tradingPlans/supportResistance';
 
 declare let window: Models.MyWindow;
 
@@ -190,6 +191,27 @@ const checkStockSelection = (watchlist: Models.WatchlistItem[]) => {
     return "OK";
 }
 
+/**
+ * Trading plans are loaded as runtime data, so TypeScript cannot guarantee the flag's type.
+ * A missing flag is valid and preserves the legacy one-sided entry rule; when supplied, the
+ * flag must be a boolean so a malformed value cannot silently relax entry validation.
+ */
+const verifyEntryRangeFlag = (
+    symbol: string,
+    areaName: string,
+    area: TradingPlansModels.SupportResistanceArea | undefined,
+) => {
+    if (!area) {
+        Firestore.logError(`${symbol} missing ${areaName}`);
+        return false;
+    }
+    if (!SupportResistance.hasValidEntryRangeFlag(area)) {
+        Firestore.logError(`${symbol} ${areaName} requireEntryWithinRange must be a boolean`);
+        return false;
+    }
+    return true;
+};
+
 const verifyTradingPlans = (symbol: string, plan: TradingPlansModels.TradingPlans) => {
     let longPlan = plan.long;
     let shortPlan = plan.short;
@@ -207,6 +229,10 @@ const verifyTradingPlans = (symbol: string, plan: TradingPlansModels.TradingPlan
             Math.min(rawResistance.low, rawResistance.high) <= 0 ||
             rawResistance.low === rawResistance.high) {
             Firestore.logError(`${symbol} missing resistance zone for range bound reversal`);
+            return false;
+        }
+        if (!verifyEntryRangeFlag(symbol, 'range bound reversal support', rawSupport) ||
+            !verifyEntryRangeFlag(symbol, 'range bound reversal resistance', rawResistance)) {
             return false;
         }
         let support = {
@@ -266,18 +292,27 @@ const verifyTradingPlansForSingleDirection = (
     }
     let hasBestTradebook = false;
     if (plan.gapAndCrapPlan) {
+        if (!verifyEntryRangeFlag(symbol, 'gap and crap resistance', plan.gapAndCrapPlan.resistance)) {
+            return false;
+        }
         if (!GapAndCrapAlgo.hasAtLeastOneReasonSet(plan.gapAndCrapPlan, symbol)) {
             return false;
         }
         hasBestTradebook = true;
     }
     if (plan.gapAndGoPlan) {
+        if (!verifyEntryRangeFlag(symbol, 'gap and go support', plan.gapAndGoPlan.support)) {
+            return false;
+        }
         if (!GapAndGoAlgo.hasAtLeastOneReasonSet(plan.gapAndGoPlan, symbol)) {
             return false;
         }
         hasBestTradebook = true;
     }
     if (plan.gapGiveAndGoPlan) {
+        if (!verifyEntryRangeFlag(symbol, 'gap give and go support', plan.gapGiveAndGoPlan.support)) {
+            return false;
+        }
         if (!GapGiveAndGoAlgo.hasAtLeastOneReasonSet(plan.gapGiveAndGoPlan, symbol)) {
             return false;
         }
@@ -285,12 +320,18 @@ const verifyTradingPlansForSingleDirection = (
     }
 
     if (plan.gapDownAndGoDownPlan) {
+        if (!verifyEntryRangeFlag(symbol, 'gap down and go down resistance', plan.gapDownAndGoDownPlan.resistance)) {
+            return false;
+        }
         if (!GapDownAndGoDownAlgo.hasAtLeastOneReasonSet(plan.gapDownAndGoDownPlan, symbol)) {
             return false;
         }
         hasBestTradebook = true;
     }
     if (plan.gapDownAndGoUpPlan) {
+        if (!verifyEntryRangeFlag(symbol, 'gap down and go up support', plan.gapDownAndGoUpPlan.support)) {
+            return false;
+        }
         if (!GapDownAndGoUpAlgo.hasAtLeastOneReasonSet(plan.gapDownAndGoUpPlan, symbol)) {
             return false;
         }

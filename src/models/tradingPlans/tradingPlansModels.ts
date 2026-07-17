@@ -138,9 +138,9 @@ export interface ShortMomentumPlan extends BasePlan {
 }
 export interface RangeBoundReversalPlan extends BasePlan {
     /** Support zone for long Bookmap bid reversals. */
-    support: LevelArea,
+    support: SupportResistanceArea,
     /** Resistance zone for short Bookmap offer rejections. */
-    resistance: LevelArea,
+    resistance: SupportResistanceArea,
 }
 export interface PlanConfigs {
     size: number,
@@ -152,7 +152,7 @@ export interface LevelMomentumPlan extends BasePlan {
 export interface PremarketPlan extends BasePlan { }
 export interface GapGiveAndGoPlan extends BasePlan {
     /** the min support on daily chart, below it, we cannot long */
-    support: LevelArea,
+    support: SupportResistanceArea,
     nearAboveConsolidationRange?: string,
     /** number of days of the condition and its edge price */
     nearBelowConsolidationRangeTop?: string,
@@ -165,7 +165,7 @@ export interface GapGiveAndGoPlan extends BasePlan {
 }
 export interface GapAndGoPlan extends LongMomentumPlan {
     /** the min support on daily chart, below it, we cannot long */
-    support: LevelArea,
+    support: SupportResistanceArea,
     /** the high from recent pullback */
     recentPullback?: number,
     /** number of days of the condition and its edge price */
@@ -182,7 +182,7 @@ export interface GapAndGoPlan extends LongMomentumPlan {
 }
 export interface GapAndCrapPlan extends ShortMomentumPlan {
     /** the max resistance on daily chart, above it, we cannot short. -1: no limit when it's not based on resistance, but more due to extended rally */
-    resistance: LevelArea,
+    resistance: SupportResistanceArea,
     /** the number of days in a row that form this heavy supply zone */
     heavySupplyZoneDays?: number,
     /** the length of such recent rally */
@@ -200,13 +200,13 @@ export interface GapDownAndGoDownPlan extends ShortMomentumPlan {
     nearBelowConsolidationRange?: LevelArea,
     nearBelowConsolidationRangeTop?: number,
     buyersTrappedBelowThisLevel?: number,
-    resistance: LevelArea,
+    resistance: SupportResistanceArea,
     /** the low of last 2 days */
     previousInsideDay?: number,
     waitForPullback: boolean,
 }
 export interface GapDownAndGoUpPlan extends LongMomentumPlan {
-    support: LevelArea,
+    support: SupportResistanceArea,
     nearAboveSupport?: LevelArea,
     nearAboveKeyEventLevel?: number,
     waitForPullback: boolean,
@@ -259,6 +259,16 @@ export interface LevelArea {
     high: number,
     low: number,
     label?: string,
+}
+
+export interface SupportResistanceArea extends LevelArea {
+    /**
+     * When true, the entry price must be inside the inclusive [low, high] range.
+     * When false or omitted, the range is only visual and entry uses the defensive edge:
+     * longs must be at or above low, while shorts must be at or below high.
+     * This flag affects entry validation only; it does not change how the zone is painted.
+     */
+    requireEntryWithinRange?: boolean,
 }
 
 export enum PremarketVolumeScore {

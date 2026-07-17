@@ -3,6 +3,7 @@ import * as Firestore from '../firestore';
 import * as Models from '../models/models';
 import * as Helper from '../utils/helper';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
+import * as SupportResistance from '../models/tradingPlans/supportResistance';
 
 export const hasAtLeastOneReasonSet = (plan: TradingPlansModels.GapAndGoPlan, symbol: string): boolean => {
     const hasOne =
@@ -20,7 +21,7 @@ export const hasAtLeastOneReasonSet = (plan: TradingPlansModels.GapAndGoPlan, sy
 };
 
 // Entry rules:
-// 1. Min support — entry price must be at or above basePlan.support.low
+// 1. Support — entry price must satisfy the support area's configured entry range rule
 // 2. 15-minute window — only allowed within the first 15 minutes after market open
 // 3. VWAP reclaim consistency — if the stock opened below VWAP but has since reclaimed it, entry is blocked if the last two 1m candles both closed back below VWAP
 // 4. Basic global entry rules — delegates to EntryRulesChecker.checkBasicGlobalEntryRules (standard size/risk checks)
@@ -35,9 +36,12 @@ export const validateEntry = (
 ): number => {
     let openPrice = Models.getOpenPrice(symbol);
     let openVwap = Models.getLastVwapBeforeOpen(symbol);
-    let minSupport = plan.support.low;
-    if (entryPrice < minSupport) {
-        Firestore.logError(`entry price ${entryPrice} is below min daily support ${minSupport}`, logTags);
+    let { low: minSupport, high: maxSupport } = SupportResistance.getNormalizedBounds(plan.support);
+    if (!SupportResistance.isEntryPriceAllowed(entryPrice, true, plan.support)) {
+        let entryRule = plan.support.requireEntryWithinRange === true
+            ? `inside daily support ${minSupport}-${maxSupport}`
+            : `at or above min daily support ${minSupport}`;
+        Firestore.logError(`entry price ${entryPrice} must be ${entryRule}`, logTags);
         return 0;
     }
     let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());

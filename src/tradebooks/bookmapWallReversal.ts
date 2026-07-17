@@ -12,14 +12,16 @@ import * as GapAndGoAlgo from '../algorithms/gapAndGoAlgo';
 import * as GapAndCrapAlgo from '../algorithms/gapAndCrapAlgo';
 import * as GapDownAndGoDownAlgo from '../algorithms/gapDownAndGoDownAlgo';
 import * as GapDownAndGoUpAlgo from '../algorithms/gapDownAndGoUpAlgo';
+import * as SupportResistance from '../models/tradingPlans/supportResistance';
 
 export class BookmapWallReversal extends Tradebook {
     private basePlan: TradingPlansModels.BasePlan;
     private scalpMinCount = 0;
     private coreMinCount = 0;
-    private minMaxEntryLevel: number;
+    private entryArea: TradingPlansModels.SupportResistanceArea;
 
-    constructor(symbol: string, tradebookID: string, basePlan: TradingPlansModels.BasePlan, minMaxEntryLevel: number) {
+    constructor(symbol: string, tradebookID: string, basePlan: TradingPlansModels.BasePlan,
+        entryArea: TradingPlansModels.SupportResistanceArea) {
         let isLong = false;
         let tradebookName = "unknown";
         let buttonLabel = "unknown";
@@ -65,7 +67,7 @@ export class BookmapWallReversal extends Tradebook {
         let scalpCount = GlobalSettings.batchCount - basePlan.coreCount - basePlan.runnerCount;
         this.scalpMinCount = GlobalSettings.batchCount - scalpCount;
         this.coreMinCount = GlobalSettings.batchCount - scalpCount - basePlan.coreCount;
-        this.minMaxEntryLevel = minMaxEntryLevel;
+        this.entryArea = entryArea;
     }
 
     refreshLiveStats(): void { }
@@ -95,20 +97,20 @@ export class BookmapWallReversal extends Tradebook {
     ): number {
         let symbol = this.symbol;
         let currentVwap = Models.getCurrentVwap(symbol);
+        if (!SupportResistance.isEntryPriceAllowed(entryPrice, this.isLong, this.entryArea)) {
+            let { low, high } = SupportResistance.getNormalizedBounds(this.entryArea);
+            let entryRule = this.entryArea.requireEntryWithinRange === true
+                ? `inside ${low}-${high}`
+                : this.isLong ? `at or above ${low}` : `at or below ${high}`;
+            Firestore.logError(`entryPrice ${entryPrice} must be ${entryRule}`, logTags);
+            return 0;
+        }
         if (this.isLong) {
-            if (entryPrice < this.minMaxEntryLevel) {
-                Firestore.logError(`entryPrice ${entryPrice} below min level ${this.minMaxEntryLevel}`, logTags);
-                return 0;
-            }
             if (mustAlignVwap && entryPrice < currentVwap) {
                 Firestore.logError(`entry below vwap: ${entryPrice} < ${currentVwap}`, logTags);
                 return 0;
             }
         } else {
-            if (entryPrice > this.minMaxEntryLevel) {
-                Firestore.logError(`entryPrice ${entryPrice} above max level ${this.minMaxEntryLevel}`, logTags);
-                return 0;
-            }
             if (mustAlignVwap && entryPrice > currentVwap) {
                 Firestore.logError(`entry above vwap: ${entryPrice} > ${currentVwap}`, logTags);
                 return 0;
