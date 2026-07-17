@@ -128,6 +128,14 @@ export interface BasePlan {
     runnerCount: number,
     runnerTriggerCondition: string,
 };
+export interface LongMomentumPlan extends BasePlan {
+    enableOfferBreakout: boolean,
+    enableBidReversal: boolean,
+}
+export interface ShortMomentumPlan extends BasePlan {
+    enableBidBreakdown: boolean,
+    enableOfferReversal: boolean,
+}
 export interface RangeBoundReversalPlan extends BasePlan {
     /** Support zone for long Bookmap bid reversals. */
     support: LevelArea,
@@ -155,7 +163,7 @@ export interface GapGiveAndGoPlan extends BasePlan {
     /** price of all time high */
     allTimeHigh?: number,
 }
-export interface GapAndGoPlan extends BasePlan {
+export interface GapAndGoPlan extends LongMomentumPlan {
     /** the min support on daily chart, below it, we cannot long */
     support: LevelArea,
     /** the high from recent pullback */
@@ -171,10 +179,8 @@ export interface GapAndGoPlan extends BasePlan {
     /** price of all time high */
     allTimeHigh?: number,
     waitForPullback: boolean,
-    enableOfferBreakout: boolean,
-    enableBidReversal: boolean,
 }
-export interface GapAndCrapPlan extends BasePlan {
+export interface GapAndCrapPlan extends ShortMomentumPlan {
     /** the max resistance on daily chart, above it, we cannot short. -1: no limit when it's not based on resistance, but more due to extended rally */
     resistance: LevelArea,
     /** the number of days in a row that form this heavy supply zone */
@@ -190,7 +196,7 @@ export interface GapAndCrapPlan extends BasePlan {
     nearBelowPreviousEventKeyLevel?: string,
     waitForPullback: boolean,
 }
-export interface GapDownAndGoDownPlan extends BasePlan {
+export interface GapDownAndGoDownPlan extends ShortMomentumPlan {
     nearBelowConsolidationRange?: LevelArea,
     nearBelowConsolidationRangeTop?: number,
     buyersTrappedBelowThisLevel?: number,
@@ -199,7 +205,7 @@ export interface GapDownAndGoDownPlan extends BasePlan {
     previousInsideDay?: number,
     waitForPullback: boolean,
 }
-export interface GapDownAndGoUpPlan extends BasePlan {
+export interface GapDownAndGoUpPlan extends LongMomentumPlan {
     support: LevelArea,
     nearAboveSupport?: LevelArea,
     nearAboveKeyEventLevel?: number,

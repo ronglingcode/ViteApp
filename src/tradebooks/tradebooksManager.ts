@@ -43,11 +43,13 @@ export const createTradebooksForGapAndCrap = (symbol: string, gapAndCrapPlan: Tr
     let scopeIsLong = false;
     let shortPlan = TradingPlans.getTradingPlans(symbol).short.levelMomentumPlan;
 
-    if (shortPlan) {
+    if (shortPlan && gapAndCrapPlan.enableBidBreakdown) {
         let bookmapBreakdown = new BookmapWallBreak(
             symbol, TradebookID.GapAndCrapBookmapBidWallBreakdown, gapAndCrapPlan, maxPrice, gapAndCrapPlan.waitForPullback);
         tradebooksMap.set(bookmapBreakdown.getID(), bookmapBreakdown);
+    }
 
+    if (shortPlan && gapAndCrapPlan.enableOfferReversal) {
         let bookmapReversal1 = new BookmapWallReversal(
             symbol, TradebookID.GapAndCrapOfferStepDownReappear, gapAndCrapPlan, maxPrice);
         tradebooksMap.set(bookmapReversal1.getID(), bookmapReversal1);
@@ -66,28 +68,33 @@ export const createTradebooksForGapDownAndGoDown = (symbol: string, gapPlan: Tra
         low: gapPlan.buyersTrappedBelowThisLevel || 0
     };
 
-    let gapDownAndGoDownBookmapBidWallBreakdown = new BookmapWallBreak(
-        symbol, TradebookID.GapDownAndGoDownBookmapBidWallBreakdown, gapPlan, maxPriceKeyLevel.high, gapPlan.waitForPullback);
-    tradebooksMap.set(gapDownAndGoDownBookmapBidWallBreakdown.getID(), gapDownAndGoDownBookmapBidWallBreakdown);
+    if (gapPlan.enableBidBreakdown) {
+        let gapDownAndGoDownBookmapBidWallBreakdown = new BookmapWallBreak(
+            symbol, TradebookID.GapDownAndGoDownBookmapBidWallBreakdown, gapPlan, maxPriceKeyLevel.high, gapPlan.waitForPullback);
+        tradebooksMap.set(gapDownAndGoDownBookmapBidWallBreakdown.getID(), gapDownAndGoDownBookmapBidWallBreakdown);
+    }
 
-    let gapDownAndGoDownBookmapReversal1 = new BookmapWallReversal(
-        symbol, TradebookID.GapDownAndGoDownOfferStepDownReappear, gapPlan, maxPriceKeyLevel.high);
-    tradebooksMap.set(gapDownAndGoDownBookmapReversal1.getID(), gapDownAndGoDownBookmapReversal1);
-    let gapDownAndGoDownBookmapReversal2 = new BookmapWallReversal(
-        symbol, TradebookID.GapDownAndGoDownBreakdownBidSwingLow, gapPlan, maxPriceKeyLevel.high);
-    tradebooksMap.set(gapDownAndGoDownBookmapReversal2.getID(), gapDownAndGoDownBookmapReversal2);
+    if (gapPlan.enableOfferReversal) {
+        let gapDownAndGoDownBookmapReversal1 = new BookmapWallReversal(
+            symbol, TradebookID.GapDownAndGoDownOfferStepDownReappear, gapPlan, maxPriceKeyLevel.high);
+        tradebooksMap.set(gapDownAndGoDownBookmapReversal1.getID(), gapDownAndGoDownBookmapReversal1);
+    }
 }
 
 export const createTradebooksForGapDownAndGoUp = (symbol: string, gapPlan: TradingPlansModels.GapDownAndGoUpPlan, tradebooksMap: Map<string, Tradebook>) => {
     let minSupport = gapPlan.support.low;
 
-    let gapDownAndGoUpBookmapOfferWallBreakout = new BookmapWallBreak(
-        symbol, TradebookID.GapDownAndGoUpBookmapOfferWallBreakout, gapPlan, minSupport, gapPlan.waitForPullback);
-    tradebooksMap.set(gapDownAndGoUpBookmapOfferWallBreakout.getID(), gapDownAndGoUpBookmapOfferWallBreakout);
+    if (gapPlan.enableOfferBreakout) {
+        let gapDownAndGoUpBookmapOfferWallBreakout = new BookmapWallBreak(
+            symbol, TradebookID.GapDownAndGoUpBookmapOfferWallBreakout, gapPlan, minSupport, gapPlan.waitForPullback);
+        tradebooksMap.set(gapDownAndGoUpBookmapOfferWallBreakout.getID(), gapDownAndGoUpBookmapOfferWallBreakout);
+    }
 
-    let gapDownAndGoUpBookmapWallReversal = new BookmapWallReversal(
-        symbol, TradebookID.GapDownAndGoUpBookmapReversal, gapPlan, minSupport);
-    tradebooksMap.set(gapDownAndGoUpBookmapWallReversal.getID(), gapDownAndGoUpBookmapWallReversal);
+    if (gapPlan.enableBidReversal) {
+        let gapDownAndGoUpBookmapWallReversal = new BookmapWallReversal(
+            symbol, TradebookID.GapDownAndGoUpBookmapReversal, gapPlan, minSupport);
+        tradebooksMap.set(gapDownAndGoUpBookmapWallReversal.getID(), gapDownAndGoUpBookmapWallReversal);
+    }
 }
 
 export const createTradebooksForRangeBoundReversal = (
