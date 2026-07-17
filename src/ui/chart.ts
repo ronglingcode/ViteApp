@@ -1337,8 +1337,6 @@ export const drawMomentumLevels = (widget: Models.ChartWidget) => {
 }
 
 export const drawCamPivots = (symbolData: Models.SymbolData, allCharts: Models.TimeFrameChart[], widget: Models.ChartWidget) => {
-    let pivots = symbolData.camPivots;
-    console.log(`[drawCamPivots] ${widget.symbol}: pivots R3=${pivots.R3} R4=${pivots.R4} S3=${pivots.S3} S4=${pivots.S4}, charts=${allCharts.length}`);
     allCharts.forEach(chart => {
         // Clear previous cam pivot lines
         for (let i = 0; chart.camPivotLevels.length > i; i++) {
@@ -1346,6 +1344,15 @@ export const drawCamPivots = (symbolData: Models.SymbolData, allCharts: Models.T
             chart.candleSeries.removePriceLine(l);
         }
         chart.camPivotLevels = [];
+    });
+
+    if (!GlobalSettings.enableCamPivots) {
+        return;
+    }
+
+    let pivots = symbolData.camPivots;
+    console.log(`[drawCamPivots] ${widget.symbol}: pivots R3=${pivots.R3} R4=${pivots.R4} S3=${pivots.S3} S4=${pivots.S4}, charts=${allCharts.length}`);
+    allCharts.forEach(chart => {
 
         // Draw resistance and support levels - matching Backtest colors exactly
         for (const level of ChartSettings.camPivotLevels) {

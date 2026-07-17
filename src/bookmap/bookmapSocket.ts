@@ -14,6 +14,7 @@ import * as KeyboardHandler from "../controllers/keyboardHandler";
 import * as Handler from "../controllers/handler";
 import * as ExitOrderPairs from "../utils/exitOrderPairs";
 import * as RiskManager from "../algorithms/riskManager";
+import * as GlobalSettings from "../config/globalSettings";
 declare let window: Models.MyWindow;
 
 const BOOKMAP_WS_URL = "ws://localhost:8765";
@@ -570,9 +571,11 @@ const getBookmapMarketLevelsForSymbol = (symbol: string): BookmapMarketLevels =>
     const symbolData = Models.getSymbolData(symbol);
     const marketLevels: BookmapMarketLevels = {};
 
-    const camPivots = getValidCamPivots(symbolData.camPivots);
-    if (Object.keys(camPivots).length > 0) {
-        marketLevels.camPivots = camPivots;
+    if (GlobalSettings.enableCamPivots) {
+        const camPivots = getValidCamPivots(symbolData.camPivots);
+        if (Object.keys(camPivots).length > 0) {
+            marketLevels.camPivots = camPivots;
+        }
     }
 
     const previousDay = getValidPricePair(symbolData.previousDayCandle?.high, symbolData.previousDayCandle?.low);

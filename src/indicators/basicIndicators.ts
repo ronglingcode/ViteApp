@@ -1,5 +1,6 @@
 import * as Models from '../models/models';
 import * as CamPivots from '../indicators/camPivots';
+import * as GlobalSettings from '../config/globalSettings';
 
 export const updateIndicators = (symbol: string, symbolData: Models.SymbolData, dailyCandles: Models.Candle[]) => {
     if (!dailyCandles || dailyCandles.length === 0) {
@@ -7,7 +8,9 @@ export const updateIndicators = (symbol: string, symbolData: Models.SymbolData, 
     }
     updateAllTimeHigh(symbolData, dailyCandles);
     symbolData.previousDayCandle = dailyCandles[dailyCandles.length - 1];
-    CamPivots.updateCamPivots(symbol, symbolData, dailyCandles);
+    if (GlobalSettings.enableCamPivots) {
+        CamPivots.updateCamPivots(symbol, symbolData, dailyCandles);
+    }
 }
 
 export const updateAllTimeHigh = (symbolData: Models.SymbolData, dailyCandles: Models.Candle[]) => {
