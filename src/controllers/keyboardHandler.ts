@@ -25,7 +25,7 @@ export const handleKeyPressed = (
     }
     let sourcePrice = getValidSourcePrice(symbol, priceOverride);
     //console.log(keyboardEvent);
-    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
+    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
     console.log(code);
     let codeIsUsed = true;
     let symbolState = TradingState.getSymbolState(symbol);

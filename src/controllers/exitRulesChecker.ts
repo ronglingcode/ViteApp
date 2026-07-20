@@ -31,7 +31,7 @@ const getCommonInfo = (symbol: string) => {
     let exitPairs = Models.getExitPairs(symbol);
     return {
         isLong: Models.getPositionNetQuantity(symbol) > 0,
-        secondsSinceMarketOpen: Helper.getSecondsSinceMarketOpen(new Date()),
+        secondsSinceMarketOpen: Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime()),
         planConfigs: planConfigs,
         symbolState: symbolState,
         exitPairsCount: exitPairs.length,

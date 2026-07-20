@@ -1,4 +1,9 @@
 let currentMarketTime = new Date();
+let fixedMarketOpenTime: Date | null = null;
+
+export const setFixedMarketSession = (marketOpenTime: Date | null) => {
+    fixedMarketOpenTime = marketOpenTime ? new Date(marketOpenTime) : null;
+};
 
 export const setCurrentMarketTime = (time: Date) => {
     currentMarketTime = time;
@@ -70,6 +75,9 @@ export const getTimeZoneOffsetFromNewYork = () => {
     return offset - nyOffset;
 }
 export const getMarketOpenTimeInLocal = () => {
+    if (fixedMarketOpenTime) {
+        return new Date(fixedMarketOpenTime);
+    }
     let nyOpen = new Date();
     nyOpen.setHours(9);
     nyOpen.setMinutes(30);
@@ -79,6 +87,9 @@ export const getMarketOpenTimeInLocal = () => {
 }
 
 export const getMarketCloseTimeInLocal = () => {
+    if (fixedMarketOpenTime) {
+        return new Date(fixedMarketOpenTime.getTime() + 6.5 * 60 * 60 * 1000);
+    }
     let nyClose = new Date();
     nyClose.setHours(16);
     nyClose.setMinutes(0);

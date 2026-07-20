@@ -868,7 +868,7 @@ export const getFirstEntryTimeFromNowInSeconds = (symbol: string) => {
     if (firstTradeTime == null) {
         return -1;
     }
-    let now = new Date();
+    let now = Helper.getCurrentMarketTime();
     let seconds = (now.getTime() - firstTradeTime.getTime()) / 1000;
     console.log(`${symbol} first entry ${seconds} seconds ago`);
     return seconds;
@@ -925,7 +925,7 @@ export const getLastEntryTimeFromNowInSeconds = (symbol: string) => {
     if (!tradeTime)
         return -1;
 
-    let now = new Date();
+    let now = Helper.getCurrentMarketTime();
     let seconds = (now.getTime() - tradeTime.getTime()) / 1000;
     console.log(`${symbol} first entry ${seconds} seconds ago`);
     return seconds;

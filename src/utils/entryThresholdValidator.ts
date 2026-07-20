@@ -14,7 +14,7 @@ export interface ThresholdValidatorConfig {
 
 export function validateEntryThreshold(config: ThresholdValidatorConfig, logTags: Models.LogTags): boolean {
     const { symbol, isLong, entryPrice, keyLevel } = config;
-    const seconds = Helper.getSecondsSinceMarketOpen(new Date());
+    const seconds = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
     const candles = Models.getUndefinedCandlesSinceOpen(symbol);
     if (candles.length === 0) {
         Firestore.logError(`no candles after open, cannot validate entry threshold`, logTags);

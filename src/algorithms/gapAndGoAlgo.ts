@@ -45,7 +45,7 @@ export const validateEntry = (
         Firestore.logError(`entry price ${entryPrice} must be ${entryRule}`, logTags);
         return 0;
     }
-    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
+    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
     if (secondsSinceMarketOpen > 15 * 60) {
         Firestore.logError(`only allowed for first 15 minutes`, logTags);
         return 0;

@@ -1,5 +1,10 @@
 import type * as LightweightCharts from 'sunrise-tv-lightweight-charts'
 import * as TimeHelper from './timeHelper';
+import * as Runtime from '../replay/runtime';
+
+export const getCurrentMarketTime = () => {
+    return Runtime.isReplayMode() ? new Date(TimeHelper.getCurrentMarketTime()) : new Date();
+};
 
 export const returnDefaultEntryMethods = () => {
     return ["0.25 R", "0.025 R"];
@@ -259,7 +264,7 @@ export const speak = (message: string) => {
         }
     });
 
-    let minutes = getMinutesSinceMarketOpen(new Date());
+    let minutes = getMinutesSinceMarketOpen(getCurrentMarketTime());
     if (minutes < 85) {
         let msg = new SpeechSynthesisUtterance();
         msg.text = message;
@@ -282,7 +287,7 @@ export const isTwoTimesInTheSameMinute = (time1: Date, time2: Date) => {
         time1.getMinutes() === time2.getMinutes();
 }
 export const isCurrentMinute = (jsDate: Date) => {
-    let now = new Date();
+    let now = getCurrentMarketTime();
     return isTwoTimesInTheSameMinute(now, jsDate);
 };
 

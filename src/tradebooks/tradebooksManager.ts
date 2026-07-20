@@ -7,6 +7,7 @@ import * as Helper from "../utils/helper";
 import { BookmapWallBreak } from "./bookmapWallBreak";
 import { BookmapWallReversal } from "./bookmapWallReversal";
 import { TradebookID } from "./tradebookIds";
+import * as Runtime from '../replay/runtime';
 
 export interface BookmapTradebookButtonDefinition {
     id: string,
@@ -117,8 +118,11 @@ export const createTradebooksForRangeBoundReversal = (
 }
 
 export const createAllTradebooks = (symbol: string) => {
-    let plan = TradingPlans.getTradingPlans(symbol);
     let tradebooksMap = new Map<string, Tradebook>();
+    if (!Runtime.capabilities.bookmap) {
+        return tradebooksMap;
+    }
+    let plan = TradingPlans.getTradingPlans(symbol);
 
     if (isDirectionEnabled(plan.long)) {
         if (plan.long.gapAndGoPlan) {
@@ -152,7 +156,7 @@ export const updateTradebooksStatusHighLevelCall = (symbol: string) => {
     if (widget) {
         let openPriceToUse = Models.getCurrentPrice(symbol);
         let vwapToUse = Models.getCurrentVwap(symbol);
-        let seconds = Helper.getSecondsSinceMarketOpen(new Date());
+        let seconds = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
         if (seconds > 0) {
             let openPrice = Models.getOpenPrice(symbol);
             if (openPrice > 0) {

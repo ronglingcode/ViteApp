@@ -122,6 +122,15 @@ export const initializeTradingState = async (account: Models.BrokerAccount) => {
     return true;
 };
 
+export const initializeReplayTradingState = (marketDate: string, stocks: Models.WatchlistItem[]) => {
+    internalTradingState = getDefaultTradingState();
+    internalTradingState.date = marketDate;
+    internalTradingState.initialBalance = 0;
+    stocks.forEach(stock => internalTradingState.stateBySymbol.set(stock.symbol, getDefaultSymbolState()));
+    addStocksFromWatchlist(stocks);
+    UI.displayState(internalTradingState);
+};
+
 export const set = async (state: Models.TradingState) => {
     internalTradingState = state;
     Firestore.setTradingState(state);

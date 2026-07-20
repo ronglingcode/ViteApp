@@ -36,6 +36,10 @@ import './tosClient';
 import * as GlobalSettings from './config/globalSettings';
 import * as AppVersion from './config/appVersion';
 import * as Rules from './algorithms/rules';
+import * as Runtime from './replay/runtime';
+import * as ReplayApi from './replay/replayApi';
+import * as ReplayCapture from './replay/replayCapture';
+import * as ReplayUi from './replay/replayUi';
 declare let window: Models.MyWindow;
 
 console.log('main.ts loaded');
@@ -49,8 +53,8 @@ window.HybridApp.Algo = {
 window.HybridApp.Api = {
     Broker: Broker,
     MarketData: MarketData,
-    TdaApi: tdaApi,
-    SchwabApi: schwabApi,
+    TdaApi: Runtime.capabilities.liveBroker ? tdaApi : {},
+    SchwabApi: Runtime.capabilities.liveBroker ? schwabApi : {},
 };
 window.HybridApp.Config = Config;
 window.HybridApp.Controllers = {
@@ -170,7 +174,9 @@ const loadHistoricalChartsWithRetry = async (symbol: string, todayString: string
             let priceHistory = await MarketData.getFullPriceHistory(symbol, Helper.isFutures(symbol), todayString);
             let initialized = DB.initialize(symbol, priceHistory.today1MinuteBars, priceHistory.dailyBars);
             if (initialized) {
-                BookmapSocket.sendKeyLevelConfigForSymbol(symbol);
+                if (Runtime.capabilities.bookmap) {
+                    BookmapSocket.sendKeyLevelConfigForSymbol(symbol);
+                }
                 return priceHistory;
             }
             lastFailure = `initialize loaded 0 candles from ${priceHistory.today1MinuteBars.length} history bars`;
@@ -192,29 +198,111 @@ const loadHistoricalChartsWithRetry = async (symbol: string, todayString: string
     throw new Error(finalMessage);
 };
 
-window.TradingApp.TOS.initialize().then(async () => {
+const createEmptyReplayAccount = (): Models.BrokerAccount => ({
+    orderExecutions: new Map(),
+    entryOrders: new Map(),
+    exitPairs: new Map(),
+    positions: new Map(),
+    currentBalance: 0,
+    trades: new Map(),
+    tradesCount: 0,
+    nonBreakevenTradesCount: 0,
+    realizedPnL: 0,
+});
+
+const initializeReplayGlobals = (manifest: ReplayApi.ReplayManifest, bootstrap: ReplayApi.ReplayBootstrap) => {
+    // Older recordings predate marketOpenEpochMs and always used a 09:25 cutover.
+    const marketOpenEpochMs = manifest.marketOpenEpochMs ?? manifest.cutoverEpochMs + 5 * 60 * 1000;
+    Config.setReplayTradingSession(manifest.marketDate, marketOpenEpochMs);
+    TimeHelper.setCurrentMarketTime(new Date(manifest.cutoverEpochMs));
+    const watchlist: Models.WatchlistItem[] = [{
+        symbol: manifest.symbol,
+        marketCapInMillions: bootstrap.runtimeSnapshot.marketCapInMillions,
+    }];
+    window.HybridApp.TradingPlans = [bootstrap.runtimeSnapshot.tradingPlanForSymbol as any];
+    window.HybridApp.StockSelections = [manifest.symbol];
+    window.HybridApp.TradingData = {
+        activeProfileName: bootstrap.runtimeSnapshot.activeProfileName || 'momentumSimple',
+        tradingSettings: bootstrap.runtimeSnapshot.tradingSettings as any,
+    };
+    window.HybridApp.Watchlist = watchlist;
+    window.HybridApp.AccountCache = createEmptyReplayAccount();
+    TradingState.initializeReplayTradingState(manifest.marketDate, watchlist);
+};
+
+const initializeReplayCharts = (manifest: ReplayApi.ReplayManifest, bootstrap: ReplayApi.ReplayBootstrap) => {
+    const symbolData = Models.getSymbolData(manifest.symbol);
+    symbolData.sharesOutstanding = bootstrap.sharesOutstanding;
+    const initialized = DB.initialize(manifest.symbol, bootstrap.today1MinuteBars, bootstrap.dailyBars);
+    if (!initialized) {
+        throw new Error(`Replay bootstrap could not initialize ${manifest.symbol}`);
+    }
+    MarketData.setPreviousDayPremarketVolume(manifest.symbol, bootstrap.premarketDollarCollection);
+    Chart.updateAccountUIStatusForSymbol(manifest.symbol);
+};
+
+const setupSharedAppUi = () => {
+    Chart.setup();
+    Models.setTimeframe(1);
+    TraderFocus.updateTradeManagementUI();
+};
+
+const startReplay = async () => {
+    const recordingId = Runtime.getReplayRecordingId();
+    if (!recordingId) {
+        await ReplayUi.showRecordingSelector(ReplayApi.listRecordings);
+        return;
+    }
+    const { manifest, bootstrap } = await ReplayApi.loadReplaySession(recordingId);
+    initializeReplayGlobals(manifest, bootstrap);
+    setupSharedAppUi();
+    initializeReplayCharts(manifest, bootstrap);
+    ReplayUi.showPlaybackControls(manifest, {
+        play: () => MarketDataWorkerBridge.sendReplayControl('play'),
+        pause: () => MarketDataWorkerBridge.sendReplayControl('pause'),
+        setSpeed: speed => MarketDataWorkerBridge.sendReplayControl('speed', speed),
+    });
+    MarketDataWorkerBridge.startReplayMarketDataWorker(recordingId);
+    MarketDataWorkerBridge.registerMarketDataWorkerLifecycle();
+};
+
+const startLive = () => window.TradingApp.TOS.initialize().then(async () => {
     // tos initialized with new access token
     // tos access token expires in 30 minutes, so refresh before that
     // tradestation token expires in 20 minutes
     setInterval(Broker.refreshAccessToken, 1150 * 1000);
-    // create watchlist and setup chart
-    Chart.setup();
-    let timeframe = 1;
+    setupSharedAppUi();
 
-    Models.setTimeframe(timeframe);
-    TraderFocus.updateTradeManagementUI();
+    const watchlist = Models.getWatchlist();
+    const captureAllowed = GlobalSettings.enableReplayCapture &&
+        GlobalSettings.useMarketDataWorker && watchlist.length === 1 &&
+        ReplayCapture.canCaptureCurrentSession();
+    const scheduledCutoverEpochMs = ReplayCapture.getScheduledCutoverEpochMs();
+    const isLateCaptureStart = captureAllowed && Date.now() >= scheduledCutoverEpochMs;
+    let liveMarketDataStarted = false;
+    const startLiveMarketData = (capture?: ReplayCapture.ReplayCaptureWorkerConfig) => {
+        if (liveMarketDataStarted) return;
+        liveMarketDataStarted = true;
+        if (GlobalSettings.useMarketDataWorker) {
+            // The worker owns the Massive trades socket and the Schwab streamer socket
+            // (account activity + level-one quotes); their parsing runs off the main thread.
+            MarketDataWorkerBridge.startMarketDataWorker(capture);
+            MarketDataWorkerBridge.registerMarketDataWorkerLifecycle();
+        } else {
+            ScwabStreaming.createWebSocket();
+            MassiveStreaming.createWebSocket();
+        }
+    };
 
-    // open web socket
-    if (GlobalSettings.useMarketDataWorker) {
-        // The worker owns the Massive trades socket and the Schwab streamer socket
-        // (account activity + level-one quotes); their parsing runs off the main thread.
-        MarketDataWorkerBridge.startMarketDataWorker();
-        MarketDataWorkerBridge.registerMarketDataWorkerLifecycle();
-    } else {
-        ScwabStreaming.createWebSocket();
-        MassiveStreaming.createWebSocket();
+    // Before 09:25 the worker can start immediately and filter capture until the
+    // scheduled boundary. A late launch waits for current M1 history first so that
+    // history becomes the replay baseline instead of leaving a gap from 09:25.
+    if (!isLateCaptureStart) {
+        const capture = captureAllowed ? await ReplayCapture.start(watchlist[0].symbol) : undefined;
+        startLiveMarketData(capture);
     }
-    if (GlobalSettings.enableBookmapSocket) {
+
+    if (GlobalSettings.enableBookmapSocket && Runtime.capabilities.bookmap) {
         BookmapSocket.createWebSocket();
     }
     let today = new Date();
@@ -222,7 +310,6 @@ window.TradingApp.TOS.initialize().then(async () => {
 
 
     // get price history
-    let watchlist = Models.getWatchlist();
     for (let i = 0; i < watchlist.length; i++) {
         let symbol = watchlist[i].symbol;
         let marketCap = Models.getMarketCapInMillions(symbol);
@@ -230,6 +317,7 @@ window.TradingApp.TOS.initialize().then(async () => {
             alert(`no market cap for ${symbol}`);
         } else if (marketCap < 500) {
             alert(`${symbol} market cap too low, only $ ${marketCap} M`);
+            if (isLateCaptureStart) startLiveMarketData();
             return;
         }
         let sharesOutstandingPromise = MarketData.getSharesOutstanding(symbol);
@@ -237,8 +325,27 @@ window.TradingApp.TOS.initialize().then(async () => {
             Chart.updateAccountUIStatusForSymbol(symbol);
             MarketData.setPreviousDayPremarketVolume(symbol, priceHistory.premarketDollarCollection);
 
+            if (isLateCaptureStart) {
+                const lateCutoverEpochMs = Date.now();
+                const lateCapture = await ReplayCapture.start(symbol, lateCutoverEpochMs);
+                // saveBootstrap clones the current DB candles before its first await. Start
+                // the worker immediately afterward so new prints belong only to replay.
+                const bootstrapSave = ReplayCapture.saveBootstrap(
+                    symbol,
+                    priceHistory,
+                    Models.getSymbolData(symbol).sharesOutstanding || 0,
+                    false,
+                );
+                startLiveMarketData(lateCapture);
+                const sharesOutstanding = await sharesOutstandingPromise;
+                await bootstrapSave;
+                await ReplayCapture.updateBootstrapSharesOutstanding(sharesOutstanding);
+            } else {
+                const sharesOutstanding = await sharesOutstandingPromise;
+                await ReplayCapture.saveBootstrap(symbol, priceHistory, sharesOutstanding);
+            }
+
             // check implied market cap threshold
-            await sharesOutstandingPromise;
             let impliedMarketCapInBillions = MarketData.getImpliedMarketCapInBillions(symbol);
             if (impliedMarketCapInBillions > 0 && impliedMarketCapInBillions < GlobalSettings.impliedMarketCapThresholdInBillions) {
                 if (symbol != 'STI') {
@@ -267,6 +374,7 @@ window.TradingApp.TOS.initialize().then(async () => {
             }
         }).catch(error => {
             console.error(`${symbol} startup stopped because historical charts did not load`, error);
+            if (isLateCaptureStart) startLiveMarketData();
         });
     }
     UI.setupAutoSync();
@@ -274,8 +382,29 @@ window.TradingApp.TOS.initialize().then(async () => {
     // MarketData.testTradeStationStreamBar();
 });
 
+const startApplication = async () => {
+    try {
+        if (Runtime.isReplayMode()) {
+            await startReplay();
+        } else {
+            await startLive();
+        }
+    } catch (error) {
+        console.error('Application startup failed', error);
+        Firestore.addToLogView(`startup failed: ${getErrorMessage(error)}`, 'Error');
+        if (Runtime.isReplayMode()) {
+            await ReplayUi.showRecordingSelector(ReplayApi.listRecordings);
+        }
+    }
+};
+
+startApplication();
+
 let htmlBody = document.getElementsByTagName("body")[0];
 htmlBody.addEventListener("keydown", async function (keyboardEvent) {
+    if (Runtime.isReplayMode()) {
+        return;
+    }
     if (window.HybridApp.UIState.activeTabIndex === -1) {
         Firestore.logError("no active tab, skip key press");
         return;

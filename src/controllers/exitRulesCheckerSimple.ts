@@ -8,7 +8,7 @@ import * as Helper from '../utils/helper';
 import * as TraderFocus from './traderFocus';
 
 export const isAllowedForAll = (symbol: string, logTags: Models.LogTags) => {
-    let seconds = Helper.getSecondsSinceMarketOpen(new Date());
+    let seconds = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
 
     let minutes = seconds / 60;
     let hours = minutes / 60;
@@ -88,7 +88,7 @@ export const checkTrailStopRules = (symbol: string, timeFrame: number, logTags: 
 }
 export const checkTrailStopSingleRules = (symbol: string, batchIndex: number, timeFrame: number, logTags: Models.LogTags) => {
     if (timeFrame == 1) {
-        let seconds = Helper.getSecondsSinceMarketOpen(new Date());
+        let seconds = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
         if (seconds < 5 * 60) {
             return true;
         } else {
@@ -106,7 +106,7 @@ export const checkTrailStopSingleRules = (symbol: string, batchIndex: number, ti
  * within the first 5 minutes, cannot move stop tighter than a previously closed candle * 
  */
 export const isLessTightThanClosedCandlesForAdjustStop = (symbol: string, positionIsLong: boolean, newPrice: number) => {
-    let now = new Date();
+    let now = Helper.getCurrentMarketTime();
     let seconds = Helper.getSecondsSinceMarketOpen(now);
     if (seconds < 120 || seconds > 300) {
         Firestore.logInfo(`allow moving stop for seconds ${seconds}`);
@@ -151,7 +151,7 @@ export const getCommonInfo = (symbol: string) => {
     let isHigherTimeFrame = breakoutTradeState.plan.timeframe && breakoutTradeState.plan.timeframe > 1;
     return {
         isLong: isLong,
-        secondsSinceMarketOpen: Helper.getSecondsSinceMarketOpen(new Date()),
+        secondsSinceMarketOpen: Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime()),
         planConfigs: planConfigs,
         symbolState: symbolState,
         breakoutTradeState: breakoutTradeState,
