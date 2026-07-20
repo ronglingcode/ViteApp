@@ -5,6 +5,8 @@ export const premarketVolumeThresholdInMillions: number = 0.9;
 export const premarketVolumeThresholdWhitelist: string[] = ['AVAV', 'AEHR'];
 // true: offload time & sales socket receipt + parsing to a Web Worker (main app).
 export const useMarketDataWorker: boolean = true;
+// Capture the worker-to-main market-data batches to local ProxyServer for replay.
+export const enableReplayCapture: boolean = true;
 // false: late T&S records still flow into chart/state updates.
 export const skipLateTimeAndSalesChartUpdates: boolean = false;
 export const allowLiveStats: boolean = true;

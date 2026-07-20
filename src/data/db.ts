@@ -14,6 +14,7 @@ import * as Broker from '../api/broker';
 import * as UI from '../ui/ui';
 import * as BasicIndicators from '../indicators/basicIndicators';
 import * as ChartSeries from '../utils/chartSeries';
+import * as Runtime from '../replay/runtime';
 
 // Create a throttled version of cancelAllEntryOrders that executes once per second
 const throttledCancelAllEntryOrders = Helper.executeOncePerInterval(
@@ -40,6 +41,8 @@ const timeSaleDiagnostics = {
     late: 0,
     stale: 0,
     rendered: 0,
+    renderDurationMs: 0,
+    maxRenderDurationMs: 0,
     samples: [] as string[],
 };
 (globalThis as any).timeSaleDiagnostics = timeSaleDiagnostics;
@@ -122,6 +125,7 @@ const lastTimeSaleRenderAtBySymbol = new Map<string, number>();
 // Applies the newest queued T&S render payload for a symbol to the DOM and chart series.
 // Older payloads are discarded before this runs, so each flush draws the latest known state.
 const flushTimeSaleRender = (symbol: string) => {
+    const renderStartedAt = performance.now();
     let render = pendingTimeSaleRenderBySymbol.get(symbol);
     pendingTimeSaleRenderBySymbol.delete(symbol);
     scheduledTimeSaleRenderBySymbol.delete(symbol);
@@ -131,11 +135,17 @@ const flushTimeSaleRender = (symbol: string) => {
 
     lastTimeSaleRenderAtBySymbol.set(symbol, Date.now());
     timeSaleDiagnostics.rendered++;
-    updateTimeSaleDiagnosticsView();
+    const recordRenderDuration = () => {
+        const duration = performance.now() - renderStartedAt;
+        timeSaleDiagnostics.renderDurationMs += duration;
+        timeSaleDiagnostics.maxRenderDurationMs = Math.max(timeSaleDiagnostics.maxRenderDurationMs, duration);
+        updateTimeSaleDiagnosticsView();
+    };
     Chart.updateUI(symbol, "currentPrice", Helper.numberToStringWithPaddingToCents(render.lastPrice));
     UI.updateClock(render.timeAndSalesTime);
     let m1Chart = render.allCharts[0];
     if (!m1Chart) {
+        recordRenderDuration();
         return;
     }
 
@@ -145,6 +155,7 @@ const flushTimeSaleRender = (symbol: string) => {
     ChartSeries.safeUpdateSeries(m1Chart.volumeSeries, render.lastVolume, `${symbol} m1 volume`);
     ChartSeries.safeUpdateSeries(m1Chart.vwapSeries, render.lastVwap, `${symbol} m1 vwap`);
     ChartSeries.safeUpdateSeries(m1Chart.candleSeries, render.lastCandle, `${symbol} m1 candle`);
+    recordRenderDuration();
 };
 
 // Stores the newest T&S render payload and schedules a flush only when needed.
@@ -446,9 +457,11 @@ const updateFromTimeSaleCore = (timesale: Models.TimeSale): TimeSaleApplyMeta | 
         }
         if (haspremarketChange) {
             Chart.drawMomentumLevels(widget);
-            window.dispatchEvent(new CustomEvent('tradingscripts:bookmap-market-levels-updated', {
-                detail: { symbol },
-            }));
+            if (Runtime.capabilities.bookmap) {
+                window.dispatchEvent(new CustomEvent('tradingscripts:bookmap-market-levels-updated', {
+                    detail: { symbol },
+                }));
+            }
         }
     } else {
         // update in-market indicators

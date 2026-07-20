@@ -605,3 +605,23 @@ span.algo {
 .clickableSectionTitle .collapseIcon {
     margin-left: 10px;
 }
+/* Local market-data replay controls. */
+.replayToolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10000;
+  padding: 8px 12px;
+  color: #fff;
+  background: #7a1717;
+  border-bottom: 2px solid #ffb3b3;
+  font-family: sans-serif;
+}
+
+.replayToolbar button,
+.replayToolbar select {
+  margin-left: 8px;
+}
+
+.replaySelector {
+  background: #333;
+}

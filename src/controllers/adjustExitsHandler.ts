@@ -26,7 +26,7 @@ export const onAdjustExits = (symbol: string) => {
 export const getSnapPriceForAdjustStops = (symbol: string, newPrice: number) => {
     let snapPrice = newPrice;
     if (Models.isSnapMode()) {
-        let now = new Date();
+        let now = Helper.getCurrentMarketTime();
         let seconds = Helper.getSecondsSinceMarketOpen(now);
         let isFirstMinute = 0 < seconds && seconds < 60;
         if (isFirstMinute) {
@@ -122,7 +122,7 @@ export const afterAdjustSingleExit = (symbol: string, totalPairsCount: number) =
     }
     alertText += `: ${message}`;
     alert(alertText);*/
-    let now = new Date();
+    let now = Helper.getCurrentMarketTime();
     let seconds = Helper.getSecondsSinceMarketOpen(now);
     if (seconds < 60 * 2 + 30) {
         // skip pop up for the first 2.5 minutes

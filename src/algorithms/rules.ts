@@ -96,7 +96,7 @@ export const checkOpenCandle = (symbol: string,
     if (!openingCandle)
         return true;
 
-    let seconds = Helper.getSecondsSinceMarketOpen(new Date());
+    let seconds = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
     if (seconds >= 120)
         return true;
 
@@ -283,7 +283,7 @@ export const isAfterOpeningMomentum = (symbol: string) => {
     if (Helper.isFutures(symbol))
         return false;
 
-    let m = Helper.getMinutesSinceMarketOpen(new Date());
+    let m = Helper.getMinutesSinceMarketOpen(Helper.getCurrentMarketTime());
     if (m > 20) {
         Firestore.logError(`is after 20 minutes since market open`);
         return true;
@@ -367,7 +367,7 @@ export const isEntryMoreThanHalfDailyRange = (symbol: string,
     if (dailyRange == 0)
         return false;
 
-    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
+    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
     if (secondsSinceMarketOpen < 0) {
         return false;
     }
@@ -385,7 +385,7 @@ export const isSpreadTooLarge = (symbol: string) => {
     if (!window.HybridApp.Settings.checkSpread) {
         return false;
     }
-    let seconds = Helper.getSecondsSinceMarketOpen(new Date());
+    let seconds = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
     let spreads = OrderFlowManager.getSpreadDataPoints(symbol);
     let atr = Models.getAtr(symbol).average;
     //Firestore.logInfo(spreads);
@@ -507,7 +507,7 @@ export const isAllowedByVwapContinuation = (symbol: string, isLong: boolean, ent
         return true;
     };
     // if already closed 2 candles against vwap, must wait for 10 minutes
-    let minutesSinceMarketOpen = Helper.getMinutesSinceMarketOpen(new Date());
+    let minutesSinceMarketOpen = Helper.getMinutesSinceMarketOpen(Helper.getCurrentMarketTime());
     if (minutesSinceMarketOpen < 10) {
         return false;
     }

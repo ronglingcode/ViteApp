@@ -227,6 +227,6 @@ const getCommonInfo = (symbol: string, isLong: boolean) => {
         averageRange: plan.atr.average,
         currentVwap: Models.getCurrentVwap(symbol),
         premarketVwapTrend: Vwap.getStrongPremarketVwapTrend(symbol),
-        secondsSinceMarketOpen: Helper.getSecondsSinceMarketOpen(new Date()),
+        secondsSinceMarketOpen: Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime()),
     }
 }

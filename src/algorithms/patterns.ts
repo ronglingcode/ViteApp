@@ -96,7 +96,7 @@ export const isPriceOutsideLevel = (isLong: boolean, price: number, level: numbe
     }
 }
 export const isBarClosed = (candle: Models.SimpleCandle) => {
-    let now = new Date();
+    let now = Helper.getCurrentMarketTime();
     let candleTime = Helper.tvTimestampToLocalJsDate(candle.time); // candleTime is candle open time
     candleTime.setSeconds(candleTime.getSeconds() + 60); // candleTime is candle close time now
     return now >= candleTime;

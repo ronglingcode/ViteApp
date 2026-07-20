@@ -6,13 +6,24 @@ import * as Firestore from '../firestore';
 import * as Chart from '../ui/chart';
 import * as RiskManager from '../algorithms/riskManager';
 import * as Helper from '../utils/helper';
+import * as Runtime from '../replay/runtime';
 
 declare let window: Models.MyWindow;
 
+const allowLiveBrokerAction = (action: string) => {
+    if (Runtime.capabilities.liveBroker) {
+        return true;
+    }
+    console.warn(`[replay] blocked broker action: ${action}`);
+    return false;
+};
+
 export const getBrokerApi = () => {
+    if (!Runtime.capabilities.liveBroker) return null;
     return schwabApi;
 }
 export const refreshAccessToken = async () => {
+    if (!allowLiveBrokerAction('refreshAccessToken')) return true;
     let brokerName = config.getProfileSettings().brokerName;
     console.log(`brokerName ${brokerName}`);
     if (brokerName == "TradeStation") {
@@ -28,6 +39,7 @@ export const refreshAccessToken = async () => {
  * submit an entry order with a bracket order to the broker
  */
 export const test1 = () => {
+    if (!allowLiveBrokerAction('test1')) return;
     let symbol = 'AAPL';
     let entryPrice = 0;
     let stopPrice = 0;
@@ -112,6 +124,7 @@ const emitNewOrderFills = (previousKeys: Map<string, Set<string>> | undefined) =
 };
 
 export const UpdateAccountUIWithDelay = (source: string) => {
+    if (!Runtime.capabilities.liveBroker) return;
     let now = new Date();
     if (now > lastAccountSyncTime) {
         lastAccountSyncTime = new Date(now.getTime() + 900);
@@ -132,6 +145,7 @@ export const UpdateAccountUIWithDelay = (source: string) => {
     }
 }
 export const onOrderEvent = () => {
+    if (!Runtime.capabilities.liveBroker) return;
     // Helper.playOrderSubmissionSound();
     UpdateAccountUIWithDelay('onOrderEvent');
 }
@@ -157,6 +171,7 @@ const submitEntryOrderWithBracketCore = (
 export const submitEntryOrderWithBracket = (
     symbol: string, quantity: number, isLong: boolean, orderType: Models.OrderType,
     entryPrice: number, limitPrice: number, stopPrice: number, logTags: Models.LogTags) => {
+    if (!allowLiveBrokerAction('submitEntryOrderWithBracket')) return;
     emitBookmapActionLog(symbol, `Submit ${isLong ? 'long' : 'short'} ${quantity} ${formatOrderPrice(orderType, entryPrice)}`);
     submitEntryOrderWithBracketCore(
         symbol, quantity, isLong, orderType, entryPrice, limitPrice, stopPrice, logTags
@@ -167,6 +182,7 @@ export const submitEntryOrderWithMultipleBrackets = (
     symbol: string, quantity: number, isLong: boolean, orderType: Models.OrderType,
     entryPrice: number, profitTargets: Models.ProfitTarget[], stopPrice: number, logTags: Models.LogTags,
     orderIdToReplace: string) => {
+    if (!allowLiveBrokerAction('submitEntryOrderWithMultipleBrackets')) return;
     emitBookmapActionLog(symbol, `Submit ${isLong ? 'long' : 'short'} ${quantity} ${formatOrderPrice(orderType, entryPrice)}`);
     let brokerName = config.getProfileSettings().brokerName;
     if (brokerName == 'Schwab') {
@@ -190,6 +206,7 @@ export const submitEntryOrderWithMultipleBrackets = (
 export const submitExitOrderWithBroker = (
     symbol: string, quantity: number, positionIsLong: boolean,
     targetPrice: number, stopLossPrice: number, logTags: Models.LogTags) => {
+    if (!allowLiveBrokerAction('submitExitOrderWithBroker')) return;
     emitBookmapActionLog(symbol, `Submit exit ${quantity} T $${targetPrice} S $${stopLossPrice}`);
     let brokerName = config.getProfileSettings().brokerName;
     if (brokerName == 'Schwab') {
@@ -206,6 +223,7 @@ export const submitExitOrderWithBroker = (
 
 export const submitSingleOrder = async (symbol: string, orderType: Models.OrderType, quantity: number, price: number,
     isLong: boolean, positionEffectIsOpen: boolean, logTags: Models.LogTags, emitActionLog = true) => {
+    if (!allowLiveBrokerAction('submitSingleOrder')) return;
     if (emitActionLog) {
         emitBookmapActionLog(symbol, `Submit ${isLong ? 'buy' : 'sell'} ${quantity} ${formatOrderPrice(orderType, price)}`);
     }
@@ -226,6 +244,7 @@ export const submitSingleOrder = async (symbol: string, orderType: Models.OrderT
 }
 export const submitPremarketOrder = async (symbol: string, quantity: number, price: number,
     isLong: boolean, positionEffectIsOpen: boolean, logTags: Models.LogTags) => {
+    if (!allowLiveBrokerAction('submitPremarketOrder')) return;
     emitBookmapActionLog(symbol, `Submit premarket ${isLong ? 'buy' : 'sell'} ${quantity} $${price}`);
     let brokerName = config.getProfileSettings().brokerName;
     let isEquity = config.getProfileSettings().isEquity;
@@ -269,6 +288,7 @@ export const cancelOneSideEntryOrders = async (symbol: string, isLong: boolean) 
     cancelOrders(orderIds);
 }
 export const cancelOrders = async (orderIds: string[]) => {
+    if (!allowLiveBrokerAction('cancelOrders')) return;
     let brokerName = config.getProfileSettings().brokerName;
     if (!orderIds || orderIds.length == 0) {
         return;
@@ -285,6 +305,7 @@ export const cancelOrders = async (orderIds: string[]) => {
 /* #endregion */
 /* #region Replace Orders */
 export const replaceWithMarketOrder = async (order: Models.OrderModel, logTags: Models.LogTags) => {
+    if (!allowLiveBrokerAction('replaceWithMarketOrder')) return;
     let brokerName = config.getProfileSettings().brokerName;
     if (brokerName == 'Schwab') {
         schwabApi.replaceSingleOrderWithMarketOrder(order, logTags);
@@ -296,6 +317,7 @@ export const replaceWithMarketOrder = async (order: Models.OrderModel, logTags: 
     onOrderEvent();
 };
 export const replaceSimpleOrderWithNewPrice = async (order: Models.OrderModel, newPrice: number, logTags: Models.LogTags) => {
+    if (!allowLiveBrokerAction('replaceSimpleOrderWithNewPrice')) return;
     let brokerName = config.getProfileSettings().brokerName;
     if (brokerName == 'Schwab') {
         schwabApi.replaceSingleOrderWithNewPrice(order, newPrice, logTags);
@@ -309,6 +331,7 @@ export const replaceSimpleOrderWithNewPrice = async (order: Models.OrderModel, n
 export const replaceExitPairWithNewPrice = async (
     pair: Models.ExitPair, newPrice: number,
     isStopLeg: boolean, positionIsLong: boolean, logTags: Models.LogTags) => {
+    if (!allowLiveBrokerAction('replaceExitPairWithNewPrice')) return;
     emitBookmapActionLog(pair.symbol, `Adjust ${isStopLeg ? 'stop' : 'target'} @ $${newPrice}`);
     let brokerName = config.getProfileSettings().brokerName;
     if (brokerName == 'Schwab') {
@@ -330,6 +353,7 @@ export const replaceExitPairWithNewPrice = async (
 export const instantOutOneExitPair = (
     symbol: string, positionIsLong: boolean,
     pair: Models.ExitPair, logTags: Models.LogTags, emitActionLog = true) => {
+    if (!allowLiveBrokerAction('instantOutOneExitPair')) return 0;
     let quantity = 0;
     if (pair.LIMIT) {
         quantity = pair.LIMIT.quantity;
@@ -354,6 +378,7 @@ export const instantOutOneExitPair = (
     return quantity;
 };
 export const instantOutOneExitPairByReplace = async (pair: Models.ExitPair, logTags: Models.LogTags) => {
+    if (!allowLiveBrokerAction('instantOutOneExitPairByReplace')) return;
     if (pair.LIMIT) {
         tradeStationApi.replaceWithMarketOrder(pair.LIMIT, logTags);
 
@@ -365,6 +390,9 @@ export const instantOutOneExitPairByReplace = async (pair: Models.ExitPair, logT
 /* #endregion */
 
 export const syncAccount = async (source: string) => {
+    if (!Runtime.capabilities.liveBroker) {
+        return window.HybridApp.AccountCache;
+    }
     console.log(`sync account from ${source}`);
     let previousExecutionKeys = snapshotOrderExecutionKeys();
     let brokerName = config.getProfileSettings().brokerName;
@@ -633,6 +661,7 @@ const isTradeClosed = (trade: Models.TradeExecution) => {
     return entryQuantity == exitQuantity;
 }
 export const marketOutExitPairsButOne = async (symbol: string, netQuantity: number, logTags: Models.LogTags) => {
+    if (!allowLiveBrokerAction('marketOutExitPairsButOne')) return false;
     let exitPairs = Models.getExitPairs(symbol);
     if (exitPairs.length < 2) {
         Firestore.logError(`need at 2 partials, having ${exitPairs.length}`, logTags);
@@ -671,6 +700,7 @@ export const marketOutExitPairsButOne = async (symbol: string, netQuantity: numb
     return true;
 }
 export const flattenPosition = async (symbol: string, netQuantity: number, logTags: Models.LogTags) => {
+    if (!allowLiveBrokerAction('flattenPosition')) return false;
     let remainingQuantity = Math.abs(netQuantity);
     let originalQuantity = remainingQuantity;
     // market out exit orders

@@ -35,7 +35,7 @@ const shouldUpdateLiveChartAnnotations = (symbol: string) => {
 }
 
 export const checkVolumeOnCandleClose = (symbol: string, newlyClosedCandle: Models.CandlePlus) => {
-    let seconds = Helper.getSecondsSinceMarketOpen(new Date());
+    let seconds = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
     if (seconds < 100) {
         return;
     }
@@ -65,7 +65,7 @@ export const checkVolumeOnCandleClose = (symbol: string, newlyClosedCandle: Mode
     }
 }
 export const alertHigherVolume = (symbol: string) => {
-    let now = new Date();
+    let now = Helper.getCurrentMarketTime();
     let seconds = Helper.getSecondsSinceMarketOpen(now);
     if (seconds <= 61) {
         return;
@@ -117,7 +117,7 @@ export const alertHigherVolume = (symbol: string) => {
     }
 }
 export const getTimeFrameToUse = () => {
-    let seconds = Helper.getSecondsSinceMarketOpen(new Date());
+    let seconds = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
     let timeframe = 1;
 
     if (seconds > (60 * 10)) {
@@ -294,7 +294,7 @@ const startRefreshingEntryStopLoss = () => {
     if (refreshEntryStopLossInterval !== undefined) {
         return;
     }
-    const secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
+    const secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
     if (secondsSinceMarketOpen < 0 || secondsSinceMarketOpen >= 5 * 60) {
         return;
     }
@@ -305,7 +305,7 @@ export const updateUIBasedOnOpenZoneForSymbol = (symbol: string, openPrice: numb
 
 }
 export const updateUIBasedOnOpenZone = () => {
-    let seconds = Helper.getSecondsSinceMarketOpen(new Date());
+    let seconds = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
     if (seconds < 0) {
         return;
     }
@@ -326,7 +326,7 @@ export const onMarketOpen = (symbol: string) => {
 export const onMinuteClosed = (
     symbol: string, newlyClosedCandle: Models.CandlePlus,
     isRealtime: boolean, symbolData: Models.SymbolData) => {
-    let seconds = Helper.getSecondsSinceMarketOpen(new Date());
+    let seconds = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
     if (isRealtime) {
         checkVolumeOnCandleClose(symbol, newlyClosedCandle);
         if (120 <= seconds && seconds <= 180) {
@@ -425,7 +425,7 @@ export const refreshAlgoPeriodically = () => {
     if (!wl || wl.length == 0)
         return;
 
-    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
+    let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
     for (let i = 0; i < wl.length; i++) {
         let symbol = wl[i].symbol;
         refreshAlgoPeriodicallyForSymbol(symbol, secondsSinceMarketOpen);
@@ -495,7 +495,7 @@ export const warnIfEntryStopIsInsideDayExtreme = (symbol: string, secondsSinceMa
     });
 }
 export const refreshEntryStopLoss = () => {
-    const secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(new Date());
+    const secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
     if (secondsSinceMarketOpen < 0 || secondsSinceMarketOpen >= 5 * 60) {
         if (refreshEntryStopLossInterval !== undefined) {
             clearInterval(refreshEntryStopLossInterval);
@@ -585,7 +585,7 @@ export const refreshEntryStopLossForSymbol = (symbol: string, logTags: Models.Lo
 };
 
 export const checkAlgoPendingCondition = (symbol: string) => {
-    let seconds = Helper.getSecondsSinceMarketOpen(new Date());
+    let seconds = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
     if (seconds > 60) {
         return;
     }
@@ -633,7 +633,7 @@ export const onNewTimeAndSalesData = (symbol: string, newPrice: number, isNewCan
     Chart.drawRiskLevels(symbol);
 }
 export const checkTimingForEntry = (symbol: string) => {
-    let seconds = Helper.getSecondsSinceMarketOpen(new Date());
+    let seconds = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
     if (seconds > 120) {
         return;
     }

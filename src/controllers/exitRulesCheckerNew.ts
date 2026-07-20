@@ -37,7 +37,7 @@ export const isAllowedForAllOrdersForAllTradebooks = (symbol: string, isLong: bo
         allowed: false,
         reason: "default disallow",
     };
-    let seconds = Helper.getSecondsSinceMarketOpen(new Date());
+    let seconds = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
     if (seconds > 60 * 15) {
         allowedReason.allowed = true;
         allowedReason.reason = "allow after 15 minutes since open";
@@ -56,7 +56,7 @@ export const isAllowedForAllOrdersForAllTradebooks = (symbol: string, isLong: bo
         return allowedReason;
     }
     // allow if break incremental trailing stop
-    let second = Helper.getSecondsSinceMarketOpen(new Date());
+    let second = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
     if (120 <= second && second < 300) {
         // first 5 minutes, use the high/low of 2nd candle
         let candles = Models.getM1ClosedCandlesSinceOpen(symbol);
