@@ -7,6 +7,7 @@ import * as SupportResistance from '../models/tradingPlans/supportResistance';
 
 export const hasAtLeastOneReasonSet = (plan: TradingPlansModels.GapAndGoPlan, symbol: string): boolean => {
     const hasOne =
+        !!plan.higherTimeframeSupportReversal ||
         !!plan.recentPullback ||
         !!plan.nearAboveConsolidationRange ||
         !!plan.nearBelowConsolidationRangeTop ||

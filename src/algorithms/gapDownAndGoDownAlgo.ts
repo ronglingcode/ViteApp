@@ -4,6 +4,7 @@ import * as Models from '../models/models';
 
 export const hasAtLeastOneReasonSet = (plan: TradingPlansModels.GapDownAndGoDownPlan, symbol: string): boolean => {
     const hasOne =
+        !!plan.higherTimeframeResistanceReversal ||
         !!plan.nearBelowConsolidationRange ||
         !!plan.nearBelowConsolidationRangeTop ||
         !!plan.buyersTrappedBelowThisLevel ||

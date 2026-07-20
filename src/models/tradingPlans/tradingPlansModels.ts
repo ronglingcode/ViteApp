@@ -166,6 +166,11 @@ export interface GapGiveAndGoPlan extends BasePlan {
 export interface GapAndGoPlan extends LongMomentumPlan {
     /** the min support on daily chart, below it, we cannot long */
     support: SupportResistanceArea,
+    /**
+     * Evidence that the gap may start a higher-timeframe reversal from major support.
+     * Example: "30-35 held several times on the zoomed-out daily chart".
+     */
+    higherTimeframeSupportReversal?: string,
     /** the high from recent pullback */
     recentPullback?: number,
     /** number of days of the condition and its edge price */
@@ -201,6 +206,11 @@ export interface GapDownAndGoDownPlan extends ShortMomentumPlan {
     nearBelowConsolidationRangeTop?: number,
     buyersTrappedBelowThisLevel?: number,
     resistance: SupportResistanceArea,
+    /**
+     * Evidence that the gap may start a higher-timeframe reversal from major resistance.
+     * Example: "the weekly supply zone rejected several prior rallies".
+     */
+    higherTimeframeResistanceReversal?: string,
     /** the low of last 2 days */
     previousInsideDay?: number,
     waitForPullback: boolean,

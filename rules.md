@@ -31,6 +31,7 @@ This document summarizes the concrete tradebook classes under `src/tradebooks`. 
 ## GapAndGoBookmapOfferWallBreakout
 
 - Source: `src/tradebooks/gapAndGoBookmapOfferWallBreakout.ts`
+- Plan-validation rule: `hasAtLeastOneReasonSet(...)` requires at least one of `higherTimeframeSupportReversal`, `recentPullback`, `nearAboveConsolidationRange`, `nearBelowConsolidationRangeTop`, `nearPreviousKeyEventLevel`, `previousInsideDay`, or `allTimeHigh`.
 - Entry rules: this book is effectively Bookmap-only because `triggerEntry(...)` is disabled. In `triggerEntryCommon(...)`, it applies `checkBasicGlobalEntryRules(...)`.
 - Sizing rules: accepted size is quartered (`allowedSize / 4`).
 - Add rules: partial adds are only allowed once the add price is at or above premarket high.
@@ -47,7 +48,7 @@ This document summarizes the concrete tradebook classes under `src/tradebooks`. 
 ## GapDownAndGoDown
 
 - Source: `src/tradebooks/gapDownAndGoDown.ts`
-- Plan-validation rule: `hasAtLeastOneReasonSet(...)` requires at least one of `nearBelowConsolidationRange`, `nearBelowConsolidationRangeTop`, `buyersTrappedBelowThisLevel`, or `previousInsideDay`.
+- Plan-validation rule: `hasAtLeastOneReasonSet(...)` requires at least one of `higherTimeframeResistanceReversal`, `nearBelowConsolidationRange`, `nearBelowConsolidationRangeTop`, `buyersTrappedBelowThisLevel`, or `previousInsideDay`.
 - Entry rules: `validateEntry(...)` only applies `checkBasicGlobalEntryRules(...)`.
 - Risk rules: default risk level comes from `Models.chooseRiskLevel(...)`; the `HOD` entry method forces the risk level to the exact high of day.
 - Add rules: no override, so base `Tradebook` default applies and adds are disallowed.
