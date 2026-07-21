@@ -14,7 +14,6 @@ import * as KeyboardHandler from "../controllers/keyboardHandler";
 import * as Handler from "../controllers/handler";
 import * as ExitOrderPairs from "../utils/exitOrderPairs";
 import * as RiskManager from "../algorithms/riskManager";
-import * as GlobalSettings from "../config/globalSettings";
 declare let window: Models.MyWindow;
 
 const BOOKMAP_WS_URL = "ws://localhost:8765";
@@ -39,7 +38,6 @@ interface BookmapPricePair {
 }
 
 interface BookmapMarketLevels {
-    camPivots?: Partial<Models.CamarillaPivots>;
     previousDay?: BookmapPricePair;
     premarket?: BookmapPricePair;
 }
@@ -238,14 +236,12 @@ export const sendKeyLevelConfigForSymbol = (symbol: string) => {
         symbol: symbol,
         levels: levels,
         zones: zones,
-        camPivots: marketLevels.camPivots,
         previousDay: marketLevels.previousDay,
         premarket: marketLevels.premarket,
         timestamp: Date.now(),
     }));
     console.log(`[BookmapSocket] Sent ${levels.length} key levels and ${zones.length} key zones for ${symbol}`
-        + ` with market levels: cam=${Object.keys(marketLevels.camPivots ?? {}).length}`
-        + ` prev=${marketLevels.previousDay ? 1 : 0}`
+        + ` with market levels: prev=${marketLevels.previousDay ? 1 : 0}`
         + ` pm=${marketLevels.premarket ? 1 : 0}`);
 };
 
@@ -571,13 +567,6 @@ const getBookmapMarketLevelsForSymbol = (symbol: string): BookmapMarketLevels =>
     const symbolData = Models.getSymbolData(symbol);
     const marketLevels: BookmapMarketLevels = {};
 
-    if (GlobalSettings.enableCamPivots) {
-        const camPivots = getValidCamPivots(symbolData.camPivots);
-        if (Object.keys(camPivots).length > 0) {
-            marketLevels.camPivots = camPivots;
-        }
-    }
-
     const previousDay = getValidPricePair(symbolData.previousDayCandle?.high, symbolData.previousDayCandle?.low);
     if (previousDay) {
         marketLevels.previousDay = previousDay;
@@ -589,21 +578,6 @@ const getBookmapMarketLevelsForSymbol = (symbol: string): BookmapMarketLevels =>
     }
 
     return marketLevels;
-};
-
-const getValidCamPivots = (pivots: Models.CamarillaPivots): Partial<Models.CamarillaPivots> => {
-    const result: Partial<Models.CamarillaPivots> = {};
-    const keys: (keyof Models.CamarillaPivots)[] = [
-        "R1", "R2", "R3", "R4", "R5", "R6",
-        "S1", "S2", "S3", "S4", "S5", "S6",
-    ];
-    for (const key of keys) {
-        const price = pivots[key];
-        if (isValidBookmapPrice(price)) {
-            result[key] = price;
-        }
-    }
-    return result;
 };
 
 const getValidPricePair = (high: number | undefined, low: number | undefined): BookmapPricePair | undefined => {

@@ -16,7 +16,7 @@ export const showTradebooksForPosition: boolean = enableLeftPaneFeatures && fals
 export const checkMaxEntryThreshold: boolean = false;
 export const m15ChartEnabledAfterSeconds: number = 15 * 60;
 export const enableBookmapSocket: boolean = true;
-export const enableCamPivots: boolean = false;
+export const enableCamPivots: boolean = true;
 // true: Lite app renders the simple Lightweight Chart with order price lines.
 // false: Lite app skips chart creation/updates and shows only the minimal trading UI.
 export const showSimpleChart: boolean = false;
