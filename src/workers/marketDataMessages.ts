@@ -28,6 +28,8 @@ export interface ReplayCaptureConfig {
     socketUrl: string;
     cutoverEpochMs: number;
     finalizeAtEpochMs: number;
+    nextSequence: number;
+    recordingStartedAtEpochMs: number;
 }
 
 export interface LiveMarketDataWorkerStartPayload {

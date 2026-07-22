@@ -10,6 +10,8 @@ export interface ReplayCaptureWorkerConfig {
     socketUrl: string;
     cutoverEpochMs: number;
     finalizeAtEpochMs: number;
+    nextSequence: number;
+    recordingStartedAtEpochMs: number;
 }
 
 let recording: ReplayApi.ReplayManifest | null = null;
@@ -30,7 +32,7 @@ const getMarketDate = () => {
     return `${year}-${month}-${day}`;
 };
 
-export const getScheduledCutoverEpochMs = () => Config.Settings.marketOpenTime.getTime() - 5 * 60 * 1000;
+export const getScheduledCutoverEpochMs = () => Config.Settings.marketOpenTime.getTime() - 2 * 60 * 1000;
 
 export const canCaptureCurrentSession = () => {
     const regularSessionEndEpochMs = Config.Settings.marketOpenTime.getTime() + 6.5 * 60 * 60 * 1000;
@@ -68,6 +70,8 @@ export const start = async (
             cutoverEpochMs: recording.cutoverEpochMs,
             // Allow the final 100 ms trade flush and the 1 second capture flush to settle.
             finalizeAtEpochMs: regularSessionEndEpochMs + 5000,
+            nextSequence: (recording.lastSequence ?? -1) + 1,
+            recordingStartedAtEpochMs: recording.captureStartedAtEpochMs,
         };
     } catch (error) {
         console.warn('[replay capture] ProxyServer unavailable; live data will not be recorded', error);

@@ -294,9 +294,9 @@ const startLive = () => window.TradingApp.TOS.initialize().then(async () => {
         }
     };
 
-    // Before 09:25 the worker can start immediately and filter capture until the
+    // Before 09:28 the worker can start immediately and filter capture until the
     // scheduled boundary. A late launch waits for current M1 history first so that
-    // history becomes the replay baseline instead of leaving a gap from 09:25.
+    // history becomes the replay baseline instead of leaving a gap from 09:28.
     if (!isLateCaptureStart) {
         const capture = captureAllowed ? await ReplayCapture.start(watchlist[0].symbol) : undefined;
         startLiveMarketData(capture);

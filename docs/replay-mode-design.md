@@ -25,14 +25,15 @@ Replay mode uses the same page shell, charts, `DB` aggregation, chart rendering,
 3. Use a precise, non-overlapping history/replay cutover.
    - Exchange timezone is always `America/New_York`.
    - Market open is 09:30 ET.
-   - If ViteApp is ready before 09:25 ET, the cutover is 09:25:00. Historical M1 bootstrap data contains candles whose start is strictly before 09:25 and replayed time-and-sales begins at `tradeTime >= 09:25:00`.
-   - If ViteApp starts after 09:25, it first loads all currently available M1 data. That state, including the current partial minute, becomes the bootstrap; the recording cutover is the late startup time and time-and-sales capture starts immediately afterward.
-   - A late recording therefore replays from its actual startup boundary, not from 09:25, and does not claim to contain the missing earlier time-and-sales stream.
+   - If ViteApp is ready before 09:28 ET, the cutover is 09:28:00. Historical M1 bootstrap data contains candles whose start is strictly before 09:28 and replayed time-and-sales begins at `tradeTime >= 09:28:00`.
+   - If ViteApp starts after 09:28, it first loads all currently available M1 data. That state, including the current partial minute, becomes the bootstrap; the recording cutover is the late startup time and time-and-sales capture starts immediately afterward.
+   - A late recording therefore replays from its actual startup boundary, not from 09:28, and does not claim to contain the missing earlier time-and-sales stream.
    - The cutover is stored as an epoch timestamp in the manifest, so browser locale and daylight-saving rules cannot move it.
-   - The actual 09:30 market-open timestamp is stored separately because it cannot be derived as `cutover + 5 minutes` for a late recording.
+   - The actual 09:30 market-open timestamp is stored separately because it cannot be derived as `cutover + 2 minutes` for a late recording.
 
 4. A recording is for one symbol and one market date.
    - This matches the app's current single-stock watchlist rule.
+   - Reloading the live app resumes that recording instead of creating another selector entry. Existing same-day recordings from older builds are combined before capture resumes.
    - Selecting another symbol/day reloads `/replay?recording=<id>` and creates a clean application state.
    - Restart also reloads the page. Resetting all of the existing global maps, timers, chart objects, and tradebook state in place is unnecessarily risky.
 
@@ -172,7 +173,7 @@ interface ReplayBootstrap {
 
 The runtime snapshot contains no secrets, access tokens, account data, or API keys. Capturing the symbol's plan makes a replay reproducible even if the current Firestore plan changes later.
 
-For an on-time recording, ViteApp uploads an initial bootstrap after historical data loads and replaces it atomically with a final snapshot at the 09:25 cutover. For a late recording, live streaming waits until history is initialized, that M1 state is uploaded once, and capture starts from the late cutover. The server validates that no candle beginning at or after the recording cutover is present.
+For an on-time recording, ViteApp uploads an initial bootstrap after historical data loads and replaces it atomically with a final snapshot at the 09:28 cutover. For a late recording, live streaming waits until history is initialized, that M1 state is uploaded once, and capture starts from the late cutover. The server validates that no candle beginning at or after the recording cutover is present.
 
 ### Event line
 
@@ -181,7 +182,7 @@ Each JSONL line is an event envelope:
 ```ts
 interface StoredReplayEvent {
     sequence: number;
-    arrivalOffsetMs: number;       // performance.now() relative to capture start
+    arrivalOffsetMs: number;       // wall time relative to the day's first capture start
     marketTimeEpochMs: number;     // last exchange time represented by the event
     message: WorkerToMainMessage;  // timeSaleFlush or quote in v1
 }
@@ -189,7 +190,7 @@ interface StoredReplayEvent {
 
 The serializer converts `Date` fields such as `TimeSale.receivedTime` to epoch milliseconds; the replay worker restores them to `Date` before posting the message to the main thread.
 
-`arrivalOffsetMs` is captured when the worker delivers the 100 ms flush to the app. Capture-side buffering may combine event envelopes for network efficiency, but it must not change this timestamp, the stored flush boundary, or live delivery timing.
+`arrivalOffsetMs` is captured when the worker delivers the 100 ms flush to the app. It uses the first capture's wall-time origin so offsets continue across full-app reloads. Capture-side buffering may combine event envelopes for network efficiency, but it must not change this timestamp, the stored flush boundary, or live delivery timing.
 
 Files rotate at a fixed size (for example 64 MiB). ProxyServer writes through one open `WriteStream` per active recording and honors stream backpressure. Closed chunks may be gzip-compressed. The current open chunk remains plain append-only JSONL so a crash can be recovered by discarding only a malformed trailing line.
 
@@ -206,7 +207,7 @@ WS   /replay/recordings/:id/capture
 POST /replay/recordings/:id/finalize
 ```
 
-- `POST` creates the directory and manifest, then returns the recording ID and capture WebSocket URL.
+- `POST` creates the directory and manifest, or resumes the existing recording for that symbol/date, then returns the recording ID and capture WebSocket URL. Legacy duplicate recordings are combined first so discovery exposes at most one recording per symbol/date.
 - `PUT bootstrap` writes to a temporary file, validates it, then renames it atomically.
 - The capture WebSocket accepts batches of event envelopes. Batching reduces browser/network overhead while every envelope retains its own sequence and timing.
 - `finalize` flushes and closes streams, validates counts/coverage, writes final manifest state, and optionally compresses closed chunks.
@@ -322,7 +323,7 @@ Recommended performance workflow:
 
 - ProxyServer unavailable during live capture: live data continues; replay capture shows disconnected.
 - Capture queue full or WebSocket backpressure: drop capture batches rather than live market updates, increment a gap counter, and mark the recording incomplete.
-- ViteApp starts after 09:25: initialize current M1 history first and create a valid late-start recording. It is complete if it runs normally through session finalization, but it is not an opening-performance fixture.
+- ViteApp first starts after 09:28 with no recording for that date: initialize current M1 history first and create a valid late-start recording. It is complete if it runs normally through session finalization, but it is not an opening-performance fixture.
 - Browser or ProxyServer crash: recover all complete JSONL lines, discard a partial last line, and mark incomplete.
 - Duplicate or out-of-order trades: preserve the already-recorded worker message exactly; do not “fix” it during replay.
 - App version differs from the capture version: warn but allow replay. This is expected when measuring a fix against an older fixture.
@@ -368,11 +369,11 @@ The implementation is enabled by `enableReplayCapture` in `src/config/globalSett
 
 1. Start ProxyServer with `npm start`. Recordings are stored under `ProxyServer/data/replay/` by default; set `REPLAY_DATA_ROOT` to override the location.
 2. Start ViteApp normally. When the watchlist contains one symbol and the market-data worker is enabled, ViteApp creates one recording and opens one persistent capture WebSocket.
-3. For an on-time launch, capture begins at 09:25. For a late launch, ViteApp loads current M1 history first and then begins capture at a new late cutover. The worker sends accumulated capture envelopes to ProxyServer once per second; live delivery to ViteApp remains on its existing 100 ms cadence.
+3. For an on-time launch, capture begins at 09:28. For a first late launch, ViteApp loads current M1 history first and then begins capture at a late cutover. A same-day reload resumes the existing cutover and continues its event sequence and arrival timeline. The worker sends accumulated capture envelopes to ProxyServer once per second; live delivery to ViteApp remains on its existing 100 ms cadence.
 4. ViteApp uploads the appropriate boundary bootstrap and automatically finalizes the recording just after the regular 16:00 ET close.
 5. Open `/replay`, select a date/symbol recording, and use Play, Pause, speed, or Restart. The toolbar reports apply time, render time/rate, accepted trades, quotes, replay lag, long tasks, and heap size when supported.
 
-A recording is marked `complete` only if capture began at its declared cutover, a valid bootstrap exists, at least one event was saved, no sequence gap/drop was reported, and finalization completed. Closing the app early produces an `incomplete` recording that remains selectable for debugging.
+A recording is marked `complete` only if capture began at its declared cutover, a valid bootstrap exists, at least one event was saved, no sequence gap/drop was reported, and finalization completed. Closing the app early temporarily marks it `incomplete`; loading the full app again resumes the same symbol/date recording.
 
 ProxyServer validation is run with `npm test`. ViteApp validation is run with `npx tsc --noEmit` and `npm run build`.
 

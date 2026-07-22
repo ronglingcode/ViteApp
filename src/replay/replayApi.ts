@@ -19,6 +19,7 @@ export interface ReplayManifest {
     eventCount: number;
     tradeRecordCount: number;
     quoteEventCount: number;
+    lastSequence: number;
     droppedCaptureBatchCount: number;
     bootstrapAvailable: boolean;
     status: 'recording' | 'complete' | 'incomplete' | 'corrupt';
@@ -73,7 +74,8 @@ export const createRecording = async (input: {
     captureStartedAtEpochMs: number;
 }) => {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 1500);
+    // Reusing a day can include a one-time merge of recordings made by older builds.
+    const timeout = setTimeout(() => controller.abort(), 10_000);
     try {
         return await requestJson<{ manifest: ReplayManifest; capturePath: string }>('/replay/recordings', {
             method: 'POST',

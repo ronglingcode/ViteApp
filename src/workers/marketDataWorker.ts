@@ -134,18 +134,18 @@ class ReplayCaptureSink {
     private finalizeTimer: ReturnType<typeof setTimeout> | null = null;
     private finalizeRetryTimer: ReturnType<typeof setTimeout> | null = null;
     private pending: StoredCaptureEvent[] = [];
-    private sequence = 0;
+    private sequence: number;
     private droppedCaptureBatchCount = 0;
     private finalizeRequested = false;
     private finalizeSent = false;
     private finalized = false;
     private stopped = false;
-    private readonly startedAt = performance.now();
-
     constructor(
         private readonly config: Messages.ReplayCaptureConfig,
         private readonly postStatus: PostToMain,
-    ) { }
+    ) {
+        this.sequence = config.nextSequence;
+    }
 
     start() {
         this.socket = new WebSocket(this.config.socketUrl);
@@ -214,7 +214,7 @@ class ReplayCaptureSink {
         }
         this.pending.push({
             sequence: this.sequence++,
-            arrivalOffsetMs: performance.now() - this.startedAt,
+            arrivalOffsetMs: Math.max(0, Date.now() - this.config.recordingStartedAtEpochMs),
             marketTimeEpochMs,
             message: captureMessage,
         });
@@ -263,6 +263,7 @@ class ReplayCaptureSink {
         this.finalizeRetryTimer = null;
         this.finalizeRequested = finalize;
         if (finalize) this.finishRecording();
+        else this.flush();
         this.socket?.close();
         this.socket = null;
     }
