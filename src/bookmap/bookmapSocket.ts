@@ -9,6 +9,7 @@ import * as Models from "../models/models";
 import type * as TradingPlansModels from "../models/tradingPlans/tradingPlansModels";
 import * as TradingPlans from "../models/tradingPlans/tradingPlans";
 import * as TradebooksManager from "../tradebooks/tradebooksManager";
+import { BookmapWallReversal } from "../tradebooks/bookmapWallReversal";
 import * as KeyboardHandler from "../controllers/keyboardHandler";
 import * as Handler from "../controllers/handler";
 import * as ExitOrderPairs from "../utils/exitOrderPairs";
@@ -615,6 +616,10 @@ const handleCustomButtonClick = (data: any) => {
         if (isChartHotkey) {
             sendActionLog(symbol, `Received hotkey ${shiftKey ? "Shift+" : ""}${keyCode}${priceText}`);
         }
+        if (isChartHotkey && (keyCode === "KeyB" || keyCode === "KeyS")) {
+            handleWallReversalHoverHotkey(symbol, keyCode, sourcePrice, data);
+            return;
+        }
         KeyboardHandler.handleKeyPressed(keyCode, shiftKey, symbol, sourcePrice, isChartHotkey ? "Bookmap" : undefined);
         return;
     }
@@ -640,6 +645,46 @@ const handleCustomButtonClick = (data: any) => {
         ...Models.getDefaultEntryParameters(),
         entryMethod: entryMethod || undefined,
         bookmapOrderbook: bookmapOrderbook,
+    });
+};
+
+const handleWallReversalHoverHotkey = (
+    symbol: string,
+    keyCode: string,
+    sourcePrice: number | undefined,
+    data: any,
+) => {
+    if (sourcePrice === undefined) {
+        console.warn(`[BookmapSocket] ${keyCode} hover hotkey missing a valid price`, data);
+        return;
+    }
+
+    let tradebookId = getString(data.tradebook_id || data.tradebookId);
+    let tradebook = TradebooksManager.getTradebookByID(symbol, tradebookId);
+    if (!(tradebook instanceof BookmapWallReversal)) {
+        console.warn(
+            `[BookmapSocket] ${keyCode} hover hotkey missing a matching wall-reversal tradebook for ${symbol}`,
+            data);
+        return;
+    }
+
+    let isLong = keyCode === "KeyB";
+    if (tradebook.isLong !== isLong) {
+        console.warn(
+            `[BookmapSocket] ${keyCode} hover hotkey has the wrong tradebook side: ${tradebookId}`,
+            data);
+        return;
+    }
+
+    let entryMethod = getString(data.entry_method || data.entryMethod);
+    console.log(
+        `[BookmapSocket] Starting ${tradebook.buttonLabel} ${entryMethod} for ${symbol}`
+        + ` with stop entry at hovered price ${sourcePrice}`);
+    tradebook.startEntry(false, false, {
+        ...Models.getDefaultEntryParameters(),
+        entryMethod: entryMethod || tradebook.getEntryMethods()[0],
+        bookmapOrderbook: normalizeBookmapOrderbook(data.orderbook, symbol),
+        entryPriceOverride: sourcePrice,
     });
 };
 

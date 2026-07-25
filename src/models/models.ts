@@ -1991,6 +1991,7 @@ export interface TradebookEntryParameters {
     useMarketOrderWithTightStop: boolean,
     entryMethod?: string,
     bookmapOrderbook?: BookmapOrderbookSnapshot,
+    entryPriceOverride?: number,
 }
 export const getDefaultEntryParameters = () => {
     let ret: TradebookEntryParameters = {

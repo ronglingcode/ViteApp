@@ -138,7 +138,16 @@ export class BookmapWallReversal extends Tradebook {
         let symbol = this.symbol;
         let logTags = Models.generateLogTags(symbol, `${symbol}_${this.getBookmapLogSuffix()}`);
 
-        let entryPrice = Chart.getBreakoutEntryPrice(symbol, this.isLong, useMarketOrder, Models.getDefaultEntryParameters());
+        let entryPriceOverride = parameters.entryPriceOverride;
+        if (entryPriceOverride !== undefined
+            && (!Number.isFinite(entryPriceOverride) || entryPriceOverride <= 0)) {
+            Firestore.logError(`invalid entry price override: ${entryPriceOverride}`, logTags);
+            return 0;
+        }
+        let entryPrice = entryPriceOverride === undefined
+            ? Chart.getBreakoutEntryPrice(
+                symbol, this.isLong, useMarketOrder, Models.getDefaultEntryParameters())
+            : Helper.roundPrice(symbol, entryPriceOverride);
         let stopOutPrice = Chart.getCustomStopLossPrice(symbol, this.isLong);
         if (stopOutPrice == 0) {
             // default to low of the day
