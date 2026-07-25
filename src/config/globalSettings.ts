@@ -20,6 +20,18 @@ export const enableCamPivots: boolean = true;
 // true: Lite app renders the simple Lightweight Chart with order price lines.
 // false: Lite app skips chart creation/updates and shows only the minimal trading UI.
 export const showSimpleChart: boolean = false;
+export const notificationSettings = {
+    enabled: true,
+    soundEnabled: true,
+    speechEnabled: true,
+    firstPopToVwap: {
+        enabled: true,
+        // Keep this consistent with the existing "near against VWAP" definition.
+        approachAtrMultiplier: 0.15,
+        // Allows a just-filled long to be reconciled after Schwab refreshes account state.
+        positionReconciliationWindowMs: 5000,
+    },
+};
 // Track and use the pre-breakout swing pullback low/high for Bookmap wall breaks.
 export const enableBookmapWallBreakSwingPullback: boolean = false;
 // false: remind only. true: block core/runner exit adjustments until coreInvalidationLevel is set.

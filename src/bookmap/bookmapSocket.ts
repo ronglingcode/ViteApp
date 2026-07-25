@@ -613,7 +613,12 @@ const handleCustomButtonClick = (data: any) => {
         let priceText = sourcePrice !== undefined ? ` @ ${sourcePrice}` : "";
         console.log(`[BookmapSocket] Handling ${data.button_name || data.button_id || "button"} as ${shiftKey ? "Shift+" : ""}${keyCode}${priceText} for ${symbol}`);
         if (isChartHotkey) {
-            sendActionLog(symbol, `Received hotkey ${shiftKey ? "Shift+" : ""}${keyCode}${priceText}`);
+            let priceUsed = sourcePrice !== undefined ? sourcePrice.toFixed(2) : "none";
+            let shiftText = shiftKey ? " + shift" : "";
+            sendActionLog(
+                symbol,
+                `hover_key ${symbol} ${keyCode} @ ${priceUsed}${shiftText}`,
+            );
         }
         KeyboardHandler.handleKeyPressed(keyCode, shiftKey, symbol, sourcePrice, isChartHotkey ? "Bookmap" : undefined);
         return;

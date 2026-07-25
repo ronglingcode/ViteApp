@@ -3,6 +3,70 @@ body {
     margin: 1px;
 }
 
+.notificationCenter {
+    position: fixed;
+    top: 8px;
+    left: 50%;
+    z-index: 10000;
+    width: min(720px, calc(100vw - 24px));
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.tradingNotification {
+    position: relative;
+    box-sizing: border-box;
+    margin-bottom: 8px;
+    padding: 12px 42px 11px 14px;
+    border: 2px solid #b45309;
+    border-radius: 5px;
+    background: #fffbeb;
+    color: #451a03;
+    box-shadow: 0 5px 18px rgb(0 0 0 / 28%);
+    pointer-events: auto;
+}
+
+.tradingNotification.critical {
+    border-color: #b91c1c;
+    background: #fef2f2;
+    color: #450a0a;
+}
+
+.tradingNotification.info {
+    border-color: #0369a1;
+    background: #f0f9ff;
+    color: #082f49;
+}
+
+.notificationTitle {
+    margin-bottom: 4px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.notificationMessage {
+    font-size: 14px;
+    line-height: 1.35;
+}
+
+.notificationDetails {
+    margin-top: 5px;
+    font-size: 12px;
+    opacity: 0.75;
+}
+
+.notificationDismiss {
+    position: absolute;
+    top: 5px;
+    right: 7px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 25px;
+    line-height: 1;
+    cursor: pointer;
+}
+
 .controls {
     padding: 5px 10px 0 10px;
 }

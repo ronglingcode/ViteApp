@@ -250,7 +250,7 @@ export const isMarketOpenTime = (jsDatdeObj: Date, currentDay: Date) => {
         d.getMinutes() == open.getMinutes();
 };
 
-export const speak = (message: string) => {
+export const speak = (message: string, maxMinutesSinceOpen = 85) => {
     let now = Date.now();
     let lastSpokenAt = spokenMessages.get(message);
     if (lastSpokenAt && now - lastSpokenAt < speechMessageCooldownInMs) {
@@ -265,7 +265,7 @@ export const speak = (message: string) => {
     });
 
     let minutes = getMinutesSinceMarketOpen(getCurrentMarketTime());
-    if (minutes < 85) {
+    if (minutes < maxMinutesSinceOpen) {
         let msg = new SpeechSynthesisUtterance();
         msg.text = message;
         window.speechSynthesis.speak(msg);

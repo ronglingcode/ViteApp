@@ -40,6 +40,7 @@ import * as Runtime from './replay/runtime';
 import * as ReplayApi from './replay/replayApi';
 import * as ReplayCapture from './replay/replayCapture';
 import * as ReplayUi from './replay/replayUi';
+import * as NotificationEngine from './notifications/notificationEngine';
 declare let window: Models.MyWindow;
 
 console.log('main.ts loaded');
@@ -49,6 +50,7 @@ window.HybridApp.Algo = {
     RiskManager: RiskManager,
     Watchlist: Watchlist,
     AutoTrader: AutoTrader,
+    NotificationEngine: NotificationEngine,
 };
 window.HybridApp.Api = {
     Broker: Broker,
@@ -174,6 +176,7 @@ const loadHistoricalChartsWithRetry = async (symbol: string, todayString: string
             let priceHistory = await MarketData.getFullPriceHistory(symbol, Helper.isFutures(symbol), todayString);
             let initialized = DB.initialize(symbol, priceHistory.today1MinuteBars, priceHistory.dailyBars);
             if (initialized) {
+                NotificationEngine.initializeSymbol(symbol);
                 if (Runtime.capabilities.bookmap) {
                     BookmapSocket.sendKeyLevelConfigForSymbol(symbol);
                 }
@@ -237,6 +240,7 @@ const initializeReplayCharts = (manifest: ReplayApi.ReplayManifest, bootstrap: R
     if (!initialized) {
         throw new Error(`Replay bootstrap could not initialize ${manifest.symbol}`);
     }
+    NotificationEngine.initializeSymbol(manifest.symbol);
     MarketData.setPreviousDayPremarketVolume(manifest.symbol, bootstrap.premarketDollarCollection);
     Chart.updateAccountUIStatusForSymbol(manifest.symbol);
 };
@@ -398,6 +402,7 @@ const startApplication = async () => {
     }
 };
 
+NotificationEngine.initialize();
 startApplication();
 
 let htmlBody = document.getElementsByTagName("body")[0];

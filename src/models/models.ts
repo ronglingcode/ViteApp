@@ -44,6 +44,7 @@ export interface MyWindow extends Window {
             RiskManager: any,
             Watchlist: any,
             AutoTrader: any,
+            NotificationEngine: any,
         },
         Api: {
             Broker: any,
