@@ -4,7 +4,6 @@
  * order book snapshots, heartbeats, and breakout signals.
  */
 
-import { handlePriceSelect } from "./bookmapActions";
 import * as Helper from "../utils/helper";
 import * as Models from "../models/models";
 import type * as TradingPlansModels from "../models/tradingPlans/tradingPlansModels";
@@ -116,21 +115,11 @@ export const createWebSocket = () => {
             console.log(data);
         }
         let symbol = normalizeSymbol(data.symbol || "");
-        let rawPrice = getNumber(data.price);
-        let newPrice = rawPrice > 0 ? Helper.roundPrice(symbol, rawPrice) : 0;
-
 
         if (type === "heartbeat") {
             // price tracked via heartbeat if needed later
         } else if (type === "breakout") {
             console.log(`[BookmapSocket] BREAKOUT [${symbol}]: level=${data.breakoutLevel}, timestamp=${data.timestamp}`);
-        } else if (type === "priceSelect") {
-            handlePriceSelect({
-                symbol,
-                price: newPrice,
-                keyCode: data.keyCode || "cmd",
-                timestamp: data.timestamp,
-            });
         } else if (type === "custom_button_click") {
             console.log("[BookmapSocket] custom_button_click");
             console.log(data)

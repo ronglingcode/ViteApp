@@ -98,7 +98,6 @@ src/
 │
 ├── bookmap/                   # Bookmap plugin integration
 │   ├── bookmapSocket.ts       # WebSocket client for Bookmap Active Trader plugin
-│   ├── bookmapActions.ts      # priceSelect event routing to trading actions
 │   └── largeOrderTracker.ts   # Large order wall state tracking across snapshots
 │
 ├── data/
