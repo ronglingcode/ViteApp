@@ -57,6 +57,10 @@ ViteApp/
 └── package.json   # Dependencies and scripts
 ```
 
+## Documentation
+
+- [Notification engine](docs/notification-engine.md)
+
 ## License
 
 MIT
