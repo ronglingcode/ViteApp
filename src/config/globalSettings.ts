@@ -20,6 +20,12 @@ export const enableCamPivots: boolean = true;
 // true: Lite app renders the simple Lightweight Chart with order price lines.
 // false: Lite app skips chart creation/updates and shows only the minimal trading UI.
 export const showSimpleChart: boolean = false;
+export const notificationSettings = {
+    firstTouchToVwap: {
+        // Disable only this notification rule when needed.
+        enabled: true,
+    },
+};
 // Track and use the pre-breakout swing pullback low/high for Bookmap wall breaks.
 export const enableBookmapWallBreakSwingPullback: boolean = false;
 // false: remind only. true: block core/runner exit adjustments until coreInvalidationLevel is set.

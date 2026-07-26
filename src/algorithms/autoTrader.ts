@@ -9,6 +9,7 @@ import * as OrderFlow from '../controllers/orderFlow';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import * as VwapPatterns from './vwapPatterns';
 import * as GlobalSettings from '../config/globalSettings';
+import * as NotificationEngine from '../notifications/notificationEngine';
 import { TradebookID } from '../tradebooks/tradebookIds';
 
 declare let window: Models.MyWindow;
@@ -622,6 +623,7 @@ export const onNewTimeAndSalesData = (symbol: string, newPrice: number, isNewCan
     checkAlgoPendingCondition(symbol);
     updatePullbackDepth(symbol, newPrice);
     alertHigherVolume(symbol);
+    NotificationEngine.onPriceTick(symbol, newPrice);
     TradebooksManager.onNewTimeAndSalesDataForSymbol(symbol, newPrice);
     if (!shouldUpdateLiveChartAnnotations(symbol)) {
         return;
