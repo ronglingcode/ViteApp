@@ -91,7 +91,10 @@ const createTimeFrameChart = (timeframe: number, htmlElement: HTMLElement, tabIn
         timeframe: timeframe,
         chart: lwChart,
         volumeSeries: lwChart.addHistogramSeries(ChartSettings.volumeSeriesSettings),
-        candleSeries: lwChart.addCandlestickSeries(ChartSettings.candlestickSeriesSettings),
+        candleSeries: lwChart.addCandlestickSeries({
+            ...ChartSettings.candlestickSeriesSettings,
+            visible: GlobalSettings.showCandles,
+        }),
         keyAreaSeriesList: [],
         vwapSeries: lwChart.addLineSeries(ChartSettings.vwapSettings),
         markers: [],
