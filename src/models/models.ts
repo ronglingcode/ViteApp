@@ -325,6 +325,8 @@ export interface SymbolData {
     volumes: LineSeriesData[],
     totalVolume: number,
     totalTradingAmount: number,
+    bookmapVwapSeedVolume: number,
+    bookmapVwapSeedNotional: number,
     schwabLevelOneQuote: LevelOneQuote,
     maxTimeSaleTimestamp: MaxTimeSaleTimestamp,
     camPivots: CamarillaPivots,
@@ -1016,6 +1018,8 @@ export const getDefaultSymbolData = () => {
         OpenRangeLineSeriesData: getEmptyOpenRangeLineSeriesData(),
         totalVolume: 0,
         totalTradingAmount: 0,
+        bookmapVwapSeedVolume: 0,
+        bookmapVwapSeedNotional: 0,
         schwabLevelOneQuote: {
             bidPrice: 0,
             askPrice: 0,

@@ -181,6 +181,7 @@ const loadHistoricalChartsWithRetry = async (symbol: string, todayString: string
             if (initialized) {
                 if (Runtime.capabilities.bookmap) {
                     BookmapSocket.sendKeyLevelConfigForSymbol(symbol);
+                    BookmapSocket.sendVwapSeedForSymbol(symbol);
                 }
                 return priceHistory;
             }

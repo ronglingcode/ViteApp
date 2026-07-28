@@ -14,6 +14,7 @@ import * as KeyboardHandler from "../controllers/keyboardHandler";
 import * as Handler from "../controllers/handler";
 import * as ExitOrderPairs from "../utils/exitOrderPairs";
 import * as RiskManager from "../algorithms/riskManager";
+import { buildVwapSeedForSymbol } from "./vwapSeed";
 declare let window: Models.MyWindow;
 
 const BOOKMAP_WS_URL = "ws://localhost:8765";
@@ -83,6 +84,7 @@ let accountUiRefreshListenerRegistered = false;
 let actionLogListenerRegistered = false;
 let marketLevelRefreshListenerRegistered = false;
 const knownAccountSnapshotSymbols = new Set<string>();
+const sentVwapSeedKeys = new Set<string>();
 
 export const createWebSocket = () => {
     if (websocket && (websocket.readyState === WebSocket.CONNECTING || websocket.readyState === WebSocket.OPEN)) {
@@ -101,6 +103,7 @@ export const createWebSocket = () => {
 
     websocket.onopen = function () {
         console.log("[BookmapSocket] Connected");
+        sentVwapSeedKeys.clear();
         subscribeToOrderbook();
         pushBookmapConfigsForAllSymbols();
         startPeriodicConfigPush();
@@ -137,6 +140,7 @@ export const createWebSocket = () => {
     websocket.onclose = function () {
         console.log(`[BookmapSocket] Disconnected, reconnecting in ${RECONNECT_DELAY_MS}ms...`);
         stopPeriodicConfigPush();
+        sentVwapSeedKeys.clear();
         websocket = null;
         if (reconnectTimeoutId === null) {
             reconnectTimeoutId = setTimeout(() => {
@@ -167,6 +171,7 @@ const pushBookmapConfigsForAllSymbols = () => {
     sendKeyLevelConfigsForAllSymbols();
     sendExitOrderPairConfigsForAllSymbols();
     sendAccountStatesForAllSymbols();
+    sendVwapSeedsForAllSymbols();
 };
 
 const startPeriodicConfigPush = () => {
@@ -281,6 +286,35 @@ export const sendAccountStateForSymbol = (symbol: string) => {
         executions: executions,
         timestamp: Date.now(),
     }));
+};
+
+export const sendVwapSeedsForAllSymbols = () => {
+    let watchlist = Models.getWatchlist();
+    for (let i = 0; i < watchlist.length; i++) {
+        sendVwapSeedForSymbol(watchlist[i].symbol);
+    }
+};
+
+export const sendVwapSeedForSymbol = (symbol: string) => {
+    if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+        return;
+    }
+
+    const seed = buildVwapSeedForSymbol(symbol);
+    if (!seed) {
+        return;
+    }
+
+    const seedKey = `${seed.symbol}:${seed.sessionDate}:${seed.continueFromTimeMs}`;
+    if (sentVwapSeedKeys.has(seedKey)) {
+        return;
+    }
+
+    websocket.send(JSON.stringify(seed));
+    sentVwapSeedKeys.add(seedKey);
+    console.log(`[BookmapSocket] Sent VWAP seed for ${symbol}: `
+        + `vwap=${(seed.cumulativeNotional / seed.cumulativeVolume).toFixed(4)}, `
+        + `volume=${seed.cumulativeVolume}, continueFrom=${new Date(seed.continueFromTimeMs).toISOString()}`);
 };
 
 const registerAccountUiRefreshListener = () => {

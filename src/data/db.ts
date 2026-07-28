@@ -265,6 +265,11 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyC
     let vwapCorrectionVolumeSum = vwapCorrection.volumeSum;
     let vwapCorrectionTradingAmount = vwapCorrection.tradingSum;
     let vwapCorrected = false;
+    const vwapSeedCutoffTimeMs = Config.Settings.marketOpenTime.getTime() - 25 * 60_000;
+    const vwapCorrectionStartTimeMs = Config.Settings.marketOpenTime.getTime() - 30 * 60_000;
+    const hasVwapCorrection = vwapCorrectionVolumeSum > 0 && vwapCorrectionTradingAmount > 0;
+    symbolData.bookmapVwapSeedVolume = hasVwapCorrection ? vwapCorrectionVolumeSum : 0;
+    symbolData.bookmapVwapSeedNotional = hasVwapCorrection ? vwapCorrectionTradingAmount : 0;
 
     data.sort(function (a, b) { return a.datetime - b.datetime });
     let prevDatetime = 0;
@@ -296,6 +301,11 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyC
         }
 
         let newTradingAmount = element.volume * Models.getTypicalPrice(element);
+        if (element.datetime < vwapSeedCutoffTimeMs
+            && (!hasVwapCorrection || element.datetime >= vwapCorrectionStartTimeMs)) {
+            symbolData.bookmapVwapSeedVolume += element.volume;
+            symbolData.bookmapVwapSeedNotional += newTradingAmount;
+        }
 
         if (newCandle.minutesSinceMarketOpen < 0) {
             // update pre-market indicators
@@ -433,6 +443,11 @@ const updateFromTimeSaleCore = (timesale: Models.TimeSale): TimeSaleApplyMeta | 
     }
     let timeAndSalesTime = Helper.numberToDate(timesale.tradeTime);
     TimeHelper.setCurrentMarketTime(timeAndSalesTime);
+    const vwapSeedCutoffTimeMs = Config.Settings.marketOpenTime.getTime() - 25 * 60_000;
+    if (timesale.tradeTime != null && timesale.tradeTime < vwapSeedCutoffTimeMs) {
+        symbolData.bookmapVwapSeedVolume += lastSize;
+        symbolData.bookmapVwapSeedNotional += lastPrice * lastSize;
+    }
     symbolData.totalVolume += lastSize;
     symbolData.totalTradingAmount += (lastPrice * lastSize);
     let newVwapValue = symbolData.totalTradingAmount / symbolData.totalVolume;
