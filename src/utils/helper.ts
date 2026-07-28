@@ -7,7 +7,7 @@ export const getCurrentMarketTime = () => {
 };
 
 export const returnDefaultEntryMethods = () => {
-    return ["0.3 R", "0.6 R"];
+    return ["0.5 R", "0.9 R"];
 }
 export const getRiskMultiplierFromEntryMethod = (entryMethod: string | undefined, defaultMultiplier = 1) => {
     if (!entryMethod) {
