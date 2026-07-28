@@ -658,13 +658,20 @@ export const updateFromTimeSalesBatch = (sales: Models.TimeSale[]) => {
 };
 
 const setColorForVolume = (candles: Models.CandlePlus[], volumes: Models.LineSeriesData[], currentIndex: number) => {
+    let volume = volumes[currentIndex];
+    if (!volume) {
+        return;
+    }
+    if (!GlobalSettings.showCandles) {
+        volume.color = ChartSettings.defaultVolumeColor;
+        return;
+    }
     if (currentIndex == 0) {
         return;
     }
     let candle = candles[currentIndex];
-    let volume = volumes[currentIndex];
     let previousVolume = volumes[currentIndex - 1];
-    if (!candle || !volume || !previousVolume) {
+    if (!candle || !previousVolume) {
         return;
     }
     if (candle.minutesSinceMarketOpen == 0) {
