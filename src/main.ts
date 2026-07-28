@@ -40,6 +40,7 @@ import * as Runtime from './replay/runtime';
 import * as ReplayApi from './replay/replayApi';
 import * as ReplayCapture from './replay/replayCapture';
 import * as ReplayUi from './replay/replayUi';
+import * as PremarketSetupReminder from './ui/premarketSetupReminder';
 declare let window: Models.MyWindow;
 
 console.log('main.ts loaded');
@@ -128,8 +129,12 @@ if (syncAccountButton) {
 let testPopButton = document.getElementById("test_popup");
 if (testPopButton) {
     testPopButton.addEventListener("click", () => {
-        TraderFocus.test();
+        PremarketSetupReminder.showPremarketSetupReminderForTest();
     });
+}
+
+if (!Runtime.isReplayMode()) {
+    PremarketSetupReminder.schedulePremarketSetupReminder();
 }
 
 let toggleManagementCardExitBlockButton = document.getElementById("toggle_management_card_exit_block");

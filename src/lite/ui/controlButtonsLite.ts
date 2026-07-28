@@ -1,6 +1,7 @@
 import * as RiskManager from '../../algorithms/riskManager';
 import * as GlobalSettings from '../../config/globalSettings';
 import * as Models from '../../models/models';
+import * as PremarketSetupReminder from '../../ui/premarketSetupReminder';
 
 interface ControlButtonCallbacks {
     setOrderStatus: (message: string, isError?: boolean) => void;
@@ -75,10 +76,7 @@ export const setupMainAppControlButtons = (callbacks: ControlButtonCallbacks) =>
         runControlAction('Updated account UI', callbacks, callbacks.refreshAccount);
     });
     document.getElementById('test_popup')?.addEventListener('click', () => {
-        runControlAction('Opened test popup', callbacks, async () => {
-            let TraderFocus = await import('../../controllers/traderFocus');
-            TraderFocus.test();
-        });
+        PremarketSetupReminder.showPremarketSetupReminderForTest();
     });
     document.getElementById('toggle_management_card_exit_block')?.addEventListener('click', () => {
         let enabled = GlobalSettings.toggleBlockExitAdjustmentsWithoutCommittedTradeManagementCard();
