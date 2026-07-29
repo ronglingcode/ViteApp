@@ -794,6 +794,9 @@ const normalizeBookmapOrderbook = (value: any, fallbackSymbol: string): Models.B
     let bestBid = getNumber(value.bestBid);
     let bestAsk = getNumber(value.bestAsk);
     let wallThreshold = getNumber(value.wallThreshold);
+    let absoluteWallThreshold = getNumber(value.absoluteWallThreshold);
+    let percentileWallThreshold = getNumber(value.percentileWallThreshold);
+    let effectiveWallThreshold = getNumber(value.effectiveWallThreshold);
     let timestamp = getNumber(value.timestamp);
     if (largeBids.length === 0 && largeAsks.length === 0 && bestBid <= 0 && bestAsk <= 0) {
         return undefined;
@@ -809,6 +812,15 @@ const normalizeBookmapOrderbook = (value: any, fallbackSymbol: string): Models.B
     }
     if (wallThreshold > 0) {
         snapshot.wallThreshold = wallThreshold;
+    }
+    if (absoluteWallThreshold > 0) {
+        snapshot.absoluteWallThreshold = absoluteWallThreshold;
+    }
+    if (percentileWallThreshold > 0) {
+        snapshot.percentileWallThreshold = percentileWallThreshold;
+    }
+    if (effectiveWallThreshold > 0) {
+        snapshot.effectiveWallThreshold = effectiveWallThreshold;
     }
     if (bestBid > 0) {
         snapshot.bestBid = bestBid;

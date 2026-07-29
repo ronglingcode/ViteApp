@@ -4,10 +4,13 @@ import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as TradingState from '../models/tradingState';
 import * as GlobalSettings from '../config/globalSettings';
 import * as Firestore from '../firestore';
+import {
+    getBookmapSizeThreshold,
+    meetsBookmapSizeThreshold,
+} from '../bookmap/wallThreshold';
 
 export const BatchCount = GlobalSettings.batchCount;
 const BookmapWallTargetCount = 5;
-const BookmapWallMinSize = 5_000;
 const DefaultRiskReward = 3;
 
 export const getTargetPriceByRiskReward = (symbol: string, isLong: boolean,
@@ -37,6 +40,7 @@ const getEntryTargetPrices = (
     bookmapOrderbook: Models.BookmapOrderbookSnapshot | undefined,
     logTags: Models.LogTags) => {
     const target3R = getTargetPriceByRiskReward(symbol, isLong, entryPrice, riskReferencePrice, DefaultRiskReward);
+    const wallThreshold = getBookmapSizeThreshold(bookmapOrderbook);
     const wallTargets = getBookmapWallTargets(symbol, entryPrice, isLong, bookmapOrderbook);
     const targets = wallTargets.slice(0, BookmapWallTargetCount);
 
@@ -45,7 +49,7 @@ const getEntryTargetPrices = (
     }
 
     if (wallTargets.length > 0) {
-        Firestore.logInfo(`${symbol} initial targets use ${Math.min(wallTargets.length, BookmapWallTargetCount)} Bookmap wall(s), rest 3R @ ${target3R}`, logTags);
+        Firestore.logInfo(`${symbol} initial targets use ${Math.min(wallTargets.length, BookmapWallTargetCount)} Bookmap wall(s) >= ${wallThreshold}, rest 3R @ ${target3R}`, logTags);
     } else {
         Firestore.logInfo(`${symbol} initial targets use 3R only @ ${target3R}`, logTags);
     }
@@ -69,7 +73,7 @@ const getBookmapWallTargets = (
     const seenPrices = new Set<number>();
     const targets: number[] = [];
     rawLevels.forEach(([price, size]) => {
-        if (!Number.isFinite(price) || !Number.isFinite(size) || size <= BookmapWallMinSize) {
+        if (!Number.isFinite(price) || !meetsBookmapSizeThreshold(size, bookmapOrderbook)) {
             return;
         }
         if ((isLong && price <= entryPrice) || (!isLong && price >= entryPrice)) {
@@ -110,4 +114,3 @@ const splitTargetsEvenly = (
 
     return results;
 };
-
