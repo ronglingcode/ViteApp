@@ -41,14 +41,16 @@ const getEntryTargetPrices = (
     logTags: Models.LogTags) => {
     const target3R = getTargetPriceByRiskReward(symbol, isLong, entryPrice, riskReferencePrice, DefaultRiskReward);
     const wallThreshold = getBookmapSizeThreshold(bookmapOrderbook);
-    const wallTargets = getBookmapWallTargets(symbol, entryPrice, isLong, bookmapOrderbook);
+    const wallTargets = getBookmapWallTargets(symbol, entryPrice, isLong, bookmapOrderbook, wallThreshold);
     const targets = wallTargets.slice(0, BookmapWallTargetCount);
 
     while (targets.length < BatchCount) {
         targets.push(target3R);
     }
 
-    if (wallTargets.length > 0) {
+    if (wallThreshold === undefined) {
+        Firestore.logInfo(`${symbol} Bookmap wall threshold unavailable; initial targets use 3R only @ ${target3R}`, logTags);
+    } else if (wallTargets.length > 0) {
         Firestore.logInfo(`${symbol} initial targets use ${Math.min(wallTargets.length, BookmapWallTargetCount)} Bookmap wall(s) >= ${wallThreshold}, rest 3R @ ${target3R}`, logTags);
     } else {
         Firestore.logInfo(`${symbol} initial targets use 3R only @ ${target3R}`, logTags);
@@ -60,8 +62,9 @@ const getBookmapWallTargets = (
     symbol: string,
     entryPrice: number,
     isLong: boolean,
-    bookmapOrderbook: Models.BookmapOrderbookSnapshot | undefined) => {
-    if (!bookmapOrderbook) {
+    bookmapOrderbook: Models.BookmapOrderbookSnapshot | undefined,
+    wallThreshold: number | undefined) => {
+    if (!bookmapOrderbook || wallThreshold === undefined) {
         return [];
     }
 
@@ -73,7 +76,7 @@ const getBookmapWallTargets = (
     const seenPrices = new Set<number>();
     const targets: number[] = [];
     rawLevels.forEach(([price, size]) => {
-        if (!Number.isFinite(price) || !meetsBookmapSizeThreshold(size, bookmapOrderbook)) {
+        if (!Number.isFinite(price) || !meetsBookmapSizeThreshold(size, wallThreshold)) {
             return;
         }
         if ((isLong && price <= entryPrice) || (!isLong && price >= entryPrice)) {
