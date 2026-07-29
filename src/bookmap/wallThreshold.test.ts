@@ -12,6 +12,15 @@ test("uses Bookmap's effective wall threshold directly", () => {
     }), 14_600);
 });
 
+test("reads the threshold from every snapshot without caching an older P97", () => {
+    assert.equal(getBookmapSizeThreshold({
+        effectiveWallThreshold: 20_000,
+    }), 20_000);
+    assert.equal(getBookmapSizeThreshold({
+        effectiveWallThreshold: 7_000,
+    }), 7_000);
+});
+
 test("does not guess a threshold when Bookmap omits an effective value", () => {
     assert.equal(getBookmapSizeThreshold(undefined), undefined);
     assert.equal(getBookmapSizeThreshold({}), undefined);
