@@ -14,6 +14,12 @@ import * as KeyboardHandler from "../controllers/keyboardHandler";
 import * as Handler from "../controllers/handler";
 import * as ExitOrderPairs from "../utils/exitOrderPairs";
 import * as RiskManager from "../algorithms/riskManager";
+import {
+    getBookmapWirePrice,
+    isSupportedBookmapWirePriceUnit,
+    normalizeBookmapWirePrice,
+    withBookmapWirePriceUnit,
+} from "./priceNormalization";
 import { buildVwapSeedForSymbol } from "./vwapSeed";
 declare let window: Models.MyWindow;
 
@@ -112,6 +118,10 @@ export const createWebSocket = () => {
     websocket.onmessage = function (messageEvent) {
         let data = JSON.parse(messageEvent.data);
         let type = data.type;
+        if (!isSupportedBookmapWirePriceUnit(data.priceUnit)) {
+            console.warn(`[BookmapSocket] Ignoring ${type || "message"} with unsupported priceUnit`, data);
+            return;
+        }
         if (type === "orderbook") {
             return;
         }
@@ -123,7 +133,8 @@ export const createWebSocket = () => {
         if (type === "heartbeat") {
             // price tracked via heartbeat if needed later
         } else if (type === "breakout") {
-            console.log(`[BookmapSocket] BREAKOUT [${symbol}]: level=${data.breakoutLevel}, timestamp=${data.timestamp}`);
+            let breakoutLevel = getBookmapWirePrice(data, "breakoutLevel");
+            console.log(`[BookmapSocket] BREAKOUT [${symbol}]: level=${breakoutLevel ?? "invalid"}, timestamp=${data.timestamp}`);
         } else if (type === "custom_button_click") {
             console.log("[BookmapSocket] custom_button_click");
             console.log(data)
@@ -226,7 +237,7 @@ export const sendKeyLevelConfigForSymbol = (symbol: string) => {
     const levels = getBookmapKeyLevelsForSymbol(symbol);
     const zones = getBookmapKeyZonesForSymbol(symbol);
     const marketLevels = getBookmapMarketLevelsForSymbol(symbol);
-    websocket.send(JSON.stringify({
+    websocket.send(JSON.stringify(withBookmapWirePriceUnit({
         type: "key_levels_config",
         symbol: symbol,
         levels: levels,
@@ -234,7 +245,7 @@ export const sendKeyLevelConfigForSymbol = (symbol: string) => {
         previousDay: marketLevels.previousDay,
         premarket: marketLevels.premarket,
         timestamp: Date.now(),
-    }));
+    })));
     console.log(`[BookmapSocket] Sent ${levels.length} key levels and ${zones.length} key zones for ${symbol}`
         + ` with market levels: prev=${marketLevels.previousDay ? 1 : 0}`
         + ` pm=${marketLevels.premarket ? 1 : 0}`);
@@ -253,12 +264,12 @@ export const sendExitOrderPairConfigForSymbol = (symbol: string) => {
     }
 
     let pairs = ExitOrderPairs.buildExitOrderPairConfigs(Models.getExitPairs(symbol));
-    websocket.send(JSON.stringify({
+    websocket.send(JSON.stringify(withBookmapWirePriceUnit({
         type: "exit_order_pairs_config",
         symbol: symbol,
         pairs: pairs,
         timestamp: Date.now(),
-    }));
+    })));
     console.log(`[BookmapSocket] Sent ${pairs.length} exit order pairs for ${symbol}`);
 };
 
@@ -278,14 +289,14 @@ export const sendAccountStateForSymbol = (symbol: string) => {
     let position = buildPositionConfig(symbol);
     let openOrders = buildOpenOrderConfigs(symbol);
     let executions = buildExecutionConfigs(symbol);
-    websocket.send(JSON.stringify({
+    websocket.send(JSON.stringify(withBookmapWirePriceUnit({
         type: "account_state",
         symbol: symbol,
         position: position,
         openOrders: openOrders,
         executions: executions,
         timestamp: Date.now(),
-    }));
+    })));
 };
 
 export const sendVwapSeedsForAllSymbols = () => {
@@ -389,10 +400,14 @@ const buildPositionConfig = (symbol: string): BookmapPositionConfig | undefined 
     if (!position || position.netQuantity === 0) {
         return undefined;
     }
+    const averagePrice = normalizeBookmapWirePrice(position.averagePrice);
+    if (averagePrice === undefined) {
+        return undefined;
+    }
     return {
         symbol: position.symbol,
         netQuantity: position.netQuantity,
-        averagePrice: position.averagePrice,
+        averagePrice,
         riskPercent: getPositionRiskPercent(symbol),
     };
 };
@@ -435,10 +450,10 @@ const buildExecutionConfigs = (symbol: string): BookmapExecutionConfig[] => {
     const executions: BookmapExecutionConfig[] = [];
 
     Models.getAllOrderExecutions(symbol).forEach(execution => {
-        const price = Number(execution.price);
+        const price = normalizeBookmapWirePrice(execution.price);
         const quantity = Number(execution.quantity);
         const timeMs = getExecutionTimeMs(execution);
-        if (!Number.isFinite(price) || price <= 0 || !Number.isFinite(quantity) || quantity <= 0 || timeMs <= 0) {
+        if (price === undefined || !Number.isFinite(quantity) || quantity <= 0 || timeMs <= 0) {
             return;
         }
 
@@ -484,8 +499,9 @@ const createOpenOrderConfig = (
         parentOrderID,
         pairIndex,
     };
-    if (order.price !== undefined && Number.isFinite(order.price) && order.price > 0) {
-        config.price = order.price;
+    const price = normalizeBookmapWirePrice(order.price);
+    if (price !== undefined) {
+        config.price = price;
     }
     return config;
 };
@@ -497,8 +513,8 @@ const getBookmapKeyLevelsForSymbol = (symbol: string): BookmapKeyLevel[] => {
     const levels: BookmapKeyLevel[] = [];
 
     for (const level of rawLevels) {
-        const price = level.price;
-        if (!Number.isFinite(price) || price <= 0 || seen.has(price)) {
+        const price = normalizeBookmapWirePrice(level.price);
+        if (price === undefined || seen.has(price)) {
             continue;
         }
         seen.add(price);
@@ -564,11 +580,16 @@ const addBookmapKeyZone = (
     label?: string,
     color?: string,
 ) => {
-    if (!zone || !isValidBookmapPrice(zone.low) || !isValidBookmapPrice(zone.high) || zone.low === zone.high) {
+    if (!zone) {
         return;
     }
-    const low = Math.min(zone.low, zone.high);
-    const high = Math.max(zone.low, zone.high);
+    const normalizedLow = normalizeBookmapWirePrice(zone.low);
+    const normalizedHigh = normalizeBookmapWirePrice(zone.high);
+    if (normalizedLow === undefined || normalizedHigh === undefined || normalizedLow === normalizedHigh) {
+        return;
+    }
+    const low = Math.min(normalizedLow, normalizedHigh);
+    const high = Math.max(normalizedLow, normalizedHigh);
     const key = `${low}:${high}`;
     if (seen.has(key)) {
         return;
@@ -606,17 +627,15 @@ const getBookmapMarketLevelsForSymbol = (symbol: string): BookmapMarketLevels =>
 
 const getValidPricePair = (high: number | undefined, low: number | undefined): BookmapPricePair | undefined => {
     const pair: BookmapPricePair = {};
-    if (isValidBookmapPrice(high)) {
-        pair.high = high;
+    const normalizedHigh = normalizeBookmapWirePrice(high);
+    const normalizedLow = normalizeBookmapWirePrice(low);
+    if (normalizedHigh !== undefined) {
+        pair.high = normalizedHigh;
     }
-    if (isValidBookmapPrice(low)) {
-        pair.low = low;
+    if (normalizedLow !== undefined) {
+        pair.low = normalizedLow;
     }
     return pair.high !== undefined || pair.low !== undefined ? pair : undefined;
-};
-
-const isValidBookmapPrice = (price: number | undefined): price is number => {
-    return typeof price === "number" && Number.isFinite(price) && price > 0 && price < 999999;
 };
 
 const normalizeOptionalString = (value: string | undefined): string | undefined => {
@@ -640,8 +659,8 @@ const handleCustomButtonClick = (data: any) => {
     let keyCode = getString(data.keyCode || data.key_code);
     if (keyCode) {
         let shiftKey = data.shiftKey === true || data.shift_key === true;
-        let eventPrice = getNumber(data.price);
-        let sourcePrice = eventPrice > 0 ? Helper.roundPrice(symbol, eventPrice) : undefined;
+        let eventPrice = getBookmapWirePrice(data, "price");
+        let sourcePrice = eventPrice !== undefined ? Helper.roundPrice(symbol, eventPrice) : undefined;
         let source = getString(data.source);
         let isChartHotkey = source === "bookmap_chart_hotkey"
             || getString(data.button_id).startsWith("chart_hotkey:");
@@ -766,10 +785,13 @@ const getBookmapDayHighLow = (data: any): { high: number, low: number } | undefi
         return undefined;
     }
 
-    let high = getNumber(bookmapDayHighLow.high);
-    let low = getNumber(bookmapDayHighLow.low);
+    if (!isSupportedBookmapWirePriceUnit(bookmapDayHighLow.priceUnit)) {
+        return undefined;
+    }
+    let high = getBookmapWirePrice(bookmapDayHighLow, "high");
+    let low = getBookmapWirePrice(bookmapDayHighLow, "low");
 
-    if (high <= 0 || low <= 0) {
+    if (high === undefined || low === undefined) {
         return undefined;
     }
     return { high, low };
@@ -788,17 +810,22 @@ const normalizeBookmapOrderbook = (value: any, fallbackSymbol: string): Models.B
     if (!value || typeof value !== "object") {
         return undefined;
     }
+    if (!isSupportedBookmapWirePriceUnit(value.priceUnit)) {
+        console.warn("[BookmapSocket] Ignoring orderbook with unsupported priceUnit", value);
+        return undefined;
+    }
 
     let largeBids = normalizeBookmapLevels(value.largeBids);
     let largeAsks = normalizeBookmapLevels(value.largeAsks);
-    let bestBid = getNumber(value.bestBid);
-    let bestAsk = getNumber(value.bestAsk);
+    let bestBid = getBookmapWirePrice(value, "bestBid");
+    let bestAsk = getBookmapWirePrice(value, "bestAsk");
     let wallThreshold = getNumber(value.wallThreshold);
     let absoluteWallThreshold = getNumber(value.absoluteWallThreshold);
     let percentileWallThreshold = getNumber(value.percentileWallThreshold);
     let effectiveWallThreshold = getNumber(value.effectiveWallThreshold);
     let timestamp = getNumber(value.timestamp);
-    if (largeBids.length === 0 && largeAsks.length === 0 && bestBid <= 0 && bestAsk <= 0) {
+    if (largeBids.length === 0 && largeAsks.length === 0
+        && bestBid === undefined && bestAsk === undefined) {
         return undefined;
     }
 
@@ -822,10 +849,10 @@ const normalizeBookmapOrderbook = (value: any, fallbackSymbol: string): Models.B
     if (effectiveWallThreshold > 0) {
         snapshot.effectiveWallThreshold = effectiveWallThreshold;
     }
-    if (bestBid > 0) {
+    if (bestBid !== undefined) {
         snapshot.bestBid = bestBid;
     }
-    if (bestAsk > 0) {
+    if (bestAsk !== undefined) {
         snapshot.bestAsk = bestAsk;
     }
     return snapshot;
@@ -840,9 +867,9 @@ const normalizeBookmapLevels = (value: any): Models.BookmapOrderbookLevel[] => {
         if (!Array.isArray(level) || level.length < 2) {
             return;
         }
-        let price = getNumber(level[0]);
+        let price = normalizeBookmapWirePrice(level[0]);
         let size = Math.trunc(getNumber(level[1]));
-        if (price > 0 && size > 0) {
+        if (price !== undefined && size > 0) {
             levels.push([price, size]);
         }
     });
@@ -851,8 +878,8 @@ const normalizeBookmapLevels = (value: any): Models.BookmapOrderbookLevel[] => {
 
 const handleExitLimitWallAdjustment = (symbol: string, data: any) => {
     let pairIndex = Math.trunc(getNumber(data.pair_index || data.pairIndex));
-    let targetPrice = getNumber(data.target_price || data.targetPrice || data.price);
-    if (pairIndex < 1 || pairIndex > 10 || targetPrice <= 0) {
+    let targetPrice = getBookmapWirePrice(data, "target_price", "targetPrice", "price");
+    if (pairIndex < 1 || pairIndex > 10 || targetPrice === undefined) {
         console.warn("[BookmapSocket] invalid wall adjustment request", data);
         return;
     }

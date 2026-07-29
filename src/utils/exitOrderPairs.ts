@@ -1,4 +1,5 @@
 import * as Models from '../models/models';
+import { normalizeBookmapWirePrice } from '../bookmap/priceNormalization';
 
 export interface ExitOrderLegConfig {
     orderID: string;
@@ -41,12 +42,16 @@ export const getExitOrderPairsForDisplay = (pairs: Models.ExitPair[]) => {
 };
 
 const createLegConfig = (order: Models.OrderModel | undefined): ExitOrderLegConfig | undefined => {
-    if (!order || order.price === undefined || !Number.isFinite(order.price)) {
+    if (!order) {
+        return undefined;
+    }
+    const price = normalizeBookmapWirePrice(order.price);
+    if (price === undefined) {
         return undefined;
     }
     return {
         orderID: order.orderID,
-        price: order.price,
+        price,
         quantity: order.quantity,
         isBuy: order.isBuy,
     };

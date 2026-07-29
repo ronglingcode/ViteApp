@@ -1,12 +1,17 @@
 import * as Helper from "../utils/helper";
 import * as Models from "../models/models";
 import * as Config from "../config/config";
+import {
+    BOOKMAP_WIRE_PRICE_UNIT,
+    normalizeBookmapWirePrice,
+} from "./priceNormalization";
 
 const VWAP_HANDOFF_MINUTES_BEFORE_MARKET_OPEN = 25;
 const NEW_YORK_TIME_ZONE = "America/New_York";
 
 export interface BookmapVwapSeed {
     type: "vwap_seed";
+    priceUnit: typeof BOOKMAP_WIRE_PRICE_UNIT;
     symbol: string;
     sessionDate: string;
     continueFromTimeMs: number;
@@ -63,9 +68,13 @@ export const buildVwapSeedForSymbol = (
     if (!isPositiveFinite(cumulativeVolume) || !isPositiveFinite(cumulativeNotional)) {
         return undefined;
     }
+    if (normalizeBookmapWirePrice(cumulativeNotional / cumulativeVolume) === undefined) {
+        return undefined;
+    }
 
     return {
         type: "vwap_seed",
+        priceUnit: BOOKMAP_WIRE_PRICE_UNIT,
         symbol,
         sessionDate: formatNewYorkDate(continueFromTimeMs),
         continueFromTimeMs,

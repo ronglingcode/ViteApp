@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:bookmap-price": "node --experimental-strip-types --test src/bookmap/priceNormalization.test.ts"
   },
   "devDependencies": {
     "typescript": "~5.9.3",

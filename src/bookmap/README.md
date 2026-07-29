@@ -2,6 +2,11 @@
 
 Custom bookmap-style visualization showing order flow as volume dots and Level 2 heatmap.
 
+For the separate Bookmap desktop-plugin bridge, every price-bearing WebSocket
+message uses `priceUnit: "real"` and real instrument prices. Price validation
+and message marking are centralized in `priceNormalization.ts`; only the Java
+plugin converts those values to or from Bookmap price levels using `pips`.
+
 ## Architecture
 
 Uses a **pure canvas chart** (no TradingView LWC) for continuous time axis rendering. The canvas handles its own zoom, pan, crosshair, and axis drawing. This was chosen because LWC is bar-based (1-minute candle snappping) which doesn't support the sub-second continuous time positioning bookmap requires.
