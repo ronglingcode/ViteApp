@@ -130,11 +130,6 @@ export const validateTradingPlans = (symbol: string, tradingPlans: TradingPlansM
     if (atr.average <= 0 || atr.mutiplier <= 0 || atr.minimumMultipler <= 0) {
         return "missing atr";
     }
-    /*
-    if (atr.maxRisk <= 0) {
-        return "miss max risk in ATR";
-    }*/
-
     let longPlanInvalidReason = validateTradingPlansForOneDirection(tradingPlans.long, true);
     if (longPlanInvalidReason.length > 0) {
         return longPlanInvalidReason;

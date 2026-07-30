@@ -13,7 +13,6 @@ const getDefaultAtr = () => {
         average: 0,
         mutiplier: 0,
         minimumMultipler: 1,
-        maxRisk: 0,
         maxQuantity: 0,
     }
     return result;
@@ -226,7 +225,6 @@ export const getAtrInTrade = (symbol: string) => {
         average: 100,
         mutiplier: 1,
         minimumMultipler: 1,
-        maxRisk: 0,
         maxQuantity: 0,
     };
     if (readOnlyState) {
@@ -234,7 +232,6 @@ export const getAtrInTrade = (symbol: string) => {
         result.average = atr.average;
         result.mutiplier = atr.mutiplier;
         result.minimumMultipler = atr.minimumMultipler;
-        result.maxRisk = atr.maxRisk;
     }
     return result;
 }
