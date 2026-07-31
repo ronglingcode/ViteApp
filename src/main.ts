@@ -41,6 +41,7 @@ import * as ReplayApi from './replay/replayApi';
 import * as ReplayCapture from './replay/replayCapture';
 import * as ReplayUi from './replay/replayUi';
 import * as PremarketSetupReminder from './ui/premarketSetupReminder';
+import * as NotificationEngine from './notifications/notificationEngine';
 declare let window: Models.MyWindow;
 
 console.log('main.ts loaded');
@@ -50,6 +51,7 @@ window.HybridApp.Algo = {
     RiskManager: RiskManager,
     Watchlist: Watchlist,
     AutoTrader: AutoTrader,
+    NotificationEngine: NotificationEngine,
 };
 window.HybridApp.Api = {
     Broker: Broker,
@@ -404,6 +406,7 @@ const startApplication = async () => {
     }
 };
 
+NotificationEngine.initialize();
 startApplication();
 
 let htmlBody = document.getElementsByTagName("body")[0];

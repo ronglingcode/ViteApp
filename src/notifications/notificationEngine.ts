@@ -1,11 +1,10 @@
-import * as Firestore from '../firestore';
-import { AudioHelper } from '../utils/audioHelper';
-import * as Helper from '../utils/helper';
+import * as GlobalSettings from '../config/globalSettings';
+import * as Models from '../models/models';
+import { dispatchTradingNotification } from './notificationDispatcher';
 import { firstTouchToVwapRule } from './rules/firstTouchToVwap';
 import type {
     NotificationRule,
     NotificationRuleResult,
-    TradingNotification,
 } from './types';
 
 const rules: NotificationRule<any>[] = [
@@ -13,22 +12,13 @@ const rules: NotificationRule<any>[] = [
 ];
 const stateByRuleAndSymbol = new Map<string, unknown>();
 const storagePrefix = 'tradingscripts.notification';
+let initialized = false;
 
 const getStateKey = (ruleId: string, symbol: string) =>
     `${ruleId}:${symbol}`;
 
 const getStorageKey = (ruleId: string, symbol: string) =>
     `${storagePrefix}.${getStateKey(ruleId, symbol)}`;
-
-const dispatchTradingNotification = (notification: TradingNotification) => {
-    AudioHelper.playWarningTone();
-    Helper.speak(notification.speechMessage, Number.POSITIVE_INFINITY);
-
-    Firestore.logInfo(
-        `[notification:${notification.ruleId}] ${notification.message}`,
-        { symbol: notification.symbol },
-    );
-};
 
 const loadPersistedState = <State>(rule: NotificationRule<State>, symbol: string): State => {
     try {
@@ -65,9 +55,35 @@ const applyRuleResult = <State>(
 };
 
 export const onPriceTick = (symbol: string, currentPrice: number) => {
+    if (!GlobalSettings.notificationSettings.enabled) {
+        return;
+    }
     rules.forEach(rule => {
         const key = getStateKey(rule.id, symbol);
         const state = stateByRuleAndSymbol.get(key) ?? loadPersistedState(rule, symbol);
         applyRuleResult(rule, symbol, rule.evaluate(symbol, currentPrice, state));
+    });
+};
+
+export const onAccountDataRefresh = (symbol: string) => {
+    if (!GlobalSettings.notificationSettings.enabled) {
+        return;
+    }
+    const currentPrice = Models.getCurrentPrice(symbol);
+    if (currentPrice > 0) {
+        onPriceTick(symbol, currentPrice);
+    }
+};
+
+export const initialize = () => {
+    if (initialized) {
+        return;
+    }
+    initialized = true;
+    window.addEventListener('tradingscripts:account-ui-symbol-updated', event => {
+        const symbol = (event as CustomEvent<{ symbol?: string }>).detail?.symbol;
+        if (symbol) {
+            onAccountDataRefresh(symbol);
+        }
     });
 };

@@ -1,6 +1,7 @@
 import * as GlobalSettings from '../../config/globalSettings';
 import * as Models from '../../models/models';
 import * as TradingState from '../../models/tradingState';
+import * as Helper from '../../utils/helper';
 import type {
     NotificationRule,
     NotificationRuleResult,
@@ -116,14 +117,26 @@ const evaluate = (
     const entryRelation = position.isLong ? 'below' : 'above';
     const article = position.isLong ? 'a' : 'an';
     const approach = position.isLong ? 'pop' : 'dip';
+    const occurredAt = Helper.getCurrentMarketTime().getTime();
     return {
         state: notifiedState,
         persist: true,
         notification: {
+            id: `${ruleId}:${symbol}:${position.positionKey}`,
             ruleId,
             symbol,
+            title: `${symbol} — FIRST ${approach.toUpperCase()} TO VWAP`,
             message: `First ${approach} to VWAP after ${article} ${entryRelation}-VWAP ${direction} entry at ${position.entryPrice}. Manage the ${direction} at this make-or-break level.`,
             speechMessage: `${symbol}, first ${approach} to V WAP after ${article} ${entryRelation} V WAP ${direction} entry. Make or break. Manage the ${direction}.`,
+            severity: 'warning',
+            occurredAt,
+            details: {
+                entryPrice: position.entryPrice,
+                entryVwap: position.entryVwap,
+                touchPrice: currentPrice,
+                touchVwap: currentVwap,
+                isLong: position.isLong,
+            },
         },
     };
 };

@@ -23,8 +23,10 @@ export const showCandles: boolean = false;
 // false: Lite app skips chart creation/updates and shows only the minimal trading UI.
 export const showSimpleChart: boolean = false;
 export const notificationSettings = {
+    enabled: true,
+    soundEnabled: true,
+    speechEnabled: true,
     firstTouchToVwap: {
-        // Disable only this notification rule when needed.
         enabled: true,
     },
 };

@@ -3,9 +3,10 @@
 ## Purpose
 
 The notification engine evaluates trading conditions on every live
-time-and-sales price update. When a rule triggers, the app plays a warning
-tone, speaks the rule's message, and writes an informational Firestore log.
-Notifications are audio-first and do not add UI elements.
+time-and-sales price update and after account state refreshes. When a rule
+triggers, the app displays a dismissible notification, optionally plays a
+warning tone, optionally speaks the rule's message, and writes an informational
+Firestore log.
 
 The engine is intentionally small so additional notification rules can share
 dispatch and reload protection without introducing a separate state-management
@@ -31,25 +32,28 @@ state update ------> optional sessionStorage persistence
         v
 optional notification
         |
-        +--> AudioHelper warning tone
-        +--> speech synthesis
+        +--> visual notification center
+        +--> optional AudioHelper warning tone
+        +--> optional speech synthesis
         +--> Firestore information log
 ```
 
 The live integration point is
-`src/algorithms/autoTrader.ts`. The notification engine does not listen for
-broker-account events or scan historical candles during startup. It evaluates
-the market and account state that is available when a live price arrives.
+`src/algorithms/autoTrader.ts`. The engine also listens for the existing
+per-symbol account refresh event so a just-reconciled fill is evaluated using
+the latest price. It does not scan historical candles during startup.
 
 ## Files
 
 | File | Responsibility |
 | --- | --- |
 | `src/notifications/types.ts` | Shared rule, result, and notification contracts |
-| `src/notifications/notificationEngine.ts` | Rule registration, evaluation, state persistence, and audio dispatch |
+| `src/notifications/notificationEngine.ts` | Rule registration, evaluation, state persistence, and account-refresh handling |
+| `src/notifications/notificationDispatcher.ts` | Visual, sound, speech, and Firestore delivery |
 | `src/notifications/rules/` | One file per notification condition |
+| `src/ui/notificationCenter.ts` | Dismissible on-screen notifications |
 | `src/utils/audioHelper.ts` | Reusable Web Audio warning tone |
-| `src/config/globalSettings.ts` | Per-rule enable flags |
+| `src/config/globalSettings.ts` | Global delivery and per-rule enable flags |
 | `src/algorithms/autoTrader.ts` | Calls the engine for each live price |
 
 ## Rule Contract
@@ -134,7 +138,12 @@ The rule:
 - Persists `alertedPositionKey`, so the same open position alerts only once,
   including after a page reload.
 - Does not re-arm when the position is added to.
-- Does not perform Schwab fill-delay reconciliation or historical hydration.
+- Re-evaluates after account refreshes to cover delayed broker position state.
+- Does not perform historical hydration.
+
+The notification includes the entry price, entry VWAP, touch price, and current
+VWAP. At most five notifications remain visible; each can be dismissed
+independently.
 
 ## Adding a Rule
 
@@ -145,6 +154,9 @@ independently disabled:
 
 ```ts
 export const notificationSettings = {
+    enabled: true,
+    soundEnabled: true,
+    speechEnabled: true,
     firstTouchToVwap: {
         enabled: true,
     },
@@ -201,10 +213,14 @@ const evaluate = (
         state: nextState,
         persist: true,
         notification: {
+            id: `${ruleId}:${symbol}:${eventKey}`,
             ruleId,
             symbol,
+            title: `${symbol} example notification`,
             message: `${symbol} example notification`,
             speechMessage: `${symbol}, example notification`,
+            severity: 'info',
+            occurredAt: Date.now(),
         },
     };
 };
@@ -231,8 +247,9 @@ const rules: NotificationRule<any>[] = [
 ];
 ```
 
-No other startup or UI integration is required. The existing
-`onPriceTick()` call evaluates every registered rule.
+No other startup or UI integration is required. The existing `onPriceTick()`
+call evaluates every registered rule, and the shared dispatcher handles all
+delivery channels.
 
 ## Rule-Author Checklist
 
