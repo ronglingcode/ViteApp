@@ -10,7 +10,7 @@ import {
 } from '../bookmap/wallThreshold';
 
 export const BatchCount = GlobalSettings.batchCount;
-const BookmapWallTargetCount = 5;
+const BookmapWallTargetCount = 3;
 const DefaultRiskReward = 3;
 
 export const getTargetPriceByRiskReward = (symbol: string, isLong: boolean,
