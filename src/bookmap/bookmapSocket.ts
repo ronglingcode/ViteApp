@@ -20,7 +20,7 @@ import {
     normalizeBookmapWirePrice,
     withBookmapWirePriceUnit,
 } from "./priceNormalization";
-import { buildVwapSeedForSymbol } from "./vwapSeed";
+import { buildVwapUpdate } from "./vwapUpdate";
 declare let window: Models.MyWindow;
 
 const BOOKMAP_WS_URL = "ws://localhost:8765";
@@ -89,8 +89,9 @@ let configPushIntervalId: ReturnType<typeof setInterval> | null = null;
 let accountUiRefreshListenerRegistered = false;
 let actionLogListenerRegistered = false;
 let marketLevelRefreshListenerRegistered = false;
+let vwapUpdateListenerRegistered = false;
 const knownAccountSnapshotSymbols = new Set<string>();
-const sentVwapSeedKeys = new Set<string>();
+const lastSentVwapTimeBySymbol = new Map<string, number>();
 
 export const createWebSocket = () => {
     if (websocket && (websocket.readyState === WebSocket.CONNECTING || websocket.readyState === WebSocket.OPEN)) {
@@ -105,11 +106,12 @@ export const createWebSocket = () => {
     registerAccountUiRefreshListener();
     registerActionLogListener();
     registerMarketLevelRefreshListener();
+    registerVwapUpdateListener();
     websocket = new WebSocket(BOOKMAP_WS_URL);
 
     websocket.onopen = function () {
         console.log("[BookmapSocket] Connected");
-        sentVwapSeedKeys.clear();
+        lastSentVwapTimeBySymbol.clear();
         subscribeToOrderbook();
         pushBookmapConfigsForAllSymbols();
         startPeriodicConfigPush();
@@ -151,7 +153,7 @@ export const createWebSocket = () => {
     websocket.onclose = function () {
         console.log(`[BookmapSocket] Disconnected, reconnecting in ${RECONNECT_DELAY_MS}ms...`);
         stopPeriodicConfigPush();
-        sentVwapSeedKeys.clear();
+        lastSentVwapTimeBySymbol.clear();
         websocket = null;
         if (reconnectTimeoutId === null) {
             reconnectTimeoutId = setTimeout(() => {
@@ -182,7 +184,7 @@ const pushBookmapConfigsForAllSymbols = () => {
     sendKeyLevelConfigsForAllSymbols();
     sendExitOrderPairConfigsForAllSymbols();
     sendAccountStatesForAllSymbols();
-    sendVwapSeedsForAllSymbols();
+    sendVwapUpdatesForAllSymbols();
 };
 
 const startPeriodicConfigPush = () => {
@@ -299,33 +301,51 @@ export const sendAccountStateForSymbol = (symbol: string) => {
     })));
 };
 
-export const sendVwapSeedsForAllSymbols = () => {
+export const sendVwapUpdatesForAllSymbols = () => {
     let watchlist = Models.getWatchlist();
     for (let i = 0; i < watchlist.length; i++) {
-        sendVwapSeedForSymbol(watchlist[i].symbol);
+        sendVwapUpdatesForSymbol(watchlist[i].symbol);
     }
 };
 
-export const sendVwapSeedForSymbol = (symbol: string) => {
+export const sendVwapUpdatesForSymbol = (symbol: string) => {
     if (!websocket || websocket.readyState !== WebSocket.OPEN) {
         return;
     }
-
-    const seed = buildVwapSeedForSymbol(symbol);
-    if (!seed) {
+    if (!symbol || Helper.isFutures(symbol)) {
         return;
     }
 
-    const seedKey = `${seed.symbol}:${seed.sessionDate}:${seed.continueFromTimeMs}`;
-    if (sentVwapSeedKeys.has(seedKey)) {
+    const symbolData = Models.getSymbolData(symbol);
+    if (!symbolData?.m1Vwaps?.length) {
         return;
     }
 
-    websocket.send(JSON.stringify(seed));
-    sentVwapSeedKeys.add(seedKey);
-    console.log(`[BookmapSocket] Sent VWAP seed for ${symbol}: `
-        + `vwap=${(seed.cumulativeNotional / seed.cumulativeVolume).toFixed(4)}, `
-        + `volume=${seed.cumulativeVolume}, continueFrom=${new Date(seed.continueFromTimeMs).toISOString()}`);
+    const sentAtMs = Date.now();
+    // The final point belongs to the active candle. Candle rollover publishes it
+    // on the next pass, after ViteApp has declared that minute closed.
+    for (let i = 0; i < symbolData.m1Vwaps.length - 1; i++) {
+        const point = symbolData.m1Vwaps[i];
+        const update = buildVwapUpdate(symbol, point, sentAtMs);
+        if (!update) continue;
+        sendVwapUpdate(update);
+    }
+};
+
+const sendVwapUpdate = (update: ReturnType<typeof buildVwapUpdate>) => {
+    if (!update || !websocket || websocket.readyState !== WebSocket.OPEN) {
+        return;
+    }
+
+    const lastSentTime = lastSentVwapTimeBySymbol.get(update.symbol) ?? 0;
+    if (update.effectiveTimeMs <= lastSentTime) {
+        return;
+    }
+
+    websocket.send(JSON.stringify(update));
+    lastSentVwapTimeBySymbol.set(update.symbol, update.effectiveTimeMs);
+    console.log(`[BookmapSocket] Sent closed-minute VWAP for ${update.symbol}: `
+        + `vwap=${update.vwap.toFixed(4)}, effective=${new Date(update.effectiveTimeMs).toISOString()}`);
 };
 
 const registerAccountUiRefreshListener = () => {
@@ -366,6 +386,23 @@ const registerMarketLevelRefreshListener = () => {
         if (symbol) {
             sendKeyLevelConfigForSymbol(symbol);
         }
+    });
+};
+
+const registerVwapUpdateListener = () => {
+    if (vwapUpdateListenerRegistered) {
+        return;
+    }
+    vwapUpdateListenerRegistered = true;
+    window.addEventListener('tradingscripts:bookmap-vwap-updated', event => {
+        const detail = (event as CustomEvent<{
+            symbol?: string,
+            point?: Models.LineSeriesData,
+        }>).detail;
+        if (!detail?.symbol || !detail.point || Helper.isFutures(detail.symbol)) {
+            return;
+        }
+        sendVwapUpdate(buildVwapUpdate(detail.symbol, detail.point));
     });
 };
 
