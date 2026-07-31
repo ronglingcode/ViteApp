@@ -48,9 +48,6 @@ export const createTradebooksForGapAndCrap = (symbol: string, gapAndCrapPlan: Tr
         let bookmapReversal1 = new BookmapWallReversal(
             symbol, TradebookID.GapAndCrapOfferStepDownReappear, gapAndCrapPlan, gapAndCrapPlan.resistance);
         tradebooksMap.set(bookmapReversal1.getID(), bookmapReversal1);
-        let bookmapReversal2 = new BookmapWallReversal(
-            symbol, TradebookID.GapAndCrapBreakdownBidSwingLow, gapAndCrapPlan, gapAndCrapPlan.resistance);
-        tradebooksMap.set(bookmapReversal2.getID(), bookmapReversal2);
     }
 }
 
