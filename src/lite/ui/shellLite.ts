@@ -1,5 +1,6 @@
 import * as StateLite from '../models/stateLite';
 import * as ChartLite from './chartLite';
+import * as GlobalSettings from '../../config/globalSettings';
 
 export interface SymbolElements {
     price: HTMLElement;
@@ -114,7 +115,7 @@ const renderControls = () => {
           <button id="show_execution_detail" type="button">Show exec more</button>
           <button id="export_trades" type="button">Export trades</button>
           <button id="test_popup" type="button">Test popup</button>
-          <button id="toggle_management_card_exit_block" type="button"></button>
+          ${GlobalSettings.enableTradeManagementCard ? '<button id="toggle_management_card_exit_block" type="button"></button>' : ''}
           <button id="reconnectButton" type="button">Reconnect</button>
           <span id="statusRow" class="statusRow"></span>
         </div>
@@ -139,6 +140,7 @@ export const renderShell = (
         <div class="liteRoot">
           <table>
             <tr>
+              ${GlobalSettings.enableTradeManagementCard ? `
               <td id="traderFocus">
                 <div id="traderFocusColumn">
                   <div id="traderFocusInstructions" class="collapsibleSection">
@@ -148,7 +150,7 @@ export const renderShell = (
                     <div class="sectionContent" id="traderFocusInstructionsContent"></div>
                   </div>
                 </div>
-              </td>
+              </td>` : ''}
               <td class="liteChartsCell">
                 <table>
                   <tr>

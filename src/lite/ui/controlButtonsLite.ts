@@ -78,11 +78,13 @@ export const setupMainAppControlButtons = (callbacks: ControlButtonCallbacks) =>
     document.getElementById('test_popup')?.addEventListener('click', () => {
         PremarketSetupReminder.showPremarketSetupReminderForTest();
     });
-    document.getElementById('toggle_management_card_exit_block')?.addEventListener('click', () => {
-        let enabled = GlobalSettings.toggleBlockExitAdjustmentsWithoutCommittedTradeManagementCard();
+    if (GlobalSettings.enableTradeManagementCard) {
+        document.getElementById('toggle_management_card_exit_block')?.addEventListener('click', () => {
+            let enabled = GlobalSettings.toggleBlockExitAdjustmentsWithoutCommittedTradeManagementCard();
+            updateManagementCardExitBlockButtonText();
+            callbacks.setOrderStatus(`blockExitAdjustmentsWithoutCommittedTradeManagementCard: ${enabled}`);
+            callbacks.logEvent(`blockExitAdjustmentsWithoutCommittedTradeManagementCard: ${enabled}`);
+        });
         updateManagementCardExitBlockButtonText();
-        callbacks.setOrderStatus(`blockExitAdjustmentsWithoutCommittedTradeManagementCard: ${enabled}`);
-        callbacks.logEvent(`blockExitAdjustmentsWithoutCommittedTradeManagementCard: ${enabled}`);
-    });
-    updateManagementCardExitBlockButtonText();
+    }
 };

@@ -54,11 +54,6 @@ interface ManagementSelection {
     updatedAt: string,
 }
 
-interface RequiredDraftField {
-    fieldName: keyof ManagementDraft,
-    label: string,
-}
-
 export interface ManagementPositionContext {
     symbol: string,
     position?: Models.Position,
@@ -257,53 +252,6 @@ const hasWallBreakFields = (setupId: ManagementSetupId | undefined) => {
 // Returns true for wall-step setups that need first/second wall fields.
 const hasWallStepFields = (setupId: ManagementSetupId | undefined) => {
     return setupId === 'bookmap_bid_step_up' || setupId === 'bookmap_offer_step_down';
-};
-
-// Lists the fields that must be filled before the setup can be committed.
-const getRequiredDraftFields = (setupId: ManagementSetupId | undefined): RequiredDraftField[] => {
-    let fields: RequiredDraftField[] = [];
-    if (hasWallBreakFields(setupId)) {
-        fields.push(
-            { fieldName: 'wallPrice', label: 'Wall price' },
-            { fieldName: 'wallSize', label: 'Wall size' },
-        );
-        if (setupId === 'bookmap_offer_breakout') {
-            fields.push({ fieldName: 'swingLow', label: 'Swing low' });
-        }
-        if (setupId === 'bookmap_bid_breakdown') {
-            fields.push({ fieldName: 'swingHigh', label: 'Swing high' });
-        }
-    }
-    if (hasWallStepFields(setupId)) {
-        fields.push(
-            { fieldName: 'wall1Price', label: 'Wall 1 price' },
-            { fieldName: 'wall1Size', label: 'Wall 1 size' },
-            { fieldName: 'wall2Price', label: 'Wall 2 price' },
-            { fieldName: 'wall2Size', label: 'Wall 2 size' },
-        );
-    }
-    if (hasReappearFields(setupId)) {
-        fields.push(
-            { fieldName: 'originalOfferPrice', label: 'Original price' },
-            { fieldName: 'originalSize', label: 'Original size' },
-            { fieldName: 'reappearedOfferSize', label: 'Reappeared size' },
-        );
-    }
-    fields.push(
-        { fieldName: 'coreCount', label: 'Core count' },
-        { fieldName: 'coreTarget', label: 'Core target' },
-        { fieldName: 'runnerCount', label: 'Runner count' },
-        { fieldName: 'runnerTarget', label: 'Runner target' },
-        { fieldName: 'runnerTriggerCondition', label: 'Runner trigger condition' },
-    );
-    return fields;
-};
-
-// Returns human-readable labels for fields that are blank.
-const getMissingRequiredFieldLabels = (draft: ManagementDraft) => {
-    return getRequiredDraftFields(draft.setupId)
-        .filter(field => String(draft[field.fieldName] ?? '').trim() === '')
-        .map(field => field.label);
 };
 
 // Checks whether a single visible exit pair maps back to the scalp tier.
@@ -571,10 +519,6 @@ const renderManagementSetupCard = (draft: ManagementDraft, root: HTMLElement, re
     commitButton.className = 'managementCommitButton';
     form.appendChild(commitButton);
 
-    let commitMessage = document.createElement('div');
-    commitMessage.className = 'managementCommitMessage';
-    form.appendChild(commitMessage);
-
     // Updates button copy and styling from the current draft commit state.
     const updateCommitButton = () => {
         let isCommitted = currentDraft.committed === true;
@@ -584,19 +528,11 @@ const renderManagementSetupCard = (draft: ManagementDraft, root: HTMLElement, re
 
     commitButton.addEventListener('click', () => {
         let nextCommitted = currentDraft.committed !== true;
-        if (nextCommitted) {
-            let missingFields = getMissingRequiredFieldLabels(currentDraft);
-            if (missingFields.length > 0) {
-                commitMessage.textContent = `Fill in before commit: ${missingFields.join(', ')}`;
-                return;
-            }
-        }
         currentDraft = {
             ...currentDraft,
             committed: nextCommitted,
             updatedAt: new Date().toISOString(),
         };
-        commitMessage.textContent = '';
         if (currentDraft.setupId) {
             saveSelection({
                 symbol: currentDraft.symbol,
@@ -624,6 +560,12 @@ export const isExitAdjustmentCommitted = (symbol: string, isLong: boolean) => {
 
 // Returns whether exit adjustment is allowed by the committed management card rule.
 export const getDisallowedReasonToAdjustExitOrders = (symbol: string, isLong: boolean, keyIndex?: number): Models.CheckRulesResult => {
+    if (!GlobalSettings.enableTradeManagementCard) {
+        return {
+            allowed: true,
+            reason: "trade management card is disabled",
+        };
+    }
     if (isExitAdjustmentCommitted(symbol, isLong)) {
         return {
             allowed: true,
@@ -650,6 +592,9 @@ export const getDisallowedReasonToAdjustExitOrders = (symbol: string, isLong: bo
 
 // Creates each stable watchlist card once, then updates position-driven visibility.
 export const render = (root: HTMLElement, contexts: ManagementPositionContext[]) => {
+    if (!GlobalSettings.enableTradeManagementCard) {
+        return;
+    }
     let shell = getOrCreateShell(root);
     contexts.forEach(context => {
         let container = getOrCreateCardContainer(shell, context.symbol);

@@ -34,6 +34,8 @@ export const notificationSettings = {
 export const enableBookmapWallBreakSwingPullback: boolean = false;
 // false: remind only. true: block core/runner exit adjustments until coreInvalidationLevel is set.
 export const blockExitAdjustmentsWithoutCoreInvalidationLevel: boolean = false;
+// Master switch for the Trade Management panel and its exit-adjustment commitment checks.
+export const enableTradeManagementCard: boolean = false;
 // false: do not block. true: block exit adjustments until the active trade management card is committed.
 export let blockExitAdjustmentsWithoutCommittedTradeManagementCard: boolean = false;
 

@@ -1,5 +1,11 @@
 # Management Card Implementation Plan
 
+> Status: disabled by `GlobalSettings.enableTradeManagementCard = false`. The panel is
+> hidden or omitted, and commitment checks allow exit adjustments without warnings.
+> Set the flag to `true` to restore the UI and commitment feature. All draft fields
+> remain optional in either mode.
+> The remaining sections document the retained implementation for possible future use.
+
 ## Goal
 
 Add a Trade Management UI that is always visible. The first version helps choose the setup and edit management values. The values are still manual notes for now, but exit adjustments can be configured to require the active setup card to be committed first.
@@ -234,7 +240,7 @@ type ManagementSetupId =
 
 The values stay strings because the first version is a manual UI. Numeric validation can come later when rules start consuming the fields.
 
-Each setup card ends with a `Commit` button. Clicking it toggles the draft between committed and uncommitted. Transitioning from uncommitted to committed requires every rendered field for that setup to have a non-empty value. `GlobalSettings.blockExitAdjustmentsWithoutCommittedTradeManagementCard` controls whether an uncommitted active side blocks exit-order adjustments. When this setting is `false`, the adjustment is allowed but still logs an error and speaks a warning. When this setting is `true`, scalp-tier single-order adjustments also warn instead of blocking; batch operations are treated as non-scalp. The primary checks live in the tradebook exit-rule wrapper calls for single limit, single stop, batch, and all-exit adjustments. Clicking `Commit` also records an inferred setup as the selected setup, so tradebook-id inference can still drive the exit-adjustment guard.
+Each setup card ends with a `Commit` button. Clicking it toggles the draft between committed and uncommitted and records an inferred setup as the selected setup. Every field is optional. When `enableTradeManagementCard` is `false`, commitment is only draft metadata and does not warn about or block exit-order adjustments. When enabled, `blockExitAdjustmentsWithoutCommittedTradeManagementCard` controls whether an uncommitted card warns or blocks.
 
 ## Proposed Code Shape
 
@@ -259,7 +265,8 @@ Keep `traderFocus.ts` as the owner of the Trade Management section, keep setup d
 - `public/mystyle.css`
   - add small styles for setup buttons and compact form rows
 - `src/config/globalSettings.ts`
-  - expose `blockExitAdjustmentsWithoutCommittedTradeManagementCard`
+  - expose `enableTradeManagementCard` as the master feature flag
+  - expose `blockExitAdjustmentsWithoutCommittedTradeManagementCard` for enabled-mode enforcement
 
 This avoids mixing the new manual management-card state with the existing tradebook entry logic.
 

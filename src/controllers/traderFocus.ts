@@ -3,6 +3,7 @@ import * as TradingState from '../models/tradingState';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import * as UI from '../ui/ui';
 import * as Firestore from '../firestore';
+import * as GlobalSettings from '../config/globalSettings';
 import * as ManagementCard from './managementCard';
 
 export const updateUI = () => {
@@ -10,6 +11,9 @@ export const updateUI = () => {
 }
 
 export const updateTradeManagementUI = () => {
+    if (!GlobalSettings.enableTradeManagementCard) {
+        return;
+    }
     let traderFocusInstructionsContent = document.getElementById("traderFocusInstructionsContent");
     if (traderFocusInstructionsContent) {
         ManagementCard.render(traderFocusInstructionsContent, getManagementContexts());
@@ -64,13 +68,16 @@ export const getTradebookFromPosition = (symbol: string) => {
     return null;
 }
 export const populateTradeManagementForPosition = (position: Models.Position, root: HTMLElement) => {
-    if (position.netQuantity === 0) {
+    if (!GlobalSettings.enableTradeManagementCard || position.netQuantity === 0) {
         return;
     }
     let tradebookID = getTradebookIDForPosition(position);
     ManagementCard.populateForPosition(position, root, tradebookID);
 }
 export const populateTradeManagementForTradebook = (symbol: string, isLong: boolean, tradebookID: string, root: HTMLElement) => {
+    if (!GlobalSettings.enableTradeManagementCard) {
+        return;
+    }
     let tradebook = TradebooksManager.getTradebookByID(symbol, tradebookID);
     if (!tradebook) {
         Firestore.logInfo(`tradebook not found for ${symbol} ${tradebookID}`);
@@ -89,6 +96,9 @@ export const populateTradeManagementForTradebook = (symbol: string, isLong: bool
     UI.addOneLineSpan(tickerTitle, tradebook.name, tagClassName);
 }
 export const test = () => {
+    if (!GlobalSettings.enableTradeManagementCard) {
+        return;
+    }
     let traderFocusInstructionsContent = document.getElementById("traderFocusInstructionsContent");
     if (traderFocusInstructionsContent) {
         let section = document.getElementById("traderFocusInstructions");
