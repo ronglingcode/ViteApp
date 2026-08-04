@@ -12,7 +12,7 @@ import * as Runtime from '../replay/runtime';
 export interface BookmapTradebookButtonDefinition {
     id: string,
     label: string,
-    side: "long" | "short",
+    sideIsLong: boolean,
     tradebookId: string,
     tradebookName: string,
     entryMethods: string[],
@@ -238,7 +238,7 @@ const createBookmapTradebookButtonDefinition = (
     return {
         id: `${symbol}:${tradebook.getID()}`,
         label: tradebook.buttonLabel,
-        side: tradebook.isLong ? "long" : "short",
+        sideIsLong: tradebook.isLong,
         tradebookId: tradebook.getID(),
         tradebookName: tradebook.name,
         entryMethods: entryMethods,
