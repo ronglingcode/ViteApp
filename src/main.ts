@@ -139,6 +139,11 @@ if (!Runtime.isReplayMode()) {
     PremarketSetupReminder.schedulePremarketSetupReminder();
 }
 
+let tradeManagementPane = document.getElementById("traderFocus");
+if (tradeManagementPane) {
+    tradeManagementPane.style.display = GlobalSettings.enableTradeManagementCard ? "" : "none";
+}
+
 let toggleManagementCardExitBlockButton = document.getElementById("toggle_management_card_exit_block");
 const updateManagementCardExitBlockButtonText = () => {
     if (!toggleManagementCardExitBlockButton) {
@@ -148,7 +153,8 @@ const updateManagementCardExitBlockButtonText = () => {
         ? "Block card exits: ON"
         : "Block card exits: OFF";
 };
-if (toggleManagementCardExitBlockButton) {
+if (GlobalSettings.enableTradeManagementCard && toggleManagementCardExitBlockButton) {
+    toggleManagementCardExitBlockButton.style.display = "";
     updateManagementCardExitBlockButtonText();
     toggleManagementCardExitBlockButton.addEventListener("click", () => {
         const enabled = GlobalSettings.toggleBlockExitAdjustmentsWithoutCommittedTradeManagementCard();
