@@ -723,6 +723,8 @@ const handleCustomButtonClick = (data: any) => {
     let entryMethod = getString(data.entry_method || data.entryMethod);
     let useMarketOrder = data.use_market_order === true || data.useMarketOrder === true;
     let bookmapOrderbook = normalizeBookmapOrderbook(data.orderbook, symbol);
+    let bookmapEstimatedEntryPrice = getBookmapWirePrice(
+        data, "estimated_entry_price", "estimatedEntryPrice");
 
     if (!tradebookId) {
         console.warn("[BookmapSocket] custom_button_click missing tradebook_id", data);
@@ -740,6 +742,7 @@ const handleCustomButtonClick = (data: any) => {
         ...Models.getDefaultEntryParameters(),
         entryMethod: entryMethod || undefined,
         bookmapOrderbook: bookmapOrderbook,
+        bookmapEstimatedEntryPrice: useMarketOrder ? bookmapEstimatedEntryPrice : undefined,
     });
 };
 

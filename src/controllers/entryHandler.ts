@@ -94,7 +94,18 @@ export const marketEntryWithoutRules = (symbol: string, isLong: boolean,
     tradebookID: string,
     entryParameters?: Models.TradebookEntryParameters
 ) => {
-    let estimatedEntryPrice = Models.getCurrentPrice(symbol);
+    let viteAppEstimatedEntryPrice = Models.getCurrentPrice(symbol);
+    let bookmapEstimatedEntryPrice = entryParameters?.bookmapEstimatedEntryPrice;
+    let estimatedEntryPrice = Calculator.selectMarketEntryEstimate(
+        viteAppEstimatedEntryPrice, bookmapEstimatedEntryPrice, isLong) ?? viteAppEstimatedEntryPrice;
+    let bookmapEstimateText = bookmapEstimatedEntryPrice === undefined
+        ? "unavailable"
+        : Helper.roundPrice(symbol, bookmapEstimatedEntryPrice);
+    Firestore.logInfo(
+        `${symbol} market entry estimates: Bookmap ${bookmapEstimateText}, `
+        + `ViteApp ${Helper.roundPrice(symbol, viteAppEstimatedEntryPrice)}, `
+        + `using ${isLong ? "max" : "min"} ${Helper.roundPrice(symbol, estimatedEntryPrice)}`,
+        logTags);
     let logMessage = createEntryLogMessage('market', isLong, estimatedEntryPrice, stopOutPrice, riskLevel, allowedSizeMutiplier);
 
     Firestore.logInfo(logMessage, logTags);

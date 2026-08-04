@@ -1,5 +1,18 @@
 import * as Models from '../models/models';
 
+export const selectMarketEntryEstimate = (
+    viteAppEstimate: number | undefined,
+    bookmapEstimate: number | undefined,
+    isLong: boolean,
+): number | undefined => {
+    const estimates = [viteAppEstimate, bookmapEstimate]
+        .filter((value): value is number => value !== undefined && Number.isFinite(value) && value > 0);
+    if (estimates.length === 0) {
+        return undefined;
+    }
+    return isLong ? Math.max(...estimates) : Math.min(...estimates);
+};
+
 /**
  * If current quote is already more aggressive than specified price, use the quote price
  */
