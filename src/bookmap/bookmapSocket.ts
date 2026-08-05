@@ -21,11 +21,16 @@ import {
     withBookmapWirePriceUnit,
 } from "./priceNormalization";
 import { buildVwapUpdate } from "./vwapUpdate";
+import {
+    BOOKMAP_SCREEN_LOG_EVENT,
+    type BookmapScreenLogDetail,
+} from "./screenLog";
 declare let window: Models.MyWindow;
 
 const BOOKMAP_WS_URL = "ws://localhost:8765";
 const RECONNECT_DELAY_MS = 3000;
 const CONFIG_PUSH_INTERVAL_MS = 60_000;
+const MAX_PENDING_SCREEN_LOGS = 100;
 
 interface BookmapKeyLevel {
     price: number;
@@ -88,10 +93,12 @@ let reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
 let configPushIntervalId: ReturnType<typeof setInterval> | null = null;
 let accountUiRefreshListenerRegistered = false;
 let actionLogListenerRegistered = false;
+let screenLogListenerRegistered = false;
 let marketLevelRefreshListenerRegistered = false;
 let vwapUpdateListenerRegistered = false;
 const knownAccountSnapshotSymbols = new Set<string>();
 const lastSentVwapTimeBySymbol = new Map<string, number>();
+const pendingScreenLogs: BookmapScreenLogDetail[] = [];
 
 export const createWebSocket = () => {
     if (websocket && (websocket.readyState === WebSocket.CONNECTING || websocket.readyState === WebSocket.OPEN)) {
@@ -105,6 +112,7 @@ export const createWebSocket = () => {
     console.log(`[BookmapSocket] Connecting to ${BOOKMAP_WS_URL}...`);
     registerAccountUiRefreshListener();
     registerActionLogListener();
+    registerScreenLogListener();
     registerMarketLevelRefreshListener();
     registerVwapUpdateListener();
     websocket = new WebSocket(BOOKMAP_WS_URL);
@@ -112,6 +120,7 @@ export const createWebSocket = () => {
     websocket.onopen = function () {
         console.log("[BookmapSocket] Connected");
         lastSentVwapTimeBySymbol.clear();
+        flushPendingScreenLogs();
         subscribeToOrderbook();
         pushBookmapConfigsForAllSymbols();
         startPeriodicConfigPush();
@@ -386,6 +395,17 @@ const registerMarketLevelRefreshListener = () => {
         if (symbol) {
             sendKeyLevelConfigForSymbol(symbol);
         }
+    });
+};
+
+const registerScreenLogListener = () => {
+    if (screenLogListenerRegistered) {
+        return;
+    }
+    screenLogListenerRegistered = true;
+    window.addEventListener(BOOKMAP_SCREEN_LOG_EVENT, event => {
+        const detail = (event as CustomEvent<BookmapScreenLogDetail>).detail;
+        sendScreenLog(detail);
     });
 };
 
@@ -746,6 +766,34 @@ const handleCustomButtonClick = (data: any) => {
     });
 };
 
+const sendScreenLog = (detail: BookmapScreenLogDetail | undefined) => {
+    if (!detail?.message) {
+        return;
+    }
+    if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+        while (pendingScreenLogs.length >= MAX_PENDING_SCREEN_LOGS) {
+            pendingScreenLogs.shift();
+        }
+        pendingScreenLogs.push(detail);
+        return;
+    }
+    websocket.send(JSON.stringify({
+        type: "screen_log",
+        symbol: detail.symbol,
+        source: "ViteApp",
+        level: detail.level,
+        message: detail.message,
+        timestamp: Date.now(),
+    }));
+};
+
+const flushPendingScreenLogs = () => {
+    while (pendingScreenLogs.length > 0
+        && websocket?.readyState === WebSocket.OPEN) {
+        sendScreenLog(pendingScreenLogs.shift());
+    }
+};
+
 const handleWallReversalHoverHotkey = (
     symbol: string,
     keyCode: string,
@@ -928,3 +976,7 @@ const handleExitLimitWallAdjustment = (symbol: string, data: any) => {
     console.log(`[BookmapSocket] Wall adjustment ${symbol} pair ${pairIndex} @ ${targetPrice}`);
     Handler.numberKeyPressedAtPrice(symbol, keyCode, targetPrice, false);
 };
+
+// Register during module initialization so logs produced before the WebSocket
+// opens are captured in pendingScreenLogs and flushed once Bookmap connects.
+registerScreenLogListener();

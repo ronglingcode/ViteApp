@@ -1,5 +1,6 @@
 import * as StateLite from '../models/stateLite';
 import * as AppVersion from '../../config/appVersion';
+import { emitBookmapScreenLog } from '../../bookmap/screenLog';
 
 const hiddenStatusSources = new Set(['auth', 'lite', 'massive']);
 
@@ -40,6 +41,7 @@ export const logEvent = (message: string, isError = false) => {
     line.className = isError ? 'eventLine errorText' : 'eventLine';
     line.textContent = `${StateLite.formatClock()} ${message}`;
     eventLog.prepend(line);
+    emitBookmapScreenLog(message, isError ? 'Error' : 'Info');
     while (eventLog.children.length > 80) {
         eventLog.removeChild(eventLog.lastChild as Node);
     }

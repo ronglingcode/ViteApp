@@ -4,6 +4,7 @@ import * as secret from './config/secret'
 import * as Helper from './utils/helper';
 import type * as Models from './models/models';
 import * as Runtime from './replay/runtime';
+import { emitBookmapScreenLog, type BookmapScreenLogLevel } from './bookmap/screenLog';
 declare let window: Models.MyWindow;
 
 let dateobj = new Date();
@@ -85,7 +86,7 @@ export const logOrder = async (order: any, logTags: Models.LogTags) => {
     });
 };
 
-export const addToLogView = (msg: string, msgType: string, tags: Models.LogTags = {}) => {
+export const addToLogView = (msg: string, msgType: BookmapScreenLogLevel, tags: Models.LogTags = {}) => {
     let ul = document.getElementById('logs');
     if (ul == null)
         return;
@@ -98,6 +99,7 @@ export const addToLogView = (msg: string, msgType: string, tags: Models.LogTags 
     }
     li.innerText = `${now.toLocaleTimeString()} ${symbol} ${msg}`;
     ul.appendChild(li);
+    emitBookmapScreenLog(String(msg), msgType, symbol || undefined);
     while (ul.children.length > 18) {
         let firstChild = ul.children[0];
         firstChild.remove();
