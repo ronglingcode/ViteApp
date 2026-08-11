@@ -11,8 +11,8 @@ import * as VwapPatterns from '../algorithms/vwapPatterns';
 import * as Watchlist from '../algorithms/watchlist';
 declare let window: Models.MyWindow;
 
-const isBlockedBySingleStockWatchlistRule = (logTags: Models.LogTags) => {
-    let blockReason = Watchlist.getSingleStockWatchlistBlockReason();
+const isBlockedByWatchlistLimitRule = (logTags: Models.LogTags) => {
+    let blockReason = Watchlist.getWatchlistLimitBlockReason();
     if (blockReason == "") {
         return false;
     }
@@ -31,7 +31,7 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
     entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, basePlan: TradingPlansModels.BasePlan,
     shouldCheckEntryDistance: boolean,
     logTags: Models.LogTags,) => {
-    if (isBlockedBySingleStockWatchlistRule(logTags)) {
+    if (isBlockedByWatchlistLimitRule(logTags)) {
         return 0;
     }
     if (Rules.isOverDailyMaxLoss()) {
@@ -146,7 +146,7 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
 
 export const checkPartialEntry = (symbol: string, isLong: boolean, quantity: number,
     entryPrice: number, stopLossPrice: number, logTags: Models.LogTags) => {
-    if (isBlockedBySingleStockWatchlistRule(logTags)) {
+    if (isBlockedByWatchlistLimitRule(logTags)) {
         return false;
     }
     let { todayRange } = getCommonInfo(symbol, isLong);

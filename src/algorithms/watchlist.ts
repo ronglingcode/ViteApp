@@ -1,4 +1,5 @@
 import * as Config from '../config/config';
+import * as GlobalSettings from '../config/globalSettings';
 import * as Firestore from '../firestore';
 import type * as Models from '../models/models';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
@@ -103,7 +104,7 @@ export const createWatchlist = async () => {
         watchlist = watchlist.slice(0, 1);
     }
 
-    let blockReason = getSingleStockWatchlistBlockReason(watchlist);
+    let blockReason = getWatchlistLimitBlockReason(watchlist);
     if (blockReason != "") {
         Firestore.logError(blockReason);
         throw new Error(blockReason);
@@ -117,16 +118,16 @@ const getWatchlistSymbolsText = (watchlist: Models.WatchlistItem[]) => {
     return watchlist.map(item => item.symbol).join(', ');
 };
 
-const getSingleStockWatchlistMessage = (watchlist: Models.WatchlistItem[]) => {
-    return `more than 1 stock in watchlist: ${getWatchlistSymbolsText(watchlist)}`;
+const getWatchlistLimitMessage = (watchlist: Models.WatchlistItem[]) => {
+    return `more than ${GlobalSettings.maxTradableStocksCount} stocks in watchlist: ${getWatchlistSymbolsText(watchlist)}`;
 };
 
-export const getSingleStockWatchlistBlockReason = (watchlist: Models.WatchlistItem[] = window.HybridApp.Watchlist ?? []) => {
-    if (watchlist.length <= 1) {
+export const getWatchlistLimitBlockReason = (watchlist: Models.WatchlistItem[] = window.HybridApp.Watchlist ?? []) => {
+    if (watchlist.length <= GlobalSettings.maxTradableStocksCount) {
         return "";
     }
 
-    return getSingleStockWatchlistMessage(watchlist);
+    return getWatchlistLimitMessage(watchlist);
 };
 
 
