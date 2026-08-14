@@ -972,9 +972,10 @@ const handleExitLimitWallAdjustment = (symbol: string, data: any) => {
         return;
     }
 
-    let keyCode = pairIndex === 10 ? "Digit0" : `Digit${pairIndex}`;
-    console.log(`[BookmapSocket] Wall adjustment ${symbol} pair ${pairIndex} @ ${targetPrice}`);
-    Handler.numberKeyPressedAtPrice(symbol, keyCode, targetPrice, false);
+    console.log(
+        `[BookmapSocket] Wall adjustment ${symbol} requested pair ${pairIndex};`
+        + ` selecting the first smallest-quantity pair @ ${targetPrice}`);
+    Handler.numberKeyPressedAtPrice(symbol, "Digit1", targetPrice, false);
 };
 
 // Register during module initialization so logs produced before the WebSocket

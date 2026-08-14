@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test:bookmap-price": "node --experimental-strip-types --test src/bookmap/priceNormalization.test.ts",
-    "test:bookmap-vwap": "node --experimental-strip-types --test src/bookmap/vwapUpdate.test.ts"
+    "test:bookmap-vwap": "node --experimental-strip-types --test src/bookmap/vwapUpdate.test.ts",
+    "test:exit-order-pairs": "node --experimental-strip-types --test src/utils/exitOrderPairs.test.ts"
   },
   "devDependencies": {
     "typescript": "~5.9.3",

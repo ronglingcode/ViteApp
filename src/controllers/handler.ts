@@ -18,6 +18,7 @@ import * as AdjustExitsHandler from './adjustExitsHandler';
 import { TradebookID } from '../tradebooks/tradebookIds';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import * as PartialStopDiscipline from './partialStopDisciplineController';
+import { getFirstSmallestQuantityExitPairIndex } from '../utils/exitPairSelection';
 
 export const cancelKeyPressed = async (symbol: string) => {
     let exitPairs = Models.getExitPairs(symbol);
@@ -195,7 +196,12 @@ export const numberKeyPressed = async (symbol: string, keyCode: string, isFromBa
     return numberKeyPressedAtPrice(symbol, keyCode, newPrice, isFromBatch);
 };
 
-export const numberKeyPressedAtPrice = async (symbol: string, keyCode: string, newPrice: number, isFromBatch: boolean) => {
+export const numberKeyPressedAtPrice = async (
+    symbol: string,
+    keyCode: string,
+    newPrice: number,
+    isFromBatch: boolean,
+) => {
     let logTags = Models.generateLogTags(symbol, `${symbol}-adjust_exit`);
     // "Digit1" -> 1, "Digit2" -> 2
     Firestore.logInfo(logTags.logSessionName, logTags);
@@ -203,7 +209,8 @@ export const numberKeyPressedAtPrice = async (symbol: string, keyCode: string, n
         Firestore.logError(`invalid adjustment price for ${symbol}: ${newPrice}`, logTags);
         return;
     }
-    let { pair, keyIndex, totalPairsCount } = getExitPairFromKeyCode(symbol, keyCode, "Digit", logTags);
+    let { pair, keyIndex, totalPairsCount } = getExitPairFromKeyCode(
+        symbol, keyCode, "Digit", logTags, !isFromBatch);
     if (!pair)
         return;
 
@@ -241,7 +248,8 @@ export const numberPadPressed = async (symbol: string, keyCode: string) => {
     let logTags = Models.generateLogTags(symbol, `${symbol}-market_out_exit`);
     // "Numpad1" -> 1, "Numpad2" -> 2
     Firestore.logInfo(logTags.logSessionName, logTags);
-    let { pair, keyIndex, totalPairsCount } = getExitPairFromKeyCode(symbol, keyCode, "Numpad", logTags);
+    let { pair, keyIndex, totalPairsCount } = getExitPairFromKeyCode(
+        symbol, keyCode, "Numpad", logTags, true);
     if (!pair || (!pair.LIMIT && !pair.STOP)) {
         Firestore.logError(`incomplete pair ${symbol}`, logTags);
         return;
@@ -270,12 +278,18 @@ const marketOutExitPair = async (symbol: string, pair: Models.ExitPair, logTags:
     onAdjustExits(symbol);
 };
 
-const getExitPairFromKeyCode = (symbol: string, keyCode: string, prefix: string, logTags: Models.LogTags) => {
+const getExitPairFromKeyCode = (
+    symbol: string,
+    keyCode: string,
+    prefix: string,
+    logTags: Models.LogTags,
+    selectSmallestQuantityForFirst: boolean,
+) => {
     let number = parseInt(keyCode[prefix.length]);
     if (number == 0) {
         number = 10;
     }
-    let index = number - 1;
+    let requestedIndex = number - 1;
     let noneResult = {
         pair: undefined,
         keyIndex: -1,
@@ -285,6 +299,13 @@ const getExitPairFromKeyCode = (symbol: string, keyCode: string, prefix: string,
     if (!widget) {
         Firestore.logError(`no exit pair for ${symbol} due to no chart widget`, logTags);
         return noneResult;
+    }
+    let index = requestedIndex;
+    if (requestedIndex === 0 && selectSmallestQuantityForFirst) {
+        let smallestQuantityIndex = getFirstSmallestQuantityExitPairIndex(widget.exitOrderPairs);
+        if (smallestQuantityIndex >= 0) {
+            index = smallestQuantityIndex;
+        }
     }
     if (widget.exitOrderPairs.length <= index) {
         Firestore.logError(`no exit pair for ${symbol} due to out of range`, logTags);

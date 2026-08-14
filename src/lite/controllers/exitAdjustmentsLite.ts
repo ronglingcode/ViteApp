@@ -1,6 +1,7 @@
 import * as SchwabLite from '../api/schwabLite';
 import * as StateLite from '../models/stateLite';
 import * as ChartLite from '../ui/chartLite';
+import { getFirstSmallestQuantityExitPairIndex } from '../../utils/exitPairSelection';
 
 interface ExitAdjusterCallbacks {
     getActiveSymbol: () => string;
@@ -136,13 +137,20 @@ export class LiteExitAdjuster {
         throw new Error(`Cannot choose STOP or LIMIT leg for ${symbol}`);
     }
 
-    private getExitPairFromDigitKey(symbol: string, code: string) {
+    private getExitPairFromDigitKey(symbol: string, code: string, selectSmallestQuantityPair: boolean) {
         let number = Number(code.replace('Digit', ''));
         if (number === 0) {
             number = 10;
         }
-        let index = number - 1;
+        let requestedIndex = number - 1;
         let pairs = this.getExitPairsForSymbol(symbol);
+        let index = requestedIndex;
+        if (requestedIndex === 0 && selectSmallestQuantityPair) {
+            let smallestQuantityIndex = getFirstSmallestQuantityExitPairIndex(pairs);
+            if (smallestQuantityIndex >= 0) {
+                index = smallestQuantityIndex;
+            }
+        }
         return {
             pair: pairs[index],
             index,
@@ -287,7 +295,7 @@ export class LiteExitAdjuster {
     }
 
     private async handleDigitAdjust(symbol: string, code: string) {
-        let { pair, index, totalPairsCount } = this.getExitPairFromDigitKey(symbol, code);
+        let { pair, index, totalPairsCount } = this.getExitPairFromDigitKey(symbol, code, true);
         if (!pair) {
             throw new Error(`No exit pair ${index + 1} for ${symbol}; found ${totalPairsCount}`);
         }
@@ -301,13 +309,13 @@ export class LiteExitAdjuster {
     }
 
     private async handleMarketOutFirstPair(symbol: string) {
-        let { pair, index, totalPairsCount } = this.getExitPairFromDigitKey(symbol, 'Digit1');
+        let { pair, index, totalPairsCount } = this.getExitPairFromDigitKey(symbol, 'Digit1', true);
         if (!pair) {
             throw new Error(`No exit pair ${index + 1} for ${symbol}; found ${totalPairsCount}`);
         }
         let quantity = await this.marketOutExitPair(pair);
-        this.callbacks.setOrderStatus(`Market out ${symbol} pair 1 qty ${StateLite.formatQuantity(quantity)}`);
-        this.callbacks.logEvent(`Market out ${symbol} pair 1 qty ${StateLite.formatQuantity(quantity)}`);
+        this.callbacks.setOrderStatus(`Market out ${symbol} pair ${index + 1} (smallest) qty ${StateLite.formatQuantity(quantity)}`);
+        this.callbacks.logEvent(`Market out ${symbol} pair ${index + 1} (smallest) qty ${StateLite.formatQuantity(quantity)}`);
         await this.callbacks.refreshAccount();
     }
 
