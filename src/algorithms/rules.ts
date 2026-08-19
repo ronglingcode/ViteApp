@@ -1,4 +1,5 @@
 import * as Models from '../models/models';
+import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as Helper from '../utils/helper';
 import * as Patterns from './patterns';
 import * as Config from '../config/config';
@@ -6,7 +7,7 @@ import * as RiskManager from '../algorithms/riskManager';
 import * as Watchlist from '../algorithms/watchlist';
 import * as Firestore from '../firestore';
 import * as TradingState from '../models/tradingState';
-import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
+import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as OrderFlowManager from '../controllers/orderFlowManager';
 import * as VwapPatterns from './vwapPatterns';
 import * as SetupQuality from './setupQuality';
@@ -566,5 +567,24 @@ export const isNewTradeAfterStopOut = (symbol: string, isLong: boolean): boolean
         return (symbolData.lowOfDay < initialStop);
     } else {
         return (symbolData.highOfDay > initialStop);
+    }
+}
+export const isAllowedForHeavierPosition = (symbol: string, isLong: boolean, entryPrice: number) => {
+    const symbolData = Models.getSymbolData(symbol);
+    const currentVwap = Models.getCurrentVwap(symbol);
+    const isGappedUp = Models.isGappedUp(symbol);
+    let topPlan = TradingPlans.getTradingPlans(symbol);
+    if (isLong) {
+        let threshold = topPlan.long.firstTargetToAdd;
+        if (threshold < 0) {
+            threshold = isGappedUp ? symbolData.premktHigh : currentVwap;
+        }
+        return entryPrice >= threshold;
+    } else {
+        let threshold = topPlan.short.firstTargetToAdd;
+        if (threshold < 0) {
+            threshold = isGappedUp ? currentVwap : symbolData.premktLow;
+        }
+        return entryPrice <= threshold;
     }
 }

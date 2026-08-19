@@ -62,7 +62,7 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
     let isOpenInTradableArea = Models.isPriceInTradableArea(symbol, isLong, openPrice);
     let hasBeenInTradableArea = Models.hasPriceBeenInTradableArea(symbol, isLong);
 
-    let initialSize = liquidityScale * RiskManager.getRiskMultiplerForNextEntry(symbol, isLong, basePlan, logTags);
+    let initialSize = liquidityScale * RiskManager.getRiskMultiplerForNextEntry(symbol, isLong, entryPrice, basePlan, logTags);
     let finalSize = initialSize;
     if (shouldCheckEntryDistance) {
         if (isEntryPriceInTradableArea == 0 &&
