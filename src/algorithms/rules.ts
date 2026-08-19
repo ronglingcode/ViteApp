@@ -532,49 +532,6 @@ export const isAllowedByVwapContinuation = (symbol: string, isLong: boolean, ent
     return false;
 }
 
-export const isAllowedByMovingAverage = (symbol: string, isLong: boolean, useMarketOrder: boolean) => {
-    console.log(`check ma ${useMarketOrder}`);
-    if (useMarketOrder) {
-        return true;
-    }
-    let symbolData = Models.getSymbolData(symbol);
-    let lastClosedCandle = symbolData.m1Candles[symbolData.m1Candles.length - 2];
-    if (!lastClosedCandle || symbolData.m1ma5.length < 2 || symbolData.m1ma9.length < 2) {
-        return true;
-    }
-    let closePrice = lastClosedCandle.close;
-    let lastClosedMa5 = symbolData.m1ma5[symbolData.m1ma5.length - 2].value;
-    let lastClosedMa9 = symbolData.m1ma9[symbolData.m1ma9.length - 2].value;
-    console.log(`closePrice ${closePrice}, lastClosedMa5 ${lastClosedMa5}, lastClosedMa9 ${lastClosedMa9}`);
-    let isAlignedWithMovingAverage = true;
-    if (isLong) {
-        if (closePrice < lastClosedMa5 && closePrice < lastClosedMa9) {
-            isAlignedWithMovingAverage = false;
-        }
-    } else {
-        if (closePrice > lastClosedMa5 && closePrice > lastClosedMa9) {
-            isAlignedWithMovingAverage = false;
-        }
-    }
-    if (isAlignedWithMovingAverage) {
-        return true;
-    }
-    let currentCandle = Models.getCurrentCandle(symbol);
-    if (!currentCandle) {
-        return true;
-    }
-    if (isLong) {
-        if (currentCandle.high >= symbolData.highOfDay) {
-            return true;
-        }
-    } else {
-        if (currentCandle.low <= symbolData.lowOfDay) {
-            return true;
-        }
-    }
-    return false;
-}
-
 export const shouldAllowEarlyEntry = (symbol: string, secondsSinceMarketOpen: number) => {
     let result: Models.CheckRulesResult = {
         allowed: true,
