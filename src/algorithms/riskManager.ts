@@ -74,7 +74,7 @@ const getInitialMultipler = (basePlan: TradingPlansModels.BasePlan) => {
 export const getRiskMultiplerForNextEntry = (symbol: string, isLong: boolean,
     entryPrice: number, basePlan: TradingPlansModels.BasePlan, logTags: Models.LogTags) => {
     if (!Rules.isAllowedForHeavierPosition(symbol, isLong, entryPrice) &&
-        hasRiskFromExistingPositionsAndEntriesForDirection(symbol, isLong)) {
+        hasRiskFromExistingPositions(symbol, isLong)) {
         Firestore.logError("not allowed for heavier positions", logTags);
         return 0;
     }
@@ -87,9 +87,13 @@ export const getRiskMultiplerForNextEntry = (symbol: string, isLong: boolean,
     let profitLossPerDirection = Models.getRealizedProfitLossPerDirection(symbol, isLong);
     let profitLossTotal = Models.getRealizedProfitLoss();
     let existingRisk = getRiskInDollarFromExistingPositionsAndEntries(symbol, logTags);
-    if (hasRiskFromExistingPositionsAndEntriesForDirection(symbol, isLong)) {
-        Firestore.logError(`no more entry with existing risk, use add partial instead`, logTags);
-        return 0;
+    if (existingRisk > 0) {
+        let netQuantity = Models.getPositionNetQuantity(symbol);
+        let positionIsLong = netQuantity > 0;
+        if (netQuantity != 0 && positionIsLong == isLong) {
+            Firestore.logError(`no more entry with existing risk, use add partial instead`, logTags);
+            return 0;
+        }
     }
     let riskUsingPerDirection = getRiskInDollarForNextEntry(
         getMaxDailyLossLimit() / 2, profitLossPerDirection, existingRisk, "per direction", logTags
@@ -108,9 +112,13 @@ const getRiskMultiplerForNextEntry2 = (symbol: string, isLong: boolean, multiple
         return 0;
     }
     let existingRisk = getRiskInDollarFromExistingPositionsAndEntries(symbol, logTags);
-    if (hasRiskFromExistingPositionsAndEntriesForDirection(symbol, isLong)) {
-        Firestore.logError(`no more entry with existing risk, use add partial instead`, logTags);
-        return 0;
+    if (existingRisk > 0) {
+        let netQuantity = Models.getPositionNetQuantity(symbol);
+        let positionIsLong = netQuantity > 0;
+        if (netQuantity != 0 && positionIsLong == isLong) {
+            Firestore.logError(`no more entry with existing risk, use add partial instead`, logTags);
+            return 0;
+        }
     }
 
     return multipler;
@@ -140,10 +148,10 @@ export const getRiskInDollarFromExistingPositionsAndEntries = (symbol: string, l
     return result;
 }
 
-export const hasRiskFromExistingPositionsAndEntriesForDirection = (symbol: string, isLong: boolean) => {
+export const hasRiskFromExistingPositions = (symbol: string, isLong: boolean) => {
     let netQuantity = Models.getPositionNetQuantity(symbol);
     let hasPosition = isLong ? netQuantity > 0 : netQuantity < 0;
-    return hasPosition || Models.hasEntryOrdersInSameDirection(symbol, isLong);
+    return hasPosition;
 }
 
 export const getRiskInDollarFromExistingEntries = (symbol: string) => {
