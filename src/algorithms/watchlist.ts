@@ -1,7 +1,7 @@
 import * as Config from '../config/config';
 import * as GlobalSettings from '../config/globalSettings';
 import * as Firestore from '../firestore';
-import type * as Models from '../models/models';
+import * as Models from '../models/models';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as Helper from '../utils/helper';
@@ -249,10 +249,10 @@ const verifyTradingPlans = (symbol: string, plan: TradingPlansModels.TradingPlan
             return false;
         }
     }
-    if (!verifyTradingPlansForSingleDirection(symbol, longPlan, hasRangeBoundReversalPlan)) {
+    if (!verifyTradingPlansForSingleDirection(symbol, longPlan, true, hasRangeBoundReversalPlan)) {
         return false;
     }
-    if (!verifyTradingPlansForSingleDirection(symbol, shortPlan, hasRangeBoundReversalPlan)) {
+    if (!verifyTradingPlansForSingleDirection(symbol, shortPlan, false, hasRangeBoundReversalPlan)) {
         return false;
     }
 
@@ -264,11 +264,12 @@ const verifyTradingPlans = (symbol: string, plan: TradingPlansModels.TradingPlan
 const verifyTradingPlansForSingleDirection = (
     symbol: string,
     plan: TradingPlansModels.SingleDirectionPlans,
+    isLong: boolean,
     hasTopLevelTradebook = false) => {
     if (!plan.enabled) {
         return true;
     }
-    if (plan.firstTargetToAdd == 0) {
+    if (Models.getFirstTargetToAdd(symbol, isLong) === 0) {
         Firestore.logError(`${symbol} missing first target to add`);
         return false;
     }

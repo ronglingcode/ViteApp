@@ -81,9 +81,17 @@ export interface VwapCorrection {
     open: number,
 }
 
+export enum PriceIndicator {
+    PremarketHigh = 'premarketHigh',
+    PremarketLow = 'premarketLow',
+    Vwap = 'vwap',
+}
+
+export type PriceReference = `${number}` | PriceIndicator;
+
 export interface SingleDirectionPlans {
     enabled: boolean,
-    firstTargetToAdd: number,
+    firstTargetToAdd: PriceReference,
     finalTargets: SingleExitTarget[],
     /* used strategies begin */
     levelMomentumPlan?: LevelMomentumPlan,

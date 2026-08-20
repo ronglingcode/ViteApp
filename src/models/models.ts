@@ -1,6 +1,7 @@
 import type * as LightweightCharts from 'sunrise-tv-lightweight-charts';
 import * as TradingPlans from './tradingPlans/tradingPlans';
 import type * as TradingPlansModels from './tradingPlans/tradingPlansModels';
+import { PriceIndicator } from './tradingPlans/tradingPlansModels';
 import * as Helper from '../utils/helper';
 import type { Timestamp } from 'firebase/firestore';
 import * as Watchlist from '../algorithms/watchlist';
@@ -1283,6 +1284,33 @@ export const getCurrentVwap = (symbol: string) => {
     let currentVwap = vwap[vwap.length - 1].value;
     return currentVwap;
 };
+
+const resolvePriceReference = (
+    symbol: string,
+    reference: TradingPlansModels.PriceReference,
+): number => {
+    let symbolData = getSymbolData(symbol);
+    switch (reference) {
+        case PriceIndicator.PremarketHigh:
+            return symbolData.premktHigh;
+        case PriceIndicator.PremarketLow:
+            return symbolData.premktLow;
+        case PriceIndicator.Vwap: {
+            return getCurrentVwap(symbol);
+        }
+        default: {
+            let price = Number(reference);
+            return price;
+        }
+    }
+};
+
+export const getFirstTargetToAdd = (symbol: string, isLong: boolean): number => {
+    let plan = TradingPlans.getTradingPlans(symbol);
+    let directionPlan = isLong ? plan.long : plan.short;
+    return resolvePriceReference(symbol, directionPlan.firstTargetToAdd);
+};
+
 export const hasOpenPrice = (symbol: string) => {
     let candles = getCandlesFromDisplaySinceOpen(symbol);
     return candles && candles.length > 0;

@@ -1,5 +1,4 @@
 import * as Models from '../models/models';
-import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as Helper from '../utils/helper';
 import * as Patterns from './patterns';
 import * as Config from '../config/config';
@@ -573,15 +572,14 @@ export const isAllowedForHeavierPosition = (symbol: string, isLong: boolean, ent
     const symbolData = Models.getSymbolData(symbol);
     const currentVwap = Models.getCurrentVwap(symbol);
     const isGappedUp = Models.isGappedUp(symbol);
-    let topPlan = TradingPlans.getTradingPlans(symbol);
+    let threshold = Models.getFirstTargetToAdd(symbol, isLong);
+
     if (isLong) {
-        let threshold = topPlan.long.firstTargetToAdd;
         if (threshold < 0) {
             threshold = isGappedUp ? symbolData.premktHigh : currentVwap;
         }
         return entryPrice >= threshold;
     } else {
-        let threshold = topPlan.short.firstTargetToAdd;
         if (threshold < 0) {
             threshold = isGappedUp ? currentVwap : symbolData.premktLow;
         }

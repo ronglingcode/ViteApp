@@ -1321,17 +1321,18 @@ export const drawMomentumLevels = (widget: Models.ChartWidget) => {
         }
         chart.momentumLevels = [];
 
-        let topPlan = TradingPlans.getTradingPlans(widget.symbol);
-        if (topPlan.long.firstTargetToAdd > 0) {
+        let longTargetToAdd = Models.getFirstTargetToAdd(widget.symbol, true);
+        if (longTargetToAdd > 0) {
             let l = createPriceLine(
-                chart.candleSeries, topPlan.long.firstTargetToAdd,
+                chart.candleSeries, longTargetToAdd,
                 "T1 to add", "green", 1, false, "solid",
             );
             chart.momentumLevels.push(l);
         }
-        if (topPlan.short.firstTargetToAdd > 0) {
+        let shortTargetToAdd = Models.getFirstTargetToAdd(widget.symbol, false);
+        if (shortTargetToAdd > 0) {
             let l = createPriceLine(
-                chart.candleSeries, topPlan.short.firstTargetToAdd,
+                chart.candleSeries, shortTargetToAdd,
                 "T1 to add", "red", 1, false, "solid",
             );
             chart.momentumLevels.push(l);

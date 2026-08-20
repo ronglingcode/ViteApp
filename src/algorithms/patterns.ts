@@ -1,4 +1,3 @@
-import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as Firestore from '../firestore';
 import * as Models from '../models/models';
 import * as Helper from '../utils/helper';
@@ -826,8 +825,7 @@ export const hasLevelRetest = (symbol: string, isLong: boolean, level: number) =
 export const hasApproachedTargetToAdd = (symbol: string, isLong: boolean) => {
     let symbolData = Models.getSymbolData(symbol);
     let maxDayLevel = isLong ? symbolData.highOfDay : symbolData.lowOfDay;
-    let topPlan = TradingPlans.getTradingPlans(symbol);
-    let targetToAdd = isLong ? topPlan.long.firstTargetToAdd : topPlan.short.firstTargetToAdd;
+    let targetToAdd = Models.getFirstTargetToAdd(symbol, isLong);
     if (targetToAdd <= 0) {
         return false;
     }
