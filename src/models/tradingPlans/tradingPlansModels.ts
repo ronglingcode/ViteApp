@@ -287,10 +287,3 @@ export interface SupportResistanceArea extends LevelArea {
      */
     requireEntryWithinRange?: boolean,
 }
-
-export enum PremarketVolumeScore {
-    Zero_Low_Or_Normal = 0,
-    One_Higher_Than_Normal = 1,
-    Two_Extremely_High = 2,
-    Unknown = -1,
-}
