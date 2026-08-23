@@ -98,6 +98,9 @@ interface BookmapCorePlanConfig {
     entryPrice?: number;
     coreTarget?: number;
     coreCount?: number;
+    runnerCondition?: string;
+    runnerCount?: number;
+    corePlan?: string;
     bufferedTarget?: number;
     partialsTaken?: number;
     tradeId?: string;
@@ -403,12 +406,16 @@ const buildCorePlanConfig = (
     let entryPrice = Number(state.entryPrice);
     let coreTarget = Number(state.plan.coreTarget);
     let coreCount = normalizeRestrictedPartialCount(state.plan.coreCount);
+    let tradingPlan = TradingPlans.getTradingPlans(symbol);
     return {
         ...base,
         isLong,
         entryPrice,
         coreTarget,
         coreCount,
+        runnerCondition: state.plan.runnerTriggerCondition ?? "",
+        runnerCount: Number(state.plan.runnerCount) || 0,
+        corePlan: tradingPlan?.corePlan ?? "",
         bufferedTarget: calculateBufferedCoreTarget(entryPrice, coreTarget),
         partialsTaken: getPartialsTaken(symbol, state),
         tradeId: `${symbol}:${isLong ? "long" : "short"}:${getTimestampTimeMs(state.submitTime)}`,
