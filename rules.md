@@ -1,6 +1,6 @@
 # Tradebook Rules
 
-This document summarizes the concrete tradebook classes under `src/tradebooks`. Helper and abstract files such as `baseTradebook.ts`, `gapAndCrapBookmapShortCommon.ts`, `singleKeyLevel/commonRules.ts`, `singleKeyLevel/singleKeyLevelTradebook.ts`, and `singleKeyLevel/baseBreakoutTradebook.ts` are not listed as standalone tradebooks, but their shared rules are called out below where relevant.
+This document summarizes the concrete tradebook classes under `src/tradebooks`. Helper and abstract files such as `baseTradebook.ts`, `gapAndCrapBookmapShortCommon.ts`, `singleKeyLevel/commonRules.ts`, and `singleKeyLevel/baseBreakoutTradebook.ts` are not listed as standalone tradebooks, but their shared rules are called out below where relevant.
 
 ## Shared Helpers
 
