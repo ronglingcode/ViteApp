@@ -127,16 +127,6 @@ This document summarizes the concrete tradebook classes under `src/tradebooks`. 
 - Add rules: partial adds are only allowed below current VWAP.
 - Exit rules: limit moves, stop moves, and market-outs first consult `ExitRulesCheckerNew(...)`; even then, actions near VWAP alignment are blocked by `VwapPatterns.isNearAlignWithVwap(...)`. `flatten` and `adjustAllExitPairs` are allowed by default, except they are also blocked near VWAP alignment.
 
-## VwapContinuationFailed
-
-- Source: `src/tradebooks/singleKeyLevel/vwapContinuationFailed.ts`
-- Entry rules: an entry method is required. `Closed Candle` waits for the specific fail pattern (`pushing down from vwap` for long, `bouncing off vwap` for short). `Live Candle` skips that wait-for-close rule. `M5/M15/M30 NewHighLow` require the entry to break both a prior candle and VWAP on that timeframe.
-- Momentum rule: `Rules.isReverseOfMomentumCandle(...)` blocks market orders that are against the current candle's momentum.
-- VWAP-side check: the code logs and speaks when the entry is on the wrong side of VWAP, but it does not hard-block on that condition.
-- Shared entry rules: after the local checks it applies `validateCommonEntryRules(...)`.
-- Add rules: no override, so adds are disallowed by the base `Tradebook`.
-- Exit rules: limit moves, stop moves, and market-outs first consult `ExitRulesCheckerNew(...)`; if that does not allow the action, losing VWAP via `Patterns.isPriceWorseThanVwap(...)` can allow the exit. `flatten` and `adjustAllExitPairs` use base `Tradebook` defaults.
-
 ## AboveWaterBreakout
 
 - Source: `src/tradebooks/singleKeyLevel/aboveWaterBreakout.ts`

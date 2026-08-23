@@ -2,7 +2,6 @@ import * as Models from "../models/models";
 import * as TradingPlans from "../models/tradingPlans/tradingPlans";
 import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import type { Tradebook } from "./baseTradebook";
-import { VwapContinuationFailed } from "./singleKeyLevel/vwapContinuationFailed";
 import * as Helper from "../utils/helper";
 import { BookmapWallBreak } from "./bookmapWallBreak";
 import { BookmapWallReversal } from "./bookmapWallReversal";
