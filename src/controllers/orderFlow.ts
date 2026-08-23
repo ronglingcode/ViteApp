@@ -9,6 +9,7 @@ import * as Firestore from '../firestore';
 import * as Helper from '../utils/helper';
 import * as EntryHandler from './entryHandler';
 import * as AdjustExitsHandler from './adjustExitsHandler';
+import * as CoreTargetExitRules from './coreTargetExitRules';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 declare let window: Models.MyWindow;
 
@@ -213,9 +214,17 @@ export const adjustExitPairsWithNewPrice = async (symbol: string,
         let { newUpdatedPrice } = AdjustExitsHandler.prepareAdjustStopExits(symbol, newPrice, '');
         newPrice = newUpdatedPrice;
     }
+    let coreTargetResult = CoreTargetExitRules.checkPriceAdjustment(
+        symbol, pairs, newPrice, isStopLeg);
+    if (!coreTargetResult.allowed) {
+        Firestore.logError(`core target blocked exit adjustment: ${coreTargetResult.reason}`, logTags);
+        Helper.speak(`core target blocked ${symbol} exit`);
+        return false;
+    }
     pairs.forEach(pair => {
         Broker.replaceExitPairWithNewPrice(pair, newPrice, isStopLeg, positionIsLong, logTags);
     })
+    return true;
 }
 
 export const adjustHalfExitOrdersWithNewPrice = async (symbol: string, newPrice: number,
@@ -248,7 +257,7 @@ export const raiseAllTargetsBelow = async (symbol: string, isLong: boolean, newP
     let netQuantity = Models.getPositionNetQuantity(symbol);
     let positionIsLong = netQuantity > 0;
 
-    adjustExitPairsWithNewPrice(symbol, exitPairs, newPrice, false, positionIsLong, logTags);
+    adjustExitPairsWithNewPrice(symbol, allowedPairs, newPrice, false, positionIsLong, logTags);
 };
 
 export const getHalfExitOrdersPairs = (symbol: string) => {

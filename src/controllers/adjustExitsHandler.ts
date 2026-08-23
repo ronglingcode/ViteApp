@@ -108,20 +108,6 @@ export const afterAdjustSingleExit = (symbol: string, totalPairsCount: number) =
         return;
     }
 
-    /*let message = "";
-    let alertText = "";
-    let tradeManagetment = TraderFocus.getTradeManagementFromPosition(symbol);
-    let tradebook = TraderFocus.getTradebookFromPosition(symbol);
-    if (tradebook) {
-        alertText = tradebook.name
-    }
-    if (totalPairsCount < 4) {
-        message = "review trade book, manage third leg in M15";
-    } else if (totalPairsCount <= 7) {
-        message = "review trade book, manage second leg in M5";
-    }
-    alertText += `: ${message}`;
-    alert(alertText);*/
     let now = Helper.getCurrentMarketTime();
     let seconds = Helper.getSecondsSinceMarketOpen(now);
     if (seconds < 60 * 2 + 30) {

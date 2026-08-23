@@ -5,7 +5,6 @@ import * as Models from '../models/models';
 import * as Firestore from '../firestore';
 import * as EntryRulesChecker from '../controllers/entryRulesChecker';
 import * as GlobalSettings from '../config/globalSettings';
-import * as ExitRulesCheckerNew from '../controllers/exitRulesCheckerNew';
 import * as Helper from '../utils/helper';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import { TradebookID } from "./tradebookIds";
@@ -17,8 +16,6 @@ import * as SupportResistance from '../models/tradingPlans/supportResistance';
 
 export class BookmapWallBreak extends Tradebook {
     private basePlan: TradingPlansModels.BasePlan;
-    private scalpMinCount = 0;
-    private coreMinCount = 0;
     private entryArea: TradingPlansModels.SupportResistanceArea;
     private inPullbackPhase = false;
     private hasPullbackPhase = false;
@@ -53,9 +50,6 @@ export class BookmapWallBreak extends Tradebook {
         this.basePlan = basePlan;
         this.enableByDefault = true;
         this.waitForPullback = waitForPullback;
-        let scalpCount = GlobalSettings.batchCount - basePlan.coreCount - basePlan.runnerCount;
-        this.scalpMinCount = GlobalSettings.batchCount - scalpCount;
-        this.coreMinCount = GlobalSettings.batchCount - scalpCount - basePlan.coreCount;
         this.entryArea = entryArea;
     }
 
@@ -194,155 +188,28 @@ export class BookmapWallBreak extends Tradebook {
     getDisallowedReasonToAdjustSingleLimitOrder(
         symbol: string, keyIndex: number, order: Models.OrderModel,
         pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
-        let exitCount = Models.getExitPairs(symbol).length;
         let missingCoreInvalidationResult = this.getDisallowedReasonForMissingCoreInvalidationLevelAtKeyIndex(symbol, keyIndex, this.basePlan, logTags);
         if (missingCoreInvalidationResult) {
             return missingCoreInvalidationResult;
         }
-        let isMarketOrder = false;
-        let newResult = ExitRulesCheckerNew.isAllowedForLimitOrderForAllTradebooks(
-            symbol, this.isLong, isMarketOrder, newPrice, keyIndex, pair, logTags);
-        if (newResult.allowed) {
-            return newResult;
-        }
-        if (exitCount >= this.scalpMinCount) {
-            // manage scalp position
-            let allowedReason: Models.CheckRulesResult = {
-                allowed: true,
-                reason: `allow adjust stop for scalps: ${exitCount} > ${this.scalpMinCount}`,
-            };
-            return allowedReason;
-        } else if (exitCount >= this.coreMinCount) {
-            // manage core position
-            let minutesSinceOpen = Helper.getMinutesSinceMarketOpen(new Date());
-            if (minutesSinceOpen >= 10) {
-                let allowedReason: Models.CheckRulesResult = {
-                    allowed: true,
-                    reason: "alow core exit after 10 minutes from open",
-                };
-                return allowedReason;
-            }
-            if ((this.isLong && newPrice >= this.basePlan.coreTarget) || (!this.isLong && newPrice <= this.basePlan.coreTarget)) {
-                let allowedReason: Models.CheckRulesResult = {
-                    allowed: true,
-                    reason: `allow adjust exit for core if new price ${newPrice} is above core target ${this.basePlan.coreTarget}`,
-                };
-                return allowedReason;
-            }
-        } else {
-            let minutesSinceOpen = Helper.getMinutesSinceMarketOpen(new Date());
-            if (minutesSinceOpen >= 14) {
-                let allowedReason: Models.CheckRulesResult = {
-                    allowed: true,
-                    reason: "alow runner exit after 14 minutes from open",
-                };
-                return allowedReason;
-            }
-        }
-        return newResult;
+        return { allowed: true, reason: "core target rule passed" };
     }
 
     getDisallowedReasonToAdjustSingleStopOrder(
         symbol: string, keyIndex: number, order: Models.OrderModel, pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
-        let exitCount = Models.getExitPairs(symbol).length;
         let missingCoreInvalidationResult = this.getDisallowedReasonForMissingCoreInvalidationLevelAtKeyIndex(symbol, keyIndex, this.basePlan, logTags);
         if (missingCoreInvalidationResult) {
             return missingCoreInvalidationResult;
         }
-        let isMarketOrder = false;
-        let newResult = ExitRulesCheckerNew.isAllowedForSingleOrderForAllTradebooks(
-            symbol, this.isLong, isMarketOrder, newPrice, keyIndex, logTags);
-        if (newResult.allowed) {
-            return newResult;
-        }
-
-        if (exitCount >= this.scalpMinCount) {
-            // manage scalp position
-            let allowedReason: Models.CheckRulesResult = {
-                allowed: true,
-                reason: `allow adjust stop for scalps: ${exitCount} > ${this.scalpMinCount}`,
-            };
-            return allowedReason;
-        } else if (exitCount >= this.coreMinCount) {
-            // manage core position
-            let minutesSinceOpen = Helper.getMinutesSinceMarketOpen(new Date());
-            if (minutesSinceOpen >= 10) {
-                let allowedReason: Models.CheckRulesResult = {
-                    allowed: true,
-                    reason: "alow core exit after 10 minutes from open",
-                };
-                return allowedReason;
-            }
-            if ((this.isLong && newPrice >= this.basePlan.coreTarget) || (!this.isLong && newPrice <= this.basePlan.coreTarget)) {
-                let allowedReason: Models.CheckRulesResult = {
-                    allowed: true,
-                    reason: `allow adjust stop for core if new price ${newPrice} is above core target ${this.basePlan.coreTarget}`,
-                };
-                return allowedReason;
-            }
-        } else {
-            let minutesSinceOpen = Helper.getMinutesSinceMarketOpen(new Date());
-            if (minutesSinceOpen >= 14) {
-                let allowedReason: Models.CheckRulesResult = {
-                    allowed: true,
-                    reason: "alow runner exit after 14 minutes from open",
-                };
-                return allowedReason;
-
-            }
-        }
-        return newResult;
+        return { allowed: true, reason: "core target rule passed" };
     }
 
     getDisallowedReasonToMarketOutSingleOrder(symbol: string, keyIndex: number, logTags: Models.LogTags): Models.CheckRulesResult {
-        let exitCount = Models.getExitPairs(symbol).length;
         let missingCoreInvalidationResult = this.getDisallowedReasonForMissingCoreInvalidationLevelAtKeyIndex(symbol, keyIndex, this.basePlan, logTags);
         if (missingCoreInvalidationResult) {
             return missingCoreInvalidationResult;
         }
-        let isMarketOrder = true;
-        let currentPrice = Models.getCurrentPrice(symbol);
-        let newResult = ExitRulesCheckerNew.isAllowedForSingleOrderForAllTradebooks(
-            symbol, this.isLong, isMarketOrder, currentPrice, keyIndex, logTags);
-        if (newResult.allowed) {
-            return newResult;
-        }
-        let newPrice = Models.getCurrentPrice(symbol);
-        if (exitCount >= this.scalpMinCount) {
-            // manage scalp position
-            let allowedReason: Models.CheckRulesResult = {
-                allowed: true,
-                reason: `allow market out for scalps: ${exitCount} > ${this.scalpMinCount}`,
-            };
-            return allowedReason;
-        } else if (exitCount >= this.coreMinCount) {
-            // manage core position
-            let minutesSinceOpen = Helper.getMinutesSinceMarketOpen(new Date());
-            if (minutesSinceOpen >= 10) {
-                let allowedReason: Models.CheckRulesResult = {
-                    allowed: true,
-                    reason: "alow core exit after 10 minutes from open",
-                };
-                return allowedReason;
-            }
-            if ((this.isLong && newPrice >= this.basePlan.coreTarget) || (!this.isLong && newPrice <= this.basePlan.coreTarget)) {
-                let allowedReason: Models.CheckRulesResult = {
-                    allowed: true,
-                    reason: `allow market out for core if new price ${newPrice} is above core target ${this.basePlan.coreTarget}`,
-                };
-                return allowedReason;
-            }
-        } else {
-            let minutesSinceOpen = Helper.getMinutesSinceMarketOpen(new Date());
-            if (minutesSinceOpen >= 14) {
-                let allowedReason: Models.CheckRulesResult = {
-                    allowed: true,
-                    reason: "alow runner exit after 14 minutes from open",
-                };
-                return allowedReason;
-            }
-        }
-        return newResult;
+        return { allowed: true, reason: "core target rule passed" };
     }
 
     getDisallowedReasonToAdjustAllExitPairs(symbol: string, logTags: Models.LogTags, newPrice: number): Models.CheckRulesResult {

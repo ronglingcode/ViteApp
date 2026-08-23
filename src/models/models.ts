@@ -179,6 +179,7 @@ export interface BreakoutTradeState {
     exitDescription: string,
     closedOutsideRatio: number,
     stopTightenPhase: 'idle' | 'needs_tighten' | 'done',
+    coreTargetReminderShown?: boolean,
 };
 export interface StreamingAccountActivity {
     symbol: string,

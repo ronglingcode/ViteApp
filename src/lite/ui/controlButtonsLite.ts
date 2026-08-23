@@ -1,5 +1,4 @@
 import * as RiskManager from '../../algorithms/riskManager';
-import * as GlobalSettings from '../../config/globalSettings';
 import * as Models from '../../models/models';
 import * as PremarketSetupReminder from '../../ui/premarketSetupReminder';
 
@@ -9,16 +8,6 @@ interface ControlButtonCallbacks {
     handleError: (source: string, error: unknown) => void;
     refreshAccount: () => Promise<void>;
 }
-
-const updateManagementCardExitBlockButtonText = () => {
-    let button = document.getElementById('toggle_management_card_exit_block');
-    if (!button) {
-        return;
-    }
-    button.textContent = GlobalSettings.blockExitAdjustmentsWithoutCommittedTradeManagementCard
-        ? 'Block card exits: ON'
-        : 'Block card exits: OFF';
-};
 
 const runControlAction = async (
     label: string,
@@ -78,13 +67,4 @@ export const setupMainAppControlButtons = (callbacks: ControlButtonCallbacks) =>
     document.getElementById('test_popup')?.addEventListener('click', () => {
         PremarketSetupReminder.showPremarketSetupReminderForTest();
     });
-    if (GlobalSettings.enableTradeManagementCard) {
-        document.getElementById('toggle_management_card_exit_block')?.addEventListener('click', () => {
-            let enabled = GlobalSettings.toggleBlockExitAdjustmentsWithoutCommittedTradeManagementCard();
-            updateManagementCardExitBlockButtonText();
-            callbacks.setOrderStatus(`blockExitAdjustmentsWithoutCommittedTradeManagementCard: ${enabled}`);
-            callbacks.logEvent(`blockExitAdjustmentsWithoutCommittedTradeManagementCard: ${enabled}`);
-        });
-        updateManagementCardExitBlockButtonText();
-    }
 };

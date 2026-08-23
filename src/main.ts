@@ -124,7 +124,6 @@ let syncAccountButton = document.getElementById("update_account_ui");
 if (syncAccountButton) {
     syncAccountButton.addEventListener("click", () => {
         Chart.updateAccountUIStatus('sync button');
-        TraderFocus.updateUI();
     });
 }
 
@@ -137,30 +136,6 @@ if (testPopButton) {
 
 if (!Runtime.isReplayMode()) {
     PremarketSetupReminder.schedulePremarketSetupReminder();
-}
-
-let tradeManagementPane = document.getElementById("traderFocus");
-if (tradeManagementPane) {
-    tradeManagementPane.style.display = GlobalSettings.enableTradeManagementCard ? "" : "none";
-}
-
-let toggleManagementCardExitBlockButton = document.getElementById("toggle_management_card_exit_block");
-const updateManagementCardExitBlockButtonText = () => {
-    if (!toggleManagementCardExitBlockButton) {
-        return;
-    }
-    toggleManagementCardExitBlockButton.textContent = GlobalSettings.blockExitAdjustmentsWithoutCommittedTradeManagementCard
-        ? "Block card exits: ON"
-        : "Block card exits: OFF";
-};
-if (GlobalSettings.enableTradeManagementCard && toggleManagementCardExitBlockButton) {
-    toggleManagementCardExitBlockButton.style.display = "";
-    updateManagementCardExitBlockButtonText();
-    toggleManagementCardExitBlockButton.addEventListener("click", () => {
-        const enabled = GlobalSettings.toggleBlockExitAdjustmentsWithoutCommittedTradeManagementCard();
-        updateManagementCardExitBlockButtonText();
-        Firestore.addToLogView(`blockExitAdjustmentsWithoutCommittedTradeManagementCard: ${enabled}`, 'Info');
-    });
 }
 
 Firestore.addToLogView(AppVersion.appVersionLogMessage, 'Info');
@@ -258,7 +233,6 @@ const initializeReplayCharts = (manifest: ReplayApi.ReplayManifest, bootstrap: R
 const setupSharedAppUi = () => {
     Chart.setup();
     Models.setTimeframe(1);
-    TraderFocus.updateTradeManagementUI();
 };
 
 const startReplay = async () => {
@@ -448,10 +422,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
-
-if (!GlobalSettings.enableLeftPaneFeatures) {
-    let leftPane = document.getElementById('traderFocus');
-    if (leftPane) {
-        leftPane.style.display = 'none';
-    }
-}

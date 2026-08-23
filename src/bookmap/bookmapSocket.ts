@@ -14,6 +14,15 @@ import * as KeyboardHandler from "../controllers/keyboardHandler";
 import * as Handler from "../controllers/handler";
 import * as ExitOrderPairs from "../utils/exitOrderPairs";
 import * as RiskManager from "../algorithms/riskManager";
+import * as TradingState from "../models/tradingState";
+import {
+    ALWAYS_UNRESTRICTED_PARTIALS,
+    calculateBufferedCoreTarget,
+    DEFAULT_PARTIALS_COUNT,
+    estimateCompletedPartials,
+    MAX_RESTRICTED_PARTIALS,
+    normalizeRestrictedPartialCount,
+} from "../controllers/coreTargetRule";
 import {
     getBookmapWirePrice,
     isSupportedBookmapWirePriceUnit,
@@ -79,6 +88,31 @@ interface BookmapExecutionConfig {
     isBuy: boolean;
     positionEffectIsOpen: boolean;
     timeMs: number;
+}
+
+interface BookmapCorePlanConfig {
+    type: "core_plan_config";
+    symbol: string;
+    hasActiveTrade: boolean;
+    isLong?: boolean;
+    entryPrice?: number;
+    coreTarget?: number;
+    coreCount?: number;
+    bufferedTarget?: number;
+    partialsTaken?: number;
+    tradeId?: string;
+    reminderRequested?: boolean;
+    requestId?: string;
+    updateStatus?: "success" | "error";
+    error?: string;
+    timestamp: number;
+}
+
+interface CorePlanSendOptions {
+    reminderRequested?: boolean;
+    requestId?: string;
+    updateStatus?: "success" | "error";
+    error?: string;
 }
 
 /** Normalize symbol e.g. "ADBE:NASDAQ:STOCKS@BMD" -> "ADBE" */
@@ -150,6 +184,8 @@ export const createWebSocket = () => {
             console.log("[BookmapSocket] custom_button_click");
             console.log(data)
             handleCustomButtonClick(data);
+        } else if (type === "core_plan_update") {
+            handleCorePlanUpdate(data);
         } else if (type === "subscribed") {
             console.log(`[BookmapSocket] Subscribed to ${data.channel}(interval = ${data.intervalMs}ms, levels = ${data.levels})`);
         } else if (type === "unsubscribed") {
@@ -193,6 +229,7 @@ const pushBookmapConfigsForAllSymbols = () => {
     sendKeyLevelConfigsForAllSymbols();
     sendExitOrderPairConfigsForAllSymbols();
     sendAccountStatesForAllSymbols();
+    sendCorePlanConfigsForAllSymbols();
     sendVwapUpdatesForAllSymbols();
 };
 
@@ -310,6 +347,170 @@ export const sendAccountStateForSymbol = (symbol: string) => {
     })));
 };
 
+const getTimestampTimeMs = (value: unknown): number => {
+    if (value && typeof value === "object") {
+        let timestamp = value as { toMillis?: () => number, seconds?: number, nanoseconds?: number };
+        if (typeof timestamp.toMillis === "function") {
+            let result = timestamp.toMillis();
+            return Number.isFinite(result) ? result : 0;
+        }
+        if (Number.isFinite(timestamp.seconds)) {
+            return (timestamp.seconds ?? 0) * 1000 + (timestamp.nanoseconds ?? 0) / 1_000_000;
+        }
+    }
+    return 0;
+};
+
+const getPartialsTaken = (symbol: string, state: Models.BreakoutTradeState): number => {
+    let initialQuantity = Number(state.initialQuantity);
+    if (Number.isFinite(initialQuantity) && initialQuantity > 0) {
+        let submitTimeMs = getTimestampTimeMs(state.submitTime);
+        let exitedQuantity = Models.getAllOrderExecutions(symbol)
+            .filter(execution => !execution.positionEffectIsOpen
+                && (submitTimeMs <= 0 || getExecutionTimeMs(execution) >= submitTimeMs))
+            .reduce((total, execution) => total + Math.max(0, Number(execution.quantity) || 0), 0);
+        return estimateCompletedPartials(
+            initialQuantity,
+            exitedQuantity,
+            Models.getExitPairs(symbol).length,
+        );
+    }
+
+    return estimateCompletedPartials(0, 0, Models.getExitPairs(symbol).length);
+};
+
+const buildCorePlanConfig = (
+    symbol: string,
+    options: CorePlanSendOptions = {},
+): BookmapCorePlanConfig => {
+    let netQuantity = Models.getPositionNetQuantity(symbol);
+    let isLong = netQuantity > 0;
+    let state = netQuantity === 0 ? undefined : TradingState.getBreakoutTradeState(symbol, isLong);
+    let base: BookmapCorePlanConfig = {
+        type: "core_plan_config",
+        symbol,
+        hasActiveTrade: state?.hasValue === true,
+        reminderRequested: options.reminderRequested === true,
+        requestId: options.requestId,
+        updateStatus: options.updateStatus,
+        error: options.error,
+        timestamp: Date.now(),
+    };
+    if (!state?.hasValue) {
+        return base;
+    }
+
+    let entryPrice = Number(state.entryPrice);
+    let coreTarget = Number(state.plan.coreTarget);
+    let coreCount = normalizeRestrictedPartialCount(state.plan.coreCount);
+    return {
+        ...base,
+        isLong,
+        entryPrice,
+        coreTarget,
+        coreCount,
+        bufferedTarget: calculateBufferedCoreTarget(entryPrice, coreTarget),
+        partialsTaken: getPartialsTaken(symbol, state),
+        tradeId: `${symbol}:${isLong ? "long" : "short"}:${getTimestampTimeMs(state.submitTime)}`,
+    };
+};
+
+export const sendCorePlanConfigsForAllSymbols = () => {
+    getAccountSnapshotSymbols().forEach(symbol => sendCorePlanConfigForSymbol(symbol));
+};
+
+export const sendCorePlanConfigForSymbol = (
+    symbol: string,
+    options: CorePlanSendOptions = {},
+) => {
+    if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+        return false;
+    }
+    websocket.send(JSON.stringify(withBookmapWirePriceUnit(buildCorePlanConfig(symbol, options))));
+    return true;
+};
+
+const maybeSendThirdPartialCorePlanReminder = (symbol: string) => {
+    let netQuantity = Models.getPositionNetQuantity(symbol);
+    if (netQuantity === 0) {
+        return false;
+    }
+    let isLong = netQuantity > 0;
+    let state = TradingState.getBreakoutTradeState(symbol, isLong);
+    if (!state.hasValue || state.coreTargetReminderShown === true
+        || getPartialsTaken(symbol, state) < ALWAYS_UNRESTRICTED_PARTIALS) {
+        return false;
+    }
+    if (!sendCorePlanConfigForSymbol(symbol, { reminderRequested: true })) {
+        return false;
+    }
+    TradingState.markCoreTargetReminderShown(symbol, isLong);
+    return true;
+};
+
+const sendCorePlanUpdateError = (symbol: string, requestId: string, error: string) => {
+    console.warn(`[BookmapSocket] Rejected core plan update for ${symbol}: ${error}`);
+    sendCorePlanConfigForSymbol(symbol, {
+        requestId,
+        updateStatus: "error",
+        error,
+    });
+};
+
+const handleCorePlanUpdate = (data: Record<string, unknown>) => {
+    let symbol = normalizeSymbol(getString(data.symbol));
+    let requestId = getString(data.requestId || data.request_id) || `${Date.now()}`;
+    let netQuantity = Models.getPositionNetQuantity(symbol);
+    if (!symbol || symbol === "???" || netQuantity === 0) {
+        sendCorePlanUpdateError(symbol, requestId, "There is no active position for this symbol.");
+        return;
+    }
+
+    let isLong = netQuantity > 0;
+    let state = TradingState.getBreakoutTradeState(symbol, isLong);
+    if (!state.hasValue) {
+        sendCorePlanUpdateError(symbol, requestId, "There is no active trade plan for this position.");
+        return;
+    }
+
+    let coreTarget = normalizeBookmapWirePrice(data.coreTarget ?? data.core_target);
+    let coreCount = Number(data.coreCount ?? data.core_count);
+    if (coreTarget === undefined) {
+        sendCorePlanUpdateError(symbol, requestId, "Core target must be a positive number.");
+        return;
+    }
+    if (!Number.isInteger(coreCount)
+        || coreCount < 0
+        || coreCount > MAX_RESTRICTED_PARTIALS) {
+        sendCorePlanUpdateError(
+            symbol,
+            requestId,
+            `Core count must be an integer from 0 to ${MAX_RESTRICTED_PARTIALS}.`,
+        );
+        return;
+    }
+
+    coreTarget = Helper.roundPrice(symbol, coreTarget);
+    let entryPrice = Number(state.entryPrice);
+    if (!Number.isFinite(entryPrice) || entryPrice <= 0
+        || (isLong && coreTarget <= entryPrice)
+        || (!isLong && coreTarget >= entryPrice)) {
+        sendCorePlanUpdateError(
+            symbol,
+            requestId,
+            `Core target must be ${isLong ? "above" : "below"} entry ${entryPrice}.`,
+        );
+        return;
+    }
+
+    TradingState.updateCoreTargetPlan(symbol, isLong, coreTarget, coreCount);
+    sendCorePlanConfigForSymbol(symbol, {
+        requestId,
+        updateStatus: "success",
+    });
+    sendActionLog(symbol, `updated core plan: target ${coreTarget}, count ${coreCount}`);
+};
+
 export const sendVwapUpdatesForAllSymbols = () => {
     let watchlist = Models.getWatchlist();
     for (let i = 0; i < watchlist.length; i++) {
@@ -367,10 +568,18 @@ const registerAccountUiRefreshListener = () => {
         if (symbol) {
             sendExitOrderPairConfigForSymbol(symbol);
             sendAccountStateForSymbol(symbol);
+            if (!maybeSendThirdPartialCorePlanReminder(symbol)) {
+                sendCorePlanConfigForSymbol(symbol);
+            }
         }
     });
     window.addEventListener('tradingscripts:account-ui-updated', () => {
         sendAccountStatesForAllSymbols();
+        getAccountSnapshotSymbols().forEach(symbol => {
+            if (!maybeSendThirdPartialCorePlanReminder(symbol)) {
+                sendCorePlanConfigForSymbol(symbol);
+            }
+        });
     });
 };
 

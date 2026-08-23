@@ -1,53 +1,7 @@
 import * as Models from '../models/models';
 import * as TradingState from '../models/tradingState';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
-import * as UI from '../ui/ui';
-import * as Firestore from '../firestore';
-import * as GlobalSettings from '../config/globalSettings';
-import * as ManagementCard from './managementCard';
 
-export const updateUI = () => {
-    updateTradeManagementUI();
-}
-
-export const updateTradeManagementUI = () => {
-    if (!GlobalSettings.enableTradeManagementCard) {
-        return;
-    }
-    let traderFocusInstructionsContent = document.getElementById("traderFocusInstructionsContent");
-    if (traderFocusInstructionsContent) {
-        ManagementCard.render(traderFocusInstructionsContent, getManagementContexts());
-    }
-}
-const getManagementContexts = (): ManagementCard.ManagementPositionContext[] => {
-    let positions = Models.getOpenPositions();
-    let positionBySymbol = new Map<string, Models.Position>();
-    positions.forEach(position => {
-        positionBySymbol.set(position.symbol, position);
-    });
-
-    return Models.getWatchlist().map(item => {
-        let position = positionBySymbol.get(item.symbol);
-        return {
-            symbol: item.symbol,
-            position: position,
-            tradebookID: position ? getTradebookIDForPosition(position) : undefined,
-        };
-    });
-}
-const getTradebookIDForPosition = (position: Models.Position) => {
-    let symbol = position.symbol;
-    if (position.netQuantity === 0) {
-        return undefined;
-    }
-    let isLong = position.netQuantity > 0;
-    let breakoutTradeState = TradingState.getBreakoutTradeState(symbol, isLong);
-    if (!breakoutTradeState) {
-        Firestore.logError(`should have breakoutTradeState for position ${symbol}`);
-        return undefined;
-    }
-    return breakoutTradeState.submitEntryResult.tradeBookID;
-}
 export const getTradebookFromPosition = (symbol: string) => {
     let position = Models.getOpenPositions();
     for (let i = 0; i < position.length; i++) {
@@ -66,50 +20,4 @@ export const getTradebookFromPosition = (symbol: string) => {
         }
     }
     return null;
-}
-export const populateTradeManagementForPosition = (position: Models.Position, root: HTMLElement) => {
-    if (!GlobalSettings.enableTradeManagementCard || position.netQuantity === 0) {
-        return;
-    }
-    let tradebookID = getTradebookIDForPosition(position);
-    ManagementCard.populateForPosition(position, root, tradebookID);
-}
-export const populateTradeManagementForTradebook = (symbol: string, isLong: boolean, tradebookID: string, root: HTMLElement) => {
-    if (!GlobalSettings.enableTradeManagementCard) {
-        return;
-    }
-    let tradebook = TradebooksManager.getTradebookByID(symbol, tradebookID);
-    if (!tradebook) {
-        Firestore.logInfo(`tradebook not found for ${symbol} ${tradebookID}`);
-        return;
-    }
-    let container = document.createElement("div");
-    container.className = "ticker";
-    root.appendChild(container);
-
-    let tickerTitle = document.createElement("div");
-    tickerTitle.className = "ticker-title";
-    container.appendChild(tickerTitle);
-
-    UI.addOneLineDiv(tickerTitle, symbol, "");
-    let tagClassName = isLong ? "tag tag-long" : "tag tag-short";
-    UI.addOneLineSpan(tickerTitle, tradebook.name, tagClassName);
-}
-export const test = () => {
-    if (!GlobalSettings.enableTradeManagementCard) {
-        return;
-    }
-    let traderFocusInstructionsContent = document.getElementById("traderFocusInstructionsContent");
-    if (traderFocusInstructionsContent) {
-        let section = document.getElementById("traderFocusInstructions");
-        if (section) {
-            section.classList.remove("collapsed");
-            let icon = section.querySelector(".collapseIcon");
-            if (icon) {
-                icon.textContent = "-";
-            }
-        }
-        traderFocusInstructionsContent.innerHTML = "";
-        ManagementCard.populateMockForTest(traderFocusInstructionsContent);
-    }
 }

@@ -37,6 +37,7 @@ const getDefaultBreakoutTradeState = (isLong: boolean) => {
         exitDescription: "",
         closedOutsideRatio: -1,
         stopTightenPhase: 'idle',
+        coreTargetReminderShown: false,
         submitEntryResult: {
             isSingleOrder: false,
             profitTargets: [],
@@ -207,6 +208,7 @@ const onPlaceTrade = async (symbol: string, isLong: boolean, isMarketOrder: bool
         exitDescription: "",
         closedOutsideRatio: -1,
         stopTightenPhase: 'idle',
+        coreTargetReminderShown: false,
     };
     if (isLong) {
         symbolState.breakoutTradeStateForLong = bts;
@@ -218,6 +220,29 @@ const onPlaceTrade = async (symbol: string, isLong: boolean, isMarketOrder: bool
     update();
     AutoTrader.checkTimingForEntry(symbol);
 }
+
+export const updateCoreTargetPlan = (
+    symbol: string,
+    isLong: boolean,
+    coreTarget: number,
+    coreCount: number,
+) => {
+    let symbolState = getSymbolState(symbol);
+    let breakoutTradeState = getBreakoutTradeState(symbol, isLong);
+    breakoutTradeState.plan.coreTarget = coreTarget;
+    breakoutTradeState.plan.coreCount = coreCount;
+    if (symbolState.activeBasePlan) {
+        symbolState.activeBasePlan.coreTarget = coreTarget;
+        symbolState.activeBasePlan.coreCount = coreCount;
+    }
+    update();
+};
+
+export const markCoreTargetReminderShown = (symbol: string, isLong: boolean) => {
+    let breakoutTradeState = getBreakoutTradeState(symbol, isLong);
+    breakoutTradeState.coreTargetReminderShown = true;
+    update();
+};
 
 export const getAtrInTrade = (symbol: string) => {
     let readOnlyState = internalTradingState.readOnlyStateBySymbol.get(symbol);

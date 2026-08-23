@@ -115,7 +115,6 @@ const renderControls = () => {
           <button id="show_execution_detail" type="button">Show exec more</button>
           <button id="export_trades" type="button">Export trades</button>
           <button id="test_popup" type="button">Test popup</button>
-          ${GlobalSettings.enableTradeManagementCard ? '<button id="toggle_management_card_exit_block" type="button"></button>' : ''}
           <button id="reconnectButton" type="button">Reconnect</button>
           <span id="statusRow" class="statusRow"></span>
         </div>
@@ -140,17 +139,6 @@ export const renderShell = (
         <div class="liteRoot">
           <table>
             <tr>
-              ${GlobalSettings.enableTradeManagementCard ? `
-              <td id="traderFocus">
-                <div id="traderFocusColumn">
-                  <div id="traderFocusInstructions" class="collapsibleSection">
-                    <div class="sectionTitle">
-                      Trade Management
-                    </div>
-                    <div class="sectionContent" id="traderFocusInstructionsContent"></div>
-                  </div>
-                </div>
-              </td>` : ''}
               <td class="liteChartsCell">
                 <table>
                   <tr>

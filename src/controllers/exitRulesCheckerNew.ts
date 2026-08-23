@@ -1,163 +1,9 @@
 import * as Models from "../models/models";
-import * as Rules from "../algorithms/rules";
 import * as Firestore from "../firestore";
-import * as RiskManager from "../algorithms/riskManager";
 import * as TradingState from "../models/tradingState";
 import * as TradebooksManager from "../tradebooks/tradebooksManager";
-import * as TakeProfit from "../algorithms/takeProfit";
 import * as Helper from "../utils/helper";
-import * as TradingPlans from "../models/tradingPlans/tradingPlans";
-import * as GlobalSettings from '../config/globalSettings';
-import * as ManagementCard from './managementCard';
-
-const getCommittedManagementBlock = (
-    symbol: string,
-    isLong: boolean,
-    logTags: Models.LogTags,
-    action: string,
-    keyIndex?: number,
-): Models.CheckRulesResult => {
-    let managementResult = ManagementCard.getDisallowedReasonToAdjustExitOrders(symbol, isLong, keyIndex);
-    if (!managementResult.allowed) {
-        Firestore.logInfo(`${action} disallowed: ${managementResult.reason}`, logTags);
-        return {
-            allowed: false,
-            reason: managementResult.reason,
-        };
-    }
-    return {
-        allowed: true,
-        reason: managementResult.reason,
-    };
-};
-
-export const isAllowedForAllOrdersForAllTradebooks = (symbol: string, isLong: boolean, isMarketOrder: boolean, newPrice: number, logTags: Models.LogTags) => {
-    let { planConfigs, exitPairsCount } = getCommonInfo(symbol);
-    let allowedReason: Models.CheckRulesResult = {
-        allowed: false,
-        reason: "default disallow",
-    };
-    let seconds = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
-    if (seconds > 60 * 15) {
-        allowedReason.allowed = true;
-        allowedReason.reason = "allow after 15 minutes since open";
-        return allowedReason;
-    }
-    if (RiskManager.isOverSized(symbol)) {
-        Firestore.logInfo(`allow exit when over sized`, logTags);
-        allowedReason.allowed = true;
-        allowedReason.reason = "allow when over sized";
-        return allowedReason;
-    }
-    let exitCount = Models.getExitOrdersPairs(symbol).length;
-    if (exitCount > TakeProfit.BatchCount) {
-        allowedReason.allowed = true;
-        allowedReason.reason = `allow when exit count is more than ${TakeProfit.BatchCount}`;
-        return allowedReason;
-    }
-    // allow if break incremental trailing stop
-    let second = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
-    if (120 <= second && second < 300) {
-        // first 5 minutes, use the high/low of 2nd candle
-        let candles = Models.getM1ClosedCandlesSinceOpen(symbol);
-        let secondCandle = candles[1];
-        if (isLong && secondCandle && newPrice <= secondCandle.low) {
-            allowedReason.allowed = true;
-            allowedReason.reason = "low of 2nd M1 candle";
-            return allowedReason;
-        }
-        if (!isLong && secondCandle && newPrice >= secondCandle.high) {
-            allowedReason.allowed = true;
-            allowedReason.reason = "high of 2nd M1 candle";
-            return allowedReason;
-        }
-    } else if (second >= 600) {
-        let candles = Models.getCandlesFromM1SinceOpen(symbol);
-        let m5Candles = Models.aggregateCandles(candles, 5);
-        let secondM5Candle = m5Candles[1];
-        if (isLong && secondM5Candle && newPrice <= secondM5Candle.low) {
-            allowedReason.allowed = true;
-            allowedReason.reason = "low of 2nd M5 candle";
-            return allowedReason;
-        }
-        if (!isLong && secondM5Candle && newPrice >= secondM5Candle.high) {
-            allowedReason.allowed = true;
-            allowedReason.reason = "high of 2nd M5 candle";
-            return allowedReason;
-        }
-    }
-    return allowedReason;
-}
-export const isAllowedForLimitOrderForAllTradebooks = (
-    symbol: string, isLong: boolean, isMarketOrder: boolean, newPrice: number, keyIndex: number,
-    exitPair: Models.ExitPair, logTags: Models.LogTags) => {
-    let allowedByAll = isAllowedForSingleOrderForAllTradebooks(
-        symbol, isLong, isMarketOrder, newPrice, keyIndex, logTags);
-    if (allowedByAll.allowed) {
-        return allowedByAll;
-    }
-    let allowedReason: Models.CheckRulesResult = {
-        allowed: false,
-        reason: "default disallow",
-    };
-    if (Rules.isIncreasingTarget(isLong, newPrice, exitPair)) {
-        allowedReason.allowed = true;
-        allowedReason.reason = "allow when increasing target";
-        return allowedReason;
-    }
-    return allowedReason;
-}
-export const getPartialIndex = (symbol: string, keyIndex: number) => {
-    let maxPartialsCount = GlobalSettings.batchCount;
-    let totalPairsCount = Models.getExitPairs(symbol).length;
-    let exitedCount = 0;
-    if (totalPairsCount < maxPartialsCount) {
-        exitedCount = maxPartialsCount - totalPairsCount;
-    }
-    return keyIndex + exitedCount;
-}
-export const isAllowedForSingleOrderForAllTradebooks = (symbol: string, isLong: boolean, isMarketOrder: boolean, newPrice: number, keyIndex: number, logTags: Models.LogTags) => {
-    let partialIndex = getPartialIndex(symbol, keyIndex);
-    let allowedForAllOrders = isAllowedForAllOrdersForAllTradebooks(symbol, isLong, isMarketOrder, newPrice, logTags);
-    if (allowedForAllOrders.allowed) {
-        return allowedForAllOrders;
-    }
-    let allowedReason: Models.CheckRulesResult = {
-        allowed: false,
-        reason: "default disallow",
-    };
-    let { planConfigs, exitPairsCount } = getCommonInfo(symbol);
-
-    if (Rules.isAllowedForAddedPosition(symbol, isLong, isMarketOrder, newPrice, keyIndex, false)) {
-        allowedReason.allowed = true;
-        allowedReason.reason = "added position";
-        return allowedReason;
-    }
-
-    let threshold = TradingPlans.getMinTarget(symbol, isLong, partialIndex);
-    if (threshold == -1) {
-        allowedReason.allowed = true;
-        allowedReason.reason = `no target (-1) for partial ${partialIndex}`;
-        return allowedReason;
-    }
-
-    // use 0.1 today's current high-low range as buffer
-    let symbolData = Models.getSymbolData(symbol);
-    let buffer = (symbolData.highOfDay - symbolData.lowOfDay) * 0.1;
-    let thresholdWithBuffer = isLong ? threshold - buffer : threshold + buffer;
-    if ((isLong && newPrice >= thresholdWithBuffer) || (!isLong && newPrice <= thresholdWithBuffer)) {
-        allowedReason.allowed = true;
-        allowedReason.reason = `new target ${newPrice} meets threshold: ${threshold}, with buffer: ${thresholdWithBuffer}`;
-        return allowedReason;
-    }
-
-    if ((isLong && symbolData.highOfDay >= threshold) || (!isLong && symbolData.lowOfDay <= threshold)) {
-        allowedReason.allowed = true;
-        allowedReason.reason = `has reached minimum target: ${threshold}`;
-        return allowedReason;
-    }
-    return allowedReason;
-}
+import * as CoreTargetExitRules from './coreTargetExitRules';
 
 export const getCommonInfo = (symbol: string) => {
     let isLong = Models.getPositionNetQuantity(symbol) > 0;
@@ -187,8 +33,10 @@ export const isAllowedToAdjustSingleLimitOrder = (symbol: string, keyIndex: numb
     order: Models.OrderModel, pair: Models.ExitPair,
     newPrice: number, logTags: Models.LogTags) => {
     let { isLong, tradebookID } = getCommonInfo(symbol);
-    let managementResult = getCommittedManagementBlock(symbol, isLong, logTags, "adjust limit order", keyIndex);
-    if (!managementResult.allowed) {
+    let coreTargetResult = CoreTargetExitRules.checkPriceAdjustment(symbol, [pair], newPrice, false);
+    if (!coreTargetResult.allowed) {
+        Firestore.logInfo(`adjust limit order disallowed: ${coreTargetResult.reason}`, logTags);
+        Helper.speak(`core target blocked ${symbol} exit`);
         return false;
     }
     let tradebook = TradebooksManager.getTradebookByID(symbol, tradebookID);
@@ -206,8 +54,10 @@ export const checkAdjustSingleStopOrderRules = (symbol: string, keyIndex: number
     order: Models.OrderModel, pair: Models.ExitPair,
     newPrice: number, logTags: Models.LogTags) => {
     let { isLong, tradebookID } = getCommonInfo(symbol);
-    let managementResult = getCommittedManagementBlock(symbol, isLong, logTags, "adjust stop order", keyIndex);
-    if (!managementResult.allowed) {
+    let coreTargetResult = CoreTargetExitRules.checkPriceAdjustment(symbol, [pair], newPrice, true);
+    if (!coreTargetResult.allowed) {
+        Firestore.logInfo(`adjust stop order disallowed: ${coreTargetResult.reason}`, logTags);
+        Helper.speak(`core target blocked ${symbol} exit`);
         return false;
     }
     let tradebook = TradebooksManager.getTradebookByID(symbol, tradebookID);
@@ -224,6 +74,15 @@ export const checkAdjustSingleStopOrderRules = (symbol: string, keyIndex: number
 
 export const isAllowedToMarketOutSingleOrder = (symbol: string, keyIndex: number, logTags: Models.LogTags) => {
     let { isLong, tradebookID } = getCommonInfo(symbol);
+    let pair = Models.getExitPairs(symbol)[keyIndex];
+    if (pair) {
+        let coreTargetResult = CoreTargetExitRules.checkMarketExit(symbol, [pair]);
+        if (!coreTargetResult.allowed) {
+            Firestore.logInfo(`market out disallowed: ${coreTargetResult.reason}`, logTags);
+            Helper.speak(`core target blocked ${symbol} exit`);
+            return false;
+        }
+    }
     let tradebook = TradebooksManager.getTradebookByID(symbol, tradebookID);
     if (tradebook) {
         let result = tradebook.getDisallowedReasonToMarketOutSingleOrder(symbol, keyIndex, logTags);
@@ -237,10 +96,14 @@ export const isAllowedToMarketOutSingleOrder = (symbol: string, keyIndex: number
     return true;
 };
 
-export const isAllowedToAdjustAllExitPairs = (symbol: string, newPrice: number, logTags: Models.LogTags) => {
+export const isAllowedToAdjustAllExitPairs = (
+    symbol: string, newPrice: number, isStopLeg: boolean, logTags: Models.LogTags) => {
     let { isLong, tradebookID } = getCommonInfo(symbol);
-    let managementResult = getCommittedManagementBlock(symbol, isLong, logTags, "adjust all exit pairs");
-    if (!managementResult.allowed) {
+    let coreTargetResult = CoreTargetExitRules.checkPriceAdjustment(
+        symbol, Models.getExitPairs(symbol), newPrice, isStopLeg);
+    if (!coreTargetResult.allowed) {
+        Firestore.logInfo(`adjust all exit pairs disallowed: ${coreTargetResult.reason}`, logTags);
+        Helper.speak(`core target blocked ${symbol} exit`);
         return false;
     }
     let tradebook = TradebooksManager.getTradebookByID(symbol, tradebookID);
@@ -256,10 +119,5 @@ export const isAllowedToAdjustAllExitPairs = (symbol: string, newPrice: number, 
 };
 
 export const isAllowedToAdjustBatchExitPairs = (symbol: string, logTags: Models.LogTags) => {
-    let { isLong } = getCommonInfo(symbol);
-    let managementResult = getCommittedManagementBlock(symbol, isLong, logTags, "adjust batch exit pairs");
-    if (!managementResult.allowed) {
-        return false;
-    }
     return true;
 };

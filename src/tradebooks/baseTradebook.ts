@@ -5,6 +5,7 @@ import * as TradingState from '../models/tradingState';
 import * as EntryHandler from '../controllers/entryHandler';
 import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as GlobalSettings from '../config/globalSettings';
+import { normalizeRestrictedPartialCount } from '../controllers/coreTargetRule';
 
 // 1) Define a common interface
 export abstract class Tradebook {
@@ -63,7 +64,7 @@ export abstract class Tradebook {
     protected getDisallowedReasonForMissingCoreInvalidationLevelAtKeyIndex(
         symbol: string, keyIndex: number, basePlan: TradingPlansModels.BasePlan, logTags: Models.LogTags): Models.CheckRulesResult | null {
         let partialIndex = this.getPartialIndexForExitAdjustment(symbol, keyIndex);
-        let exitTier = this.getExitTierForPartialIndex(basePlan, partialIndex);
+        let exitTier = this.getExitTierForPartialIndex(this.getActivePlanOrFallback(basePlan), partialIndex);
         if (exitTier === "scalp") {
             return null;
         }
@@ -72,14 +73,20 @@ export abstract class Tradebook {
 
     protected getDisallowedReasonForMissingCoreInvalidationLevelInExitPairRange(
         symbol: string, totalPairsCount: number, basePlan: TradingPlansModels.BasePlan, logTags: Models.LogTags): Models.CheckRulesResult | null {
+        let effectivePlan = this.getActivePlanOrFallback(basePlan);
         for (let keyIndex = 0; keyIndex < totalPairsCount; keyIndex++) {
             let partialIndex = this.getPartialIndexForExitAdjustment(symbol, keyIndex);
-            let exitTier = this.getExitTierForPartialIndex(basePlan, partialIndex);
+            let exitTier = this.getExitTierForPartialIndex(effectivePlan, partialIndex);
             if (exitTier !== "scalp") {
                 return this.getDisallowedReasonForMissingCoreInvalidationLevel(exitTier, logTags);
             }
         }
         return null;
+    }
+
+    private getActivePlanOrFallback(basePlan: TradingPlansModels.BasePlan) {
+        let state = TradingState.getBreakoutTradeState(this.symbol, this.isLong);
+        return state.hasValue ? state.plan : basePlan;
     }
 
     // Convert the current visible exit-pair index back to the original batch slot.
@@ -92,14 +99,9 @@ export abstract class Tradebook {
     }
 
     private getExitTierForPartialIndex(basePlan: TradingPlansModels.BasePlan, partialIndex: number): string {
-        let scalpCount = GlobalSettings.batchCount - basePlan.coreCount - basePlan.runnerCount;
-        if (partialIndex < scalpCount) {
-            return "scalp";
-        }
-        if (partialIndex < scalpCount + basePlan.coreCount) {
-            return "core";
-        }
-        return "runner";
+        let restrictedCount = normalizeRestrictedPartialCount(basePlan.coreCount, GlobalSettings.batchCount);
+        let unrestrictedCount = GlobalSettings.batchCount - restrictedCount;
+        return partialIndex < unrestrictedCount ? "scalp" : "core";
     }
 
     startEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {

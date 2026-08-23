@@ -2,6 +2,8 @@ import * as SchwabLite from '../api/schwabLite';
 import * as StateLite from '../models/stateLite';
 import * as ChartLite from '../ui/chartLite';
 import { getFirstSmallestQuantityExitPairIndex } from '../../utils/exitPairSelection';
+import * as CoreTargetExitRules from '../../controllers/coreTargetExitRules';
+import type * as Models from '../../models/models';
 
 interface ExitAdjusterCallbacks {
     getActiveSymbol: () => string;
@@ -47,6 +49,14 @@ const getPairLeg = (pair: StateLite.LiteExitPair, stopLeg: boolean) => {
 
 const getMarketOutLeg = (pair: StateLite.LiteExitPair) => {
     return pair.LIMIT ?? pair.STOP;
+};
+
+const toCoreRulePair = (pair: StateLite.LiteExitPair) => pair as unknown as Models.ExitPair;
+
+const requireAllowed = (result: Models.CheckRulesResult) => {
+    if (!result.allowed) {
+        throw new Error(`Core target blocked exit: ${result.reason}`);
+    }
 };
 
 export class LiteExitAdjuster {
@@ -236,6 +246,8 @@ export class LiteExitAdjuster {
         if (!order) {
             throw new Error(`Missing ${stopLeg ? 'STOP' : 'LIMIT'} leg for ${pair.symbol}`);
         }
+        requireAllowed(CoreTargetExitRules.checkPriceAdjustment(
+            pair.symbol, [toCoreRulePair(pair)], newPrice, stopLeg));
         try {
             await SchwabLite.replaceExitPairWithNewPrice(
                 activeSecrets.schwab,
@@ -254,7 +266,7 @@ export class LiteExitAdjuster {
         }
     }
 
-    private async marketOutExitPair(pair: StateLite.LiteExitPair) {
+    private async marketOutExitPair(pair: StateLite.LiteExitPair, enforceCoreTarget = true) {
         let activeSecrets = this.callbacks.getActiveSecrets();
         if (!activeSecrets) {
             throw new Error('Not connected');
@@ -262,6 +274,10 @@ export class LiteExitAdjuster {
         let order = getMarketOutLeg(pair);
         if (!order) {
             throw new Error(`Missing exit leg for ${pair.symbol}`);
+        }
+        if (enforceCoreTarget) {
+            requireAllowed(CoreTargetExitRules.checkMarketExit(
+                pair.symbol, [toCoreRulePair(pair)], this.callbacks.getCurrentPrice(pair.symbol)));
         }
         try {
             await SchwabLite.replaceExitPairWithMarketOrder(
@@ -325,6 +341,11 @@ export class LiteExitAdjuster {
             throw new Error(`No exit pairs for ${symbol}`);
         }
         let pairsToMarketOut = pairs.slice(0, Math.ceil(pairs.length / 2));
+        requireAllowed(CoreTargetExitRules.checkMarketExit(
+            symbol,
+            pairsToMarketOut.map(toCoreRulePair),
+            this.callbacks.getCurrentPrice(symbol),
+        ));
         let totalQuantity = 0;
         for (let pair of pairsToMarketOut) {
             totalQuantity += await this.marketOutExitPair(pair);
@@ -344,7 +365,7 @@ export class LiteExitAdjuster {
         let remainingQuantity = Math.abs(netQuantity);
         let marketOutQuantity = 0;
         for (let pair of pairs) {
-            let quantity = await this.marketOutExitPair(pair);
+            let quantity = await this.marketOutExitPair(pair, false);
             marketOutQuantity += quantity;
             remainingQuantity -= quantity;
         }
@@ -373,6 +394,8 @@ export class LiteExitAdjuster {
         let newPrice = this.getCrosshairAdjustPrice(symbol);
         let pairsToAdjust = code === 'KeyT' ? pairs : pairs.slice(0, Math.ceil(pairs.length / 2));
         let stopLeg = this.isStopLeg(symbol, newPrice, pairsToAdjust[0]);
+        requireAllowed(CoreTargetExitRules.checkPriceAdjustment(
+            symbol, pairsToAdjust.map(toCoreRulePair), newPrice, stopLeg));
         for (let pair of pairsToAdjust) {
             await this.replaceExitPairAtPrice(pair, newPrice, stopLeg);
         }

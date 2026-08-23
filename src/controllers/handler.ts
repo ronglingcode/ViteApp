@@ -19,6 +19,7 @@ import { TradebookID } from '../tradebooks/tradebookIds';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import * as PartialStopDiscipline from './partialStopDisciplineController';
 import { getFirstSmallestQuantityExitPairIndex } from '../utils/exitPairSelection';
+import * as CoreTargetExitRules from './coreTargetExitRules';
 
 export const cancelKeyPressed = async (symbol: string) => {
     let exitPairs = Models.getExitPairs(symbol);
@@ -62,6 +63,14 @@ export const resetStop = async (symbol: string, isSingle: boolean) => {
     let newPrice = positionIsLong ? symbolData.lowOfDay : symbolData.highOfDay;
     let pairs = Models.getExitPairs(symbol);
     let logTags = Models.generateLogTags(symbol, `reset_stop`);
+    let pairsToAdjust = isSingle ? pairs.slice(0, 1) : pairs;
+    let coreTargetResult = CoreTargetExitRules.checkPriceAdjustment(
+        symbol, pairsToAdjust, newPrice, true);
+    if (!coreTargetResult.allowed) {
+        Firestore.logError(`core target blocked reset stop: ${coreTargetResult.reason}`, logTags);
+        Helper.speak(`core target blocked ${symbol} exit`);
+        return;
+    }
     for (let i = 0; i < pairs.length; i++) {
         let p = pairs[i];
         if (p.STOP && p.STOP.price && p.STOP.price != newPrice) {
@@ -132,6 +141,15 @@ export const trailStopCore = async (symbol: string, timeFrame: number, shiftKey:
     newPrice = Helper.addMinimumPriceIncrement(symbol, !positionIsLong, newPrice);
     Firestore.logInfo(`last closed bar, open: ${lastClosedBar.open}, close: ${lastClosedBar.close}, high: ${lastClosedBar.high}, low: ${lastClosedBar.low}`);
     let pairs = Models.getExitPairs(symbol);
+    let selectedPairs = isSingle ? pairs.slice(0, 1) : pairs;
+    let coreTargetResult = shiftKey
+        ? CoreTargetExitRules.checkMarketExit(symbol, selectedPairs)
+        : CoreTargetExitRules.checkPriceAdjustment(symbol, selectedPairs, newPrice, true);
+    if (!coreTargetResult.allowed) {
+        Firestore.logError(`core target blocked trail stop: ${coreTargetResult.reason}`, logTags);
+        Helper.speak(`core target blocked ${symbol} exit`);
+        return;
+    }
     for (let i = 0; i < pairs.length; i++) {
         let p = pairs[i];
         if (p.STOP && p.STOP.price && p.STOP.price != newPrice) {
@@ -181,6 +199,13 @@ export const trailStopBatch = async (symbol: string, timeFrame: number) => {
     while (i >= 0 && pairsToTrail.length < allowedCount) {
         pairsToTrail.push(pairs[i]);
         i--;
+    }
+    let coreTargetResult = CoreTargetExitRules.checkPriceAdjustment(
+        symbol, pairsToTrail, newPrice, true);
+    if (!coreTargetResult.allowed) {
+        Firestore.logError(`core target blocked batch trail stop: ${coreTargetResult.reason}`, logTags);
+        Helper.speak(`core target blocked ${symbol} exit`);
+        return;
     }
     OrderFlow.adjustExitPairsWithNewPrice(symbol, pairsToTrail, newPrice, true, positionIsLong, logTags);
     Helper.speak("trail stop");
@@ -330,6 +355,17 @@ export const keyGPressed = async (symbol: string) => {
 
 export const keyGPressedAtPrice = async (symbol: string, newPrice: number) => {
     let exitPairs = Models.getExitPairs(symbol);
+    let pairCount = Math.ceil(exitPairs.length / 2);
+    let pairsToAdjust = exitPairs.slice(0, pairCount);
+    let isStopLeg = OrderFlow.isStopLeg(symbol, newPrice);
+    let coreTargetResult = CoreTargetExitRules.checkPriceAdjustment(
+        symbol, pairsToAdjust, newPrice, isStopLeg);
+    if (!coreTargetResult.allowed) {
+        let logTags = Models.generateLogTags(symbol, `${symbol}-adjust_half_exits`);
+        Firestore.logError(`core target blocked half adjustment: ${coreTargetResult.reason}`, logTags);
+        Helper.speak(`core target blocked ${symbol} exit`);
+        return;
+    }
     for (let i = 0; i < exitPairs.length / 2; i++) {
         numberKeyPressedAtPrice(symbol, `Digit${i + 1}`, newPrice, true);
     }
@@ -347,6 +383,12 @@ export const keyGPressedWithShift = async (symbol: string) => {
         //let allowed = ExitRulesCheckerNew.isAllowedToMarketOutSingleOrder(symbol, keyIndex, logTags);
         allowedPairs.push(exitPairs[i]);
 
+    }
+    let coreTargetResult = CoreTargetExitRules.checkMarketExit(symbol, allowedPairs);
+    if (!coreTargetResult.allowed) {
+        Firestore.logError(`core target blocked market out half: ${coreTargetResult.reason}`, logTags);
+        Helper.speak(`core target blocked ${symbol} exit`);
+        return;
     }
     for (let i = 0; i < allowedPairs.length; i++) {
         marketOutExitPair(symbol, allowedPairs[i], logTags);
@@ -391,13 +433,8 @@ export const adjustAllExits = async (symbol: string, newPrice: number, logTags: 
         Firestore.logError(`adjustAllExits: netQ should not be 0, retry`);
         return;
     }
-    let tradebook = TraderFocus.getTradebookFromPosition(symbol);
-    if (tradebook) {
-        let result = tradebook.getDisallowedReasonToAdjustAllExitPairs(symbol, logTags, newPrice);
-        if (!result.allowed) {
-            Firestore.logInfo(`adjust exit pairs disallowed: ${result.reason}`, logTags);
-            return;
-        }
+    if (!ExitRulesCheckerNew.isAllowedToAdjustAllExitPairs(symbol, newPrice, isStopLeg, logTags)) {
+        return;
     }
     if (isStopLeg) {
         let { newUpdatedPrice } = AdjustExitsHandler.prepareAdjustStopExits(symbol, newPrice, '');

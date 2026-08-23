@@ -4,7 +4,6 @@ import * as AppVersion from '../config/appVersion';
 import * as GlobalSettings from '../config/globalSettings';
 import * as BookmapSocket from '../bookmap/bookmapSocket';
 import * as KeyboardHandler from '../controllers/keyboardHandler';
-import * as TraderFocus from '../controllers/traderFocus';
 import * as SchwabLite from './api/schwabLite';
 import * as ExitAdjustmentsLite from './controllers/exitAdjustmentsLite';
 import * as StateLite from './models/stateLite';
@@ -173,7 +172,6 @@ async function refreshAccount() {
     updateEntryOrdersUi();
     updateExitPairsUi();
     updateOrderChartRanges();
-    TraderFocus.updateTradeManagementUI();
     pushBookmapAccountSnapshot();
 }
 

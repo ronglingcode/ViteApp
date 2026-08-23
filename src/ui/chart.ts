@@ -16,7 +16,6 @@ import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import type { Tradebook } from '../tradebooks/baseTradebook';
 import * as Patterns from '../algorithms/patterns';
 import * as TimeHelper from '../utils/timeHelper';
-import * as TraderFocus from '../controllers/traderFocus';
 import * as QuestionPopup from './questionPopup';
 import * as GlobalSettings from '../config/globalSettings';
 import * as ChartSeries from '../utils/chartSeries';
@@ -673,7 +672,6 @@ const runAccountUIStatusUpdate = async (source: string) => {
         window.dispatchEvent(new CustomEvent('tradingscripts:account-ui-updated', {
             detail: { source },
         }));
-        TraderFocus.updateTradeManagementUI();
     }
 };
 
