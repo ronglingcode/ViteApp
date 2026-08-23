@@ -234,7 +234,6 @@ const createLiteWidgetHtmlContents = (index: number): Models.ChartWidgetHtmlCont
         positionCount: getRequiredElement<Element>(container, '.positionCount'),
         popupWindow: document.getElementById(`chart${index}popup`) as HTMLElement,
         exitOrders: getRequiredElement<HTMLElement>(container, '.exitOrders'),
-        exitButtonsContainer: getRequiredElement<HTMLElement>(container, '.exitButtons'),
         timeframeButtonsContainer: document.createElement('span'),
         currentCandle: {
             open: getRequiredElement<HTMLElement>(currentCandle, '.ohlc_o'),

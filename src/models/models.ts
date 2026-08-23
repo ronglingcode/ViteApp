@@ -264,7 +264,6 @@ export interface ChartWidgetHtmlContents {
     positionCount: Element,
     popupWindow: HTMLElement, // document.getElementById("chart0popup"),
     exitOrders: HTMLElement,
-    exitButtonsContainer: HTMLElement,
     timeframeButtonsContainer: HTMLElement,
     currentCandle: CurentCandleElements,
     quantityElements: QuantityElements,

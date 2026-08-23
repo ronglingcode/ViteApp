@@ -69,7 +69,6 @@ const renderChartContainer = (
             <div class="twoColumnsWithChart">
               <div class="left">
                 <div class="lastBar">
-                  <span class="exitButtons"></span>
                   <span class="exitOrders">Exits: </span>
                 </div>
                 <div id="chart${index}" class="tvchart liteChartHost"${chartHostStyle}></div>

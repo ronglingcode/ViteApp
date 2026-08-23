@@ -121,11 +121,6 @@ body {
     font-size: 13px;
 }
 
-.exitButtons {
-    display: none;
-}
-
-.exitButtons span,
 .timeframebuttons span,
 span.add_count {
     margin: 0 2px;
@@ -157,7 +152,6 @@ span.add_count {
 
 .tradingPlansLong span:hover,
 .tradingPlansShort span:hover,
-.exitButtons span:hover,
 .timeframebuttons span:hover,
 span.add_count:hover,
 .sideBar .longButton:hover,

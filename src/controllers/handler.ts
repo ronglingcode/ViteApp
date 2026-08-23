@@ -56,33 +56,6 @@ export const hasSplitPartials = (symbol: string, isLong: boolean) => {
     }
     return !hasLargeExits;
 }
-export const resetStop = async (symbol: string, isSingle: boolean) => {
-    let netQ = Models.getPositionNetQuantity(symbol);
-    let positionIsLong = netQ > 0;
-    let symbolData = Models.getSymbolData(symbol);
-    let newPrice = positionIsLong ? symbolData.lowOfDay : symbolData.highOfDay;
-    let pairs = Models.getExitPairs(symbol);
-    let logTags = Models.generateLogTags(symbol, `reset_stop`);
-    let pairsToAdjust = isSingle ? pairs.slice(0, 1) : pairs;
-    let coreTargetResult = CoreTargetExitRules.checkPriceAdjustment(
-        symbol, pairsToAdjust, newPrice, true);
-    if (!coreTargetResult.allowed) {
-        Firestore.logError(`core target blocked reset stop: ${coreTargetResult.reason}`, logTags);
-        Helper.speak(`core target blocked ${symbol} exit`);
-        return;
-    }
-    for (let i = 0; i < pairs.length; i++) {
-        let p = pairs[i];
-        if (p.STOP && p.STOP.price && p.STOP.price != newPrice) {
-            OrderFlow.adjustExitPairsWithNewPrice(symbol, [p], newPrice, true, positionIsLong, logTags);
-            if (isSingle) {
-                break;
-            }
-        }
-    }
-    onAdjustExits(symbol);
-}
-
 export const onAdjustExits = (symbol: string) => {
     let w = Models.getChartWidget(symbol);
     if (!w) {
@@ -98,19 +71,12 @@ export const onAdjustExits = (symbol: string) => {
         Helper.speak("higher timeframe and re-entry");
     }*/
 }
-export const trailStopAll = async (symbol: string, timeFrame: number) => {
-    trailStopCore(symbol, timeFrame, false, false);
-}
 export const trailStop = async (symbol: string, timeFrame: number, shiftKey: boolean) => {
-    trailStopCore(symbol, timeFrame, shiftKey, true);
-}
-export const trailStopCore = async (symbol: string, timeFrame: number, shiftKey: boolean, isSingle: boolean) => {
     let widget = Models.getChartWidget(symbol);
     if (!widget || !widget.exitOrderPairs || widget.exitOrderPairs.length <= 0) {
         return;
     }
-    let logPostfix = isSingle ? "single" : "all";
-    let logTags = Models.generateLogTags(symbol, `${symbol}-trail_stop_${timeFrame}_${logPostfix}`);
+    let logTags = Models.generateLogTags(symbol, `${symbol}-trail_stop_${timeFrame}_single`);
     Firestore.logInfo(logTags.logSessionName, logTags);
 
     let candles = Models.getUndefinedCandlesSinceOpen(symbol);
@@ -141,7 +107,7 @@ export const trailStopCore = async (symbol: string, timeFrame: number, shiftKey:
     newPrice = Helper.addMinimumPriceIncrement(symbol, !positionIsLong, newPrice);
     Firestore.logInfo(`last closed bar, open: ${lastClosedBar.open}, close: ${lastClosedBar.close}, high: ${lastClosedBar.high}, low: ${lastClosedBar.low}`);
     let pairs = Models.getExitPairs(symbol);
-    let selectedPairs = isSingle ? pairs.slice(0, 1) : pairs;
+    let selectedPairs = pairs.slice(0, 1);
     let coreTargetResult = shiftKey
         ? CoreTargetExitRules.checkMarketExit(symbol, selectedPairs)
         : CoreTargetExitRules.checkPriceAdjustment(symbol, selectedPairs, newPrice, true);
@@ -162,9 +128,7 @@ export const trailStopCore = async (symbol: string, timeFrame: number, shiftKey:
                     OrderFlow.adjustExitPairsWithNewPrice(symbol, [p], newPrice, true, positionIsLong, logTags);
                 }
             }
-            if (isSingle) {
-                break;
-            }
+            break;
         }
     }
     onAdjustExits(symbol);

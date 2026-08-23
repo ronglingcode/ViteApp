@@ -269,7 +269,6 @@ const getHtmlContentsAndTradebooks = (symbol: string, tabIndex: number) => {
 
     let currentCandleContainer = container.getElementsByClassName("currentCandle")[0] as HTMLElement;
     let quantityBarContainer = container.getElementsByClassName("quantityBar")[0] as HTMLElement;
-    let exitButtonsContainer = container.getElementsByClassName("exitButtons")[0] as HTMLElement;
     let timeframeButtonsContainer = (container.getElementsByClassName("timeframebuttons")[0] as HTMLElement | undefined) ?? document.createElement('span');
     let tradingPlans = container.getElementsByClassName("tradingPlans")[0] as HTMLElement;
     let sideBar = container.getElementsByClassName("sideBar")[0] as HTMLElement;
@@ -281,7 +280,6 @@ const getHtmlContentsAndTradebooks = (symbol: string, tabIndex: number) => {
         positionCount: container.getElementsByClassName("positionCount")[0],
         popupWindow: popupWindow,
         exitOrders: container.getElementsByClassName("exitOrders")[0] as HTMLElement,
-        exitButtonsContainer: exitButtonsContainer,
         timeframeButtonsContainer: timeframeButtonsContainer,
         currentCandle: {
             open: currentCandleContainer.getElementsByClassName("ohlc_o")[0] as HTMLElement,
@@ -307,7 +305,6 @@ const getHtmlContentsAndTradebooks = (symbol: string, tabIndex: number) => {
     setupQuantityBar(symbol, htmlContents.quantityElements);
 
     let tradebooksMap = setupTradingPlans(symbol, htmlContents.tradingPlans, htmlContents.tradebookButtons);
-    setupExitButtons(symbol, htmlContents.exitButtonsContainer);
     setupAddCountButtons(htmlContents.container, symbol);
     let refreshButton = htmlContents.container.getElementsByClassName("refresh")[0] as HTMLElement;
     refreshButton.addEventListener("click", (pointerEvent) => {
@@ -356,38 +353,6 @@ export const showChartForTimeframe = (symbol: string, _timeframe: number) => {
         buttons[0].style.backgroundColor = 'lightblue';
     }
 }
-
-const setupExitButtons = (symbol: string, container: HTMLElement) => {
-    let children = container.getElementsByTagName("span");
-    if (children.length > 0) {
-        let resetOne = children[0];
-        resetOne.addEventListener("click", (pointerEvent) => {
-            Firestore.logInfo(`reset for 1`);
-            Handler.resetStop(symbol, true);
-        });
-        let resetAll = children[1];
-        resetAll.addEventListener("click", (pointerEvent) => {
-            Firestore.logInfo(`reset for all`);
-            Handler.resetStop(symbol, false);
-        });
-        for (let i = 2; i < children.length; i++) {
-            let child = children[i];
-            child.addEventListener("click", (pointerEvent) => {
-                let sender = pointerEvent.target as HTMLElement;
-                let buttonText = sender.innerText;
-                let parts = buttonText.split(' ');
-                let timeframe = parseInt(parts[1]);
-                Firestore.logInfo(`${buttonText} clicked for ${timeframe}`);
-                if (buttonText.endsWith("all")) {
-                    Handler.trailStopAll(symbol, timeframe);
-                } else {
-                    Handler.trailStop(symbol, timeframe, false);
-                }
-            });
-        }
-    }
-}
-
 
 const setupQuantityBar = (symbol: string, quantityElements: Models.QuantityElements) => {
     let input = quantityElements.input;
