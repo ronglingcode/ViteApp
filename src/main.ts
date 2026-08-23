@@ -40,7 +40,6 @@ import * as Runtime from './replay/runtime';
 import * as ReplayApi from './replay/replayApi';
 import * as ReplayCapture from './replay/replayCapture';
 import * as ReplayUi from './replay/replayUi';
-import * as PremarketSetupReminder from './ui/premarketSetupReminder';
 import * as NotificationEngine from './notifications/notificationEngine';
 declare let window: Models.MyWindow;
 
@@ -126,16 +125,11 @@ if (syncAccountButton) {
         Chart.updateAccountUIStatus('sync button');
     });
 }
-
 let testPopButton = document.getElementById("test_popup");
 if (testPopButton) {
     testPopButton.addEventListener("click", () => {
-        PremarketSetupReminder.showPremarketSetupReminderForTest();
+        // no op
     });
-}
-
-if (!Runtime.isReplayMode()) {
-    PremarketSetupReminder.schedulePremarketSetupReminder();
 }
 
 Firestore.addToLogView(AppVersion.appVersionLogMessage, 'Info');

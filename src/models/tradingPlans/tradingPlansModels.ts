@@ -42,6 +42,7 @@ export interface TradingPlans {
     rangeBoundReversalPlan?: RangeBoundReversalPlan,
     long: SingleDirectionPlans,
     short: SingleDirectionPlans,
+    corePlan: string,
 };
 export interface TradebookCommonConfig {
     enabled?: number,

@@ -1,6 +1,5 @@
 import * as RiskManager from '../../algorithms/riskManager';
 import * as Models from '../../models/models';
-import * as PremarketSetupReminder from '../../ui/premarketSetupReminder';
 
 interface ControlButtonCallbacks {
     setOrderStatus: (message: string, isError?: boolean) => void;
@@ -65,6 +64,6 @@ export const setupMainAppControlButtons = (callbacks: ControlButtonCallbacks) =>
         runControlAction('Updated account UI', callbacks, callbacks.refreshAccount);
     });
     document.getElementById('test_popup')?.addEventListener('click', () => {
-        PremarketSetupReminder.showPremarketSetupReminderForTest();
+
     });
 };

@@ -12,15 +12,12 @@ import * as ChartLite from './ui/chartLite';
 import * as ControlButtonsLite from './ui/controlButtonsLite';
 import * as ShellLite from './ui/shellLite';
 import * as StatusLite from './ui/statusLite';
-import * as PremarketSetupReminder from '../ui/premarketSetupReminder';
 
 const liteAppRoot = document.getElementById('liteApp');
 if (!liteAppRoot) {
     throw new Error('Missing liteApp root element');
 }
 const root = liteAppRoot;
-
-PremarketSetupReminder.schedulePremarketSetupReminder();
 
 let worker: Worker | null = null;
 let tokenRefreshInterval: ReturnType<typeof setInterval> | null = null;
