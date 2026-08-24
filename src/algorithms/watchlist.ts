@@ -214,6 +214,12 @@ const verifyEntryRangeFlag = (
 };
 
 const verifyTradingPlans = (symbol: string, plan: TradingPlansModels.TradingPlans) => {
+    const corePlanLength = typeof plan.corePlan === 'string' ? plan.corePlan.trim().length : 0;
+    if (corePlanLength <= 50) {
+        Firestore.logError(`${symbol} core plan must contain more than 50 characters`);
+        return false;
+    }
+
     let longPlan = plan.long;
     let shortPlan = plan.short;
     let hasRangeBoundReversalPlan = !!plan.rangeBoundReversalPlan;
