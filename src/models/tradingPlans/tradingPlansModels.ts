@@ -137,12 +137,9 @@ export interface BasePlan {
     runnerTriggerCondition: string,
 };
 export interface LongMomentumPlan extends BasePlan {
-    enableOfferBreakout: boolean,
-    enableBidReversal: boolean,
 }
 export interface ShortMomentumPlan extends BasePlan {
-    enableBidBreakdown: boolean,
-    enableOfferReversal: boolean,
+
 }
 export interface RangeBoundReversalPlan extends BasePlan {
     /** Support zone for long Bookmap bid reversals. */
