@@ -91,12 +91,9 @@ export class BookmapWallReversal extends Tradebook {
     ): number {
         let symbol = this.symbol;
         let currentVwap = Models.getCurrentVwap(symbol);
-        if (!SupportResistance.isEntryPriceAllowed(entryPrice, this.isLong, this.entryArea)) {
-            let { low, high } = SupportResistance.getNormalizedBounds(this.entryArea);
-            let entryRule = this.entryArea.requireEntryWithinRange === true
-                ? `inside ${low}-${high}`
-                : this.isLong ? `at or above ${low}` : `at or below ${high}`;
-            Firestore.logError(`entryPrice ${entryPrice} must be ${entryRule}`, logTags);
+        let entryPriceCheck = this.getAllowedReasonForEntryPrice(entryPrice);
+        if (!entryPriceCheck.allowed) {
+            Firestore.logError(entryPriceCheck.reason, logTags);
             return 0;
         }
         if (this.isLong) {
@@ -153,6 +150,17 @@ export class BookmapWallReversal extends Tradebook {
         Firestore.logInfo(`risk multiplier: ${riskReduction}`, logTags);
         return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskReduction, false, logTags, parameters);
 
+    }
+
+    override getAllowedReasonForEntryPrice(entryPrice: number): Models.CheckRulesResult {
+        let { low, high } = SupportResistance.getNormalizedBounds(this.entryArea);
+        let entryRule = this.entryArea.requireEntryWithinRange === true
+            ? `inside ${low}-${high}`
+            : this.isLong ? `at or above ${low}` : `at or below ${high}`;
+        return {
+            allowed: SupportResistance.isEntryPriceAllowed(entryPrice, this.isLong, this.entryArea),
+            reason: `entry price ${entryPrice} must be ${entryRule}`,
+        };
     }
 
     getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {

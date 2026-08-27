@@ -198,6 +198,12 @@ export abstract class Tradebook {
         };
         return result;
     }
+    getAllowedReasonForEntryPrice(entryPrice: number): Models.CheckRulesResult {
+        return {
+            allowed: true,
+            reason: "base tradebook has no entry price boundary",
+        };
+    }
     getAllowedReasonToAddPartial(symbol: string, entryPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
         Firestore.logInfo(`base tradebook add rules`, logTags);
         let result: Models.CheckRulesResult = {

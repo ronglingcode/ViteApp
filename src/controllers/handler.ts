@@ -581,6 +581,23 @@ export const reloadPartialAtMarket = async (symbol: string) => {
 const canReloadPartial = (
     symbol: string, isLong: boolean, quantity: number, entryPrice: number,
     stopOutPrice: number, logTags: Models.LogTags) => {
+    let breakoutTradeState = TradingState.getBreakoutTradeState(symbol, isLong);
+    let tradebookID = breakoutTradeState.submitEntryResult.tradeBookID;
+    let activeTradebook = tradebookID
+        ? TradebooksManager.getTradebookByID(symbol, tradebookID)
+        : undefined;
+
+    // The directional entry boundary is a hard rule for both initial entries and
+    // KeyA partials. Check it before the low-risk override, which should bypass
+    // sizing/add-discipline rules only, not the plan's valid entry price area.
+    if (activeTradebook) {
+        let entryPriceCheck = activeTradebook.getAllowedReasonForEntryPrice(entryPrice);
+        if (!entryPriceCheck.allowed) {
+            Firestore.logError(`Cannot add to ${symbol}: ${entryPriceCheck.reason}`, logTags);
+            return false;
+        }
+    }
+
     let lowRiskAddOverride = RiskManager.getAllowedReasonToAddIfCurrentPositionRiskIsBelowThreshold(symbol, isLong, logTags);
     if (lowRiskAddOverride.allowed) {
         return true;
@@ -590,18 +607,13 @@ const canReloadPartial = (
         return false;
     }
 
-    let breakoutTradeState = TradingState.getBreakoutTradeState(symbol, isLong);
-    let tradebookID = breakoutTradeState.submitEntryResult.tradeBookID;
-    if (tradebookID) {
-        let activeTradebook = TradebooksManager.getTradebookByID(symbol, tradebookID);
-        if (activeTradebook) {
-            let addCheck = activeTradebook.getAllowedReasonToAddPartial(symbol, entryPrice, logTags);
-            if (!addCheck.allowed) {
-                Firestore.logError(`Cannot add to ${symbol}: ${addCheck.reason}`, logTags);
-                Helper.speak(`warning state, no adds, tighten stop`);
-                // disable for now since I will just trade full size as a new trade
-                // return false;
-            }
+    if (activeTradebook) {
+        let addCheck = activeTradebook.getAllowedReasonToAddPartial(symbol, entryPrice, logTags);
+        if (!addCheck.allowed) {
+            Firestore.logError(`Cannot add to ${symbol}: ${addCheck.reason}`, logTags);
+            Helper.speak(`warning state, no adds, tighten stop`);
+            // disable for now since I will just trade full size as a new trade
+            // return false;
         }
     }
 
