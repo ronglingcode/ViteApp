@@ -1832,17 +1832,22 @@ export const getLiquidityScale = (symbol: string, debug?: boolean) => {
         return 0;
     }
     let oneMillionShares = 1000000;
+    let tenMillion = 10000000;
+    let twentyMillion = 20000000;
+    let fiveHundredThousand = 500000;
     let item = Watchlist.getWatchlistItem(symbol);
     let threshold = item.marketCapInMillions * 1000;
-    let firstMinuteTraded = price * candles[0].value;
-    logIf(`first minute trade ${firstMinuteTraded}`, debug);
+    let firstMinuteTradedInDollar = price * candles[0].value;
+    logIf(`first minute trade ${firstMinuteTradedInDollar}`, debug);
     logIf(`candles.length = ${candles.length}`, debug);
     logIf(`threshold ${threshold}`, debug);
     let lastMinuteVolumeBeforeOpen = getLastVolumeBeforeOpen(symbol);
     if (candles.length == 1) {
         if (candles[0].value < lastMinuteVolumeBeforeOpen) {
             return 0;
-        } else if (firstMinuteTraded > Math.min(20000000, threshold)) {
+        } else if (candles[0].value < fiveHundredThousand) {
+            return 0;
+        } else if (firstMinuteTradedInDollar > Math.min(twentyMillion, threshold)) {
             logIf(`case 1`, debug);
             return lockLiquidityScaleAtMax(symbolData, 1);
         } else if (candles[0].value > 10 * lastMinuteVolumeBeforeOpen) {
@@ -1850,10 +1855,10 @@ export const getLiquidityScale = (symbol: string, debug?: boolean) => {
             return lockLiquidityScaleAtMax(symbolData, 1);
         } else if (candles[0].value > oneMillionShares) {
             return lockLiquidityScaleAtMax(symbolData, 1);
-        } else if (firstMinuteTraded > 10000000) {
+        } else if (firstMinuteTradedInDollar > tenMillion) {
             logIf(`case 3`, debug);
             return 0.35;
-        } else if (firstMinuteTraded > threshold) {
+        } else if (firstMinuteTradedInDollar > threshold) {
             logIf(`case 4`, debug);
             return 0.35;
         } else {
@@ -1876,12 +1881,12 @@ export const getLiquidityScale = (symbol: string, debug?: boolean) => {
         return lockLiquidityScaleAtMax(symbolData, 1);
     } else if (maxVolume > oneMillionShares) {
         return lockLiquidityScaleAtMax(symbolData, 1);
-    } else if (dollarTraded > Math.min(20000000, threshold)) {
+    } else if (dollarTraded > Math.min(twentyMillion, threshold)) {
         logIf('after case 1', debug);
         return lockLiquidityScaleAtMax(symbolData, 1);
-    } else if (dollarTraded > 10000000) {
+    } else if (dollarTraded > tenMillion) {
         logIf('after case 2', debug);
-        return dollarTraded / 20000000;
+        return dollarTraded / twentyMillion;
     } else if (dollarTraded > threshold) {
         logIf('after case 3', debug);
         return 0.35;
