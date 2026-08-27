@@ -7,7 +7,6 @@ import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as Helper from '../utils/helper';
 import * as GapAndGoAlgo from './gapAndGoAlgo';
 import * as GapAndCrapAlgo from './gapAndCrapAlgo';
-import * as GapGiveAndGoAlgo from './gapGiveAndGoAlgo';
 import * as GapDownAndGoDownAlgo from './gapDownAndGoDownAlgo';
 import * as GapDownAndGoUpAlgo from './gapDownAndGoUpAlgo';
 import * as SupportResistance from '../models/tradingPlans/supportResistance';
@@ -317,16 +316,6 @@ const verifyTradingPlansForSingleDirection = (
         }
         hasBestTradebook = true;
     }
-    if (plan.gapGiveAndGoPlan) {
-        if (!verifyEntryRangeFlag(symbol, 'gap give and go support', plan.gapGiveAndGoPlan.support)) {
-            return false;
-        }
-        if (!GapGiveAndGoAlgo.hasAtLeastOneReasonSet(plan.gapGiveAndGoPlan, symbol)) {
-            return false;
-        }
-        hasBestTradebook = true;
-    }
-
     if (plan.gapDownAndGoDownPlan) {
         if (!verifyEntryRangeFlag(symbol, 'gap down and go down resistance', plan.gapDownAndGoDownPlan.resistance)) {
             return false;
