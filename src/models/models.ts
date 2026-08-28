@@ -1834,7 +1834,7 @@ export const getLiquidityScale = (symbol: string, debug?: boolean) => {
     let oneMillionShares = 1000000;
     let tenMillion = 10000000;
     let twentyMillion = 20000000;
-    let fiveHundredThousand = 500000;
+    let quartermillion = 250000;
     let item = Watchlist.getWatchlistItem(symbol);
     let threshold = item.marketCapInMillions * 1000;
     let firstMinuteTradedInDollar = price * candles[0].value;
@@ -1845,7 +1845,7 @@ export const getLiquidityScale = (symbol: string, debug?: boolean) => {
     if (candles.length == 1) {
         if (candles[0].value < lastMinuteVolumeBeforeOpen) {
             return 0;
-        } else if (candles[0].value < fiveHundredThousand) {
+        } else if (candles[0].value < quartermillion) {
             return 0;
         } else if (firstMinuteTradedInDollar > Math.min(twentyMillion, threshold)) {
             logIf(`case 1`, debug);
@@ -1876,6 +1876,8 @@ export const getLiquidityScale = (symbol: string, debug?: boolean) => {
     logIf(`max volume: ${maxVolume}`, debug);
     let dollarTraded = price * maxVolume;
     if (maxVolume < lastMinuteVolumeBeforeOpen) {
+        return 0;
+    } else if (maxVolume < quartermillion) {
         return 0;
     } else if (maxVolume > 10 * lastMinuteVolumeBeforeOpen) {
         return lockLiquidityScaleAtMax(symbolData, 1);
