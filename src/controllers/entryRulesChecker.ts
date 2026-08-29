@@ -137,6 +137,8 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
         }
     }
 
+    Rules.checkPullbackRequirement(symbol, isLong);
+
     return finalSize;
 }
 

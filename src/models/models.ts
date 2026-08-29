@@ -2210,3 +2210,34 @@ export enum TradebookFamilyName {
     GapDownAndGoDown = 'Gap Down & Go Down',
     GapDownAndGoUp = 'Gap Down & Go Up',
 }
+
+
+export const getRequirementPrice = (symbol: string, isLong: boolean) => {
+    let price = 0;
+    const plan = TradingPlans.getTradingPlans(symbol);
+
+    if (isLong) {
+        if (plan.rangeBoundReversalPlan) {
+            price = plan.rangeBoundReversalPlan.support.low;
+        }
+        let longPlan = plan.long;
+        if (longPlan.gapAndGoPlan) {
+            price = longPlan.gapAndGoPlan.support.low;
+        }
+        if (longPlan.gapDownAndGoUpPlan) {
+            price = longPlan.gapDownAndGoUpPlan.support.low;
+        }
+    } else {
+        if (plan.rangeBoundReversalPlan) {
+            price = plan.rangeBoundReversalPlan.resistance.high;
+        }
+        let shortPlan = plan.short;
+        if (shortPlan.gapAndCrapPlan) {
+            price = shortPlan.gapAndCrapPlan.resistance.high;
+        }
+        if (shortPlan.gapDownAndGoDownPlan) {
+            price = shortPlan.gapDownAndGoDownPlan.resistance.high;
+        }
+    }
+    return price;
+}

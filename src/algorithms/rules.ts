@@ -586,3 +586,41 @@ export const isAllowedForHeavierPosition = (symbol: string, isLong: boolean, ent
         return entryPrice <= threshold;
     }
 }
+
+export const checkPullbackRequirement = (symbol: string, isLong: boolean) => {
+    const requirement = getPullbackRequirement(symbol, isLong);
+    if (requirement == "none") {
+        return;
+    }
+    let event = isLong ? "offer break out" : "bid break down";
+    if (requirement == "after") {
+        Helper.speak(`must wait for pullback after ${event}`);
+    } else if (requirement == "before_or_after") {
+        Helper.speak(`need pullback before or after ${event}`);
+    }
+}
+export const getPullbackRequirement = (
+    symbol: string, isLong: boolean
+): "none" | "before_or_after" | "after" => {
+    let startPrice = Models.getRequirementPrice(symbol, isLong);
+    const openPrice = Models.getOpenPrice(symbol);
+    const isGappedUp = Models.isGappedUp(symbol);
+
+    if (isLong) {
+        if (openPrice < startPrice) {
+            return "after"
+        } else if (isGappedUp) {
+            return "before_or_after"
+        } else {
+            return "none";
+        }
+    } else {
+        if (openPrice > startPrice) {
+            return "after";
+        } else if (!isGappedUp) {
+            return "before_or_after";
+        } else {
+            return "none";
+        }
+    }
+}
