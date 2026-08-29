@@ -6,6 +6,7 @@
 
 import * as Helper from "../utils/helper";
 import * as Models from "../models/models";
+import * as GlobalSettings from "../config/globalSettings";
 import type * as TradingPlansModels from "../models/tradingPlans/tradingPlansModels";
 import * as TradingPlans from "../models/tradingPlans/tradingPlans";
 import * as TradebooksManager from "../tradebooks/tradebooksManager";
@@ -401,17 +402,18 @@ const buildCorePlanConfig = (
     let netQuantity = Models.getPositionNetQuantity(symbol);
     let isLong = netQuantity > 0;
     let state = netQuantity === 0 ? undefined : TradingState.getBreakoutTradeState(symbol, isLong);
+    let featureEnabled = GlobalSettings.enableCoreTargetExitFeature;
     let base: BookmapCorePlanConfig = {
         type: "core_plan_config",
         symbol,
-        hasActiveTrade: state?.hasValue === true,
-        reminderRequested: options.reminderRequested === true,
+        hasActiveTrade: featureEnabled && state?.hasValue === true,
+        reminderRequested: featureEnabled && options.reminderRequested === true,
         requestId: options.requestId,
         updateStatus: options.updateStatus,
         error: options.error,
         timestamp: Date.now(),
     };
-    if (!state?.hasValue) {
+    if (!featureEnabled || !state?.hasValue) {
         return base;
     }
 
@@ -450,6 +452,9 @@ export const sendCorePlanConfigForSymbol = (
 };
 
 const maybeSendThirdPartialCorePlanReminder = (symbol: string) => {
+    if (!GlobalSettings.enableCoreTargetExitFeature) {
+        return false;
+    }
     let netQuantity = Models.getPositionNetQuantity(symbol);
     if (netQuantity === 0) {
         return false;
@@ -479,6 +484,10 @@ const sendCorePlanUpdateError = (symbol: string, requestId: string, error: strin
 const handleCorePlanUpdate = (data: Record<string, unknown>) => {
     let symbol = normalizeSymbol(getString(data.symbol));
     let requestId = getString(data.requestId || data.request_id) || `${Date.now()}`;
+    if (!GlobalSettings.enableCoreTargetExitFeature) {
+        sendCorePlanUpdateError(symbol, requestId, "Core-target exit feature is disabled.");
+        return;
+    }
     let netQuantity = Models.getPositionNetQuantity(symbol);
     if (!symbol || symbol === "???" || netQuantity === 0) {
         sendCorePlanUpdateError(symbol, requestId, "There is no active position for this symbol.");

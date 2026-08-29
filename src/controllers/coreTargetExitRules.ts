@@ -91,6 +91,12 @@ export const checkPriceAdjustment = (
     newPrice: number,
     isStopLeg: boolean,
 ): Models.CheckRulesResult => {
+    if (!GlobalSettings.enableCoreTargetExitFeature) {
+        return {
+            allowed: true,
+            reason: 'core-target exit feature is disabled',
+        };
+    }
     let isLong = Models.getPositionNetQuantity(symbol) > 0;
     for (let pair of pairs) {
         let leg = isStopLeg ? pair.STOP : pair.LIMIT;
@@ -116,6 +122,12 @@ export const checkMarketExit = (
     pairs: Models.ExitPair[],
     currentPrice = Models.getCurrentPrice(symbol),
 ): Models.CheckRulesResult => {
+    if (!GlobalSettings.enableCoreTargetExitFeature) {
+        return {
+            allowed: true,
+            reason: 'core-target exit feature is disabled',
+        };
+    }
     for (let pair of pairs) {
         let result = checkEarlierExit(symbol, pair, currentPrice, true);
         if (!result.allowed) {
