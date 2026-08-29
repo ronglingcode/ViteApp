@@ -207,29 +207,6 @@ export interface GapDownAndGoUpPlan extends LongMomentumPlan {
     nearAboveSupport?: LevelArea,
     nearAboveKeyEventLevel?: number,
 }
-export interface BookmapBigWallBreakdownFailLongPlan extends BasePlan {
-    bigWallLevel: number,
-}
-export interface AlgoPlan extends BasePlan {
-    expirationInSeconds: number,
-    allowPremarket: boolean,
-}
-export interface LevelBreakoutPlan extends BasePlan {
-    entryPrice: number,
-}
-export interface FirstRetracementPlan extends BasePlan { }
-export interface FirstBreakoutPlan extends BasePlan {
-
-}
-
-export interface ProfitTargets {
-    targets: number[],
-    /**
-     * Probability from 0 to 1 (100%) of how likely it will blow past those levels
-     */
-    willBlowPastThoseLevels: number,
-    summary: string,
-}
 export interface ExitTargets {
     initialTargets: ExitTargetsSet,
 }
