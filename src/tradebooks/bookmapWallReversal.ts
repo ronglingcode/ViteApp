@@ -206,45 +206,28 @@ export class BookmapWallReversal extends Tradebook {
         return Helper.returnDefaultEntryMethods();
     }
 
-
     getDisallowedReasonToAdjustSingleLimitOrder(
         symbol: string, keyIndex: number, order: Models.OrderModel,
         pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
-        let missingCoreInvalidationResult = this.getDisallowedReasonForMissingCoreInvalidationLevelAtKeyIndex(symbol, keyIndex, this.basePlan, logTags);
-        if (missingCoreInvalidationResult) {
-            return missingCoreInvalidationResult;
-        }
-        return { allowed: true, reason: "core target rule passed" };
+        return { allowed: true, reason: "exit adjustment rules disabled" };
     }
 
     getDisallowedReasonToAdjustSingleStopOrder(
-        symbol: string, keyIndex: number, order: Models.OrderModel, pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
-        let missingCoreInvalidationResult = this.getDisallowedReasonForMissingCoreInvalidationLevelAtKeyIndex(symbol, keyIndex, this.basePlan, logTags);
-        if (missingCoreInvalidationResult) {
-            return missingCoreInvalidationResult;
-        }
-        return { allowed: true, reason: "core target rule passed" };
+        symbol: string, keyIndex: number, order: Models.OrderModel,
+        pair: Models.ExitPair, newPrice: number, logTags: Models.LogTags): Models.CheckRulesResult {
+        return { allowed: true, reason: "exit adjustment rules disabled" };
     }
 
-    getDisallowedReasonToMarketOutSingleOrder(symbol: string, keyIndex: number, logTags: Models.LogTags): Models.CheckRulesResult {
-        let missingCoreInvalidationResult = this.getDisallowedReasonForMissingCoreInvalidationLevelAtKeyIndex(symbol, keyIndex, this.basePlan, logTags);
-        if (missingCoreInvalidationResult) {
-            return missingCoreInvalidationResult;
-        }
-        return { allowed: true, reason: "core target rule passed" };
+    getDisallowedReasonToMarketOutSingleOrder(
+        symbol: string, keyIndex: number, logTags: Models.LogTags): Models.CheckRulesResult {
+        return { allowed: true, reason: "exit adjustment rules disabled" };
     }
 
-    getDisallowedReasonToAdjustAllExitPairs(symbol: string, logTags: Models.LogTags, newPrice: number): Models.CheckRulesResult {
-        let exitCount = Models.getExitPairs(symbol).length;
-        let missingCoreInvalidationResult = this.getDisallowedReasonForMissingCoreInvalidationLevelInExitPairRange(symbol, exitCount, this.basePlan, logTags);
-        if (missingCoreInvalidationResult) {
-            return missingCoreInvalidationResult;
-        }
-        return {
-            allowed: true,
-            reason: "allow adjust all exits",
-        };
+    getDisallowedReasonToAdjustAllExitPairs(
+        symbol: string, logTags: Models.LogTags, newPrice: number): Models.CheckRulesResult {
+        return { allowed: true, reason: "exit adjustment rules disabled" };
     }
+
 
     onNewTimeSalesData(newPrice: number): void { }
 }

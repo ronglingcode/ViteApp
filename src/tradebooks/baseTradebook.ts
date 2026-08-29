@@ -4,8 +4,6 @@ import * as Helper from '../utils/helper';
 import * as TradingState from '../models/tradingState';
 import * as EntryHandler from '../controllers/entryHandler';
 import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
-import * as GlobalSettings from '../config/globalSettings';
-import { normalizeRestrictedPartialCount } from '../controllers/coreTargetRule';
 
 // 1) Define a common interface
 export abstract class Tradebook {
@@ -42,66 +40,6 @@ export abstract class Tradebook {
         let breakoutTradeState = TradingState.getBreakoutTradeState(this.symbol, this.isLong);
         breakoutTradeState.coreInvalidationLevel = level;
         TradingState.update();
-    }
-
-    private getDisallowedReasonForMissingCoreInvalidationLevel(exitTier: string, logTags: Models.LogTags): Models.CheckRulesResult | null {
-        let breakoutTradeState = TradingState.getBreakoutTradeState(this.symbol, this.isLong);
-        if ((breakoutTradeState.coreInvalidationLevel ?? -1) !== -1) {
-            return null;
-        }
-        let message = `coreInvalidationLevel is still -1; set the invalidation level before adjusting ${exitTier} exit orders`;
-        Firestore.logError(message, logTags);
-        Helper.speak("set the invalidation level");
-        if (!GlobalSettings.blockExitAdjustmentsWithoutCoreInvalidationLevel) {
-            return null;
-        }
-        return {
-            allowed: false,
-            reason: message,
-        };
-    }
-
-    protected getDisallowedReasonForMissingCoreInvalidationLevelAtKeyIndex(
-        symbol: string, keyIndex: number, basePlan: TradingPlansModels.BasePlan, logTags: Models.LogTags): Models.CheckRulesResult | null {
-        let partialIndex = this.getPartialIndexForExitAdjustment(symbol, keyIndex);
-        let exitTier = this.getExitTierForPartialIndex(this.getActivePlanOrFallback(basePlan), partialIndex);
-        if (exitTier === "scalp") {
-            return null;
-        }
-        return this.getDisallowedReasonForMissingCoreInvalidationLevel(exitTier, logTags);
-    }
-
-    protected getDisallowedReasonForMissingCoreInvalidationLevelInExitPairRange(
-        symbol: string, totalPairsCount: number, basePlan: TradingPlansModels.BasePlan, logTags: Models.LogTags): Models.CheckRulesResult | null {
-        let effectivePlan = this.getActivePlanOrFallback(basePlan);
-        for (let keyIndex = 0; keyIndex < totalPairsCount; keyIndex++) {
-            let partialIndex = this.getPartialIndexForExitAdjustment(symbol, keyIndex);
-            let exitTier = this.getExitTierForPartialIndex(effectivePlan, partialIndex);
-            if (exitTier !== "scalp") {
-                return this.getDisallowedReasonForMissingCoreInvalidationLevel(exitTier, logTags);
-            }
-        }
-        return null;
-    }
-
-    private getActivePlanOrFallback(basePlan: TradingPlansModels.BasePlan) {
-        let state = TradingState.getBreakoutTradeState(this.symbol, this.isLong);
-        return state.hasValue ? state.plan : basePlan;
-    }
-
-    // Convert the current visible exit-pair index back to the original batch slot.
-    // If earlier partials have already exited, the remaining pair at keyIndex 0 may
-    // now represent core/runner instead of the first scalp partial. This is the same
-    // index shift handled by Helper.getBatchIndex(...).
-    private getPartialIndexForExitAdjustment(symbol: string, keyIndex: number): number {
-        let totalPairsCount = Models.getExitPairs(symbol).length;
-        return Helper.getBatchIndex(keyIndex, GlobalSettings.batchCount, totalPairsCount);
-    }
-
-    private getExitTierForPartialIndex(basePlan: TradingPlansModels.BasePlan, partialIndex: number): string {
-        let restrictedCount = normalizeRestrictedPartialCount(basePlan.coreCount, GlobalSettings.batchCount);
-        let unrestrictedCount = GlobalSettings.batchCount - restrictedCount;
-        return partialIndex < unrestrictedCount ? "scalp" : "core";
     }
 
     startEntry(useMarketOrder: boolean, dryRun: boolean, parameters: Models.TradebookEntryParameters): number {

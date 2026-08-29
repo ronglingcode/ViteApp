@@ -36,7 +36,5 @@ export const notificationSettings = {
 export const enableBookmapWallBreakSwingPullback: boolean = false;
 // Master switch for protected exit-partial price enforcement and the Bookmap exit-plan threshold popup/update flow.
 export const enableCoreTargetExitFeature: boolean = false;
-// false: remind only. true: block core/runner exit adjustments until coreInvalidationLevel is set.
-export const blockExitAdjustmentsWithoutCoreInvalidationLevel: boolean = false;
 /** use custom risk level on top of stop loss level */
 export const enableRiskLevel: boolean = false;
