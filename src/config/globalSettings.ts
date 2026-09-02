@@ -20,7 +20,7 @@ export const m15ChartEnabledAfterSeconds: number = 15 * 60;
 export const enableBookmapSocket: boolean = true;
 export const enableCamPivots: boolean = true;
 // Controls only candlestick rendering; one-minute candles are still collected and processed.
-export const showCandles: boolean = false;
+export const showCandles: boolean = true;
 // true: Lite app renders the simple Lightweight Chart with order price lines.
 // false: Lite app skips chart creation/updates and shows only the minimal trading UI.
 export const showSimpleChart: boolean = false;
