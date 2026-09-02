@@ -19,8 +19,10 @@ export const checkMaxEntryThreshold: boolean = false;
 export const m15ChartEnabledAfterSeconds: number = 15 * 60;
 export const enableBookmapSocket: boolean = true;
 export const enableCamPivots: boolean = true;
-// Controls only candlestick rendering; one-minute candles are still collected and processed.
-export const showCandles: boolean = false;
+// true: always show; false: always hide; "auto": show after the configured delay from market open.
+// This controls only candlestick rendering; one-minute candles are still collected and processed.
+export const showCandles: boolean | "auto" = "auto";
+export const showCandlesMinutesAfterMarketOpen: number = 10;
 // true: Lite app renders the simple Lightweight Chart with order price lines.
 // false: Lite app skips chart creation/updates and shows only the minimal trading UI.
 export const showSimpleChart: boolean = false;

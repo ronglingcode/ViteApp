@@ -19,10 +19,27 @@ import * as TimeHelper from '../utils/timeHelper';
 import * as QuestionPopup from './questionPopup';
 import * as GlobalSettings from '../config/globalSettings';
 import * as ChartSeries from '../utils/chartSeries';
+import * as CandlestickVisibility from '../utils/candlestickVisibility';
 import * as ExitOrderPairs from '../utils/exitOrderPairs';
 declare let window: Models.MyWindow;
 
 const updateUiTargetCache = new WeakMap<HTMLElement, Map<string, HTMLElement>>();
+const candleSeriesVisibility = new WeakMap<object, boolean>();
+
+export const syncCandlestickVisibility = (timeframeCharts: Models.TimeFrameChart[], currentTime: Date): void => {
+    const visible = CandlestickVisibility.shouldShowCandles(
+        currentTime,
+        TimeHelper.getMarketOpenTimeInLocal()
+    );
+    for (const timeframeChart of timeframeCharts) {
+        const candleSeries = timeframeChart.candleSeries;
+        if (candleSeriesVisibility.get(candleSeries) === visible) {
+            continue;
+        }
+        candleSeries.applyOptions({ visible });
+        candleSeriesVisibility.set(candleSeries, visible);
+    }
+};
 
 const getUpdateUiTarget = (container: HTMLElement, className: string): HTMLElement | undefined => {
     let containerCache = updateUiTargetCache.get(container);
@@ -86,13 +103,17 @@ const createTimeFrameChart = (timeframe: number, htmlElement: HTMLElement, tabIn
         htmlElement,
         ChartSettings.getChartSettings(tabIndex, totalCount)
     );
+    const candlesVisible = CandlestickVisibility.shouldShowCandles(
+        Helper.getCurrentMarketTime(),
+        TimeHelper.getMarketOpenTimeInLocal()
+    );
     let timeframeChart: Models.TimeFrameChart = {
         timeframe: timeframe,
         chart: lwChart,
         volumeSeries: lwChart.addHistogramSeries(ChartSettings.volumeSeriesSettings),
         candleSeries: lwChart.addCandlestickSeries({
             ...ChartSettings.candlestickSeriesSettings,
-            visible: GlobalSettings.showCandles,
+            visible: candlesVisible,
         }),
         keyAreaSeriesList: [],
         vwapSeries: lwChart.addLineSeries(ChartSettings.vwapSettings),
@@ -103,6 +124,7 @@ const createTimeFrameChart = (timeframe: number, htmlElement: HTMLElement, tabIn
         camPivotLevels: [],
         previousDayLevels: [],
     };
+    candleSeriesVisibility.set(timeframeChart.candleSeries, candlesVisible);
     if (timeframe == 1) {
         timeframeChart.ma5Series = lwChart.addLineSeries(ChartSettings.ma5Settings);
         timeframeChart.ma9Series = lwChart.addLineSeries(ChartSettings.ma9Settings);

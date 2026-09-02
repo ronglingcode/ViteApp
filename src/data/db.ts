@@ -13,6 +13,7 @@ import * as ChartSettings from '../ui/chartSettings';
 import * as Broker from '../api/broker';
 import * as UI from '../ui/ui';
 import * as BasicIndicators from '../indicators/basicIndicators';
+import * as CandlestickVisibility from '../utils/candlestickVisibility';
 import * as ChartSeries from '../utils/chartSeries';
 import * as Runtime from '../replay/runtime';
 
@@ -148,6 +149,7 @@ const flushTimeSaleRender = (symbol: string) => {
         recordRenderDuration();
         return;
     }
+    Chart.syncCandlestickVisibility(render.allCharts, render.timeAndSalesTime);
 
     let volumeText = `${Helper.largeNumberToString(render.lastVolume.value)} $${Helper.roundToMillion(render.lastVolume.value * render.lastPrice)}M`
     Chart.updateUI(symbol, "currentVolume", volumeText);
@@ -669,7 +671,10 @@ const setColorForVolume = (candles: Models.CandlePlus[], volumes: Models.LineSer
     if (!volume) {
         return;
     }
-    if (!GlobalSettings.showCandles) {
+    if (!CandlestickVisibility.shouldShowCandles(
+        Helper.getCurrentMarketTime(),
+        TimeHelper.getMarketOpenTimeInLocal()
+    )) {
         volume.color = ChartSettings.defaultVolumeColor;
         return;
     }
