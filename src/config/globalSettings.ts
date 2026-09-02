@@ -4,7 +4,7 @@ export const impliedMarketCapThresholdInBillions: number = 0.9;
 export const premarketVolumeThresholdInMillions: number = 0.9;
 export const premarketVolumeThresholdWhitelist: string[] = [];
 // Block trading when the watchlist contains more than this many stocks.
-export const maxTradableStocksCount: number = 1; // do not change, trade management requires full attention
+export const maxTradableStocksCount: number = 2; // do not change, trade management requires full attention
 // true: offload time & sales socket receipt + parsing to a Web Worker (main app).
 export const useMarketDataWorker: boolean = true;
 // Capture the worker-to-main market-data batches to local ProxyServer for replay.
@@ -20,7 +20,7 @@ export const m15ChartEnabledAfterSeconds: number = 15 * 60;
 export const enableBookmapSocket: boolean = true;
 export const enableCamPivots: boolean = true;
 // Controls only candlestick rendering; one-minute candles are still collected and processed.
-export const showCandles: boolean = false;
+export const showCandles: boolean = true;
 // true: Lite app renders the simple Lightweight Chart with order price lines.
 // false: Lite app skips chart creation/updates and shows only the minimal trading UI.
 export const showSimpleChart: boolean = false;
