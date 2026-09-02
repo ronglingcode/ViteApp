@@ -4,7 +4,7 @@ export const impliedMarketCapThresholdInBillions: number = 0.9;
 export const premarketVolumeThresholdInMillions: number = 0.9;
 export const premarketVolumeThresholdWhitelist: string[] = [];
 // Block trading when the watchlist contains more than this many stocks.
-export const maxTradableStocksCount: number = 1;
+export const maxTradableStocksCount: number = 2;
 // true: offload time & sales socket receipt + parsing to a Web Worker (main app).
 export const useMarketDataWorker: boolean = true;
 // Capture the worker-to-main market-data batches to local ProxyServer for replay.
