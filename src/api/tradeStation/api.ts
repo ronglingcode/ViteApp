@@ -1,4 +1,5 @@
 import * as webRequest from '../../utils/webRequest'
+import { allowEntry } from '../../attendance/attendance';
 import * as secret from '../../config/secret'
 import * as config from '../../config/config'
 import * as Models from '../../models/models'
@@ -117,7 +118,8 @@ const getPositions = async (accountId: string) => {
 };
 /* #endregion */
 
-const placeOrderBase = async (order: any, logTags: Models.LogTags) => {
+const placeOrderBase = async (order: any, logTags: Models.LogTags, isEntry = true) => {
+    if (isEntry && !allowEntry()) return;
     Firestore.logOrder(order, logTags);
     let accessToken = window.HybridApp.Secrets.tradeStation.accessToken;
     let response = await webRequest.sendJsonPostRequestWithAccessToken(ordersUrl, order, accessToken);
@@ -217,6 +219,7 @@ export const entryWithBracket = async (
 export const submitSingleOrder = async (
     symbol: string, isEquity: boolean, orderType: Models.OrderType,
     quantity: number, price: number, isBuy: boolean, positionEffectIsOpen: boolean, logTags: Models.LogTags) => {
+    if (positionEffectIsOpen && !allowEntry()) return;
     const accountID = getAccountId();
     let orderTypeString = "Market";
     if (orderType == Models.OrderType.LIMIT) {
@@ -226,11 +229,12 @@ export const submitSingleOrder = async (
     }
     let order = orderFactory.buildSingleOrder(
         accountID, symbol, quantity, orderTypeString, price, isBuy, isEquity, positionEffectIsOpen);
-    placeOrderBase(order, logTags);
+    placeOrderBase(order, logTags, positionEffectIsOpen);
 };
 /* #endregion */
 
 export const replaceSingleOrderWithNewPrice = async (oldOrder: Models.OrderModel, newPrice: number, logTags: Models.LogTags) => {
+    if (oldOrder.positionEffectIsOpen && !allowEntry()) return;
     let orderType = "Market";
     let payload: any = {
         "Quantity": `${oldOrder.quantity}`,
@@ -250,6 +254,7 @@ export const replaceSingleOrderWithNewPrice = async (oldOrder: Models.OrderModel
 };
 
 export const replaceWithMarketOrder = async (oldOrder: Models.OrderModel, logTags: Models.LogTags) => {
+    if (oldOrder.positionEffectIsOpen && !allowEntry()) return;
     let oldOrderID = oldOrder.orderID;
     let payload = {
         "Quantity": `${oldOrder.quantity}`,

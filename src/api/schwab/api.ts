@@ -2,6 +2,8 @@
 https://github.com/tylerebowers/Schwab-API-Python/blob/main/tests/api_demo.py
 */
 import * as webRequest from '../../utils/webRequest';
+import { allowEntry } from '../../attendance/attendance';
+import { isClosingSchwabOrder } from '../../attendance/policy';
 import * as Helper from '../../utils/helper';
 import * as TimeHelper from '../../utils/timeHelper';
 import * as secret from '../../config/secret';
@@ -433,6 +435,7 @@ const filterOrdersNotOnSameDay = (orders: any) => {
 
 /* #region Orders */
 export const placeOrderBase = async (order: any, logTags: Models.LogTags) => {
+    if (!isClosingSchwabOrder(order) && !allowEntry()) return;
     Firestore.logOrder(order, logTags);
     let start = new Date();
     let accessToken = getAccessTokenFromStorage();
@@ -455,6 +458,7 @@ export const placeOrderBase = async (order: any, logTags: Models.LogTags) => {
 };
 
 const replaceOrderBase = async (newOrder: any, oldOrderId: string, logTags: Models.LogTags) => {
+    if (!isClosingSchwabOrder(newOrder) && !allowEntry()) return;
     if (replacedOrderIds.has(oldOrderId)) {
         // Avoid replacing the same order multiple times in a short period
         Firestore.logError(`Order with ID ${oldOrderId} already replaced`);

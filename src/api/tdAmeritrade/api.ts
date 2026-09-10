@@ -1,4 +1,6 @@
 import * as webRequest from '../../utils/webRequest';
+import { allowEntry } from '../../attendance/attendance';
+import { isClosingSchwabOrder } from '../../attendance/policy';
 import * as Helper from '../../utils/helper';
 import * as secret from '../../config/secret';
 import type * as Models from '../../models/models';
@@ -20,6 +22,7 @@ const getAccessTokenFromStorage = () => {
 
 /* #region Order */
 const placeOrderBase = async (accountId: string, order: any, logTags: Models.LogTags) => {
+    if (!isClosingSchwabOrder(order) && !allowEntry()) return;
     Firestore.logOrder(order, logTags);
     let accessToken = getAccessTokenFromStorage();
     let url = `https://api.tdameritrade.com/v1/accounts/${accountId}/orders`;
@@ -31,6 +34,7 @@ const placeOrderBase = async (accountId: string, order: any, logTags: Models.Log
 };
 
 const replaceOrderBase = async (accountId: string, newOrder: any, oldOrderId: string, logTags: Models.LogTags) => {
+    if (!isClosingSchwabOrder(newOrder) && !allowEntry()) return;
     Firestore.logOrder(newOrder, logTags);
     let accessToken = getAccessTokenFromStorage();
     let url = `https://api.tdameritrade.com/v1/accounts/${accountId}/orders/${oldOrderId}`;

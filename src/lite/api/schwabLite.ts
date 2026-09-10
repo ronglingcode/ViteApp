@@ -1,4 +1,6 @@
 import * as StateLite from '../models/stateLite';
+import { allowEntry, attendanceMessage } from '../../attendance/attendance';
+import { isClosingSchwabOrder } from '../../attendance/policy';
 
 const API_HOST = 'https://api.schwabapi.com';
 const LOCAL_TRADER_API_HOST = 'http://localhost:3000/schwabApi';
@@ -402,6 +404,7 @@ export const placeMarketOrder = async (
     side: StateLite.OrderSide
 ) => {
     let order = createMarketOrder(symbol, quantity, side);
+    if (!allowEntry()) throw new Error(attendanceMessage());
     let response = await fetch(`${getTraderApiHost()}/accounts/${secrets.accountHash}/orders`, {
         method: 'POST',
         headers: {
@@ -501,6 +504,7 @@ const replaceSingleOrder = async (
     order: StateLite.LiteOrderModel,
     replacementOrder: any
 ) => {
+    if (!isClosingSchwabOrder(replacementOrder) && !allowEntry()) throw new Error(attendanceMessage());
     if (!order.orderID) {
         throw new Error(`Missing Schwab order id for ${order.symbol}`);
     }

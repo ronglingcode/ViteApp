@@ -1,4 +1,6 @@
 import * as Rules from '../algorithms/rules';
+import { allowEntry, attendanceMessage } from '../attendance/attendance';
+import { capabilities } from '../replay/runtime';
 import * as RiskManager from '../algorithms/riskManager';
 import * as Vwap from '../algorithms/vwap';
 import * as Firestore from '../firestore';
@@ -10,6 +12,12 @@ import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as VwapPatterns from '../algorithms/vwapPatterns';
 import * as Watchlist from '../algorithms/watchlist';
 declare let window: Models.MyWindow;
+
+const isBlockedByAttendance = (logTags: Models.LogTags) => {
+    if (!capabilities.liveBroker || allowEntry()) return false;
+    Firestore.logError(`checkRule: ${attendanceMessage()}`, logTags);
+    return true;
+};
 
 const isBlockedByWatchlistLimitRule = (logTags: Models.LogTags) => {
     let blockReason = Watchlist.getWatchlistLimitBlockReason();
@@ -31,6 +39,7 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
     entryPrice: number, stopOutPrice: number, useMarketOrder: boolean, basePlan: TradingPlansModels.BasePlan,
     shouldCheckEntryDistance: boolean,
     logTags: Models.LogTags,) => {
+    if (isBlockedByAttendance(logTags)) return 0;
     if (isBlockedByWatchlistLimitRule(logTags)) {
         return 0;
     }
@@ -144,6 +153,7 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
 
 export const checkPartialEntry = (symbol: string, isLong: boolean, quantity: number,
     entryPrice: number, stopLossPrice: number, logTags: Models.LogTags) => {
+    if (isBlockedByAttendance(logTags)) return false;
     if (isBlockedByWatchlistLimitRule(logTags)) {
         return false;
     }
