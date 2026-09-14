@@ -2,7 +2,7 @@ export const localhostWithPort: string = "http://localhost:3000";
 export const batchCount: number = 10;
 export const impliedMarketCapThresholdInBillions: number = 0.9;
 export const premarketVolumeThresholdInMillions: number = 0.9;
-export const premarketVolumeThresholdWhitelist: string[] = [];
+export const premarketVolumeThresholdWhitelist: string[] = ['CRWD'];
 // Block trading when the watchlist contains more than this many stocks.
 export const maxTradableStocksCount: number = 1; // do not change, trade management requires full attention
 // true: offload time & sales socket receipt + parsing to a Web Worker (main app).
