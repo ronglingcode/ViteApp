@@ -37,6 +37,7 @@ import './tosClient';
 import * as GlobalSettings from './config/globalSettings';
 import * as AppVersion from './config/appVersion';
 import * as Rules from './algorithms/rules';
+import * as PremarketVolume from './algorithms/premarketVolume';
 import * as Runtime from './replay/runtime';
 import * as ReplayApi from './replay/replayApi';
 import * as ReplayCapture from './replay/replayCapture';
@@ -338,11 +339,12 @@ const startLive = () => window.TradingApp.TOS.initialize().then(async () => {
                 }
             }
 
-            // check premarket volume threshold
-            let premarketSharesInMillions = priceHistory.premarketDollarCollection.lastDayShares / 1000000;
+            // Allow stocks that meet either premarket volume threshold.
+            const absoluteVolume = PremarketVolume.checkAbsolutePremarketVolume(priceHistory.premarketDollarCollection);
+            const relativeVolume = PremarketVolume.checkRelativePremarketVolume(priceHistory.premarketDollarCollection);
             if (!GlobalSettings.premarketVolumeThresholdWhitelist.includes(symbol)
-                && premarketSharesInMillions < GlobalSettings.premarketVolumeThresholdInMillions) {
-                Firestore.logError(`${symbol} blocked: premarket volume ${premarketSharesInMillions.toFixed(2)}M shares, below ${GlobalSettings.premarketVolumeThresholdInMillions}M threshold`);
+                && !(absoluteVolume.passed || relativeVolume.passed)) {
+                Firestore.logError(`${symbol} blocked: ${absoluteVolume.description}, ${relativeVolume.description}; neither threshold met`);
                 Chart.hideChart(symbol);
                 return;
             }
