@@ -1,7 +1,7 @@
 /**
  * WebSocket client for the Bookmap Active Trader plugin.
- * Connects to the local WebSocket server and subscribes to
- * order book snapshots, heartbeats, and breakout signals.
+ * Connects to the local WebSocket server to push display configurations
+ * and receive trading actions and exit-plan updates.
  */
 
 import * as Helper from "../utils/helper";
@@ -12,7 +12,6 @@ import * as TradingPlans from "../models/tradingPlans/tradingPlans";
 import * as TradebooksManager from "../tradebooks/tradebooksManager";
 import { BookmapWallReversal } from "../tradebooks/bookmapWallReversal";
 import * as KeyboardHandler from "../controllers/keyboardHandler";
-import * as Handler from "../controllers/handler";
 import * as ExitOrderPairs from "../utils/exitOrderPairs";
 import * as RiskManager from "../algorithms/riskManager";
 import * as TradingState from "../models/tradingState";
@@ -172,7 +171,6 @@ export const createWebSocket = () => {
         console.log("[BookmapSocket] Connected");
         lastSentVwapTimeBySymbol.clear();
         flushPendingScreenLogs();
-        subscribeToOrderbook();
         pushBookmapConfigsForAllSymbols();
         startPeriodicConfigPush();
     };
@@ -184,29 +182,15 @@ export const createWebSocket = () => {
             console.warn(`[BookmapSocket] Ignoring ${type || "message"} with unsupported priceUnit`, data);
             return;
         }
-        if (type === "orderbook") {
-            return;
-        }
         if (type !== "custom_button_click") {
             console.log(data);
         }
-        let symbol = normalizeSymbol(data.symbol || "");
-
-        if (type === "heartbeat") {
-            // price tracked via heartbeat if needed later
-        } else if (type === "breakout") {
-            let breakoutLevel = getBookmapWirePrice(data, "breakoutLevel");
-            console.log(`[BookmapSocket] BREAKOUT [${symbol}]: level=${breakoutLevel ?? "invalid"}, timestamp=${data.timestamp}`);
-        } else if (type === "custom_button_click") {
+        if (type === "custom_button_click") {
             console.log("[BookmapSocket] custom_button_click");
             console.log(data)
             handleCustomButtonClick(data);
         } else if (type === "core_plan_update") {
             handleCorePlanUpdate(data);
-        } else if (type === "subscribed") {
-            console.log(`[BookmapSocket] Subscribed to ${data.channel}(interval = ${data.intervalMs}ms, levels = ${data.levels})`);
-        } else if (type === "unsubscribed") {
-            console.log(`[BookmapSocket] Unsubscribed from ${data.channel}`);
         } else {
             console.log(`[BookmapSocket] Unknown message type: ${type}`, data);
         }
@@ -230,15 +214,6 @@ export const createWebSocket = () => {
     };
 
     return websocket;
-};
-
-const subscribeToOrderbook = () => {
-    if (websocket && websocket.readyState === WebSocket.OPEN) {
-        websocket.send(JSON.stringify({
-            type: "subscribe",
-            channel: "orderbook",
-        }));
-    }
 };
 
 const pushBookmapConfigsForAllSymbols = () => {
@@ -1000,12 +975,6 @@ const handleCustomButtonClick = (data: any) => {
     let symbol = normalizeSymbol(data.symbol || "");
     mergeBookmapHighLowOfDay(symbol, data);
 
-    let action = getString(data.action);
-    if (action === "adjust_exit_limit_to_bookmap_wall") {
-        handleExitLimitWallAdjustment(symbol, data);
-        return;
-    }
-
     let keyCode = getString(data.keyCode || data.key_code);
     if (keyCode) {
         let shiftKey = data.shiftKey === true || data.shift_key === true;
@@ -1035,6 +1004,7 @@ const handleCustomButtonClick = (data: any) => {
     let tradebookId = getString(data.tradebook_id || data.tradebookId);
     let entryMethod = getString(data.entry_method || data.entryMethod);
     let useMarketOrder = data.use_market_order === true || data.useMarketOrder === true;
+    // Order-book context is optional; missing snapshots use the standard profit targets.
     let bookmapOrderbook = normalizeBookmapOrderbook(data.orderbook, symbol);
     let bookmapEstimatedEntryPrice = getBookmapWirePrice(
         data, "estimated_entry_price", "estimatedEntryPrice");
@@ -1122,6 +1092,7 @@ const handleWallReversalHoverHotkey = (
     tradebook.startEntry(false, false, {
         ...Models.getDefaultEntryParameters(),
         entryMethod: entryMethod || tradebook.getEntryMethods()[0],
+        // Keep optional snapshot support for compatible plugin versions.
         bookmapOrderbook: normalizeBookmapOrderbook(data.orderbook, symbol),
         entryPriceOverride: sourcePrice,
     });
@@ -1255,20 +1226,6 @@ const normalizeBookmapLevels = (value: any): Models.BookmapOrderbookLevel[] => {
         }
     });
     return levels;
-};
-
-const handleExitLimitWallAdjustment = (symbol: string, data: any) => {
-    let pairIndex = Math.trunc(getNumber(data.pair_index || data.pairIndex));
-    let targetPrice = getBookmapWirePrice(data, "target_price", "targetPrice", "price");
-    if (pairIndex < 1 || pairIndex > 10 || targetPrice === undefined) {
-        console.warn("[BookmapSocket] invalid wall adjustment request", data);
-        return;
-    }
-
-    console.log(
-        `[BookmapSocket] Wall adjustment ${symbol} requested pair ${pairIndex};`
-        + ` selecting the first smallest-quantity pair @ ${targetPrice}`);
-    Handler.numberKeyPressedAtPrice(symbol, "Digit1", targetPrice, false);
 };
 
 // Register during module initialization so logs produced before the WebSocket
