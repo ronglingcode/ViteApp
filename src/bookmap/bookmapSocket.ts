@@ -189,6 +189,8 @@ export const createWebSocket = () => {
             console.log("[BookmapSocket] custom_button_click");
             console.log(data)
             handleCustomButtonClick(data);
+        } else if (type === "entry_retest_ready") {
+            handleEntryRetestReady(data);
         } else if (type === "core_plan_update") {
             handleCorePlanUpdate(data);
         } else {
@@ -980,7 +982,7 @@ const handleCustomButtonClick = (data: any) => {
 
     let retestWarning = getString(data.retest_warning || data.retestWarning);
     if (retestWarning) {
-        Helper.speak(retestWarning, Number.POSITIVE_INFINITY);
+        speakBookmapMessage(retestWarning);
     }
 
     let keyCode = getString(data.keyCode || data.key_code);
@@ -1035,6 +1037,24 @@ const handleCustomButtonClick = (data: any) => {
         bookmapOrderbook: bookmapOrderbook,
         bookmapEstimatedEntryPrice: useMarketOrder ? bookmapEstimatedEntryPrice : undefined,
     });
+};
+
+const handleEntryRetestReady = (data: any) => {
+    let side = getString(data.side).toLowerCase();
+    if (side === "bid") {
+        speakBookmapMessage("bid retest done");
+    } else if (side === "offer") {
+        speakBookmapMessage("offer retest done");
+    }
+};
+
+const speakBookmapMessage = (message: string) => {
+    if (!message) {
+        return;
+    }
+    let utterance = new SpeechSynthesisUtterance();
+    utterance.text = message;
+    window.speechSynthesis.speak(utterance);
 };
 
 const sendScreenLog = (detail: BookmapScreenLogDetail | undefined) => {
