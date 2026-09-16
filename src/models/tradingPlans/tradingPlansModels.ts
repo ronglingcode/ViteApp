@@ -19,6 +19,8 @@ export interface Analysis {
     noTradeZones: LevelArea[],
     /** Default risk level labels for chooseRiskLevel (moved from BasePlan). */
     defaultRiskLevels: string[],
+    waitForBidRetest: boolean,
+    waitForOfferRetest: boolean,
 }
 export interface ZoneNearEdge {
     zoneIsFar: boolean,

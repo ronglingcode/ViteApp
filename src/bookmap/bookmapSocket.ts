@@ -274,12 +274,15 @@ export const sendKeyLevelConfigForSymbol = (symbol: string) => {
         return;
     }
 
+    const plan = TradingPlans.getTradingPlansWithoutDefault(symbol);
     const levels = getBookmapKeyLevelsForSymbol(symbol);
     const zones = getBookmapKeyZonesForSymbol(symbol);
     const marketLevels = getBookmapMarketLevelsForSymbol(symbol);
     websocket.send(JSON.stringify(withBookmapWirePriceUnit({
         type: "key_levels_config",
         symbol: symbol,
+        waitForBidRetest: plan?.analysis?.waitForBidRetest ?? false,
+        waitForOfferRetest: plan?.analysis?.waitForOfferRetest ?? false,
         levels: levels,
         zones: zones,
         previousDay: marketLevels.previousDay,
@@ -974,6 +977,11 @@ const normalizeOptionalString = (value: string | undefined): string | undefined 
 const handleCustomButtonClick = (data: any) => {
     let symbol = normalizeSymbol(data.symbol || "");
     mergeBookmapHighLowOfDay(symbol, data);
+
+    let retestWarning = getString(data.retest_warning || data.retestWarning);
+    if (retestWarning) {
+        Helper.speak(retestWarning, Number.POSITIVE_INFINITY);
+    }
 
     let keyCode = getString(data.keyCode || data.key_code);
     if (keyCode) {
