@@ -283,8 +283,8 @@ export const sendKeyLevelConfigForSymbol = (symbol: string) => {
     websocket.send(JSON.stringify(withBookmapWirePriceUnit({
         type: "key_levels_config",
         symbol: symbol,
-        waitForBidRetest: plan?.analysis?.waitForBidRetest ?? false,
-        waitForOfferRetest: plan?.analysis?.waitForOfferRetest ?? false,
+        waitForBidRetest: normalizeRetestWaitMode(plan?.analysis?.waitForBidRetest),
+        waitForOfferRetest: normalizeRetestWaitMode(plan?.analysis?.waitForOfferRetest),
         levels: levels,
         zones: zones,
         previousDay: marketLevels.previousDay,
@@ -976,6 +976,13 @@ const normalizeOptionalString = (value: string | undefined): string | undefined 
     return trimmed.length > 0 ? trimmed : undefined;
 };
 
+const normalizeRetestWaitMode = (value: unknown): TradingPlansModels.RetestWaitMode => {
+    if (value === "yes" || value === "warning" || value === "no") {
+        return value;
+    }
+    return "no";
+};
+
 const handleCustomButtonClick = (data: any) => {
     let symbol = normalizeSymbol(data.symbol || "");
     mergeBookmapHighLowOfDay(symbol, data);
@@ -983,6 +990,11 @@ const handleCustomButtonClick = (data: any) => {
     let retestWarning = getString(data.retest_warning || data.retestWarning);
     if (retestWarning) {
         speakBookmapMessage(retestWarning);
+    }
+    let retestBlocked = data.retest_blocked === true || data.retestBlocked === true;
+    if (retestBlocked) {
+        console.warn(`[BookmapSocket] Entry blocked for ${symbol}: ${retestWarning || "retest required"}`);
+        return;
     }
 
     let keyCode = getString(data.keyCode || data.key_code);

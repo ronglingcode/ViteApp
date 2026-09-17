@@ -6,6 +6,8 @@ export interface TradingSettings {
     snapMode: boolean,
 }
 
+export type RetestWaitMode = "no" | "yes" | "warning";
+
 export interface Analysis {
     gap: Gap,
     singleMomentumKeyLevel: LevelArea[],
@@ -19,8 +21,8 @@ export interface Analysis {
     noTradeZones: LevelArea[],
     /** Default risk level labels for chooseRiskLevel (moved from BasePlan). */
     defaultRiskLevels: string[],
-    waitForBidRetest: boolean,
-    waitForOfferRetest: boolean,
+    waitForBidRetest: RetestWaitMode,
+    waitForOfferRetest: RetestWaitMode,
 }
 export interface ZoneNearEdge {
     zoneIsFar: boolean,
