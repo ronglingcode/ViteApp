@@ -8,6 +8,7 @@ import * as Helper from "../utils/helper";
 import * as Models from "../models/models";
 import * as GlobalSettings from "../config/globalSettings";
 import type * as TradingPlansModels from "../models/tradingPlans/tradingPlansModels";
+import { isRetestWaitMode } from "../models/tradingPlans/tradingPlansModels";
 import * as TradingPlans from "../models/tradingPlans/tradingPlans";
 import * as TradebooksManager from "../tradebooks/tradebooksManager";
 import { BookmapWallReversal } from "../tradebooks/bookmapWallReversal";
@@ -977,7 +978,7 @@ const normalizeOptionalString = (value: string | undefined): string | undefined 
 };
 
 const normalizeRetestWaitMode = (value: unknown): TradingPlansModels.RetestWaitMode => {
-    if (value === "yes" || value === "warning" || value === "no") {
+    if (isRetestWaitMode(value)) {
         return value;
     }
     return "no";

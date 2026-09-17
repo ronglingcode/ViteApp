@@ -6,7 +6,11 @@ export interface TradingSettings {
     snapMode: boolean,
 }
 
-export type RetestWaitMode = "no" | "yes" | "warning";
+export const RETEST_WAIT_MODES = ["no", "yes", "warning"] as const;
+export type RetestWaitMode = (typeof RETEST_WAIT_MODES)[number];
+
+export const isRetestWaitMode = (value: unknown): value is RetestWaitMode =>
+    RETEST_WAIT_MODES.some(mode => mode === value);
 
 export interface Analysis {
     gap: Gap,
