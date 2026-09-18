@@ -6,6 +6,11 @@ app directly from `tradingscripts.firebaseConfig` in localStorage. It does not i
 the trading configuration, watchlist, broker, chart, or main application modules.
 The main modules also import the idempotent bootstrap as a fallback.
 
+`requireClockInAttendance` in `src/config/globalSettings.ts` is the master switch for
+this gate. When false, the live app allows new exposure without reading or writing
+attendance data and displays that the requirement is disabled. Replay remains unable
+to open live exposure. Set the switch back to true to restore normal enforcement.
+
 Opening full or Lite ViteApp automatically reads `tradingAttendance/DD` (`01`–`31`) in
 the existing Firebase project's Firestore. Dates use America/Los_Angeles, independent
 of the machine's timezone and the configured historical trading date. This is a

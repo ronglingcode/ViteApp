@@ -1,5 +1,6 @@
 import { getApps, initializeApp } from 'firebase/app';
 import { doc, getDocFromServer, getFirestore, runTransaction, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { requireClockInAttendance } from '../config/globalSettings.ts';
 import { checkAttendance, type AttendanceResult, type AttendanceStore } from './checkAttendance.ts';
 import { DEADLINE_MINUTE, isClockInWindow, pacificSession, validAttendance } from './policy.ts';
 import { attendanceSlot, readAttendanceSlot } from './slots.ts';
@@ -84,10 +85,14 @@ function getStore(): AttendanceStore {
 }
 
 export function canOpenNewExposure(): boolean {
-    return !isReplay() && state.status === 'eligible' && validAttendance(state.clockedInAt, new Date());
+    return !isReplay() && (!requireClockInAttendance
+        || (state.status === 'eligible' && validAttendance(state.clockedInAt, new Date())));
 }
 
 export function attendanceMessage(): string {
+    if (!isReplay() && !requireClockInAttendance) {
+        return 'Clock-in requirement disabled in global settings — eligible';
+    }
     if (canOpenNewExposure()) {
         const time = state.clockedInAt!.toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles' });
         return `Clocked in at ${time} Pacific — eligible today`;
@@ -169,7 +174,9 @@ async function refresh() {
 export function startAttendance() {
     if (started || isReplay()) return;
     started = true;
-    logEvent('startup', `Attendance started: reading clock-in for ${pacificSession(new Date()).date}. Allowed window: 5:00–5:45 AM Pacific.`);
+    logEvent('startup', requireClockInAttendance
+        ? `Attendance started: reading clock-in for ${pacificSession(new Date()).date}. Allowed window: 5:00–5:45 AM Pacific.`
+        : 'Attendance started with the clock-in requirement disabled in global settings.');
     void refresh();
     document.addEventListener('DOMContentLoaded', render, { once: true });
     window.addEventListener('online', () => void refresh());
