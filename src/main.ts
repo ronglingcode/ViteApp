@@ -342,8 +342,7 @@ const startLive = () => window.TradingApp.TOS.initialize().then(async () => {
             // Allow stocks that meet either premarket volume threshold.
             const absoluteVolume = PremarketVolume.checkAbsolutePremarketVolume(priceHistory.premarketDollarCollection);
             const relativeVolume = PremarketVolume.checkRelativePremarketVolume(priceHistory.premarketDollarCollection);
-            if (!GlobalSettings.premarketVolumeThresholdWhitelist.includes(symbol)
-                && !(absoluteVolume.passed || relativeVolume.passed)) {
+            if (!(absoluteVolume.passed || relativeVolume.passed)) {
                 Firestore.logError(`${symbol} blocked: ${absoluteVolume.description}, ${relativeVolume.description}; neither threshold met`);
                 Chart.hideChart(symbol);
                 return;
