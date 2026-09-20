@@ -154,7 +154,6 @@ export interface RangeBoundReversalPlan extends BasePlan {
     resistance: SupportResistanceArea,
 }
 export interface PlanConfigs {
-    size: number,
     sizingCount?: number,
     requireReversal: boolean,
 }

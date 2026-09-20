@@ -47,7 +47,6 @@ const getDefaultBreakoutTradeState = (isLong: boolean) => {
         },
         plan: {
             planConfigs: {
-                size: 0,
                 requireReversal: true,
             },
             coreTarget: 0,

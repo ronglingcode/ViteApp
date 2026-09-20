@@ -52,15 +52,6 @@ const orOverride = (original: number, override: number) => {
         return original;
     }
 }
-const getInitialMultipler = (basePlan: TradingPlansModels.BasePlan) => {
-    // 1 means a full-size entry risks 1R. A plan can override with its own R multiple.
-    let override = 1;
-    if (basePlan.planConfigs.size > 0) {
-        override = basePlan.planConfigs.size;
-    }
-
-    return override;
-}
 /**
  * Start from 100%, remove loss from the same direction on the same stock. 
  * Remove risk from existing positions and existings entries. 
@@ -75,11 +66,8 @@ export const getRiskMultiplerForNextEntry = (symbol: string, isLong: boolean,
         Firestore.logError("not allowed for heavier positions", logTags);
         return 0;
     }
-    let multipler = getInitialMultipler(basePlan);
-    if (multipler > 0) {
-        return multipler;
-        //return getRiskMultiplerForNextEntry2(symbol, isLong, multipler, logTags);
-    }
+    // 1 means a full-size entry risks 1R.
+    return 1;
 
     let profitLossPerDirection = Models.getRealizedProfitLossPerDirection(symbol, isLong);
     let profitLossTotal = Models.getRealizedProfitLoss();
