@@ -87,7 +87,8 @@ export class BookmapWallReversal extends Tradebook {
         riskReduction: number,
         mustAlignVwap: boolean,
         logTags: Models.LogTags,
-        entryParameters?: Models.TradebookEntryParameters
+        entryParameters?: Models.TradebookEntryParameters,
+        partialsCount: number = this.sizingCount,
     ): number {
         let symbol = this.symbol;
         let currentVwap = Models.getCurrentVwap(symbol);
@@ -120,7 +121,7 @@ export class BookmapWallReversal extends Tradebook {
         let planCopy = JSON.parse(JSON.stringify(this.basePlan)) as TradingPlansModels.BasePlan;
         this.submitEntryOrdersBase(
             dryRun, useMarketOrder, entryPrice, stopOutPrice, stopOutPrice, allowedSize, planCopy, logTags,
-            entryParameters);
+            entryParameters, partialsCount);
 
         return allowedSize;
     }
@@ -147,8 +148,10 @@ export class BookmapWallReversal extends Tradebook {
         }
         let entryMethod = parameters.entryMethod;
         let riskReduction = Helper.getRiskMultiplierFromEntryMethod(entryMethod);
-        Firestore.logInfo(`risk multiplier: ${riskReduction}`, logTags);
-        return this.triggerEntryCommon(dryRun, useMarketOrder, entryPrice, stopOutPrice, riskReduction, false, logTags, parameters);
+        let partialsCount = Helper.getPartialCountFromEntryMethod(entryMethod);
+        Firestore.logInfo(`risk multiplier: ${riskReduction}, partials count: ${partialsCount}`, logTags);
+        return this.triggerEntryCommon(
+            dryRun, useMarketOrder, entryPrice, stopOutPrice, riskReduction, false, logTags, parameters, partialsCount);
 
     }
 

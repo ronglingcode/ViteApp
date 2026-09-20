@@ -171,14 +171,18 @@ export abstract class Tradebook {
     submitEntryOrdersBase(
         dryRun: boolean, useMarketOrder: boolean, entryPrice: number, stopOutPrice: number, riskLevel: number,
         allowedSize: number, basePlan: TradingPlansModels.BasePlan, logTags: Models.LogTags,
-        entryParameters?: Models.TradebookEntryParameters): void {
+        entryParameters?: Models.TradebookEntryParameters,
+        partialsCount: number = this.sizingCount): void {
         if (dryRun) {
             Helper.speak(`${this.symbol} dry run, not submitting orders`);
             return;
         }
 
-        basePlan.planConfigs.sizingCount = this.sizingCount;
-        Firestore.logInfo(`sizing count: ${this.sizingCount}`, logTags);
+        basePlan.planConfigs.sizingCount = partialsCount;
+        if (entryParameters?.entryMethod) {
+            basePlan.entryMethod = entryParameters.entryMethod;
+        }
+        Firestore.logInfo(`sizing count: ${partialsCount}`, logTags);
 
         if (useMarketOrder) {
             EntryHandler.marketEntryWithoutRules(

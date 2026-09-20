@@ -42,7 +42,10 @@ export const isAllowedForSingle = (symbol: string, isLong: boolean, isMarketOrde
 
     let entryInSeconds = Models.getLastEntryTimeFromNowInSeconds(symbol);
     let allowedFirstFewCount = Math.floor(entryInSeconds / 300) * 2;
-    let extraCount = exitPairsCount - (TakeProfit.BatchCount - allowedFirstFewCount);
+    let partialsCount = planConfigs?.sizingCount && planConfigs.sizingCount > 0
+        ? planConfigs.sizingCount
+        : TakeProfit.BatchCount;
+    let extraCount = exitPairsCount - (partialsCount - allowedFirstFewCount);
     if (extraCount > 0 &&
         (isMarketOrder || keyIndex < extraCount)) {
         Firestore.logInfo(`allow exit for the first ${allowedFirstFewCount} exits`, logTags);

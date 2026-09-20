@@ -1,20 +1,16 @@
 import * as Models from '../models/models';
 import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels'
-import * as TradingState from '../models/tradingState';
 import * as Firestore from '../firestore';
 import * as Helper from '../utils/helper';
 import * as Rules from './rules';
-export const dailyMax = 5000;
-export const allowAddIfBelow = dailyMax / 5;
+// Dollar risk of one full-size trade.
+export const R = 1000;
+// Daily max loss is 4R.
+export const dailyMax = 4 * R;
+// Allow adding when the current position risk is below 1R.
+export const allowAddIfBelow = R;
 export const getMaxDailyLossLimit = () => {
-    let initialBalance = TradingState.getInitialBalance();
-    if (initialBalance > 120000) {
-        // each trade risk 0.0575*0.21 = 1.2% of the entire cash account
-        // now i reduced the account from 180K to 150K, so need to add another 20%
-        return initialBalance * 0.0575 * 1.2;
-    } else {
-        return dailyMax; // each trade use 21%
-    }
+    return dailyMax;
 }
 
 export const addCents = (price: number, cents: number) => {
@@ -34,7 +30,7 @@ export const calculateTotalShares = (
     symbol: string, entryPrice: number, stopOutPrice: number,
     setupQuality: string, multiplier: number) => {
     let riskPerShare = getRiskPerShare(symbol, entryPrice, stopOutPrice);
-    let maxRiskPerTrade = multiplier * getMaxDailyLossLimit();
+    let maxRiskPerTrade = multiplier * R;
     let totalShares = Math.max(2, Math.floor(maxRiskPerTrade / riskPerShare));
     return totalShares;
 };
@@ -57,7 +53,8 @@ const orOverride = (original: number, override: number) => {
     }
 }
 const getInitialMultipler = (basePlan: TradingPlansModels.BasePlan) => {
-    let override = 0.24;
+    // 1 means a full-size entry risks 1R. A plan can override with its own R multiple.
+    let override = 1;
     if (basePlan.planConfigs.size > 0) {
         override = basePlan.planConfigs.size;
     }
@@ -283,13 +280,13 @@ export const isBreakeven = (profit: number) => {
 };
 
 export const riskInDollarToMultiples = (risk: number) => {
-    let riskMultiples = risk / getMaxDailyLossLimit();
+    let riskMultiples = risk / R;
     return Math.round(riskMultiples * 1000) / 1000;
 }
 
 export const isOverSized = (symbol: string) => {
     let riskMultiples = getRiskMultiplesFromExistingPosition(symbol);
-    return (riskMultiples > 0.25)
+    return (riskMultiples > 1)
 }
 
 export const isPaperCut = (entryPrice: number, stopLossPrice: number, exitPrice: number) => {

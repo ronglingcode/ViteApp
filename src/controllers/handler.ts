@@ -120,7 +120,8 @@ export const trailStop = async (symbol: string, timeFrame: number, shiftKey: boo
         let p = pairs[i];
         if (p.STOP && p.STOP.price && p.STOP.price != newPrice) {
             let keyIndex = i;
-            let batchIndex = Helper.getBatchIndex(keyIndex, TakeProfit.BatchCount, pairs.length);
+            let partialsCount = TradingState.getPartialsCount(symbol, positionIsLong);
+            let batchIndex = Helper.getBatchIndex(keyIndex, partialsCount, pairs.length);
             if (ExitRulesChecker.checkTrailStopSingleRules(symbol, batchIndex, timeFrame, logTags)) {
                 if (shiftKey) {
                     Broker.instantOutOneExitPair(symbol, positionIsLong, p, logTags);
@@ -672,9 +673,10 @@ export const moveToInitialEntry = async (symbol: string, isLong: boolean) => {
 
 const getPartialQuantity = (symbol: string, isLong: boolean) => {
     let breakoutTradeState = TradingState.getBreakoutTradeState(symbol, isLong);
+    let partialsCount = TradingState.getPartialsCount(symbol, isLong);
     let initialQuantity = breakoutTradeState.initialQuantity;
     if (initialQuantity > 0) {
-        let partialQuantity = initialQuantity / TakeProfit.BatchCount;
+        let partialQuantity = initialQuantity / partialsCount;
         return Math.round(partialQuantity);
     }
     let lastExitSize = Models.getLastExitSize(symbol);
@@ -682,7 +684,7 @@ const getPartialQuantity = (symbol: string, isLong: boolean) => {
         return lastExitSize;
     }
     let fullSize = Math.abs(Models.getPositionNetQuantity(symbol));
-    let partialSize = fullSize / TakeProfit.BatchCount;
+    let partialSize = fullSize / partialsCount;
     return Math.round(partialSize);
 };
 

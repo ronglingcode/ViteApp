@@ -1,5 +1,6 @@
 import * as Firestore from '../firestore';
 import * as Config from '../config/config';
+import * as GlobalSettings from '../config/globalSettings';
 import * as Models from './models';
 import * as AutoTrader from '../algorithms/autoTrader';
 import * as TradingPlansModels from './tradingPlans/tradingPlansModels';
@@ -95,6 +96,19 @@ export const getBreakoutTradeState = (symbol: string, isLong: boolean) => {
     else
         return ss.breakoutTradeStateForShort;
 
+}
+
+/**
+ * Number of exit partials for the active trade. Falls back to the global batch
+ * count for trade states persisted before per-entry partial counts existed.
+ */
+export const getPartialsCount = (symbol: string, isLong: boolean) => {
+    let breakoutTradeState = getBreakoutTradeState(symbol, isLong);
+    let count = breakoutTradeState?.plan?.planConfigs?.sizingCount;
+    if (count && count > 0) {
+        return count;
+    }
+    return GlobalSettings.batchCount;
 }
 
 export const addStocksFromWatchlist = (stocks: Models.WatchlistItem[]) => {

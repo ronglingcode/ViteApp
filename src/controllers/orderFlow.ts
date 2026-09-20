@@ -25,6 +25,11 @@ export const submitAddPartial = async (
     )
 };
 
+const getPartialsCountFromPlan = (plan: TradingPlansModels.BasePlan) => {
+    let count = plan.planConfigs.sizingCount;
+    return count && count > 0 ? count : TakeProfit.BatchCount;
+}
+
 export const submitBreakoutOrders = (
     symbol: string, entryPrice: number, stopOut: number, riskLevel: number, isLong: boolean, multiplier: number,
     plan: TradingPlansModels.BasePlan, tradebookID: string,
@@ -33,6 +38,7 @@ export const submitBreakoutOrders = (
     entryParameters?: Models.TradebookEntryParameters
 ) => {
     Firestore.logInfo("Submitting breakout orders!!! submitBreakoutOrders()", logTags);
+    let partialsCount = getPartialsCountFromPlan(plan);
     let orderType = Models.OrderType.STOP;
     let currentPrice = Models.getCurrentPrice(symbol);
     if ((isLong && currentPrice > entryPrice) || (!isLong && currentPrice < entryPrice)) {
@@ -45,7 +51,8 @@ export const submitBreakoutOrders = (
             symbol, orderType, isLong,
             entryPrice, stopOut,
             fixedQuantity, tradebookID, logTags, orderIdToReplace,
-            entryParameters?.bookmapOrderbook
+            entryParameters?.bookmapOrderbook,
+            partialsCount
         );
         return submitEntryResult;
     } else {
@@ -53,7 +60,8 @@ export const submitBreakoutOrders = (
         let submitEntryResult = submitEntryOrdersWithFixedRisk(
             symbol, orderType, isLong, entryPrice, stopOut, riskLevel, "default quality",
             multiplier, tradebookID, logTags, orderIdToReplace,
-            entryParameters?.bookmapOrderbook
+            entryParameters?.bookmapOrderbook,
+            partialsCount
         );
         Firestore.logDebug(`entry with quantity ${submitEntryResult.totalQuantity}`, logTags);
         return submitEntryResult;
@@ -66,13 +74,15 @@ export const submitMarketEntryOrders = (
     tradebookID: string, logTags: Models.LogTags,
     entryParameters?: Models.TradebookEntryParameters) => {
     Firestore.logInfo("Submitting market orders!!! submitMarketEntryOrders()", logTags);
+    let partialsCount = getPartialsCountFromPlan(plan);
     let orderIdToReplace = '';
     let fixedQuantity = Models.getFixedQuantityFromInput(symbol);
     if (fixedQuantity > 0) {
         let submitEntryResult = submitEntryOrdersWithFixedQuantity(
             symbol, Models.OrderType.MARKET, isLong, estimatedEntryPrice, stopOutPrice,
             fixedQuantity, tradebookID, logTags, orderIdToReplace,
-            entryParameters?.bookmapOrderbook
+            entryParameters?.bookmapOrderbook,
+            partialsCount
         );
         return submitEntryResult;
     } else {
@@ -80,7 +90,8 @@ export const submitMarketEntryOrders = (
             symbol, Models.OrderType.MARKET, isLong, estimatedEntryPrice,
             stopOutPrice, riskLevel,
             "A", multiplier, tradebookID, logTags, orderIdToReplace,
-            entryParameters?.bookmapOrderbook
+            entryParameters?.bookmapOrderbook,
+            partialsCount
         );
         return submitEntryResult;
     }
@@ -91,7 +102,8 @@ export const submitEntryOrdersWithFixedRisk = (
     entryPrice: number, stopOutPrice: number, riskLevel: number, setupQuality: string, multiplier: number,
     tradebookID: string, logTags: Models.LogTags,
     orderIdToReplace: string,
-    bookmapOrderbook?: Models.BookmapOrderbookSnapshot
+    bookmapOrderbook?: Models.BookmapOrderbookSnapshot,
+    partialsCount: number = TakeProfit.BatchCount
 ) => {
     let isEquity = Config.getProfileSettingsForSymbol(symbol).isEquity;
     let afterSplippage = addSlippage(symbol, isLong, entryPrice, stopOutPrice, isEquity);
@@ -108,7 +120,7 @@ export const submitEntryOrdersWithFixedRisk = (
         }
     }
     let profitTargets = TakeProfit.getEntryProfitTargets(
-        symbol, totalShares, entryPrice, riskLevel, isLong, bookmapOrderbook, logTags);
+        symbol, totalShares, entryPrice, riskLevel, isLong, bookmapOrderbook, logTags, partialsCount);
     let submitResult = submitEntryOrders(symbol, isLong, orderType, entryPrice, stopOutPrice, profitTargets, tradebookID, logTags, orderIdToReplace);
     return submitResult;
 };
@@ -118,7 +130,8 @@ export const submitEntryOrdersWithFixedQuantity = (
     entryPrice: number, stopOutPrice: number, quantity: number,
     tradebookID: string, logTags: Models.LogTags,
     orderIdToReplace: string,
-    bookmapOrderbook?: Models.BookmapOrderbookSnapshot
+    bookmapOrderbook?: Models.BookmapOrderbookSnapshot,
+    partialsCount: number = TakeProfit.BatchCount
 ) => {
     let isEquity = Config.getProfileSettingsForSymbol(symbol).isEquity;
     let afterSplippage = addSlippage(symbol, isLong, entryPrice, stopOutPrice, isEquity);
@@ -128,7 +141,7 @@ export const submitEntryOrdersWithFixedQuantity = (
     let totalShares = quantity;
 
     let profitTargets = TakeProfit.getEntryProfitTargets(
-        symbol, totalShares, entryPrice, stopOutPrice, isLong, bookmapOrderbook, logTags);
+        symbol, totalShares, entryPrice, stopOutPrice, isLong, bookmapOrderbook, logTags, partialsCount);
     let submitResult = submitEntryOrders(symbol, isLong, orderType, entryPrice, stopOutPrice, profitTargets, tradebookID, logTags, orderIdToReplace);
     return submitResult;
 };

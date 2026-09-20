@@ -608,8 +608,7 @@ const getRiskMultiplesForDisplay = (symbol: string, isLongPosition: boolean,
     let riskPerShare = getRiskPerShare(symbol, isLongPosition, entryPrice, stopOutPrice);
     // consider premarket positions
     let riskMultiples = RiskManager.quantityToRiskMultiples(riskPerShare, quantity);
-    let display = riskMultiples * 100;
-    return Math.round(display * 10) / 10
+    return Math.round(riskMultiples * 100) / 100
 };
 
 const getRiskPerShare = (symbol: string, isLong: boolean,
@@ -930,13 +929,10 @@ const showPositionSize = (symbol: string, position: Models.Position | undefined,
     if (riskMultiples == 0)
         return 0;
     else {
-        let percent = riskMultiples * 100;
-        if (percent > 2) {
-            percent = Math.round(percent);
-        } else {
-            percent = Math.round(percent * 10) / 10;
-        }
-        display = `${percent}%`;
+        let rounded = riskMultiples >= 10
+            ? Math.round(riskMultiples)
+            : Math.round(riskMultiples * 100) / 100;
+        display = `${rounded}R`;
     }
 
     // show relative position size regarding to risk size
@@ -1043,7 +1039,7 @@ const drawWorkingOrders = async (
                     if (nextEntryORderToDraw)
                         firstEntryOrderToDraw.riskMultiples += nextEntryORderToDraw.riskMultiples;
                 }
-                let l = createPriceLine(widget.candleSeries, firstEntryOrderToDraw.price, `entry: ${firstEntryOrderToDraw.riskMultiples}%`, firstEntryOrderToDraw.color, null, false, "solid");
+                let l = createPriceLine(widget.candleSeries, firstEntryOrderToDraw.price, `entry: ${firstEntryOrderToDraw.riskMultiples}R`, firstEntryOrderToDraw.color, null, false, "solid");
                 widget.entryOrdersPriceLines.push(l);
                 if (firstEntryOrderToDraw.isBuyOrder) {
                     totalRiskForLong += firstEntryOrderToDraw.riskMultiples;
@@ -1056,7 +1052,7 @@ const drawWorkingOrders = async (
         widget.stopLossOfPendingEntryPriceLine = createPriceLine(
             widget.candleSeries, stopLoss, `pending stop`, 'black', null, false, "solid",
         )
-        widget.entryOrderLabelRiskMultiple = Math.max(totalRiskForLong, totalRiskForShort) / 100;
+        widget.entryOrderLabelRiskMultiple = Math.max(totalRiskForLong, totalRiskForShort);
     }
 };
 

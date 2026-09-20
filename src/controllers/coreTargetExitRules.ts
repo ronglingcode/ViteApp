@@ -33,10 +33,12 @@ const getPairIndex = (symbol: string, pair: Models.ExitPair) => {
 export const getOriginalPartialNumber = (symbol: string, pair: Models.ExitPair) => {
     let allPairs = Models.getExitPairs(symbol);
     let keyIndex = getPairIndex(symbol, pair);
+    let isLong = Models.getPositionNetQuantity(symbol) > 0;
+    let partialsCount = TradingState.getPartialsCount(symbol, isLong);
     if (keyIndex < 0) {
-        return GlobalSettings.batchCount + 1;
+        return partialsCount + 1;
     }
-    return Helper.getBatchIndex(keyIndex, GlobalSettings.batchCount, allPairs.length) + 1;
+    return Helper.getBatchIndex(keyIndex, partialsCount, allPairs.length) + 1;
 };
 
 const getActiveRulePlan = (symbol: string, isLong: boolean) => {

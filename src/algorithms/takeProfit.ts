@@ -27,9 +27,10 @@ export const getEntryProfitTargets = (
     riskReferencePrice: number,
     isLong: boolean,
     bookmapOrderbook: Models.BookmapOrderbookSnapshot | undefined,
-    logTags: Models.LogTags) => {
-    const targetPrices = getEntryTargetPrices(symbol, entryPrice, riskReferencePrice, isLong, bookmapOrderbook, logTags);
-    return splitTargetsEvenly(symbol, totalShares, targetPrices, logTags);
+    logTags: Models.LogTags,
+    partialsCount: number = BatchCount) => {
+    const targetPrices = getEntryTargetPrices(symbol, entryPrice, riskReferencePrice, isLong, bookmapOrderbook, logTags, partialsCount);
+    return splitTargetsEvenly(symbol, totalShares, targetPrices, logTags, partialsCount);
 };
 
 const getEntryTargetPrices = (
@@ -38,13 +39,14 @@ const getEntryTargetPrices = (
     riskReferencePrice: number,
     isLong: boolean,
     bookmapOrderbook: Models.BookmapOrderbookSnapshot | undefined,
-    logTags: Models.LogTags) => {
+    logTags: Models.LogTags,
+    partialsCount: number) => {
     const target3R = getTargetPriceByRiskReward(symbol, isLong, entryPrice, riskReferencePrice, DefaultRiskReward);
     const wallThreshold = getBookmapSizeThreshold(bookmapOrderbook);
     const wallTargets = getBookmapWallTargets(symbol, entryPrice, isLong, bookmapOrderbook, wallThreshold);
     const targets = wallTargets.slice(0, BookmapWallTargetCount);
 
-    while (targets.length < BatchCount) {
+    while (targets.length < partialsCount) {
         targets.push(target3R);
     }
 
@@ -55,7 +57,7 @@ const getEntryTargetPrices = (
     } else {
         Firestore.logInfo(`${symbol} initial targets use 3R only @ ${target3R}`, logTags);
     }
-    return targets.slice(0, BatchCount);
+    return targets.slice(0, partialsCount);
 };
 
 const getBookmapWallTargets = (
@@ -98,13 +100,14 @@ const splitTargetsEvenly = (
     symbol: string,
     totalShares: number,
     targetPrices: number[],
-    logTags: Models.LogTags) => {
+    logTags: Models.LogTags,
+    partialsCount: number) => {
     const normalizedShares = Math.floor(totalShares);
-    const baseQuantity = Math.floor(normalizedShares / BatchCount);
-    const remainder = normalizedShares % BatchCount;
+    const baseQuantity = Math.floor(normalizedShares / partialsCount);
+    const remainder = normalizedShares % partialsCount;
     let results: Models.ProfitTarget[] = [];
 
-    for (let i = 0; i < targetPrices.length && i < BatchCount; i++) {
+    for (let i = 0; i < targetPrices.length && i < partialsCount; i++) {
         const shares = baseQuantity + (i < remainder ? 1 : 0);
         if (shares <= 0) {
             continue;

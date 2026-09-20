@@ -1,27 +1,47 @@
 import type * as LightweightCharts from 'sunrise-tv-lightweight-charts'
 import * as TimeHelper from './timeHelper';
 import * as Runtime from '../replay/runtime';
+import * as GlobalSettings from '../config/globalSettings';
 
 export const getCurrentMarketTime = () => {
     return Runtime.isReplayMode() ? new Date(TimeHelper.getCurrentMarketTime()) : new Date();
 };
 
-export const returnDefaultEntryMethods = () => {
-    return ["0.5 R", "0.1 R"];
+export interface EntryMethodConfig {
+    label: string,
+    riskMultiple: number,
+    partialsCount: number,
 }
-export const getRiskMultiplierFromEntryMethod = (entryMethod: string | undefined, defaultMultiplier = 1) => {
+// 1R risks $1000 across the default number of exit partials. Reduced-risk methods
+// risk less and use a single exit pair.
+const entryMethodConfigs: EntryMethodConfig[] = [
+    { label: "1 R", riskMultiple: 1, partialsCount: GlobalSettings.batchCount },
+    { label: "0.1 R", riskMultiple: 0.1, partialsCount: 1 },
+];
+export const returnDefaultEntryMethods = () => {
+    return entryMethodConfigs.map(config => config.label);
+}
+const parseRiskMultipleFromEntryMethod = (entryMethod: string | undefined) => {
     if (!entryMethod) {
-        return defaultMultiplier;
+        return undefined;
     }
     let match = entryMethod.trim().match(/(?:^|\s)(\d+(?:\.\d+)?)\s*R$/i);
     if (!match) {
-        return defaultMultiplier;
+        return undefined;
     }
     let multiplier = Number(match[1]);
     if (!Number.isFinite(multiplier) || multiplier <= 0) {
-        return defaultMultiplier;
+        return undefined;
     }
     return multiplier;
+}
+export const getRiskMultiplierFromEntryMethod = (entryMethod: string | undefined, defaultMultiplier = 1) => {
+    return parseRiskMultipleFromEntryMethod(entryMethod) ?? defaultMultiplier;
+};
+export const getPartialCountFromEntryMethod = (entryMethod: string | undefined, defaultCount = GlobalSettings.batchCount) => {
+    let multiplier = parseRiskMultipleFromEntryMethod(entryMethod);
+    let config = entryMethodConfigs.find(config => config.riskMultiple === multiplier);
+    return config ? config.partialsCount : defaultCount;
 };
 export const numberToString = (n: number | null | undefined) => {
     if (!n)

@@ -359,6 +359,7 @@ const getTimestampTimeMs = (value: unknown): number => {
 };
 
 const getPartialsTaken = (symbol: string, state: Models.BreakoutTradeState): number => {
+    let partialsCount = TradingState.getPartialsCount(symbol, state.isLong);
     let initialQuantity = Number(state.initialQuantity);
     if (Number.isFinite(initialQuantity) && initialQuantity > 0) {
         let submitTimeMs = getTimestampTimeMs(state.submitTime);
@@ -370,10 +371,11 @@ const getPartialsTaken = (symbol: string, state: Models.BreakoutTradeState): num
             initialQuantity,
             exitedQuantity,
             Models.getExitPairs(symbol).length,
+            partialsCount,
         );
     }
 
-    return estimateCompletedPartials(0, 0, Models.getExitPairs(symbol).length);
+    return estimateCompletedPartials(0, 0, Models.getExitPairs(symbol).length, partialsCount);
 };
 
 const buildCorePlanConfig = (
