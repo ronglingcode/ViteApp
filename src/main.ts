@@ -339,6 +339,14 @@ const startLive = () => window.TradingApp.TOS.initialize().then(async () => {
                 }
             }
 
+            // Hard floor: below this many premarket shares, block trading regardless of relative volume.
+            const volumeFloor = PremarketVolume.checkPremarketVolumeHardFloor(priceHistory.premarketDollarCollection);
+            if (!volumeFloor.passed) {
+                Firestore.logError(`${symbol} blocked: ${volumeFloor.description}; below hard floor`);
+                Chart.hideChart(symbol);
+                return;
+            }
+
             // Allow stocks that meet either premarket volume threshold.
             const absoluteVolume = PremarketVolume.checkAbsolutePremarketVolume(priceHistory.premarketDollarCollection);
             const relativeVolume = PremarketVolume.checkRelativePremarketVolume(priceHistory.premarketDollarCollection);

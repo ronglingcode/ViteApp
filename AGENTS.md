@@ -170,6 +170,8 @@ Key flags:
 - `marketDataSource`: "massive" or "alpaca"
 - `impliedMarketCapThresholdInBillions`: 0.9 (minimum market cap filter)
 - `premarketVolumeThresholdInMillions`: 0.9 (minimum premarket volume)
+- `premarketRelativeVolumeThreshold`: 4 (alternative: 4x prior days' average premarket volume)
+- `premarketVolumeHardFloorInShares`: 500000 (hard floor — blocks trading below this even if the relative-volume rule passes)
 - `enableLeftPaneFeatures`: toggles left-pane trader focus features
 - `enableBookmapSocket`: connects to the Bookmap Active Trader plugin WebSocket (ws://localhost:8765)
 

@@ -10,6 +10,14 @@ export const checkAbsolutePremarketVolume = ({ lastDayShares }: PremarketDollarC
     };
 };
 
+export const checkPremarketVolumeHardFloor = ({ lastDayShares }: PremarketDollarCollection) => {
+    const threshold = GlobalSettings.premarketVolumeHardFloorInShares;
+    return {
+        passed: lastDayShares >= threshold,
+        description: `premarket volume ${(lastDayShares / 1000).toFixed(0)}K shares (hard floor: ${threshold / 1000}K)`,
+    };
+};
+
 export const checkRelativePremarketVolume = ({ lastDayShares, previousDaysSharesAverage }: PremarketDollarCollection) => {
     const threshold = GlobalSettings.premarketRelativeVolumeThreshold;
     const hasValidVolume = Number.isFinite(previousDaysSharesAverage)
