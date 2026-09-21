@@ -30,6 +30,21 @@ const getPartialsCountFromPlan = (plan: TradingPlansModels.BasePlan) => {
     return count && count > 0 ? count : TakeProfit.BatchCount;
 }
 
+/**
+ * Downgraded entries (lower effective risk multiple) use proportionally fewer
+ * exit pairs. Keep the plan in sync so downstream exit rules use the actual count.
+ */
+const getPartialsCountForEntry = (plan: TradingPlansModels.BasePlan, multiplier: number, logTags: Models.LogTags) => {
+    let requestedCount = getPartialsCountFromPlan(plan);
+    let count = Math.min(requestedCount, TakeProfit.getPartialsCountForRiskMultiplier(multiplier));
+    if (count < requestedCount) {
+        Firestore.logError(`entry downgraded to ${multiplier}R, `
+            + `exit pairs reduced from ${requestedCount} to ${count}`, logTags);
+        plan.planConfigs.sizingCount = count;
+    }
+    return count;
+};
+
 export const submitBreakoutOrders = (
     symbol: string, entryPrice: number, stopOut: number, riskLevel: number, isLong: boolean, multiplier: number,
     plan: TradingPlansModels.BasePlan, tradebookID: string,
@@ -57,6 +72,7 @@ export const submitBreakoutOrders = (
         return submitEntryResult;
     } else {
         //Firestore.logInfo(`fixed risk ${multiplier}`, logTags);
+        partialsCount = getPartialsCountForEntry(plan, multiplier, logTags);
         let submitEntryResult = submitEntryOrdersWithFixedRisk(
             symbol, orderType, isLong, entryPrice, stopOut, riskLevel, "default quality",
             multiplier, tradebookID, logTags, orderIdToReplace,
@@ -86,6 +102,7 @@ export const submitMarketEntryOrders = (
         );
         return submitEntryResult;
     } else {
+        partialsCount = getPartialsCountForEntry(plan, multiplier, logTags);
         let submitEntryResult = submitEntryOrdersWithFixedRisk(
             symbol, Models.OrderType.MARKET, isLong, estimatedEntryPrice,
             stopOutPrice, riskLevel,

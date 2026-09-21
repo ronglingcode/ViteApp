@@ -9,6 +9,12 @@ export const R = 1000;
 export const dailyMax = 4 * R;
 // Allow adding when the current position risk is below 1R.
 export const allowAddIfBelow = R;
+// When a heavier position is not allowed, keep the total risk in one direction
+// within this multiple by reducing the next entry to a smaller entry method.
+export const maxRiskMultipleWithExistingPosition = 1.2;
+// Entry methods risk either a full size (1R) or a single small partial (0.1R).
+const fullEntryRiskMultiple = 1;
+const smallEntryRiskMultiple = 0.1;
 export const getMaxDailyLossLimit = () => {
     return dailyMax;
 }
@@ -53,41 +59,37 @@ const orOverride = (original: number, override: number) => {
     }
 }
 /**
- * Start from 100%, remove loss from the same direction on the same stock. 
- * Remove risk from existing positions and existings entries. 
- * Use half of that. And use half of remaining daily max loss. 
- * Use whichever is smaller
+ * Size multiplier for the next entry: 0 means not allowed, 1 means full size (1R).
+ *
+ * A heavier position is allowed past the add target. Otherwise the total risk
+ * in one direction must stay within maxRiskMultipleWithExistingPosition.
+ * Since entries are either 1R or 0.1R, an existing position blocks another 1R
+ * entry, but a 0.1R entry is still allowed while the combined risk stays within the cap.
  * @returns a number between 0 and 1
  */
 export const getRiskMultiplerForNextEntry = (symbol: string, isLong: boolean,
     entryPrice: number, basePlan: TradingPlansModels.BasePlan, logTags: Models.LogTags) => {
-    if (!Rules.isAllowedForHeavierPosition(symbol, isLong, entryPrice) &&
-        hasRiskFromExistingPositions(symbol, isLong)) {
-        Firestore.logError("not allowed for heavier positions", logTags);
-        return 0;
+    if (Rules.isAllowedForHeavierPosition(symbol, isLong, entryPrice)) {
+        return fullEntryRiskMultiple;
     }
-    // 1 means a full-size entry risks 1R.
-    return 1;
-
-    let profitLossPerDirection = Models.getRealizedProfitLossPerDirection(symbol, isLong);
-    let profitLossTotal = Models.getRealizedProfitLoss();
-    let existingRisk = getRiskInDollarFromExistingPositionsAndEntries(symbol, logTags);
-    if (existingRisk > 0) {
-        let netQuantity = Models.getPositionNetQuantity(symbol);
-        let positionIsLong = netQuantity > 0;
-        if (netQuantity != 0 && positionIsLong == isLong) {
-            Firestore.logError(`no more entry with existing risk, use add partial instead`, logTags);
-            return 0;
-        }
+    if (!hasRiskFromExistingPositions(symbol, isLong)) {
+        return fullEntryRiskMultiple;
     }
-    let riskUsingPerDirection = getRiskInDollarForNextEntry(
-        getMaxDailyLossLimit() / 2, profitLossPerDirection, existingRisk, "per direction", logTags
-    );
-    let riskUsingDailyPnL = getRiskInDollarForNextEntry(
-        getMaxDailyLossLimit(), profitLossTotal, existingRisk, "daily PNL", logTags
-    );
-    let finalRisk = Math.min(riskUsingDailyPnL, riskUsingPerDirection);
-    return riskInDollarToMultiples(finalRisk);
+    let existingRisk = getRiskInDollarFromExistingPosition(symbol);
+    let existingRiskMultiple = riskInDollarToMultiples(existingRisk);
+    let allowedAdditionalRiskMultiple = riskInDollarToMultiples(
+        maxRiskMultipleWithExistingPosition * R - existingRisk);
+    if (allowedAdditionalRiskMultiple >= fullEntryRiskMultiple) {
+        return fullEntryRiskMultiple;
+    }
+    if (allowedAdditionalRiskMultiple >= smallEntryRiskMultiple) {
+        Firestore.logError(`existing risk ${existingRiskMultiple}R, only allow `
+            + `${smallEntryRiskMultiple}R entry to stay within ${maxRiskMultipleWithExistingPosition}R`, logTags);
+        return smallEntryRiskMultiple;
+    }
+    Firestore.logError(`not allowed for heavier positions, existing risk ${existingRiskMultiple}R `
+        + `reaches ${maxRiskMultipleWithExistingPosition}R`, logTags);
+    return 0;
 }
 
 const getRiskMultiplerForNextEntry2 = (symbol: string, isLong: boolean, multipler: number, logTags: Models.LogTags) => {
