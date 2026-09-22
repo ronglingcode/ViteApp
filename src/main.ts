@@ -356,6 +356,17 @@ const startLive = () => window.TradingApp.TOS.initialize().then(async () => {
                 return;
             }
 
+            // Range bound reversal plans cannot trade a 2nd day play: none of the previous 3
+            // daily candles may have broken out of or broken down the previous consolidation area.
+            let tradingPlans = TradingPlans.getTradingPlansWithoutDefault(symbol);
+            let previousConsolidationReason = TradingPlans.validatePreviousConsolidationArea(
+                tradingPlans, priceHistory.dailyBars);
+            if (previousConsolidationReason != "") {
+                Firestore.logError(`${symbol} blocked: ${previousConsolidationReason}`);
+                Chart.hideChart(symbol);
+                return;
+            }
+
             const secondsSinceMarketOpen = 0;
             let allowEarlyEntry = Rules.shouldAllowEarlyEntry(symbol, secondsSinceMarketOpen);
             if (!allowEarlyEntry.allowed) {
