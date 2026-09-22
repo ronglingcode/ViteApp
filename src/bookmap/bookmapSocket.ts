@@ -1009,6 +1009,12 @@ const handleCustomButtonClick = (data: any) => {
     let symbol = normalizeSymbol(data.symbol || "");
     mergeBookmapHighLowOfDay(symbol, data);
 
+    // Audible receipt confirmation: speak the button label sent by Bookmap.
+    let buttonName = getString(data.button_name || data.buttonName);
+    if (buttonName) {
+        speakBookmapMessage(buttonName);
+    }
+
     let retestWarning = getString(data.retest_warning || data.retestWarning);
     if (retestWarning) {
         speakBookmapMessage(retestWarning);
