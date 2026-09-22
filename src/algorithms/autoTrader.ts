@@ -10,6 +10,7 @@ import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import * as VwapPatterns from './vwapPatterns';
 import * as GlobalSettings from '../config/globalSettings';
 import * as NotificationEngine from '../notifications/notificationEngine';
+import * as RiskManager from './riskManager';
 import { TradebookID } from '../tradebooks/tradebookIds';
 
 declare let window: Models.MyWindow;
@@ -651,18 +652,26 @@ export const onAccountDataRefresh = (symbol: string) => {
     updateAllAlgo(symbol);
     detectOverRisk(symbol);
 }
+// Risk-size monitor: alert (voice x3) whenever pending entry orders or the
+// open position carry more than this many R. Wired into the per-symbol account
+// UI refresh so it keeps watching, not just at order placement time.
+export const overRiskThreshold = 1.2;
 export const detectOverRisk = (symbol: string) => {
     let chart = Models.getChartWidget(symbol);
     if (!chart) {
         return;
     }
-    let risk = chart.entryOrderLabelRiskMultiple;
-    if (!risk) {
-        return;
+    let pendingRisk = chart.entryOrderLabelRiskMultiple;
+    if (pendingRisk && pendingRisk > overRiskThreshold) {
+        let rounded = Math.round(pendingRisk * 100) / 100;
+        Helper.speakRepeated(`over risk for ${symbol}, pending entries ${rounded} R`, 3);
+        Firestore.logError(`over risk for ${symbol}, pending entries ${rounded}R`);
     }
-    if (risk > 1.5) {
-        Helper.speak(`over risk for ${symbol}`);
-        Firestore.logError(`over risk for ${symbol}`);
+    let positionRisk = RiskManager.getRiskMultiplesFromExistingPosition(symbol);
+    if (positionRisk > overRiskThreshold) {
+        let rounded = Math.round(positionRisk * 100) / 100;
+        Helper.speakRepeated(`size too big for ${symbol}, position risk ${rounded} R`, 3);
+        Firestore.logError(`size too big for ${symbol}, position risk ${rounded}R`);
     }
 }
 

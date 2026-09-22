@@ -271,6 +271,12 @@ export const isMarketOpenTime = (jsDatdeObj: Date, currentDay: Date) => {
 };
 
 export const speak = (message: string, maxMinutesSinceOpen = 85) => {
+    speakRepeated(message, 1, maxMinutesSinceOpen);
+};
+
+// Speaks the message `times` times in a row (queued utterances), with a single
+// cooldown check so repeated triggers don't re-blast within the cooldown window.
+export const speakRepeated = (message: string, times: number, maxMinutesSinceOpen = 85) => {
     let now = Date.now();
     let lastSpokenAt = spokenMessages.get(message);
     if (lastSpokenAt && now - lastSpokenAt < speechMessageCooldownInMs) {
@@ -286,9 +292,11 @@ export const speak = (message: string, maxMinutesSinceOpen = 85) => {
 
     let minutes = getMinutesSinceMarketOpen(getCurrentMarketTime());
     if (minutes < maxMinutesSinceOpen) {
-        let msg = new SpeechSynthesisUtterance();
-        msg.text = message;
-        window.speechSynthesis.speak(msg);
+        for (let i = 0; i < times; i++) {
+            let msg = new SpeechSynthesisUtterance();
+            msg.text = message;
+            window.speechSynthesis.speak(msg);
+        }
     }
 };
 

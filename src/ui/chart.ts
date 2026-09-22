@@ -755,6 +755,7 @@ export const updateAccountUIStatusForSymbol = (symbol: string) => {
     let riskMultiple = showPositionSize(symbol, position, widget);
     drawProfitRatio(symbol, position, widget, riskMultiple);
     drawWorkingOrders(symbol, position, widget);
+    AutoTrader.detectOverRisk(symbol);
     drawOrderExecutions(symbol, widget);
     window.dispatchEvent(new CustomEvent('tradingscripts:account-ui-symbol-updated', {
         detail: { symbol },
