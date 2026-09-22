@@ -152,6 +152,7 @@ export interface RangeBoundReversalPlan extends BasePlan {
     support: SupportResistanceArea,
     /** Resistance zone for short Bookmap offer rejections. */
     resistance: SupportResistanceArea,
+    previousConsoliationArea: LevelArea,
 }
 export interface PlanConfigs {
     sizingCount?: number,
