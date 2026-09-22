@@ -70,6 +70,8 @@ interface BookmapPositionConfig {
     netQuantity: number;
     averagePrice: number;
     riskPercent: number;
+    /** Pre-formatted risk label (e.g. "-0.05R") so the plugin can display it verbatim. */
+    riskText: string;
 }
 
 interface BookmapOpenOrderConfig {
@@ -742,6 +744,7 @@ const buildPositionConfig = (symbol: string): BookmapPositionConfig | undefined 
         netQuantity: position.netQuantity,
         averagePrice,
         riskPercent: getPositionRiskPercent(symbol),
+        riskText: getPositionRiskText(symbol, position.netQuantity),
     };
 };
 
@@ -752,6 +755,22 @@ const getPositionRiskPercent = (symbol: string) => {
         return Math.round(percent);
     }
     return Math.round(percent * 10) / 10;
+};
+
+/**
+ * Pre-formatted signed risk label using the exact rounding/sign convention of
+ * the Pos label in chart.ts (e.g. "+0.05R", "-0.05R"), so the Bookmap plugin
+ * displays it verbatim without doing its own math. "" means no valid risk.
+ */
+const getPositionRiskText = (symbol: string, netQuantity: number) => {
+    let riskMultiples = RiskManager.getRiskMultiplesFromExistingPosition(symbol);
+    if (!Number.isFinite(riskMultiples) || riskMultiples <= 0) {
+        return "";
+    }
+    let rounded = riskMultiples >= 10
+        ? Math.round(riskMultiples)
+        : Math.round(riskMultiples * 100) / 100;
+    return `${netQuantity < 0 ? "-" : "+"}${rounded}R`;
 };
 
 const buildOpenOrderConfigs = (symbol: string): BookmapOpenOrderConfig[] => {
