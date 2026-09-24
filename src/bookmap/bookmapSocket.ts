@@ -152,6 +152,10 @@ const lastSentVwapTimeBySymbol = new Map<string, number>();
 const pendingScreenLogs: BookmapScreenLogDetail[] = [];
 const observedPositionQuantityBySymbol = new Map<string, number>();
 const pendingNewPositionSignals = new Map<string, BookmapNewPositionSignal>();
+// Feature flag: set to true to re-enable the "New Position Reminder" popup in
+// the Bookmap plugin. When false, ViteApp never sends the "new_position"
+// signal, so the plugin's reminder dialog stays dormant (code kept intact).
+const NEW_POSITION_REMINDER_ENABLED = false;
 
 export const createWebSocket = () => {
     if (websocket && (websocket.readyState === WebSocket.CONNECTING || websocket.readyState === WebSocket.OPEN)) {
@@ -683,6 +687,10 @@ const initializePositionTransitionBaselines = () => {
 };
 
 const observeNewPositionTransition = (symbol: string) => {
+    if (!NEW_POSITION_REMINDER_ENABLED) {
+        pendingNewPositionSignals.delete(symbol);
+        return;
+    }
     let currentQuantity = Models.getPositionNetQuantity(symbol);
     let previousQuantity = observedPositionQuantityBySymbol.get(symbol);
     observedPositionQuantityBySymbol.set(symbol, currentQuantity);
