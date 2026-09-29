@@ -79,8 +79,7 @@ src/
 │   ├── exitRulesChecker*.ts   # Exit validation (multiple versions)
 │   ├── orderFlow.ts           # Order flow management
 │   ├── streamingHandler.ts    # WebSocket event routing
-│   ├── keyboardHandler.ts     # Keyboard shortcuts for trading
-│   └── volumeMonitor.ts       # Volume tracking
+│   └── keyboardHandler.ts     # Keyboard shortcuts for trading
 │
 ├── ui/                        # User interface
 │   ├── chart.ts               # TradingView chart wrapper (main chart logic)
@@ -97,8 +96,7 @@ src/
 │   └── tradingPlans/          # Trading plan models
 │
 ├── bookmap/                   # Bookmap plugin integration
-│   ├── bookmapSocket.ts       # WebSocket client for Bookmap Active Trader plugin
-│   └── largeOrderTracker.ts   # Large order wall state tracking across snapshots
+│   └── bookmapSocket.ts       # WebSocket client for Bookmap Active Trader plugin
 │
 ├── data/
 │   └── db.ts                  # In-memory database, candle aggregation
@@ -121,7 +119,6 @@ src/
 │   └── webRequest.ts          # HTTP request wrapper
 │
 └── patterns/                  # Pattern detection
-    ├── falseBreakout.ts
     ├── camPivots.ts
     └── allTimeHigh.ts
 ```
