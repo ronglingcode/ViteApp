@@ -421,7 +421,7 @@ export const syncAccount = async (source: string) => {
     return account;
 };
 
-const rebuildBrokerAccount = () => {
+export const rebuildBrokerAccount = () => {
     if (!window.HybridApp.AccountCache)
         return;
     let tradesCount = 0;

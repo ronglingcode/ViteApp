@@ -186,12 +186,18 @@ export const onPlaceBreakoutTrade = async (symbol: string, isLong: boolean,
     onPlaceTrade(symbol, isLong, false, entryPrice, stopLossPrice, riskLevel, submitEntryResult, sizeMultipler, plan);
 };
 
+export const onNativeEntryAccepted = (symbol: string, entry: {
+    isLong: boolean; useMarketOrder: boolean; entryPrice: number; stopOutPrice: number;
+    multiplier: number; basePlan: TradingPlansModels.BasePlan; submitEntryResult: Models.SubmitEntryResult;
+}) => onPlaceTrade(symbol, entry.isLong, entry.useMarketOrder, entry.entryPrice, entry.stopOutPrice,
+    entry.stopOutPrice, entry.submitEntryResult, entry.multiplier, entry.basePlan, true);
+
 const onPlaceTrade = async (symbol: string, isLong: boolean, isMarketOrder: boolean,
     entryPrice: number, stopLossPrice: number, riskLevel: number, submitEntryResult: Models.SubmitEntryResult,
     sizeMultipler: number,
-    plan: TradingPlansModels.BasePlan) => {
+    plan: TradingPlansModels.BasePlan, nativeInitialEntry = false) => {
     let netQuantity = Models.getPositionNetQuantity(symbol);
-    if ((isLong && netQuantity > 0) || (!isLong && netQuantity < 0)) {
+    if (!nativeInitialEntry && ((isLong && netQuantity > 0) || (!isLong && netQuantity < 0))) {
         // adding positions there's already a trading state in the same direction
         return;
     }

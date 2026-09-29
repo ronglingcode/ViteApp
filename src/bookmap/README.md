@@ -295,3 +295,11 @@ Unknown broker outcomes block further mutations pending review in the plugin.
 behavior. Plugin tests check Java plans, fake HTTP lifecycle, and the obfuscated
 artifact.
 
+Execution protocol 2 adds `executionEntryContext.ts`, an independent default-off
+initial-entry flag, and `execution_entry_state` acknowledgement. Native entry
+results register the accepted trade plan in ViteApp before reconciliation can
+release the fence. Initial wall-reversal entries require a flat symbol without
+pending orders; adds, pending-entry replacement, and reversals are later stages.
+Regenerate entry parity fixtures with
+`node --experimental-strip-types scripts/generateDirectEntryFixtures.mjs`.
+

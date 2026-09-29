@@ -393,6 +393,7 @@ export const syncAccountSnapshot = (account: StateLite.LiteAccountSnapshot) => {
     let previousAccount = hybridApp.AccountCache as Models.BrokerAccount | undefined;
     let nextAccount = createEmptyBrokerAccount();
     nextAccount.orderExecutions = account.orderExecutions;
+    nextAccount.rawAccount = account.rawOrders;
     nextAccount.entryOrders = new Map();
     nextAccount.trades = previousAccount?.trades ?? new Map();
     nextAccount.currentBalance = account.currentBalance || previousAccount?.currentBalance || 0;
@@ -426,6 +427,7 @@ export const syncAccountSnapshot = (account: StateLite.LiteAccountSnapshot) => {
         }
     });
     hybridApp.AccountCache = nextAccount;
+    Broker.rebuildBrokerAccount();
 };
 
 export const syncHistory = (symbol: string, candles: StateLite.Candle[], dailyCandles: StateLite.Candle[] = []) => {

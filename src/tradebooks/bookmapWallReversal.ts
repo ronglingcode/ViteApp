@@ -66,6 +66,12 @@ export class BookmapWallReversal extends Tradebook {
 
     refreshLiveStats(): void { }
 
+    /** Raw plan inputs for the mirrored native tradebook; no order decision is made here. */
+    getNativeExecutionDefinition() {
+        return { tradebookID: this.tradebookID, isLong: this.isLong,
+            enabled: this.isEnabled(), basePlan: this.basePlan, entryArea: this.entryArea };
+    }
+
     override setCoreInvalidationLevel(manualLevel: number): void {
         let symbolData = Models.getSymbolData(this.symbol);
         if (this.isLong) {

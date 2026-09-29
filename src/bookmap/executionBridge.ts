@@ -14,11 +14,13 @@ import { Tradebook } from '../tradebooks/baseTradebook';
 import { BookmapWallReversal } from '../tradebooks/bookmapWallReversal';
 import * as Firestore from '../firestore';
 import * as Helper from '../utils/helper';
+import * as Rules from '../algorithms/rules';
 import { configureExecutionFence, getLegacyBrokerMutationsInFlight } from './executionFence';
 import { getExecutionToken, getBrokerObservation, getExecutionQuoteTime } from './executionMetadata';
+import { createExecutionEntryContext, collectObservedOrderIds } from './executionEntryContext';
 
 declare const window: Models.MyWindow;
-const VERSION = 1;
+const VERSION = 2;
 const PAIRING_STORAGE_KEY = 'tradingscripts.bookmapExecutionPairingKey';
 let socket: WebSocket | undefined;
 let epoch = '';
@@ -30,6 +32,7 @@ let heartbeat: ReturnType<typeof setInterval> | undefined;
 let refreshing = false;
 let accountHash = '';
 let requiresReview = false;
+let entriesEnabled = false;
 const acknowledgements = new Map<string, (allowed: boolean) => void>();
 const nativeActions = new Set<string>();
 let refreshAccountForExecution = () => Chart.updateAccountUIStatus('native execution');
@@ -126,6 +129,8 @@ const publishState = () => {
             coreCount: state.plan.coreCount, coreRuleEnabled: GlobalSettings.enableCoreTargetExitFeature,
             rulesSupported: supportedTradebookRules(symbol, quantity > 0),
             entries: Models.getEntryOrders(symbol).map(createOrder),
+            observedOrderIds: collectObservedOrderIds(window.HybridApp.AccountCache?.rawAccount),
+            entryContext: entriesEnabled ? createExecutionEntryContext(symbol) : undefined,
             pairs: pairs.map(pair => ({ LIMIT: createOrder(pair.LIMIT), STOP: createOrder(pair.STOP),
                 originalPartial: CoreTargetExitRules.getOriginalPartialNumber(symbol, pair) })),
         };
@@ -155,6 +160,7 @@ export const handleExecutionMessage = (data: any): boolean => {
     if (data.version !== VERSION) return true;
     if (data.type === 'execution_status') {
         enabled = data.enabled === true;
+        entriesEnabled = data.entriesEnabled === true;
         requiresReview = data.requiresReview === true || (!enabled && data.blocked === true);
         if (!enabled) {
             epoch = ''; ownershipPending = false; generationSent = 0;
@@ -176,13 +182,30 @@ export const handleExecutionMessage = (data: any): boolean => {
         } else if (data.type === 'execution_started') {
             nativeActions.add(data.actionId);
             if (typeof data.buttonName === 'string' && data.buttonName) Helper.speak(data.buttonName);
+            if (data.action === 'wall_reversal_entry') {
+                Helper.speak('is it a high quality setup?');
+                Rules.checkPullbackRequirement(data.symbol, data.entryIsLong === true);
+            }
             if (data.clearPending === true) TradingState.clearPendingOrder(data.symbol);
             Firestore.logInfo(`Native ${data.action} started for ${data.symbol}`);
         } else if (data.type === 'execution_result') {
-            nativeActions.delete(data.actionId);
+            if (!nativeActions.delete(data.actionId)) return true;
             requiresReview = data.requiresReview === true;
             const text = `Native ${data.action} ${data.outcome} for ${data.symbol}${data.reason ? ': ' + data.reason : ''}`;
             if (data.outcome === 'accepted') Firestore.logInfo(text); else Firestore.logError(text);
+            if (data.outcome === 'accepted' && data.action === 'wall_reversal_entry' && data.entry) {
+                // Register before refreshing positions; a fast fill may already be in the cache.
+                const symbolData = Models.getSymbolData(data.symbol);
+                symbolData.highOfDay = Math.max(symbolData.highOfDay, data.entry.highOfDay);
+                symbolData.lowOfDay = Math.min(symbolData.lowOfDay, data.entry.lowOfDay);
+                void TradingState.onNativeEntryAccepted(data.symbol, data.entry).then(() => {
+                    send('execution_entry_state', { actionId: data.actionId, initialized: true });
+                }).catch(() => {
+                    requiresReview = true;
+                    Firestore.logError('Native entry trade-state initialization failed; review broker orders');
+                    try { send('execution_entry_state', { actionId: data.actionId, initialized: false }); } catch { /* Disconnect also blocks native execution. */ }
+                });
+            }
             // Refresh only. Do not pass lifecycle messages back to KeyboardHandler/Broker mutations.
             void refreshAccountForExecution().then(() => {
                 publishState();

@@ -2,6 +2,7 @@ import * as Helper from '../../utils/helper';
 import * as Firestore from '../../firestore';
 import * as Models from '../../models/models';
 import { createClosingEquityOrder } from './closingOrderFactory';
+import { createBracketedEquityEntry } from './entryOrderFactory';
 
 export const OrderType = {
     STOP: "STOP",
@@ -208,27 +209,8 @@ const createOcoOrderFromTwoLegs = (leg1: Order, leg2: Order) => {
 export const createOneEntryWithMultipleExits = (
     symbol: string, isLong: boolean, entryOrderType: Models.OrderType,
     entryQuantity: number, entryPrice: number, profitTargets: Models.ProfitTarget[], stopPrice: number) => {
-    let entryInstruction = getEntryInstruction(isLong);
-    let exitInstruction = getClosingOrderLegInstruction(entryInstruction);
-    let entryOrder: Order = {};
-    if (entryOrderType == Models.OrderType.STOP)
-        entryOrder = createStopOrder(symbol, entryQuantity, entryPrice, entryInstruction);
-    else if (entryOrderType == Models.OrderType.LIMIT)
-        entryOrder = createLimitOrder(symbol, entryQuantity, entryPrice, entryInstruction);
-    else if (entryOrderType == Models.OrderType.MARKET)
-        entryOrder = createMarketOrder(symbol, entryQuantity, entryInstruction);
-
-    entryOrder.orderStrategyType = OrderStrategyType.TRIGGER;
-    entryOrder.childOrderStrategies = [];
-    for (let i = 0; i < profitTargets.length; i++) {
-        let pt = profitTargets[i];
-        let q = pt.quantity;
-        let oco = createOcoOrder(symbol, q, stopPrice, pt.target, q, exitInstruction);
-        entryOrder.childOrderStrategies.push(oco);
-    }
-    return entryOrder;
+    return createBracketedEquityEntry(symbol, isLong, entryOrderType, entryQuantity, entryPrice, profitTargets, stopPrice);
 };
-
 export const createOneEntryWithTwoExits = (
     symbol: string, isLong: boolean, entryOrderType: Models.OrderType,
     entryQuantity: number, entryPrice: number, limitQuantity: number,

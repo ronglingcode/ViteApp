@@ -354,6 +354,7 @@ export const getLiteAccountSnapshot = async (
     let orderExecutions = await extractOrderExecutionsForExport(orders);
     return {
         positions: new Map(accountInfo.positions.map(position => [position.symbol, position])),
+        rawOrders: orders,
         entryOrders: extractWorkingEntryOrders(orders),
         exitPairs: extractWorkingExitPairs(orders),
         orderExecutions,

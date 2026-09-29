@@ -105,6 +105,7 @@ export interface LiteExitPair {
 }
 
 export interface LiteAccountSnapshot {
+    rawOrders: any[];
     positions: Map<string, PositionSnapshot>;
     entryOrders: Map<string, LiteOrderModel[]>;
     exitPairs: Map<string, LiteExitPair[]>;

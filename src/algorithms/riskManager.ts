@@ -3,6 +3,7 @@ import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansMod
 import * as Firestore from '../firestore';
 import * as Helper from '../utils/helper';
 import * as Rules from './rules';
+import { sharesForRisk } from './riskSizing';
 // Dollar risk of one full-size trade.
 export const R = 1000;
 // Daily max loss is 4R.
@@ -36,8 +37,7 @@ export const calculateTotalShares = (
     symbol: string, entryPrice: number, stopOutPrice: number,
     setupQuality: string, multiplier: number) => {
     let riskPerShare = getRiskPerShare(symbol, entryPrice, stopOutPrice);
-    let maxRiskPerTrade = multiplier * R;
-    let totalShares = Math.max(2, Math.floor(maxRiskPerTrade / riskPerShare));
+    let totalShares = sharesForRisk(riskPerShare, multiplier, R);
     return totalShares;
 };
 

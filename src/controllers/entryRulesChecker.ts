@@ -1,3 +1,4 @@
+import { evaluateEntryPriceAndVolumeRules } from './entryRuleDecision';
 import * as Rules from '../algorithms/rules';
 import { allowEntry, attendanceMessage } from '../attendance/attendance';
 import { capabilities } from '../replay/runtime';
@@ -81,71 +82,17 @@ export const checkBasicGlobalEntryRules = (symbol: string, isLong: boolean,
             Firestore.logError(`checkRule: not in tradable area, using 50% size`, logTags);
         }
     }
-    let topPlan = TradingPlans.getTradingPlans(symbol);
-    let watchAreas = topPlan.analysis.watchAreas;
-    if (watchAreas.length > 0) {
-        let watchLevel = watchAreas[0];
-        if (VwapPatterns.isNearAgainstLevel(symbol, isLong, entryPrice, watchLevel)) {
-            Firestore.logError(`entry price ${entryPrice} is near against watch level ${watchLevel}, block entry`, logTags);
-            return 0;
-        }
-        if (secondsSinceMarketOpen < 60 && openPrice &&
-            VwapPatterns.isNearAgainstLevel(symbol, isLong, openPrice, watchLevel)) {
-            Firestore.logError(`open price ${openPrice} is near against watch level ${watchLevel}, block entry`, logTags);
-            return 0;
-        }
-        if (VwapPatterns.isNearAgainstVwap(symbol, isLong, entryPrice)) {
-            Firestore.logError(`entry price ${entryPrice} is near against vwap, reduce to half size`, logTags);
-            finalSize = initialSize * 0.5;
-        }
-        if (secondsSinceMarketOpen < 60 && openPrice &&
-            VwapPatterns.isNearAgainstVwap(symbol, isLong, openPrice)) {
-            Firestore.logError(`open price ${openPrice} is near against vwap, reduce to half size`, logTags);
-            finalSize = initialSize * 0.5;
-        }
-    }
-    if (topPlan.analysis.noTradeZones.length > 0) {
-        for (let i = 0; i < topPlan.analysis.noTradeZones.length; i++) {
-            let noTradeZone = topPlan.analysis.noTradeZones[i];
-            if (noTradeZone.low < entryPrice && noTradeZone.high > entryPrice) {
-                Firestore.logError(`entry price ${entryPrice} is inside no trade zone ${noTradeZone.low} - ${noTradeZone.high}, block entry`, logTags);
-                return 0;
-            }
-        }
-    }
-    let volumes = Models.getVolumesSinceOpen(symbol);
-    if (volumes.length >= 3) {
-        let maxVolumeIndex = 0;
-        let maxVolume = volumes[0].value;
-        let lastClosedIndex = volumes.length - 2;
-        for (let i = 1; i <= lastClosedIndex; i++) {
-            if (volumes[i].value > maxVolume) {
-                maxVolume = volumes[i].value;
-                maxVolumeIndex = i;
-            }
-        }
-        let volumeToCheckStartIndex = maxVolumeIndex;
-        if ((maxVolumeIndex + 1) <= lastClosedIndex) {
-            volumeToCheckStartIndex = maxVolumeIndex + 1;
-        }
-
-        let metMinimumVolume = false;
-        maxVolume = volumes[volumeToCheckStartIndex].value;
-        for (let i = volumeToCheckStartIndex; i < volumes.length; i++) {
-            if (volumes[i].value > maxVolume) {
-                maxVolume = volumes[i].value;
-            }
-            if (maxVolume >= 150 * 1000) {
-                metMinimumVolume = true;
-                break;
-            }
-        }
-        if (!metMinimumVolume) {
-            finalSize = initialSize * 0.5;
-            Firestore.logError(`did not meet minimum volume ${maxVolume} < 150K, using 50% size`, logTags);
-        }
-    }
-
+    const topPlan = TradingPlans.getTradingPlans(symbol);
+    const decision = evaluateEntryPriceAndVolumeRules({
+        isLong, entryPrice, initialSize, openPrice, secondsSinceMarketOpen,
+        vwap: Models.getCurrentVwap(symbol), atr: topPlan.atr.average,
+        watchAreas: topPlan.analysis.watchAreas, noTradeZones: topPlan.analysis.noTradeZones,
+        volumes: Models.getVolumesSinceOpen(symbol).map(volume => volume.value),
+    });
+    // The distance reduction is independent; later volume/VWAP reductions use initialSize.
+    if (decision.messages.length > 0) finalSize = decision.multiplier;
+    decision.messages.forEach(message => Firestore.logError(message, logTags));
+    if (decision.multiplier === 0) return 0;
     Rules.checkPullbackRequirement(symbol, isLong);
 
     return finalSize;
