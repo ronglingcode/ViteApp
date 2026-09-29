@@ -28,7 +28,6 @@ let sequence = 0;
 let generationSent = 0;
 let heartbeat: ReturnType<typeof setInterval> | undefined;
 let refreshing = false;
-let entriesEnabled = false;
 let refreshAccountForExecution = () => Chart.updateAccountUIStatus('native execution');
 export const registerExecutionAccountRefresh = (refresh: () => Promise<void>) => { refreshAccountForExecution = refresh; };
 
@@ -102,7 +101,7 @@ const publishState = () => {
             coreCount: state.plan.coreCount, coreRuleEnabled: GlobalSettings.enableCoreTargetExitFeature,
             rulesSupported: supportedTradebookRules(symbol, quantity > 0),
             entries: Models.getEntryOrders(symbol).map(createOrder),
-            entryContext: entriesEnabled ? createExecutionEntryContext(symbol) : undefined,
+            entryContext: createExecutionEntryContext(symbol),
             pairs: pairs.map(pair => ({ LIMIT: createOrder(pair.LIMIT), STOP: createOrder(pair.STOP),
                 originalPartial: CoreTargetExitRules.getOriginalPartialNumber(symbol, pair) })),
         };
@@ -128,7 +127,6 @@ const applyExecutionMessage = (data: any): boolean => {
     if (data.version !== VERSION) return true;
     if (data.type === 'execution_status') {
         enabled = data.enabled === true;
-        entriesEnabled = data.entriesEnabled === true;
         if (data.requiresReview && data.reason) Firestore.logError(`Native requires broker review: ${data.reason}`);
         if (!enabled) {
             generationSent = 0;

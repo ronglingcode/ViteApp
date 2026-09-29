@@ -321,8 +321,10 @@ behavior. Plugin tests check Java plans, fake HTTP lifecycle, and the obfuscated
 artifact.
 
 Execution protocol 3 removes session negotiation. Both app and plugin must be
-updated together. Entry support includes `executionEntryContext.ts`, a default-off
-initial-entry flag, and `execution_entry_state` acknowledgement. Native entry
+updated together. The plugin's one default-off native execution switch enables
+cancel, exits, and supported initial entries together. ViteApp publishes
+`executionEntryContext.ts` inputs whenever that switch is enabled, and sends
+`execution_entry_state` acknowledgement after entry acceptance. Native entry
 results register the accepted trade plan in ViteApp without blocking another
 click on UI initialization or refresh. Initial wall-reversal entries require a flat symbol without
 pending orders; adds, pending-entry replacement, and reversals are later stages.
