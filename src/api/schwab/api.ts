@@ -449,7 +449,7 @@ const filterOrdersNotOnSameDay = (orders: any) => {
 /* #region Orders */
 export const placeOrderBase = async (order: any, logTags: Models.LogTags) => {
     try { return await withLegacyBrokerMutation(() => placeOrderBaseCore(order, logTags)); }
-    catch { Firestore.logError('Order blocked or failed at the broker execution boundary', logTags); }
+    catch (error) { Firestore.logError(error, logTags); }
 };
 const placeOrderBaseCore = async (order: any, logTags: Models.LogTags) => {
     if (!isClosingSchwabOrder(order) && !allowEntry()) return;
@@ -479,7 +479,7 @@ const placeOrderBaseCore = async (order: any, logTags: Models.LogTags) => {
 
 const replaceOrderBase = async (newOrder: any, oldOrderId: string, logTags: Models.LogTags) => {
     try { return await withLegacyBrokerMutation(() => replaceOrderBaseCore(newOrder, oldOrderId, logTags)); }
-    catch { Firestore.logError('Replacement blocked or failed at the broker execution boundary', logTags); }
+    catch (error) { Firestore.logError(error, logTags); }
 };
 const replaceOrderBaseCore = async (newOrder: any, oldOrderId: string, logTags: Models.LogTags) => {
     if (!isClosingSchwabOrder(newOrder) && !allowEntry()) return;
@@ -522,7 +522,7 @@ export const replaceSingleOrderWithNewPrice = async (oldOrder: Models.OrderModel
 
 export const cancelOrderBase = async (orderId: string) => {
     try { return await withLegacyBrokerMutation(() => cancelOrderBaseCore(orderId)); }
-    catch { Firestore.logError('Cancellation blocked or failed at the broker execution boundary'); }
+    catch (error) { Firestore.logError(error); }
 };
 const cancelOrderBaseCore = async (orderId: string) => {
     let accountHash = secret.schwab().accountHash;

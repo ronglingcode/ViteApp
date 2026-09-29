@@ -15,7 +15,7 @@ import { BookmapWallReversal } from '../tradebooks/bookmapWallReversal';
 import * as Firestore from '../firestore';
 import * as Helper from '../utils/helper';
 import * as Rules from '../algorithms/rules';
-import { configureExecutionFence, getLegacyBrokerMutationsInFlight } from './executionFence';
+import { configureExecutionFence, getLegacyBrokerMutationsInFlight, needsNativeExecutionFence } from './executionFence';
 import { getExecutionToken, getBrokerObservation, getExecutionQuoteTime } from './executionMetadata';
 import { createExecutionEntryContext, collectObservedOrderIds } from './executionEntryContext';
 
@@ -44,8 +44,16 @@ const send = (type: string, data: object = {}) => {
     if (!socket || socket.readyState !== WebSocket.OPEN) throw new Error('Native execution connection unavailable');
     socket.send(JSON.stringify({ type, version: VERSION, epoch, ...data }));
 };
+const getPairingKey = () => localStorage.getItem(PAIRING_STORAGE_KEY) ?? '';
 const acquireFence = async (): Promise<(outcome: 'complete' | 'unknown') => void> => {
-    if (!enabled && !requiresReview) return () => {};
+    const pairingKey = getPairingKey();
+    if (!needsNativeExecutionFence({
+        enabled,
+        hasSession: Boolean(epoch),
+        ownershipPending,
+        requiresReview,
+        pairingConfigured: pairingKey.length >= 32,
+    })) return () => {};
     if (!epoch || ownershipPending || requiresReview) throw new Error('Broker execution unavailable pending native session review');
     const requestId = crypto.randomUUID();
     const allowed = await new Promise<boolean>((resolve, reject) => {
@@ -79,7 +87,7 @@ export const disconnectExecutionBridge = () => {
 
 const startSession = () => {
     if (!enabled || requiresReview || epoch || ownershipPending || !liveSchwab() || getLegacyBrokerMutationsInFlight() > 0) return;
-    const pairingKey = localStorage.getItem(PAIRING_STORAGE_KEY);
+    const pairingKey = getPairingKey();
     if (!pairingKey || pairingKey.length < 32) return;
     ownershipPending = true;
     send('execution_hello', { pairingKey, live: true, broker: 'Schwab' });
@@ -175,6 +183,7 @@ export const handleExecutionMessage = (data: any): boolean => {
         publishToken(); void tick();
     } else if (data.type === 'execution_rejected') {
         ownershipPending = false;
+        requiresReview = true;
         Firestore.logError('Native execution session rejected; check pairing, active account, and other browser tabs');
     } else if (data.epoch === epoch) {
         if (data.type === 'execution_legacy_ack') {
