@@ -5,8 +5,7 @@ import { selectEntryOrdersToCancel } from '../controllers/cancelPendingEntries.t
 import { createClosingEquityOrder } from '../api/schwab/closingOrderFactory.ts';
 import { getFirstSmallestQuantityExitPairIndex } from '../utils/exitPairSelection.ts';
 import { evaluateCoreTargetRule } from '../controllers/coreTargetRule.ts';
-import { configureExecutionFence, withLegacyBrokerMutation, getLegacyBrokerMutationsInFlight,
-    needsNativeExecutionFence } from './executionFence.ts';
+import { configureExecutionFence, withLegacyBrokerMutation, getLegacyBrokerMutationsInFlight } from './executionFence.ts';
 import { recordExecutionQuote, getExecutionQuoteTime, recordBrokerObservation, getBrokerObservation,
     canApplyBrokerObservation, recordExecutionToken, getExecutionToken } from './executionMetadata.ts';
 
@@ -50,20 +49,6 @@ test('browser broker mutations wait for the native fence and always release it',
     await assert.rejects(withLegacyBrokerMutation(async () => { events.push('must not run'); }));
     assert.ok(!events.includes('must not run')); assert.equal(getLegacyBrokerMutationsInFlight(), 0);
     configureExecutionFence(undefined);
-});
-test('unpaired idle native execution leaves legacy broker entries available', () => {
-    assert.equal(needsNativeExecutionFence({
-        enabled: true, hasSession: false, ownershipPending: false, requiresReview: false, pairingConfigured: false,
-    }), false);
-    assert.equal(needsNativeExecutionFence({
-        enabled: true, hasSession: false, ownershipPending: false, requiresReview: false, pairingConfigured: true,
-    }), true);
-    assert.equal(needsNativeExecutionFence({
-        enabled: true, hasSession: false, ownershipPending: true, requiresReview: false, pairingConfigured: false,
-    }), true);
-    assert.equal(needsNativeExecutionFence({
-        enabled: false, hasSession: false, ownershipPending: false, requiresReview: true, pairingConfigured: false,
-    }), true);
 });
 test('broker and quote provenance cannot be refreshed by cached or out-of-order data', () => {
     const target = new EventTarget();
