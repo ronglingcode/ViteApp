@@ -18,9 +18,12 @@ test('native entry fixtures agree with production risk, rule, target and bracket
         let quantity = context.fixedQuantity > 0 ? context.fixedQuantity : Math.min(
             context.maxQuantity > 0 ? context.maxQuantity : Infinity,
             sharesForRisk(Math.abs(orderPrice - targetRisk), entry.multiplier, context.riskDollars));
-        if (fixture.halfBuyingPower) quantity /= 2;
-        assert.equal(quantity, entry.submitEntryResult.totalQuantity, fixture.name);
         const targets = calculateEntryTargets(quantity, orderPrice, targetRisk, entry.isLong, fixture.action.orderbook, count);
+        if (fixture.halfBuyingPower) {
+            quantity /= 2;
+            targets.forEach(target => { target.quantity /= 2; });
+        }
+        assert.equal(quantity, entry.submitEntryResult.totalQuantity, fixture.name);
         assert.deepEqual(targets, entry.submitEntryResult.profitTargets, fixture.name);
         assert.deepEqual(createBracketedEquityEntry('AAPL', entry.isLong, body.orderType, quantity, orderPrice, targets, orderStop), body, fixture.name);
         const decision = evaluateEntryPriceAndVolumeRules({ ...context, entryPrice: 10, isLong: entry.isLong, initialSize: context.liquidityScale });

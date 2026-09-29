@@ -30,8 +30,9 @@ function add(name, edit = () => {}, expected = {}) {
         const multiplier = fixture.multiplier ?? 1;
         const count = fixture.count ?? 10;
         const shares = fixture.shares ?? 1960;
-        const targets = calculateEntryTargets(shares, orderEntry,
+        const targets = calculateEntryTargets(fixture.halfBuyingPower ? shares * 2 : shares, orderEntry,
             fixture.state.entryContext.fixedQuantity > 0 ? orderStop : stopOutPrice, isLong, fixture.action.orderbook, count);
+        if (fixture.halfBuyingPower) targets.forEach(target => { target.quantity /= 2; });
         const body = createBracketedEquityEntry('AAPL', isLong, fixture.type ?? 'STOP', shares, orderEntry, targets, orderStop);
         fixture.requests = [{ method: 'POST', orderId: '', body }];
         fixture.entry = { isLong, useMarketOrder: fixture.type === 'MARKET', entryPrice, stopOutPrice, multiplier,
@@ -53,6 +54,9 @@ add('thin volume halves initial risk', f => { f.state.entryContext.volumes = [50
 add('opposing vwap halves risk only with watch areas', f => { f.state.entryContext.watchAreas = [20]; f.state.entryContext.vwap = 10.1; }, { multiplier: 0.5, count: 5, shares: 980 });
 add('fixed quantity keeps requested pair count and uses slipped stop for targets', f => { f.state.entryContext.fixedQuantity = 23; }, { shares: 23 });
 add('buying power halves integral legs while keeping the plan risk multiplier', f => { f.state.entryContext.availableBuyingPower = 15000; }, { shares: 980, halfBuyingPower: true });
+// Native execution warns and dispatches; the broker owns these rejection decisions.
+add('native buying power exhausted warns and dispatches half size', f => { f.state.entryContext.availableBuyingPower = 1; }, { shares: 980, halfBuyingPower: true });
+add('native fractional half legs passed to broker', f => { f.state.entryContext.fixedQuantity = 23; f.state.entryContext.availableBuyingPower = 200; }, { shares: 11.5, halfBuyingPower: true });
 add('ATR cap applies before even target split', f => { f.state.entryContext.maxQuantity = 27; }, { shares: 27 });
 add('Bookmap walls deduplicate sort and fill remaining with 3R', f => { f.action.orderbook = { priceUnit: 'real', effectiveWallThreshold: 5000,
     largeAsks: [[10.4, 6000], [10.3, 5000], [10.3, 7000], [10.5, 4000], [10.6, 8000], [10.7, 9000]], largeBids: [] }; });
@@ -72,8 +76,6 @@ for (const [name, edit] of [
     ['retest blocked', f => { f.action.retest_blocked = true; }],
     ['wrong chart side', f => { f.key = 'KeyS'; f.action.source = 'bookmap_chart_hotkey'; f.action.price = 10; }],
     ['no protective risk', f => { f.state.entryContext.customStopLong = 10; }],
-    ['buying power exhausted', f => { f.state.entryContext.availableBuyingPower = 1; }],
-    ['fractional buying power half legs blocked', f => { f.state.entryContext.fixedQuantity = 23; f.state.entryContext.availableBuyingPower = 200; }],
     ['unsupported method', f => { f.action.entry_method = '2 R'; }],
 ]) add(name, edit, { error: true });
 const json = JSON.stringify(fixtures, null, 2) + '\n';
