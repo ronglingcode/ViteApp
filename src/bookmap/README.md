@@ -277,28 +277,45 @@ Chart heights are reduced when bookmap is enabled (see `chartSettings.ts` `*With
 
 ## Experimental direct execution
 
-`executionBridge.ts` pairs a live Schwab equity session with bmtrader and sends
+`executionBridge.ts` sends updates directly to bmtrader over the existing socket:
 memory-only token metadata and versioned account/quote snapshots. The plugin
 owns migrated broker mutations; ViteApp consumes lifecycle results and refreshes
 its existing UI and trade state. Setup and action coverage are documented in
 the sibling repository at `bookmap-plugin/docs/direct-broker-execution.md`.
 
-`executionMetadata.ts` records actual OAuth expiry, successful broker read-start
-times, and incoming bid/ask times. Cached ticks and failed reads do not renew
-freshness. Both main and Lite runtimes supply these inputs.
+`executionMarketData.ts` forwards a compact `execution_market_data` bundle
+synchronously from each applied time-and-sales or level-one quote update:
+symbol, currentPrice, bid, ask, highOfDay, lowOfDay (`priceUnit: "real"`). Lite
+sends it when applying worker snapshots, including quote-only updates. Native
+enable also publishes current market values. No account read, timer, or ack is
+needed for these messages. The main app's upstream trade worker batches incoming
+prints every 100 ms; forwarding itself adds no delay. The three-second account
+refresh remains separate. Java overlays the latest per-symbol bundle when
+building an action, so account snapshots do not overwrite streaming prices.
+Exits/cancel have no broker position/protective-order preflight reads; the
+initial-entry exposure preflight remains.
 
-`executionFence.ts` coordinates every Schwab mutation with the native session.
-Unknown broker outcomes block further mutations pending review in the plugin.
+`executionMetadata.ts` records OAuth expiry and prevents account reads completing
+out of order from replacing newer data. There are no quote timestamps or execution
+age cutoffs. Both main and Lite runtimes supply the latest values.
+
+This is a single-user MVP with one app and one account. There is no ownership
+handshake, session ID, origin allowlist, account-matching check, or reconnect
+review requirement. The plugin uses the latest token/account/state updates.
+
+There is no execution fence or reconciliation wait. Browser mutations and native
+clicks submit independently. Unknown native broker outcomes still require review.
 
 `direct-execution-fixtures.json` matches the plugin test resource byte-for-byte.
-`npm run test:direct-execution` checks production helpers and metadata/fence
+`npm run test:direct-execution` checks production helpers and metadata
 behavior. Plugin tests check Java plans, fake HTTP lifecycle, and the obfuscated
 artifact.
 
-Execution protocol 2 adds `executionEntryContext.ts`, an independent default-off
+Execution protocol 3 removes session negotiation. Both app and plugin must be
+updated together. Entry support includes `executionEntryContext.ts`, a default-off
 initial-entry flag, and `execution_entry_state` acknowledgement. Native entry
-results register the accepted trade plan in ViteApp before reconciliation can
-release the fence. Initial wall-reversal entries require a flat symbol without
+results register the accepted trade plan in ViteApp without blocking another
+click on UI initialization or refresh. Initial wall-reversal entries require a flat symbol without
 pending orders; adds, pending-entry replacement, and reversals are later stages.
 Regenerate entry parity fixtures with
 `node --experimental-strip-types scripts/generateDirectEntryFixtures.mjs`.

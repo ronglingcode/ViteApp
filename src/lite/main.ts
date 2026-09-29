@@ -162,12 +162,11 @@ async function refreshAccount() {
         return;
     }
     const startedAt = Date.now();
-    const accountHash = activeSecrets.schwab.accountHash;
     let account = await SchwabLite.getLiteAccountSnapshot(
         activeSecrets.schwab,
         activeSecrets.schwab.accessToken
     );
-    if (activeSecrets.schwab.accountHash !== accountHash || !canApplyBrokerObservation(accountHash, startedAt)) return;
+    if (!canApplyBrokerObservation(startedAt)) return;
     positionsBySymbol = account.positions;
     entryOrdersBySymbol = account.entryOrders;
     exitPairsBySymbol = account.exitPairs;
@@ -177,7 +176,7 @@ async function refreshAccount() {
     updateExitPairsUi();
     updateOrderChartRanges();
     pushBookmapAccountSnapshot();
-    recordBrokerObservation(accountHash, startedAt);
+    recordBrokerObservation(startedAt);
     window.dispatchEvent(new Event('tradingscripts:account-ui-updated'));
 }
 

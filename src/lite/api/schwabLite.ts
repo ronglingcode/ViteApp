@@ -1,6 +1,5 @@
 import * as StateLite from '../models/stateLite';
 import { recordExecutionToken } from '../../bookmap/executionMetadata';
-import { withLegacyBrokerMutation } from '../../bookmap/executionFence';
 import { allowEntry, attendanceMessage } from '../../attendance/attendance';
 import { isClosingSchwabOrder } from '../../attendance/policy';
 
@@ -403,7 +402,7 @@ const createClosingMarketOrder = (symbol: string, quantity: number, netQuantity:
 };
 
 export const placeMarketOrder = (...args: Parameters<typeof placeMarketOrderCore>) =>
-    withLegacyBrokerMutation(() => placeMarketOrderCore(...args));
+    placeMarketOrderCore(...args);
 const placeMarketOrderCore = async (
     secrets: StateLite.SchwabSecrets,
     accessToken: string,
@@ -433,7 +432,7 @@ const placeMarketOrderCore = async (
 };
 
 export const placeClosingMarketOrder = (...args: Parameters<typeof placeClosingMarketOrderCore>) =>
-    withLegacyBrokerMutation(() => placeClosingMarketOrderCore(...args));
+    placeClosingMarketOrderCore(...args);
 const placeClosingMarketOrderCore = async (
     secrets: StateLite.SchwabSecrets,
     accessToken: string,
@@ -509,7 +508,7 @@ const createMarketReplacementOrder = (oldOrder: StateLite.LiteOrderModel) => {
 };
 
 const replaceSingleOrder = (...args: Parameters<typeof replaceSingleOrderCore>) =>
-    withLegacyBrokerMutation(() => replaceSingleOrderCore(...args));
+    replaceSingleOrderCore(...args);
 const replaceSingleOrderCore = async (
     secrets: StateLite.SchwabSecrets,
     accessToken: string,

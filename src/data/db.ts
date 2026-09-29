@@ -1,5 +1,4 @@
 import * as Chart from '../ui/chart';
-import { recordExecutionQuote } from '../bookmap/executionMetadata';
 import * as Helper from '../utils/helper';
 import * as TimeHelper from '../utils/timeHelper';
 import * as Config from '../config/config';
@@ -17,6 +16,7 @@ import * as BasicIndicators from '../indicators/basicIndicators';
 import * as CandlestickVisibility from '../utils/candlestickVisibility';
 import * as ChartSeries from '../utils/chartSeries';
 import * as Runtime from '../replay/runtime';
+import { publishExecutionMarketData } from '../bookmap/executionMarketData';
 
 // Create a throttled version of cancelAllEntryOrders that executes once per second
 const throttledCancelAllEntryOrders = Helper.executeOncePerInterval(
@@ -476,6 +476,8 @@ const updateFromTimeSaleCore = (timesale: Models.TimeSale): TimeSaleApplyMeta | 
             symbolData.lowOfDay = Math.floor(lastPrice * 100) / 100;
         }
     }
+    // Forward the updated trade price/day range immediately, before chart work or account polling.
+    publishExecutionMarketData(symbol, lastPrice, symbolData);
     if (lastCandle && !lastCandle.time) {
         console.log('here');
         console.log(lastCandle);
@@ -802,7 +804,6 @@ export const updateFromLevelOneQuote = (quote: Models.Quote) => {
     if (!quote)
         return;
     let symbol = quote.symbol;
-    recordExecutionQuote(symbol, !!quote.bidPrice, !!quote.askPrice);
     let symbolData = Models.getSymbolData(symbol);
     if (quote.bidPrice) {
         symbolData.bidPrice = quote.bidPrice;
@@ -817,6 +818,7 @@ export const updateFromLevelOneQuote = (quote: Models.Quote) => {
         symbolData.askSize = quote.askSize;
     }
 
+    publishExecutionMarketData(symbol, Models.getCurrentPrice(symbol), symbolData);
     Chart.updateUI(symbol, "bid", `${symbolData.bidPrice}`);
     Chart.updateUI(symbol, "ask", `${symbolData.askPrice}`);
     let spread = Models.getCurrentSpread(symbol);

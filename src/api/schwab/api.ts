@@ -13,7 +13,6 @@ import * as Config from '../../config/config';
 import * as OrderFactory from './orderFactory';
 import * as GlobalSettings from '../../config/globalSettings';
 import { recordExecutionToken, recordBrokerObservation, canApplyBrokerObservation } from '../../bookmap/executionMetadata';
-import { withLegacyBrokerMutation } from '../../bookmap/executionFence';
 declare let window: Models.MyWindow;
 
 const API_HOST = "https://api.schwabapi.com";
@@ -236,7 +235,7 @@ export const getFundamentals = async (symbol: string) => {
 /* #region Account Info */
 export const getAccountInfo = async () => {
     const observationStartedAt = Date.now();
-    const observationAccountHash = secret.schwab().accountHash;
+    const accountHash = secret.schwab().accountHash;
     let url = `${getTraderApiHost()}/accounts?fields=positions`;
     let accessToken = window.HybridApp.Secrets.schwab.accessToken;
     let response = await webRequest.asyncGet(url, accessToken);
@@ -245,7 +244,6 @@ export const getAccountInfo = async () => {
         throw new Error('Schwab account read failed');
     }
     let account = accounts[0].securitiesAccount;
-    let accountHash = observationAccountHash;
     const ordersData = Config.Settings.fetchOrdersByTimeWindows
         ? await getAllOrdersByTimeWindows(accountHash, accessToken)
         : await getAllOrders(accountHash, accessToken);
@@ -265,10 +263,9 @@ export const getAccountInfo = async () => {
         rawAccount: ordersData,
         currentBalance: account.currentBalances.liquidationValue,
     };
-    if (observationAccountHash !== secret.schwab().accountHash) throw new Error('Schwab account changed during read');
-    if (!canApplyBrokerObservation(accountHash, observationStartedAt)) return window.HybridApp.AccountCache;
+    if (!canApplyBrokerObservation(observationStartedAt)) return window.HybridApp.AccountCache;
     window.HybridApp.AccountCache = result;
-    recordBrokerObservation(accountHash, observationStartedAt);
+    recordBrokerObservation(observationStartedAt);
 
     return result;
 }
@@ -448,7 +445,7 @@ const filterOrdersNotOnSameDay = (orders: any) => {
 
 /* #region Orders */
 export const placeOrderBase = async (order: any, logTags: Models.LogTags) => {
-    try { return await withLegacyBrokerMutation(() => placeOrderBaseCore(order, logTags)); }
+    try { return await placeOrderBaseCore(order, logTags); }
     catch (error) { Firestore.logError(error, logTags); }
 };
 const placeOrderBaseCore = async (order: any, logTags: Models.LogTags) => {
@@ -478,7 +475,7 @@ const placeOrderBaseCore = async (order: any, logTags: Models.LogTags) => {
 };
 
 const replaceOrderBase = async (newOrder: any, oldOrderId: string, logTags: Models.LogTags) => {
-    try { return await withLegacyBrokerMutation(() => replaceOrderBaseCore(newOrder, oldOrderId, logTags)); }
+    try { return await replaceOrderBaseCore(newOrder, oldOrderId, logTags); }
     catch (error) { Firestore.logError(error, logTags); }
 };
 const replaceOrderBaseCore = async (newOrder: any, oldOrderId: string, logTags: Models.LogTags) => {
@@ -521,7 +518,7 @@ export const replaceSingleOrderWithNewPrice = async (oldOrder: Models.OrderModel
 };
 
 export const cancelOrderBase = async (orderId: string) => {
-    try { return await withLegacyBrokerMutation(() => cancelOrderBaseCore(orderId)); }
+    try { return await cancelOrderBaseCore(orderId); }
     catch (error) { Firestore.logError(error); }
 };
 const cancelOrderBaseCore = async (orderId: string) => {

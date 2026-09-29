@@ -15,25 +15,19 @@ import { BookmapWallReversal } from '../tradebooks/bookmapWallReversal';
 import * as Firestore from '../firestore';
 import * as Helper from '../utils/helper';
 import * as Rules from '../algorithms/rules';
-import { configureExecutionFence, getLegacyBrokerMutationsInFlight } from './executionFence';
-import { getExecutionToken, getBrokerObservation, getExecutionQuoteTime } from './executionMetadata';
-import { createExecutionEntryContext, collectObservedOrderIds } from './executionEntryContext';
+import { getExecutionToken } from './executionMetadata';
+import { createExecutionEntryContext } from './executionEntryContext';
+import { publishExecutionMarketData, registerExecutionMarketDataPublisher } from './executionMarketData';
 
 declare const window: Models.MyWindow;
-const VERSION = 2;
+const VERSION = 3;
 let socket: WebSocket | undefined;
-let epoch = '';
 let enabled = false;
-let ownershipPending = false;
 let sequence = 0;
 let generationSent = 0;
 let heartbeat: ReturnType<typeof setInterval> | undefined;
 let refreshing = false;
-let accountHash = '';
-let requiresReview = false;
 let entriesEnabled = false;
-const acknowledgements = new Map<string, (allowed: boolean) => void>();
-const nativeActions = new Set<string>();
 let refreshAccountForExecution = () => Chart.updateAccountUIStatus('native execution');
 export const registerExecutionAccountRefresh = (refresh: () => Promise<void>) => { refreshAccountForExecution = refresh; };
 
@@ -41,52 +35,26 @@ const liveSchwab = () => Runtime.capabilities.liveBroker
     && Config.getProfileSettings().brokerName === 'Schwab' && Config.getProfileSettings().isEquity;
 const send = (type: string, data: object = {}) => {
     if (!socket || socket.readyState !== WebSocket.OPEN) throw new Error('Native execution connection unavailable');
-    socket.send(JSON.stringify({ type, version: VERSION, epoch, ...data }));
+    socket.send(JSON.stringify({ type, version: VERSION, ...data }));
 };
-const acquireFence = async (): Promise<(outcome: 'complete' | 'unknown') => void> => {
-    if (!enabled && !requiresReview) return () => {};
-    if (!epoch || ownershipPending || requiresReview) throw new Error('Broker execution unavailable pending native session review');
-    const requestId = crypto.randomUUID();
-    const allowed = await new Promise<boolean>((resolve, reject) => {
-        const timeout = setTimeout(() => {
-            acknowledgements.delete(requestId);
-            requiresReview = true; // The plugin may have accepted a pause; do not silently bypass it.
-            reject(new Error('Native execution fence timed out; reconnect and review broker orders'));
-        }, 3000);
-        acknowledgements.set(requestId, result => { clearTimeout(timeout); resolve(result); });
-        try { send('execution_legacy_begin', { requestId }); }
-        catch { acknowledgements.get(requestId)?.(false); acknowledgements.delete(requestId); }
-    });
-    if (!allowed) throw new Error('Broker action blocked while native execution is unresolved');
-    return outcome => {
-        if (outcome === 'unknown') requiresReview = true;
-        try { send('execution_legacy_end', { requestId, outcome }); }
-        catch { requiresReview = true; }
-    };
-};
+registerExecutionMarketDataPublisher(data => {
+    if (!enabled || socket?.readyState !== WebSocket.OPEN || !liveSchwab()) return;
+    send('execution_market_data', { priceUnit: 'real', ...data });
+});
 export const attachExecutionBridge = (connection: WebSocket) => {
     socket = connection;
-    configureExecutionFence(acquireFence);
 };
 export const disconnectExecutionBridge = () => {
-    if (epoch || ownershipPending || nativeActions.size > 0) requiresReview = true;
-    epoch = ''; socket = undefined; ownershipPending = false; generationSent = 0;
+    socket = undefined; generationSent = 0;
     if (heartbeat) clearInterval(heartbeat);
     heartbeat = undefined;
-    acknowledgements.forEach(callback => callback(false)); acknowledgements.clear();
 };
 
-const startSession = () => {
-    if (!enabled || requiresReview || epoch || ownershipPending || !liveSchwab() || getLegacyBrokerMutationsInFlight() > 0) return;
-    ownershipPending = true;
-    send('execution_hello', { live: true, broker: 'Schwab' });
-};
 const publishToken = () => {
-    if (!epoch || !liveSchwab()) return;
+    if (!enabled || socket?.readyState !== WebSocket.OPEN || !liveSchwab()) return;
     const value = getExecutionToken();
     if (!value || value.generation <= generationSent) return;
-    accountHash = Secret.schwab().accountHash;
-    send('execution_token', { ...value, accountHash });
+    send('execution_token', { ...value, accountHash: Secret.schwab().accountHash });
     generationSent = value.generation;
 };
 const createOrder = (order: Models.OrderModel | undefined) => order ? {
@@ -104,29 +72,27 @@ const supportedTradebookRules = (symbol: string, isLong: boolean) => {
     return methods.every(method => supported.some(prototype => tradebook[method] === prototype[method]));
 };
 const publishState = () => {
-    if (!epoch || !generationSent || !liveSchwab()) return;
-    const observation = getBrokerObservation();
-    if (!observation || observation.accountHash !== accountHash || Date.now() - observation.startedAt > 10_000) return;
+    if (!enabled || socket?.readyState !== WebSocket.OPEN || !generationSent || !liveSchwab()) return;
+    if (!window.HybridApp.AccountCache) return;
     const symbols = new Set(Models.getWatchlist().map(item => item.symbol));
     window.HybridApp.AccountCache?.positions.forEach((_, symbol) => symbols.add(symbol));
     window.HybridApp.AccountCache?.entryOrders.forEach((_, symbol) => symbols.add(symbol));
     window.HybridApp.AccountCache?.exitPairs.forEach((_, symbol) => symbols.add(symbol));
     const revision = ++sequence;
-    send('execution_state', { accountHash, symbols: [...symbols].map(symbol => {
+    send('execution_state', { symbols: [...symbols].map(symbol => {
         const quantity = Models.getPositionNetQuantity(symbol);
         const state = TradingState.getBreakoutTradeState(symbol, quantity > 0);
         const data = Models.getSymbolData(symbol);
         // Use the same selection ordering as handler.getExitPairFromKeyCode, retaining unrounded prices.
         const pairs = Models.getChartWidget(symbol)?.exitOrderPairs ?? Models.getExitPairs(symbol);
         return {
-            symbol, revision, observedAt: observation.startedAt, quoteObservedAt: getExecutionQuoteTime(symbol),
+            symbol, revision,
             netQuantity: quantity, currentPrice: Models.getCurrentPrice(symbol), bid: data.bidPrice, ask: data.askPrice,
             batchCount: GlobalSettings.batchCount, splitPartials: quantity !== 0 && Handler.hasSplitPartials(symbol, quantity > 0),
             hasPlan: state.hasValue, entryPrice: state.entryPrice, coreTarget: state.plan.coreTarget,
             coreCount: state.plan.coreCount, coreRuleEnabled: GlobalSettings.enableCoreTargetExitFeature,
             rulesSupported: supportedTradebookRules(symbol, quantity > 0),
             entries: Models.getEntryOrders(symbol).map(createOrder),
-            observedOrderIds: collectObservedOrderIds(window.HybridApp.AccountCache?.rawAccount),
             entryContext: entriesEnabled ? createExecutionEntryContext(symbol) : undefined,
             pairs: pairs.map(pair => ({ LIMIT: createOrder(pair.LIMIT), STOP: createOrder(pair.STOP),
                 originalPartial: CoreTargetExitRules.getOriginalPartialNumber(symbol, pair) })),
@@ -134,14 +100,10 @@ const publishState = () => {
     }) });
 };
 const tick = async () => {
-    if (!enabled && !requiresReview) return;
-    if (!liveSchwab() || (accountHash && accountHash !== Secret.schwab().accountHash)) {
-        if (epoch) send('execution_revoke');
-        disconnectExecutionBridge();
-        return;
-    }
-    startSession(); publishToken();
-    if (epoch && !refreshing) {
+    if (!enabled) return;
+    if (!liveSchwab() || socket?.readyState !== WebSocket.OPEN) return;
+    publishToken();
+    if (!refreshing) {
         refreshing = true;
         try { await refreshAccountForExecution(); publishState(); }
         catch { /* Failed broker reads never produce a fresh execution snapshot. */ }
@@ -158,27 +120,19 @@ export const handleExecutionMessage = (data: any): boolean => {
     if (data.type === 'execution_status') {
         enabled = data.enabled === true;
         entriesEnabled = data.entriesEnabled === true;
-        requiresReview = data.requiresReview === true || (!enabled && data.blocked === true);
         if (!enabled) {
-            epoch = ''; ownershipPending = false; generationSent = 0;
+            generationSent = 0;
         }
-        if (!data.blocked) nativeActions.clear();
         if (enabled && !heartbeat) heartbeat = setInterval(() => { void tick(); }, 3000);
         if (!enabled && heartbeat) { clearInterval(heartbeat); heartbeat = undefined; }
+        if (enabled) Models.getWatchlist().forEach(({ symbol }) => {
+            publishExecutionMarketData(symbol, Models.getCurrentPrice(symbol), Models.getSymbolData(symbol));
+        });
         void tick();
-    } else if (data.type === 'execution_session') {
-        if (!ownershipPending || typeof data.epoch !== 'string' || !data.epoch) return true;
-        epoch = data.epoch; ownershipPending = false; accountHash = ''; generationSent = 0;
-        publishToken(); void tick();
     } else if (data.type === 'execution_rejected') {
-        ownershipPending = false;
-        requiresReview = true;
-        Firestore.logError('Native execution session rejected; check active account, app origin, and other browser tabs');
-    } else if (data.epoch === epoch) {
-        if (data.type === 'execution_legacy_ack') {
-            acknowledgements.get(data.requestId)?.(data.allowed === true); acknowledgements.delete(data.requestId);
-        } else if (data.type === 'execution_started') {
-            nativeActions.add(data.actionId);
+        Firestore.logError('Native execution update rejected');
+    } else {
+        if (data.type === 'execution_started') {
             if (typeof data.buttonName === 'string' && data.buttonName) Helper.speak(data.buttonName);
             if (data.action === 'wall_reversal_entry') {
                 Helper.speak('is it a high quality setup?');
@@ -187,8 +141,6 @@ export const handleExecutionMessage = (data: any): boolean => {
             if (data.clearPending === true) TradingState.clearPendingOrder(data.symbol);
             Firestore.logInfo(`Native ${data.action} started for ${data.symbol}`);
         } else if (data.type === 'execution_result') {
-            if (!nativeActions.delete(data.actionId)) return true;
-            requiresReview = data.requiresReview === true;
             const text = `Native ${data.action} ${data.outcome} for ${data.symbol}${data.reason ? ': ' + data.reason : ''}`;
             if (data.outcome === 'accepted') Firestore.logInfo(text); else Firestore.logError(text);
             if (data.outcome === 'accepted' && data.action === 'wall_reversal_entry' && data.entry) {
@@ -199,9 +151,8 @@ export const handleExecutionMessage = (data: any): boolean => {
                 void TradingState.onNativeEntryAccepted(data.symbol, data.entry).then(() => {
                     send('execution_entry_state', { actionId: data.actionId, initialized: true });
                 }).catch(() => {
-                    requiresReview = true;
                     Firestore.logError('Native entry trade-state initialization failed; review broker orders');
-                    try { send('execution_entry_state', { actionId: data.actionId, initialized: false }); } catch { /* Disconnect also blocks native execution. */ }
+                    try { send('execution_entry_state', { actionId: data.actionId, initialized: false }); } catch { /* Already logged locally. */ }
                 });
             }
             // Refresh only. Do not pass lifecycle messages back to KeyboardHandler/Broker mutations.
@@ -210,7 +161,7 @@ export const handleExecutionMessage = (data: any): boolean => {
                 if (Models.getPositionNetQuantity(data.symbol) !== 0) {
                     PartialStopDiscipline.checkAndUpdatePhase(data.symbol, Models.getPositionNetQuantity(data.symbol) > 0);
                 }
-            }).catch(() => Firestore.logError('Native account reconciliation failed; execution remains blocked'));
+            }).catch(() => Firestore.logError('Native account refresh failed'));
             if (data.outcome === 'accepted' && data.action === 'market_out_partial') {
                 setTimeout(() => { void refreshAccountForExecution().then(() => {
                     publishState();

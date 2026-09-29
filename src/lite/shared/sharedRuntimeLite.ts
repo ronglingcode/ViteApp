@@ -1,5 +1,4 @@
 import * as WebRequest from '../../utils/webRequest';
-import { recordExecutionQuote } from '../../bookmap/executionMetadata';
 import * as Config from '../../config/config';
 import * as Firestore from '../../firestore';
 import * as TimeHelper from '../../utils/timeHelper';
@@ -17,6 +16,7 @@ import * as OrderFlowManager from '../../controllers/orderFlowManager';
 import * as TraderFocus from '../../controllers/traderFocus';
 import * as BasicIndicators from '../../indicators/basicIndicators';
 import * as Models from '../../models/models';
+import { publishExecutionMarketData } from '../../bookmap/executionMarketData';
 import * as TradingPlans from '../../models/tradingPlans/tradingPlans';
 import * as TradingState from '../../models/tradingState';
 import * as TradebooksManager from '../../tradebooks/tradebooksManager';
@@ -450,12 +450,19 @@ export const syncHistory = (symbol: string, candles: StateLite.Candle[], dailyCa
 };
 
 export const syncSnapshot = (snapshot: StateLite.MarketSnapshot) => {
-    recordExecutionQuote(snapshot.symbol, true, false, snapshot.bidObservedAt ?? 0);
-    recordExecutionQuote(snapshot.symbol, false, true, snapshot.askObservedAt ?? 0);
+    let symbolData = Models.getSymbolData(snapshot.symbol);
+    if (snapshot.bid != null) {
+        symbolData.bidPrice = snapshot.bid;
+        symbolData.schwabLevelOneQuote.bidPrice = snapshot.bid;
+    }
+    if (snapshot.ask != null) {
+        symbolData.askPrice = snapshot.ask;
+        symbolData.schwabLevelOneQuote.askPrice = snapshot.ask;
+    }
     if (!snapshot.candle) {
+        publishExecutionMarketData(snapshot.symbol, snapshot.lastPrice ?? Models.getCurrentPrice(snapshot.symbol), symbolData);
         return;
     }
-    let symbolData = Models.getSymbolData(snapshot.symbol);
     let modelCandle = toModelCandle(snapshot.symbol, snapshot.candle);
     let lastIndex = symbolData.candles.length - 1;
     if (lastIndex >= 0 && symbolData.candles[lastIndex].time === modelCandle.time) {
@@ -470,15 +477,8 @@ export const syncSnapshot = (snapshot: StateLite.MarketSnapshot) => {
         symbolData.volumes.push(volumePoint);
         symbolData.m1Volumes.push(volumePoint);
     }
-    if (snapshot.bid != null) {
-        symbolData.bidPrice = snapshot.bid;
-        symbolData.schwabLevelOneQuote.bidPrice = snapshot.bid;
-    }
-    if (snapshot.ask != null) {
-        symbolData.askPrice = snapshot.ask;
-        symbolData.schwabLevelOneQuote.askPrice = snapshot.ask;
-    }
     updateSessionHighLow(snapshot.symbol);
+    publishExecutionMarketData(snapshot.symbol, snapshot.lastPrice ?? modelCandle.close, symbolData);
     updateVwapData(snapshot.symbol);
     TradebooksManager.refreshTradebooksStatusForSymbol(snapshot.symbol);
 };

@@ -28,7 +28,7 @@ export const createExecutionEntryContext = (symbol: string) => {
     });
     const data = Models.getSymbolData(symbol);
     return {
-        observedAt: Date.now(), definitions, attendanceAllowed: allowEntry(),
+        definitions, attendanceAllowed: allowEntry(),
         watchlistBlockReason: Watchlist.getWatchlistLimitBlockReason(),
         realizedPnl: Models.getRealizedProfitLoss(), dailyMaxLoss: RiskManager.dailyMax, riskDollars: RiskManager.R,
         liquidityScale: Models.getLiquidityScale(symbol),
@@ -44,13 +44,4 @@ export const createExecutionEntryContext = (symbol: string) => {
         fixedQuantity: Models.getFixedQuantityFromInput(symbol),
         availableBuyingPower: account.currentBalance * 3.9 - usedBuyingPower,
     };
-};
-export const collectObservedOrderIds = (orders: any): string[] => {
-    const ids = new Set<string>();
-    const visit = (order: any) => {
-        if (order?.orderId !== undefined) ids.add(String(order.orderId));
-        if (Array.isArray(order?.childOrderStrategies)) order.childOrderStrategies.forEach(visit);
-    };
-    if (Array.isArray(orders)) orders.forEach(visit);
-    return [...ids];
 };

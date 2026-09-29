@@ -180,6 +180,12 @@ Trading profiles define broker, asset type, entry/exit rules:
 
 ## Key Conventions
 
+- This is a personal MVP with one ViteApp, one Bookmap, and one brokerage account.
+  Keep execution integration small; do not add session ownership, session IDs,
+  origin allowlists, account-matching machinery, input-age cutoffs, execution
+  coordination fences, or waits for another action/account reconciliation.
+  Block locally only realistic
+  unintended trades that the broker could accept; leave rejection decisions to it.
 - **No test framework** — `tsc` type checking and `vite build` are the primary CI checks
 - **ES modules** throughout (`type: "module"` in package.json)
 - **No routing** — single HTML page with collapsible sections
