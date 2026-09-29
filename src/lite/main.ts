@@ -6,6 +6,7 @@ import * as GlobalSettings from '../config/globalSettings';
 import * as BookmapSocket from '../bookmap/bookmapSocket';
 import { registerExecutionAccountRefresh } from '../bookmap/executionBridge';
 import { recordBrokerObservation, canApplyBrokerObservation } from '../bookmap/executionMetadata';
+import { describeError } from '../utils/errorDetails';
 import * as KeyboardHandler from '../controllers/keyboardHandler';
 import * as SchwabLite from './api/schwabLite';
 import * as ExitAdjustmentsLite from './controllers/exitAdjustmentsLite';
@@ -181,7 +182,7 @@ async function refreshAccount() {
 }
 
 function handleError(source: string, error: unknown) {
-    let message = error instanceof Error ? error.message : String(error);
+    let message = describeError(error, activeSecrets?.schwab.accessToken, activeSecrets?.schwab.refreshToken);
     StatusLite.setStatus(source, 'error');
     if (!document.getElementById('orderStatus')) {
         StatusLite.showRootError(root, source, message);

@@ -18,6 +18,7 @@ import * as Rules from '../algorithms/rules';
 import { getExecutionToken } from './executionMetadata';
 import { createExecutionEntryContext } from './executionEntryContext';
 import { publishExecutionMarketData, registerExecutionMarketDataPublisher } from './executionMarketData';
+import { describeError } from '../utils/errorDetails';
 
 declare const window: Models.MyWindow;
 const VERSION = 3;
@@ -34,8 +35,16 @@ export const registerExecutionAccountRefresh = (refresh: () => Promise<void>) =>
 const liveSchwab = () => Runtime.capabilities.liveBroker
     && Config.getProfileSettings().brokerName === 'Schwab' && Config.getProfileSettings().isEquity;
 const send = (type: string, data: object = {}) => {
-    if (!socket || socket.readyState !== WebSocket.OPEN) throw new Error('Native execution connection unavailable');
-    socket.send(JSON.stringify({ type, version: VERSION, ...data }));
+    try {
+        if (!socket || socket.readyState !== WebSocket.OPEN) throw new Error('Native execution connection unavailable');
+        socket.send(JSON.stringify({ type, version: VERSION, ...data }));
+    }
+    catch (error) {
+        const secrets = Secret.schwab();
+        const reason = describeError(error, getExecutionToken()?.accessToken, secrets.refreshToken, secrets.accountHash);
+        Firestore.logError(`Send ${type} to Bookmap failed: ${reason}`);
+        throw new Error(`Send ${type} to Bookmap failed: ${reason}`);
+    }
 };
 registerExecutionMarketDataPublisher(data => {
     if (!enabled || socket?.readyState !== WebSocket.OPEN || !liveSchwab()) return;
@@ -106,7 +115,7 @@ const tick = async () => {
     if (!refreshing) {
         refreshing = true;
         try { await refreshAccountForExecution(); publishState(); }
-        catch { /* Failed broker reads never produce a fresh execution snapshot. */ }
+        catch (error) { Firestore.logError(`Native periodic account/state refresh failed: ${describeError(error)}`); }
         finally { refreshing = false; }
     }
 };
@@ -114,12 +123,13 @@ window.addEventListener('tradingscripts:execution-token-updated', () => { publis
 window.addEventListener('tradingscripts:account-ui-updated', () => { publishState(); });
 
 /** Return true before generic socket logging; credentials are never reflected or logged. */
-export const handleExecutionMessage = (data: any): boolean => {
+const applyExecutionMessage = (data: any): boolean => {
     if (typeof data.type !== 'string' || !data.type.startsWith('execution_')) return false;
     if (data.version !== VERSION) return true;
     if (data.type === 'execution_status') {
         enabled = data.enabled === true;
         entriesEnabled = data.entriesEnabled === true;
+        if (data.requiresReview && data.reason) Firestore.logError(`Native requires broker review: ${data.reason}`);
         if (!enabled) {
             generationSent = 0;
         }
@@ -130,7 +140,9 @@ export const handleExecutionMessage = (data: any): boolean => {
         });
         void tick();
     } else if (data.type === 'execution_rejected') {
-        Firestore.logError('Native execution update rejected');
+        Firestore.logError(`Native execution update rejected: ${data.reason || 'plugin did not supply a reason'}`);
+    } else if (data.type === 'execution_blocked') {
+        Firestore.logError(`Native execution blocked for ${data.symbol}: ${data.reason}`);
     } else {
         if (data.type === 'execution_started') {
             if (typeof data.buttonName === 'string' && data.buttonName) Helper.speak(data.buttonName);
@@ -149,10 +161,12 @@ export const handleExecutionMessage = (data: any): boolean => {
                 symbolData.highOfDay = Math.max(symbolData.highOfDay, data.entry.highOfDay);
                 symbolData.lowOfDay = Math.min(symbolData.lowOfDay, data.entry.lowOfDay);
                 void TradingState.onNativeEntryAccepted(data.symbol, data.entry).then(() => {
-                    send('execution_entry_state', { actionId: data.actionId, initialized: true });
-                }).catch(() => {
-                    Firestore.logError('Native entry trade-state initialization failed; review broker orders');
-                    try { send('execution_entry_state', { actionId: data.actionId, initialized: false }); } catch { /* Already logged locally. */ }
+                    send('execution_entry_state', { actionId: data.actionId, symbol: data.symbol, initialized: true });
+                }).catch(error => {
+                    const reason = describeError(error);
+                    Firestore.logError(`Native entry trade-state initialization failed for ${data.symbol}: ${reason}; review broker orders`);
+                    try { send('execution_entry_state', { actionId: data.actionId, symbol: data.symbol, initialized: false, reason }); }
+                    catch (sendError) { Firestore.logError(`Native entry failure report to Bookmap failed: ${describeError(sendError)}`); }
                 });
             }
             // Refresh only. Do not pass lifecycle messages back to KeyboardHandler/Broker mutations.
@@ -161,16 +175,24 @@ export const handleExecutionMessage = (data: any): boolean => {
                 if (Models.getPositionNetQuantity(data.symbol) !== 0) {
                     PartialStopDiscipline.checkAndUpdatePhase(data.symbol, Models.getPositionNetQuantity(data.symbol) > 0);
                 }
-            }).catch(() => Firestore.logError('Native account refresh failed'));
+            }).catch(error => Firestore.logError(`Native ${data.action} account/state refresh failed for ${data.symbol}: ${describeError(error)}`));
             if (data.outcome === 'accepted' && data.action === 'market_out_partial') {
                 setTimeout(() => { void refreshAccountForExecution().then(() => {
                     publishState();
                     if (Models.getPositionNetQuantity(data.symbol) !== 0) {
                         PartialStopDiscipline.checkAndUpdatePhase(data.symbol, Models.getPositionNetQuantity(data.symbol) > 0);
                     }
-                }).catch(() => {}); }, 2000);
+                }).catch(error => Firestore.logError(`Native partial-exit follow-up refresh failed for ${data.symbol}: ${describeError(error)}`)); }, 2000);
             }
         }
     }
     return true;
+};
+export const handleExecutionMessage = (data: any): boolean => {
+    if (typeof data.type !== 'string' || !data.type.startsWith('execution_')) return false;
+    try { return applyExecutionMessage(data); }
+    catch (error) {
+        Firestore.logError(`Handle ${data.type} from Bookmap failed: ${describeError(error, getExecutionToken()?.accessToken)}`);
+        return true;
+    }
 };

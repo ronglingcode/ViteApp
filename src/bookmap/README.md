@@ -306,6 +306,15 @@ review requirement. The plugin uses the latest token/account/state updates.
 There is no execution fence or reconciliation wait. Browser mutations and native
 clicks submit independently. Unknown native broker outcomes still require review.
 
+Execution errors preserve the operation, exception type/message and nested causes.
+Native HTTP failures include the order ID, status and broker error body, with
+credentials redacted. Java emits `execution_blocked` for plan failures and includes
+the actual reason in `execution_rejected`. Account refresh, initialization and
+socket failures are logged with their causes; failed entry initialization returns
+its reason in `execution_entry_state`. `utils/errorDetails.ts` formats Error objects
+before UI/Firestore storage and preserves broker response text when JSON parsing
+fails. Diagnostics do not add execution checks or retries.
+
 `direct-execution-fixtures.json` matches the plugin test resource byte-for-byte.
 `npm run test:direct-execution` checks production helpers and metadata
 behavior. Plugin tests check Java plans, fake HTTP lifecycle, and the obfuscated

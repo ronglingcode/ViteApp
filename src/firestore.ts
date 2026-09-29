@@ -5,6 +5,7 @@ import * as Helper from './utils/helper';
 import type * as Models from './models/models';
 import * as Runtime from './replay/runtime';
 import { emitBookmapScreenLog, type BookmapScreenLogLevel } from './bookmap/screenLog';
+import { describeError } from './utils/errorDetails';
 declare let window: Models.MyWindow;
 
 let dateobj = new Date();
@@ -47,6 +48,7 @@ export const logSuccess = async (msg: any, tags: Models.LogTags = {}) => {
     addToLogView(msg, 'Success', tags);
 }
 export const logError = async (msg: any, tags: Models.LogTags = {}) => {
+    msg = describeError(msg, window.HybridApp?.Secrets?.schwab?.accessToken);
     console.error(msg);
     log('Error', msg, tags);
     addToLogView(msg, 'Error', tags);

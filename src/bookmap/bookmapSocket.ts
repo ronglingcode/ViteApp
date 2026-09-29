@@ -5,6 +5,8 @@
  */
 
 import * as Helper from "../utils/helper";
+import * as Firestore from '../firestore';
+import { describeError } from '../utils/errorDetails';
 import { attachExecutionBridge, disconnectExecutionBridge, handleExecutionMessage } from './executionBridge';
 import * as Models from "../models/models";
 import * as GlobalSettings from "../config/globalSettings";
@@ -185,7 +187,12 @@ export const createWebSocket = () => {
     };
 
     websocket.onmessage = function (messageEvent) {
-        let data = JSON.parse(messageEvent.data);
+        let data;
+        try { data = JSON.parse(messageEvent.data); }
+        catch (error) {
+            Firestore.logError(`Parse Bookmap WebSocket message failed: ${describeError(error)}`);
+            return;
+        }
         if (handleExecutionMessage(data)) return;
         let type = data.type;
         if (!isSupportedBookmapWirePriceUnit(data.priceUnit)) {

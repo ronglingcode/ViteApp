@@ -8,8 +8,28 @@ import { evaluateCoreTargetRule } from '../controllers/coreTargetRule.ts';
 import { recordBrokerObservation, getBrokerObservation,
     canApplyBrokerObservation, recordExecutionToken, getExecutionToken } from './executionMetadata.ts';
 import { registerExecutionMarketDataPublisher, publishExecutionMarketData } from './executionMarketData.ts';
+import { describeError, readBrokerJson, brokerResponseError, fetchBrokerResponse } from '../utils/errorDetails.ts';
 
 const fixtures = JSON.parse(readFileSync(new URL('./direct-execution-fixtures.json', import.meta.url), 'utf8'));
+test('diagnostics retain the request, HTTP error text and exception causes without credentials', async () => {
+    const root = new Error('TLS certificate not trusted; Authorization: Bearer fake-access-token');
+    const error = new Error('GET account positions failed', { cause: root });
+    const text = describeError(error);
+    assert.match(text, /GET account positions failed.*caused by.*TLS certificate not trusted/);
+    assert.ok(!text.includes('fake-access-token'));
+    assert.match(JSON.stringify({ msg: text }), /TLS certificate not trusted/); // Saved logs keep the Error message.
+    await assert.rejects(fetchBrokerResponse('GET Schwab accounts', Promise.reject(new TypeError('connection refused'))),
+        error => describeError(error).includes('GET Schwab accounts failed; caused by TypeError: connection refused'));
+    const response = new Response('<html>gateway denied the request</html>', { status: 502 });
+    await assert.rejects(readBrokerJson(response, 'GET Schwab orders'),
+        error => /GET Schwab orders HTTP 502.*gateway denied the request.*caused by/.test(describeError(error)));
+    const rejection = brokerResponseError('POST new order', new Response('', { status: 400 }), {
+        message: 'Insufficient buying power', access_token: 'another-token', refreshToken: 'refresh-value',
+    });
+    const detail = describeError(rejection);
+    assert.match(detail, /POST new order HTTP 400.*Insufficient buying power/);
+    assert.ok(!detail.includes('another-token')); assert.ok(!detail.includes('refresh-value'));
+});
 test('market handlers publish the complete latest bundle synchronously, without an account update', () => {
     const received: any[] = [];
     registerExecutionMarketDataPublisher(data => received.push(data));

@@ -13,6 +13,7 @@ import * as Config from '../../config/config';
 import * as OrderFactory from './orderFactory';
 import * as GlobalSettings from '../../config/globalSettings';
 import { recordExecutionToken, recordBrokerObservation, canApplyBrokerObservation } from '../../bookmap/executionMetadata';
+import { brokerResponseError, readBrokerJson, describeError, fetchBrokerResponse } from '../../utils/errorDetails';
 declare let window: Models.MyWindow;
 
 const API_HOST = "https://api.schwabapi.com";
@@ -115,8 +116,8 @@ export const refreshAccessToken = async () => {
         body: new URLSearchParams(data)
     });
 
-    let json = await response.json();
-    if (!response.ok) throw new Error('Schwab access token refresh failed');
+    let json = await readBrokerJson(response, 'POST Schwab token refresh', secret.schwab().refreshToken);
+    if (!response.ok) throw brokerResponseError('POST Schwab token refresh', response, json, secret.schwab().refreshToken);
     recordExecutionToken(json.access_token, Number(json.expires_in));
     return json.access_token as string;
 };
@@ -127,12 +128,12 @@ const getAccessTokenFromStorage = () => {
 
 export const getUserPreference = async () => {
     let url = `${getTraderApiHost()}/userPreference`;
-    webRequest.asyncGet(url, getAccessTokenFromStorage()).then(response => {
+    fetchBrokerResponse('GET Schwab userPreference', webRequest.asyncGet(url, getAccessTokenFromStorage())).then(async response => {
         if (response.status != 200) {
-            Firestore.logError(`getUserPreference failed: ${response.status}`);
+            Firestore.logError(brokerResponseError('GET Schwab userPreference', response, await response.text(), getAccessTokenFromStorage()));
             return null;
         }
-        return response.json();
+        return readBrokerJson(response, 'GET Schwab userPreference', getAccessTokenFromStorage());
     })
         .then(json => {
             let streamerInfo = json?.streamerInfo[0];
@@ -141,9 +142,8 @@ export const getUserPreference = async () => {
             window.HybridApp.Secrets.schwab.schwabClientCustomerId = streamerInfo?.schwabClientCustomerId;
             window.HybridApp.Secrets.schwab.schwabClientFunctionId = streamerInfo?.schwabClientFunctionId;
             window.HybridApp.Secrets.schwab.streamerSocketUrl = streamerInfo?.streamerSocketUrl;
-            console.log(window.HybridApp.Secrets.schwab);
             return json;
-        });
+        }).catch(error => Firestore.logError(`GET Schwab userPreference failed: ${describeError(error)}`));
 }
 export const getOptionsChain = async (symbol: string) => {
     let prefix = `${API_HOST}/marketdata/v1/chains`;
@@ -238,10 +238,11 @@ export const getAccountInfo = async () => {
     const accountHash = secret.schwab().accountHash;
     let url = `${getTraderApiHost()}/accounts?fields=positions`;
     let accessToken = window.HybridApp.Secrets.schwab.accessToken;
-    let response = await webRequest.asyncGet(url, accessToken);
-    let accounts = await response.json();
+    let response = await fetchBrokerResponse('GET Schwab accounts', webRequest.asyncGet(url, accessToken));
+    let accounts = await readBrokerJson(response, 'GET Schwab accounts', accessToken);
     if (!response.ok || !Array.isArray(accounts) || !accounts[0]?.securitiesAccount) {
-        throw new Error('Schwab account read failed');
+        throw brokerResponseError('GET Schwab accounts', response,
+            response.ok ? 'expected an account array containing securitiesAccount' : accounts, accessToken);
     }
     let account = accounts[0].securitiesAccount;
     const ordersData = Config.Settings.fetchOrdersByTimeWindows
@@ -294,9 +295,10 @@ export const getAllOrders = async (accountId: string, accessToken: string) => {
     let from = TimeHelper.getTodayString() + 'T00:00:00.000Z';
     let tomorrow = TimeHelper.getTomorrowString() + 'T00:00:00.000Z';
     let ordersUrl = `${getTraderApiHost()}/accounts/${accountId}/orders?fromEnteredTime=${from}&toEnteredTime=${tomorrow}`;
-    let ordersResponse = await webRequest.asyncGet(ordersUrl, accessToken);
-    let ordersData = await ordersResponse.json();
-    if (!ordersResponse.ok || !Array.isArray(ordersData)) throw new Error('Schwab orders read failed');
+    let ordersResponse = await fetchBrokerResponse('GET Schwab orders', webRequest.asyncGet(ordersUrl, accessToken));
+    let ordersData = await readBrokerJson(ordersResponse, 'GET Schwab orders', accessToken, accountId);
+    if (!ordersResponse.ok || !Array.isArray(ordersData)) throw brokerResponseError('GET Schwab orders', ordersResponse,
+        ordersResponse.ok ? 'expected an orders array' : ordersData, accessToken, accountId);
     /*
     let equityOrders = OrderFactory.filterToEquityOrders(ordersData);
     return equityOrders;
@@ -316,9 +318,11 @@ const getOrdersInWindow = async (
     accountId: string, accessToken: string, from: string, to: string
 ): Promise<{ orders: any[]; full: boolean }> => {
     const url = `${getTraderApiHost()}/accounts/${accountId}/orders?fromEnteredTime=${encodeURIComponent(from)}&toEnteredTime=${encodeURIComponent(to)}&maxResults=${ORDERS_PAGE_SIZE}`;
-    const res = await webRequest.asyncGet(url, accessToken);
-    const data = await res.json();
-    if (!res.ok || (!Array.isArray(data) && !Array.isArray(data?.orders))) throw new Error('Schwab orders read failed');
+    const operation = `GET Schwab orders from ${from} to ${to}`;
+    const res = await fetchBrokerResponse(operation, webRequest.asyncGet(url, accessToken));
+    const data = await readBrokerJson(res, operation, accessToken, accountId);
+    if (!res.ok || (!Array.isArray(data) && !Array.isArray(data?.orders))) throw brokerResponseError(operation, res,
+        res.ok ? 'expected an orders array' : data, accessToken, accountId);
     const orders: any[] = Array.isArray(data) ? data : data.orders;
     return { orders, full: orders.length >= ORDERS_PAGE_SIZE };
 };
@@ -446,7 +450,7 @@ const filterOrdersNotOnSameDay = (orders: any) => {
 /* #region Orders */
 export const placeOrderBase = async (order: any, logTags: Models.LogTags) => {
     try { return await placeOrderBaseCore(order, logTags); }
-    catch (error) { Firestore.logError(error, logTags); }
+    catch (error) { Firestore.logError(`POST Schwab order failed: ${describeError(error)}`, logTags); }
 };
 const placeOrderBaseCore = async (order: any, logTags: Models.LogTags) => {
     if (!isClosingSchwabOrder(order) && !allowEntry()) return;
@@ -457,9 +461,10 @@ const placeOrderBaseCore = async (order: any, logTags: Models.LogTags) => {
     let url = `${getTraderApiHost()}/accounts/${accountId}/orders`;
     let response = await webRequest.sendJsonPostRequestWithAccessToken(url, order, accessToken);
     let statusCode = response.status;
-    let json = await response.json();
+    let json = await readBrokerJson(response, 'POST Schwab order', accessToken, accountId);
     if (statusCode >= 500 || (response.ok && (!json.orderId || json.orderId == -1))) {
-        throw new Error('Schwab placement outcome unknown; review broker orders');
+        throw brokerResponseError('POST Schwab order outcome unknown; review broker orders', response,
+            response.ok ? 'accepted response missing a valid orderId' : json, accessToken, accountId);
     }
     let end = new Date();
     let duration = end.getTime() - start.getTime();
@@ -476,7 +481,7 @@ const placeOrderBaseCore = async (order: any, logTags: Models.LogTags) => {
 
 const replaceOrderBase = async (newOrder: any, oldOrderId: string, logTags: Models.LogTags) => {
     try { return await replaceOrderBaseCore(newOrder, oldOrderId, logTags); }
-    catch (error) { Firestore.logError(error, logTags); }
+    catch (error) { Firestore.logError(`PUT Schwab order ${oldOrderId} failed: ${describeError(error)}`, logTags); }
 };
 const replaceOrderBaseCore = async (newOrder: any, oldOrderId: string, logTags: Models.LogTags) => {
     if (!isClosingSchwabOrder(newOrder) && !allowEntry()) return;
@@ -491,13 +496,13 @@ const replaceOrderBaseCore = async (newOrder: any, oldOrderId: string, logTags: 
     let accountId = secret.schwab().accountHash;
     let url = `${getTraderApiHost()}/accounts/${accountId}/orders/${oldOrderId}`;
     let response = await webRequest.sendJsonPutRequestWithAccessToken(url, newOrder, accessToken);
-    if (response.status >= 500) throw new Error('Schwab replacement outcome unknown; review broker orders');
+    let json = await readBrokerJson(response, `PUT Schwab order ${oldOrderId}`, accessToken, accountId);
+    if (response.status >= 500) throw brokerResponseError(`PUT Schwab order ${oldOrderId} outcome unknown; review broker orders`, response, json, accessToken, accountId);
 
     console.log(response.status);
-    let json = await response.json();
     console.log(json);
     if (response.status != 200) {
-        console.error(`replace order error status code: ${response.status}`);
+        Firestore.logError(brokerResponseError(`PUT Schwab order ${oldOrderId}`, response, json, accessToken, accountId), logTags);
         replacedOrderIds.delete(oldOrderId);
         //logErrorForObject(json);
     }
@@ -519,17 +524,20 @@ export const replaceSingleOrderWithNewPrice = async (oldOrder: Models.OrderModel
 
 export const cancelOrderBase = async (orderId: string) => {
     try { return await cancelOrderBaseCore(orderId); }
-    catch (error) { Firestore.logError(error); }
+    catch (error) { Firestore.logError(`DELETE Schwab order ${orderId} failed: ${describeError(error)}`); }
 };
 const cancelOrderBaseCore = async (orderId: string) => {
     let accountHash = secret.schwab().accountHash;
     let accessToken = getAccessTokenFromStorage();
     let url = `${getTraderApiHost()}/accounts/${accountHash}/orders/${orderId}`;
     let response = await webRequest.asyncDelete(url, accessToken);
-    if (response.status >= 500) throw new Error('Schwab cancellation outcome unknown; review broker orders');
+    if (response.status >= 500) {
+        const body = await response.text();
+        throw brokerResponseError(`DELETE Schwab order ${orderId} outcome unknown; review broker orders`, response, body, accessToken, accountHash);
+    }
     if (response.status != 200) {
-        let data = await response.json();
-        logErrorForObject(data);
+        let data = await response.text();
+        Firestore.logError(brokerResponseError(`DELETE Schwab order ${orderId}`, response, data, accessToken, accountHash));
     }
 };
 const isExitPairValid = (pair: Models.ExitPair, logTags: Models.LogTags) => {

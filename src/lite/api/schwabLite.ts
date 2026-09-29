@@ -1,5 +1,6 @@
 import * as StateLite from '../models/stateLite';
 import { recordExecutionToken } from '../../bookmap/executionMetadata';
+import { brokerResponseError, fetchBrokerResponse } from '../../utils/errorDetails';
 import { allowEntry, attendanceMessage } from '../../attendance/attendance';
 import { isClosingSchwabOrder } from '../../attendance/policy';
 
@@ -35,12 +36,12 @@ const parseResponseBody = async (response: Response) => {
 };
 
 const getWithAccessToken = (url: string, accessToken: string) => {
-    return fetch(url, {
+    return fetchBrokerResponse(`GET Schwab ${new URL(url).pathname}`, fetch(url, {
         method: 'GET',
         headers: {
             Authorization: `Bearer ${accessToken}`,
         },
-    });
+    }));
 };
 
 interface LiteAccountInfo {
@@ -77,7 +78,7 @@ export const refreshSchwabAccessToken = async (secrets: StateLite.SchwabSecrets)
     });
     let data = await parseResponseBody(response);
     if (!response.ok || !data.access_token) {
-        throw new Error(`Schwab token refresh failed: ${response.status} ${JSON.stringify(data)}`);
+        throw brokerResponseError('POST Schwab token refresh', response, data, secrets.refreshToken, secrets.secret);
     }
     StateLite.saveSchwabAccessToken(data.access_token);
     recordExecutionToken(data.access_token, Number(data.expires_in));
@@ -91,7 +92,7 @@ export const getSchwabStreamerInfo = async (
     let response = await getWithAccessToken(`${getTraderApiHost()}/userPreference`, accessToken);
     let data = await parseResponseBody(response);
     if (!response.ok) {
-        throw new Error(`Schwab userPreference failed: ${response.status} ${JSON.stringify(data)}`);
+        throw brokerResponseError('GET Schwab userPreference', response, data, accessToken);
     }
     let streamerInfo = data?.streamerInfo?.[0];
     if (!streamerInfo?.streamerSocketUrl) {
@@ -124,10 +125,11 @@ const getAccountInfo = async (accessToken: string): Promise<LiteAccountInfo> => 
     let response = await getWithAccessToken(`${getTraderApiHost()}/accounts?fields=positions`, accessToken);
     let data = await parseResponseBody(response);
     if (!response.ok) {
-        throw new Error(`Schwab account fetch failed: ${response.status} ${JSON.stringify(data)}`);
+        throw brokerResponseError('GET Schwab accounts', response, data, accessToken);
     }
     let account = data?.[0]?.securitiesAccount;
-    if (!account) throw new Error('Schwab account response is incomplete');
+    if (!account) throw brokerResponseError('GET Schwab accounts', response,
+        data?.raw ?? 'expected an account array containing securitiesAccount', accessToken);
     let rawPositions = account?.positions;
     let positions = Array.isArray(rawPositions)
         ? rawPositions
@@ -159,7 +161,7 @@ export const getTodayOrders = async (secrets: StateLite.SchwabSecrets, accessTok
     let response = await getWithAccessToken(url, accessToken);
     let data = await parseResponseBody(response);
     if (!response.ok) {
-        throw new Error(`Schwab orders fetch failed: ${response.status} ${JSON.stringify(data)}`);
+        throw brokerResponseError('GET Schwab orders', response, data, accessToken, secrets.accountHash);
     }
     if (!Array.isArray(data)) throw new Error('Schwab orders response is incomplete');
     return data;
@@ -422,7 +424,7 @@ const placeMarketOrderCore = async (
     });
     let data = await parseResponseBody(response);
     if (!response.ok) {
-        throw new Error(`Schwab order failed: ${response.status} ${JSON.stringify(data)}`);
+        throw brokerResponseError('POST Schwab order', response, data, accessToken, secrets.accountHash);
     }
     return {
         status: response.status,
@@ -451,7 +453,7 @@ const placeClosingMarketOrderCore = async (
     });
     let data = await parseResponseBody(response);
     if (!response.ok) {
-        throw new Error(`Schwab closing market order failed: ${response.status} ${JSON.stringify(data)}`);
+        throw brokerResponseError('POST Schwab closing market order', response, data, accessToken, secrets.accountHash);
     }
     return {
         status: response.status,
@@ -529,7 +531,7 @@ const replaceSingleOrderCore = async (
     });
     let data = await parseResponseBody(response);
     if (!response.ok) {
-        throw new Error(`Schwab replace order failed: ${response.status} ${JSON.stringify(data)}`);
+        throw brokerResponseError(`PUT Schwab order ${order.orderID}`, response, data, accessToken, secrets.accountHash);
     }
     return {
         status: response.status,
