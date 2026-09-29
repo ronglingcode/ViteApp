@@ -4,6 +4,8 @@ interface SymbolState {
     candles: StateLite.Candle[];
     bid?: number;
     ask?: number;
+    bidObservedAt?: number;
+    askObservedAt?: number;
     lastPrice?: number;
 }
 
@@ -80,9 +82,11 @@ export class MarketDataState {
         let state = this.getState(quote.symbol);
         if (quote.bid != null) {
             state.bid = quote.bid;
+            state.bidObservedAt = Date.now();
         }
         if (quote.ask != null) {
             state.ask = quote.ask;
+            state.askObservedAt = Date.now();
         }
         if (quote.lastPrice != null) {
             state.lastPrice = quote.lastPrice;
@@ -121,6 +125,8 @@ export class MarketDataState {
                 lastPrice: state.lastPrice,
                 bid: state.bid,
                 ask: state.ask,
+                bidObservedAt: state.bidObservedAt,
+                askObservedAt: state.askObservedAt,
                 spread,
                 candle: state.candles[state.candles.length - 1],
             });

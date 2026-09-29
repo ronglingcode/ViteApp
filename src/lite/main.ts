@@ -4,6 +4,8 @@ import * as ConfigDataLite from './api/configDataLite';
 import * as AppVersion from '../config/appVersion';
 import * as GlobalSettings from '../config/globalSettings';
 import * as BookmapSocket from '../bookmap/bookmapSocket';
+import { registerExecutionAccountRefresh } from '../bookmap/executionBridge';
+import { recordBrokerObservation, canApplyBrokerObservation } from '../bookmap/executionMetadata';
 import * as KeyboardHandler from '../controllers/keyboardHandler';
 import * as SchwabLite from './api/schwabLite';
 import * as ExitAdjustmentsLite from './controllers/exitAdjustmentsLite';
@@ -150,6 +152,7 @@ const startBookmapSocket = () => {
     if (!GlobalSettings.enableBookmapSocket) {
         return;
     }
+    registerExecutionAccountRefresh(refreshAccount);
     BookmapSocket.createWebSocket();
     pushBookmapRuntimeSnapshot();
 };
@@ -158,10 +161,13 @@ async function refreshAccount() {
     if (!activeSecrets) {
         return;
     }
+    const startedAt = Date.now();
+    const accountHash = activeSecrets.schwab.accountHash;
     let account = await SchwabLite.getLiteAccountSnapshot(
         activeSecrets.schwab,
         activeSecrets.schwab.accessToken
     );
+    if (activeSecrets.schwab.accountHash !== accountHash || !canApplyBrokerObservation(accountHash, startedAt)) return;
     positionsBySymbol = account.positions;
     entryOrdersBySymbol = account.entryOrders;
     exitPairsBySymbol = account.exitPairs;
@@ -171,6 +177,8 @@ async function refreshAccount() {
     updateExitPairsUi();
     updateOrderChartRanges();
     pushBookmapAccountSnapshot();
+    recordBrokerObservation(accountHash, startedAt);
+    window.dispatchEvent(new Event('tradingscripts:account-ui-updated'));
 }
 
 function handleError(source: string, error: unknown) {

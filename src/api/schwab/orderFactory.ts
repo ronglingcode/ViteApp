@@ -1,6 +1,7 @@
 import * as Helper from '../../utils/helper';
 import * as Firestore from '../../firestore';
 import * as Models from '../../models/models';
+import { createClosingEquityOrder } from './closingOrderFactory';
 
 export const OrderType = {
     STOP: "STOP",
@@ -171,6 +172,10 @@ const copySingleOrder = (order: any) => {
 };
 export const createSingleOrder = (symbol: string, orderType: Models.OrderType, quantity: number, price: number,
     isBuy: boolean, positionEffectIsOpen: boolean) => {
+    if (!positionEffectIsOpen && (orderType === Models.OrderType.MARKET
+        || orderType === Models.OrderType.STOP || orderType === Models.OrderType.LIMIT)) {
+        return createClosingEquityOrder(symbol, orderType, quantity, price, isBuy);
+    }
     let orderLegInstruction = "";
     if (positionEffectIsOpen) {
         orderLegInstruction = getEntryInstruction(isBuy);

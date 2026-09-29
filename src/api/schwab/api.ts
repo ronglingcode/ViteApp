@@ -12,6 +12,8 @@ import * as Firestore from '../../firestore';
 import * as Config from '../../config/config';
 import * as OrderFactory from './orderFactory';
 import * as GlobalSettings from '../../config/globalSettings';
+import { recordExecutionToken, recordBrokerObservation, canApplyBrokerObservation } from '../../bookmap/executionMetadata';
+import { withLegacyBrokerMutation } from '../../bookmap/executionFence';
 declare let window: Models.MyWindow;
 
 const API_HOST = "https://api.schwabapi.com";
@@ -115,7 +117,8 @@ export const refreshAccessToken = async () => {
     });
 
     let json = await response.json();
-    console.log(json);
+    if (!response.ok) throw new Error('Schwab access token refresh failed');
+    recordExecutionToken(json.access_token, Number(json.expires_in));
     return json.access_token as string;
 };
 
@@ -232,12 +235,17 @@ export const getFundamentals = async (symbol: string) => {
 
 /* #region Account Info */
 export const getAccountInfo = async () => {
+    const observationStartedAt = Date.now();
+    const observationAccountHash = secret.schwab().accountHash;
     let url = `${getTraderApiHost()}/accounts?fields=positions`;
     let accessToken = window.HybridApp.Secrets.schwab.accessToken;
     let response = await webRequest.asyncGet(url, accessToken);
     let accounts = await response.json();
+    if (!response.ok || !Array.isArray(accounts) || !accounts[0]?.securitiesAccount) {
+        throw new Error('Schwab account read failed');
+    }
     let account = accounts[0].securitiesAccount;
-    let accountHash = secret.schwab().accountHash;
+    let accountHash = observationAccountHash;
     const ordersData = Config.Settings.fetchOrdersByTimeWindows
         ? await getAllOrdersByTimeWindows(accountHash, accessToken)
         : await getAllOrders(accountHash, accessToken);
@@ -257,7 +265,10 @@ export const getAccountInfo = async () => {
         rawAccount: ordersData,
         currentBalance: account.currentBalances.liquidationValue,
     };
+    if (observationAccountHash !== secret.schwab().accountHash) throw new Error('Schwab account changed during read');
+    if (!canApplyBrokerObservation(accountHash, observationStartedAt)) return window.HybridApp.AccountCache;
     window.HybridApp.AccountCache = result;
+    recordBrokerObservation(accountHash, observationStartedAt);
 
     return result;
 }
@@ -288,6 +299,7 @@ export const getAllOrders = async (accountId: string, accessToken: string) => {
     let ordersUrl = `${getTraderApiHost()}/accounts/${accountId}/orders?fromEnteredTime=${from}&toEnteredTime=${tomorrow}`;
     let ordersResponse = await webRequest.asyncGet(ordersUrl, accessToken);
     let ordersData = await ordersResponse.json();
+    if (!ordersResponse.ok || !Array.isArray(ordersData)) throw new Error('Schwab orders read failed');
     /*
     let equityOrders = OrderFactory.filterToEquityOrders(ordersData);
     return equityOrders;
@@ -309,7 +321,8 @@ const getOrdersInWindow = async (
     const url = `${getTraderApiHost()}/accounts/${accountId}/orders?fromEnteredTime=${encodeURIComponent(from)}&toEnteredTime=${encodeURIComponent(to)}&maxResults=${ORDERS_PAGE_SIZE}`;
     const res = await webRequest.asyncGet(url, accessToken);
     const data = await res.json();
-    const orders: any[] = Array.isArray(data) ? data : (Array.isArray(data?.orders) ? data.orders : []);
+    if (!res.ok || (!Array.isArray(data) && !Array.isArray(data?.orders))) throw new Error('Schwab orders read failed');
+    const orders: any[] = Array.isArray(data) ? data : data.orders;
     return { orders, full: orders.length >= ORDERS_PAGE_SIZE };
 };
 
@@ -435,6 +448,10 @@ const filterOrdersNotOnSameDay = (orders: any) => {
 
 /* #region Orders */
 export const placeOrderBase = async (order: any, logTags: Models.LogTags) => {
+    try { return await withLegacyBrokerMutation(() => placeOrderBaseCore(order, logTags)); }
+    catch { Firestore.logError('Order blocked or failed at the broker execution boundary', logTags); }
+};
+const placeOrderBaseCore = async (order: any, logTags: Models.LogTags) => {
     if (!isClosingSchwabOrder(order) && !allowEntry()) return;
     Firestore.logOrder(order, logTags);
     let start = new Date();
@@ -444,6 +461,9 @@ export const placeOrderBase = async (order: any, logTags: Models.LogTags) => {
     let response = await webRequest.sendJsonPostRequestWithAccessToken(url, order, accessToken);
     let statusCode = response.status;
     let json = await response.json();
+    if (statusCode >= 500 || (response.ok && (!json.orderId || json.orderId == -1))) {
+        throw new Error('Schwab placement outcome unknown; review broker orders');
+    }
     let end = new Date();
     let duration = end.getTime() - start.getTime();
 
@@ -458,6 +478,10 @@ export const placeOrderBase = async (order: any, logTags: Models.LogTags) => {
 };
 
 const replaceOrderBase = async (newOrder: any, oldOrderId: string, logTags: Models.LogTags) => {
+    try { return await withLegacyBrokerMutation(() => replaceOrderBaseCore(newOrder, oldOrderId, logTags)); }
+    catch { Firestore.logError('Replacement blocked or failed at the broker execution boundary', logTags); }
+};
+const replaceOrderBaseCore = async (newOrder: any, oldOrderId: string, logTags: Models.LogTags) => {
     if (!isClosingSchwabOrder(newOrder) && !allowEntry()) return;
     if (replacedOrderIds.has(oldOrderId)) {
         // Avoid replacing the same order multiple times in a short period
@@ -470,6 +494,7 @@ const replaceOrderBase = async (newOrder: any, oldOrderId: string, logTags: Mode
     let accountId = secret.schwab().accountHash;
     let url = `${getTraderApiHost()}/accounts/${accountId}/orders/${oldOrderId}`;
     let response = await webRequest.sendJsonPutRequestWithAccessToken(url, newOrder, accessToken);
+    if (response.status >= 500) throw new Error('Schwab replacement outcome unknown; review broker orders');
 
     console.log(response.status);
     let json = await response.json();
@@ -496,10 +521,15 @@ export const replaceSingleOrderWithNewPrice = async (oldOrder: Models.OrderModel
 };
 
 export const cancelOrderBase = async (orderId: string) => {
+    try { return await withLegacyBrokerMutation(() => cancelOrderBaseCore(orderId)); }
+    catch { Firestore.logError('Cancellation blocked or failed at the broker execution boundary'); }
+};
+const cancelOrderBaseCore = async (orderId: string) => {
     let accountHash = secret.schwab().accountHash;
     let accessToken = getAccessTokenFromStorage();
     let url = `${getTraderApiHost()}/accounts/${accountHash}/orders/${orderId}`;
     let response = await webRequest.asyncDelete(url, accessToken);
+    if (response.status >= 500) throw new Error('Schwab cancellation outcome unknown; review broker orders');
     if (response.status != 200) {
         let data = await response.json();
         logErrorForObject(data);

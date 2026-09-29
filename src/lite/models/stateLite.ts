@@ -117,6 +117,8 @@ export interface MarketSnapshot {
     lastPrice?: number;
     bid?: number;
     ask?: number;
+    bidObservedAt?: number;
+    askObservedAt?: number;
     spread?: number;
     candle?: Candle;
 }

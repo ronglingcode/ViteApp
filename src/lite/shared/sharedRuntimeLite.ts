@@ -1,4 +1,5 @@
 import * as WebRequest from '../../utils/webRequest';
+import { recordExecutionQuote } from '../../bookmap/executionMetadata';
 import * as Config from '../../config/config';
 import * as Firestore from '../../firestore';
 import * as TimeHelper from '../../utils/timeHelper';
@@ -447,6 +448,8 @@ export const syncHistory = (symbol: string, candles: StateLite.Candle[], dailyCa
 };
 
 export const syncSnapshot = (snapshot: StateLite.MarketSnapshot) => {
+    recordExecutionQuote(snapshot.symbol, true, false, snapshot.bidObservedAt ?? 0);
+    recordExecutionQuote(snapshot.symbol, false, true, snapshot.askObservedAt ?? 0);
     if (!snapshot.candle) {
         return;
     }

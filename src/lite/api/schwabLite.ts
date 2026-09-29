@@ -1,4 +1,6 @@
 import * as StateLite from '../models/stateLite';
+import { recordExecutionToken } from '../../bookmap/executionMetadata';
+import { withLegacyBrokerMutation } from '../../bookmap/executionFence';
 import { allowEntry, attendanceMessage } from '../../attendance/attendance';
 import { isClosingSchwabOrder } from '../../attendance/policy';
 
@@ -79,6 +81,7 @@ export const refreshSchwabAccessToken = async (secrets: StateLite.SchwabSecrets)
         throw new Error(`Schwab token refresh failed: ${response.status} ${JSON.stringify(data)}`);
     }
     StateLite.saveSchwabAccessToken(data.access_token);
+    recordExecutionToken(data.access_token, Number(data.expires_in));
     return data.access_token as string;
 };
 
@@ -125,6 +128,7 @@ const getAccountInfo = async (accessToken: string): Promise<LiteAccountInfo> => 
         throw new Error(`Schwab account fetch failed: ${response.status} ${JSON.stringify(data)}`);
     }
     let account = data?.[0]?.securitiesAccount;
+    if (!account) throw new Error('Schwab account response is incomplete');
     let rawPositions = account?.positions;
     let positions = Array.isArray(rawPositions)
         ? rawPositions
@@ -158,7 +162,8 @@ export const getTodayOrders = async (secrets: StateLite.SchwabSecrets, accessTok
     if (!response.ok) {
         throw new Error(`Schwab orders fetch failed: ${response.status} ${JSON.stringify(data)}`);
     }
-    return Array.isArray(data) ? data : [];
+    if (!Array.isArray(data)) throw new Error('Schwab orders response is incomplete');
+    return data;
 };
 
 const getOrderSymbol = (order: any): string => {
@@ -396,7 +401,9 @@ const createClosingMarketOrder = (symbol: string, quantity: number, netQuantity:
     };
 };
 
-export const placeMarketOrder = async (
+export const placeMarketOrder = (...args: Parameters<typeof placeMarketOrderCore>) =>
+    withLegacyBrokerMutation(() => placeMarketOrderCore(...args));
+const placeMarketOrderCore = async (
     secrets: StateLite.SchwabSecrets,
     accessToken: string,
     symbol: string,
@@ -424,7 +431,9 @@ export const placeMarketOrder = async (
     };
 };
 
-export const placeClosingMarketOrder = async (
+export const placeClosingMarketOrder = (...args: Parameters<typeof placeClosingMarketOrderCore>) =>
+    withLegacyBrokerMutation(() => placeClosingMarketOrderCore(...args));
+const placeClosingMarketOrderCore = async (
     secrets: StateLite.SchwabSecrets,
     accessToken: string,
     symbol: string,
@@ -498,7 +507,9 @@ const createMarketReplacementOrder = (oldOrder: StateLite.LiteOrderModel) => {
     };
 };
 
-const replaceSingleOrder = async (
+const replaceSingleOrder = (...args: Parameters<typeof replaceSingleOrderCore>) =>
+    withLegacyBrokerMutation(() => replaceSingleOrderCore(...args));
+const replaceSingleOrderCore = async (
     secrets: StateLite.SchwabSecrets,
     accessToken: string,
     order: StateLite.LiteOrderModel,

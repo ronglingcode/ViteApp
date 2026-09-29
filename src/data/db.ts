@@ -1,4 +1,5 @@
 import * as Chart from '../ui/chart';
+import { recordExecutionQuote } from '../bookmap/executionMetadata';
 import * as Helper from '../utils/helper';
 import * as TimeHelper from '../utils/timeHelper';
 import * as Config from '../config/config';
@@ -801,6 +802,7 @@ export const updateFromLevelOneQuote = (quote: Models.Quote) => {
     if (!quote)
         return;
     let symbol = quote.symbol;
+    recordExecutionQuote(symbol, !!quote.bidPrice, !!quote.askPrice);
     let symbolData = Models.getSymbolData(symbol);
     if (quote.bidPrice) {
         symbolData.bidPrice = quote.bidPrice;

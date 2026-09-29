@@ -20,14 +20,12 @@ import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import * as PartialStopDiscipline from './partialStopDisciplineController';
 import { getFirstSmallestQuantityExitPairIndex } from '../utils/exitPairSelection';
 import * as CoreTargetExitRules from './coreTargetExitRules';
+import { selectEntryOrdersToCancel } from './cancelPendingEntries';
 
 export const cancelKeyPressed = async (symbol: string) => {
     let exitPairs = Models.getExitPairs(symbol);
-    if (exitPairs.length < TakeProfit.BatchCount * 0.4) {
-        Broker.cancelAllEntryOrders(symbol);
-    } else {
-        Broker.cancelBreakoutEntryOrders(symbol);
-    }
+    const orders = selectEntryOrdersToCancel(Models.getEntryOrders(symbol), exitPairs.length, TakeProfit.BatchCount);
+    Broker.cancelOrders(orders.map(order => order.orderID));
     TradingState.clearPendingOrder(symbol);
 }
 

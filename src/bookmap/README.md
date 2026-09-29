@@ -274,3 +274,24 @@ Chart heights are reduced when bookmap is enabled (see `chartSettings.ts` `*With
 - **Databento MBP-10**: 10 levels per side from Nasdaq TotalView (historical, delayed with free key)
 - **Databento MBO**: Full depth — all orders at all price levels, reconstructed from individual order events
 - For true full depth across all exchanges, use DBEQ.MAX dataset or direct exchange feeds
+
+## Experimental direct execution
+
+`executionBridge.ts` pairs a live Schwab equity session with bmtrader and sends
+memory-only token metadata and versioned account/quote snapshots. The plugin
+owns migrated broker mutations; ViteApp consumes lifecycle results and refreshes
+its existing UI and trade state. Setup and action coverage are documented in
+the sibling repository at `bookmap-plugin/docs/direct-broker-execution.md`.
+
+`executionMetadata.ts` records actual OAuth expiry, successful broker read-start
+times, and incoming bid/ask times. Cached ticks and failed reads do not renew
+freshness. Both main and Lite runtimes supply these inputs.
+
+`executionFence.ts` coordinates every Schwab mutation with the native session.
+Unknown broker outcomes block further mutations pending review in the plugin.
+
+`direct-execution-fixtures.json` matches the plugin test resource byte-for-byte.
+`npm run test:direct-execution` checks production helpers and metadata/fence
+behavior. Plugin tests check Java plans, fake HTTP lifecycle, and the obfuscated
+artifact.
+
