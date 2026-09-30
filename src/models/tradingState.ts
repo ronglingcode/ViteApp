@@ -186,11 +186,15 @@ export const onPlaceBreakoutTrade = async (symbol: string, isLong: boolean,
     onPlaceTrade(symbol, isLong, false, entryPrice, stopLossPrice, riskLevel, submitEntryResult, sizeMultipler, plan);
 };
 
-export const onNativeEntryAccepted = (symbol: string, entry: {
+export const onNativeEntryAccepted = async (symbol: string, entry: {
     isLong: boolean; useMarketOrder: boolean; entryPrice: number; stopOutPrice: number;
     multiplier: number; basePlan: TradingPlansModels.BasePlan; submitEntryResult: Models.SubmitEntryResult;
-}) => onPlaceTrade(symbol, entry.isLong, entry.useMarketOrder, entry.entryPrice, entry.stopOutPrice,
-    entry.stopOutPrice, entry.submitEntryResult, entry.multiplier, entry.basePlan, true);
+    preserveExistingTrade?: boolean;
+}) => {
+    if (entry.preserveExistingTrade) return;
+    return onPlaceTrade(symbol, entry.isLong, entry.useMarketOrder, entry.entryPrice, entry.stopOutPrice,
+        entry.stopOutPrice, entry.submitEntryResult, entry.multiplier, entry.basePlan, true);
+};
 
 const onPlaceTrade = async (symbol: string, isLong: boolean, isMarketOrder: boolean,
     entryPrice: number, stopLossPrice: number, riskLevel: number, submitEntryResult: Models.SubmitEntryResult,

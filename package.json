@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test:direct-execution": "node --experimental-strip-types --test src/bookmap/directExecution.test.ts src/bookmap/directEntryExecution.test.ts",
+    "test:extended-execution": "node --experimental-strip-types scripts/generateExtendedExecutionFixtures.mjs --check && node --test scripts/nativeEntryState.test.mjs",
     "test:attendance": "node --experimental-strip-types --test src/attendance/attendance.test.ts",
     "dev": "vite",
     "build": "tsc && vite build",

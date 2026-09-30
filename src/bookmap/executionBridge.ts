@@ -68,6 +68,7 @@ const publishToken = () => {
 const createOrder = (order: Models.OrderModel | undefined) => order ? {
     orderID: order.orderID, orderType: order.orderType, quantity: order.quantity,
     price: order.price, isBuy: order.isBuy,
+    exitStopPrice: 'exitStopPrice' in order ? order.exitStopPrice : undefined,
 } : undefined;
 const supportedTradebookRules = (symbol: string, isLong: boolean) => {
     const state = TradingState.getBreakoutTradeState(symbol, isLong);
@@ -95,7 +96,7 @@ const publishState = () => {
         const pairs = Models.getChartWidget(symbol)?.exitOrderPairs ?? Models.getExitPairs(symbol);
         return {
             symbol, revision,
-            netQuantity: quantity, currentPrice: Models.getCurrentPrice(symbol), bid: data.bidPrice, ask: data.askPrice,
+            netQuantity: quantity, averagePrice: Models.getAveragePrice(symbol), currentPrice: Models.getCurrentPrice(symbol), bid: data.bidPrice, ask: data.askPrice,
             batchCount: GlobalSettings.batchCount, splitPartials: quantity !== 0 && Handler.hasSplitPartials(symbol, quantity > 0),
             hasPlan: state.hasValue, entryPrice: state.entryPrice, coreTarget: state.plan.coreTarget,
             coreCount: state.plan.coreCount, coreRuleEnabled: GlobalSettings.enableCoreTargetExitFeature,
@@ -149,11 +150,14 @@ const applyExecutionMessage = (data: any): boolean => {
                 Rules.checkPullbackRequirement(data.symbol, data.entryIsLong === true);
             }
             if (data.clearPending === true) TradingState.clearPendingOrder(data.symbol);
+            if (data.action === 'reload_partial') {
+                TradingState.setLowestExitBatchCount(data.symbol, data.reloadIsLong === true, data.exitPairCount);
+            }
             Firestore.logInfo(`Native ${data.action} started for ${data.symbol}`);
         } else if (data.type === 'execution_result') {
             const text = `Native ${data.action} ${data.outcome} for ${data.symbol}${data.reason ? ': ' + data.reason : ''}`;
             if (data.outcome === 'accepted') Firestore.logInfo(text); else Firestore.logError(text);
-            if (data.outcome === 'accepted' && data.action === 'wall_reversal_entry' && data.entry) {
+            if (data.entry) {
                 // Register before refreshing positions; a fast fill may already be in the cache.
                 const symbolData = Models.getSymbolData(data.symbol);
                 symbolData.highOfDay = Math.max(symbolData.highOfDay, data.entry.highOfDay);

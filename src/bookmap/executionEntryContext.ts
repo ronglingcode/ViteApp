@@ -7,6 +7,19 @@ import * as RiskManager from '../algorithms/riskManager';
 import * as Broker from '../api/broker';
 import { allowEntry } from '../attendance/attendance';
 import { BookmapWallReversal } from '../tradebooks/bookmapWallReversal';
+import * as TradingState from '../models/tradingState';
+import * as PartialStopDiscipline from '../controllers/partialStopDisciplineController';
+
+const directionState = (symbol: string, isLong: boolean) => {
+    const state = TradingState.getBreakoutTradeState(symbol, isLong);
+    return {
+        initialQuantity: state.initialQuantity,
+        partialsCount: TradingState.getPartialsCount(symbol, isLong),
+        addCount: TradingState.getAddedPartialStack(symbol, isLong).length,
+        tradebookID: state.submitEntryResult.tradeBookID,
+        stopTightenPhase: PartialStopDiscipline.getPhase(symbol, isLong),
+    };
+};
 
 /** Publish raw plan/account inputs ahead of actions; Java owns the entry decision. */
 export const createExecutionEntryContext = (symbol: string) => {
@@ -43,5 +56,18 @@ export const createExecutionEntryContext = (symbol: string) => {
         customStopShort: Chart.getCustomStopLossPrice(symbol, false),
         fixedQuantity: Models.getFixedQuantityFromInput(symbol),
         availableBuyingPower: account.currentBalance * 3.9 - usedBuyingPower,
+        // Observations for the experimental workflows; Java makes the action decision.
+        reloadIsLong: Models.isLongForReload(symbol),
+        lastExitSize: Models.getLastExitSize(symbol),
+        crosshairPrice: Chart.getCrossHairPrice(symbol),
+        todayRange: Models.getTodayRange(plan.atr),
+        longState: directionState(symbol, true), shortState: directionState(symbol, false),
+        activeBasePlan: TradingState.getSymbolState(symbol).activeBasePlan,
+        isGappedUp: Models.isGappedUp(symbol),
+        premarketHigh: data.premktHigh, premarketLow: data.premktLow,
+        addTargetLong: Models.getFirstTargetToAdd(symbol, true),
+        addTargetShort: Models.getFirstTargetToAdd(symbol, false),
+        maxRiskMultipleWithExistingPosition: RiskManager.maxRiskMultipleWithExistingPosition,
+        allowAddIfBelow: RiskManager.allowAddIfBelow,
     };
 };

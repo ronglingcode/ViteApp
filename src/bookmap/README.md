@@ -321,13 +321,29 @@ behavior. Plugin tests check Java plans, fake HTTP lifecycle, and the obfuscated
 artifact.
 
 Execution protocol 3 removes session negotiation. Both app and plugin must be
-updated together. The plugin's one default-off native execution switch enables
-cancel, exits, and supported initial entries together. ViteApp publishes
-`executionEntryContext.ts` inputs whenever that switch is enabled, and sends
+updated together. The plugin always executes cancel, flatten, market partial exits,
+digit/G/H/T adjustments, and standard flat initial wall-reversal entries natively.
+ViteApp publishes `executionEntryContext.ts` inputs whenever the plugin is running, and sends
 `execution_entry_state` acknowledgement after entry acceptance. Native entry
 results register the accepted trade plan in ViteApp without blocking another
-click on UI initialization or refresh. Initial wall-reversal entries require a flat symbol without
-pending orders; adds, pending-entry replacement, and reversals are later stages.
+click on UI initialization or refresh. Same-direction adds preserve the active
+trade/core state. Accepted entries are initialized even if subsequent old-entry
+cancellation fails; no broker mutation is repeated by a lifecycle handler.
+
+The default-off `experimentalDirectBrokerExecution` plugin flag is labeled
+**Experimental: Extended Native Execution (Schwab)** and controls Add Partial/reload,
+Swap, entries with existing positions/pending orders, generic non-chart B/S selection,
+and additional parsed risk methods. Off forwards those actions to ViteApp; on uses
+Java. Standard initial entries still require a flat symbol without pending orders.
+Status `enabled`, `entriesEnabled`, and `exitsEnabled` remain true while running;
+`extendedEnabled` reports this separate flag. Tokens and account/market inputs
+continue to flow when the flag is off.
+
+Current ViteApp tradebooks all belong to the mirrored Bookmap wall-reversal family.
+See the sibling plugin's `docs/direct-broker-execution.md` for the exact operation
+table, existing-risk sizing, reload rules, and Swap's same-direction semantics.
+`npm run test:extended-execution` verifies 20 fixtures recorded from the production
+ViteApp reload/swap handlers with a recording broker and tests preserved trade state.
 Regenerate entry parity fixtures with
 `node --experimental-strip-types scripts/generateDirectEntryFixtures.mjs`.
 
