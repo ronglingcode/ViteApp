@@ -11,7 +11,6 @@ import * as VwapPatterns from './vwapPatterns';
 import * as GlobalSettings from '../config/globalSettings';
 import * as NotificationEngine from '../notifications/notificationEngine';
 import * as RiskManager from './riskManager';
-import { TradebookID } from '../tradebooks/tradebookIds';
 
 declare let window: Models.MyWindow;
 
@@ -360,19 +359,6 @@ export const onMinuteClosed = (
                 openPriceToUse = newlyClosedCandle.close;
             }
             TradebooksManager.updateTradebooksStatus(symbol, widget.tradebooks, openPriceToUse, vwapToUse);
-        }
-    }
-    let widget = Models.getChartWidget(symbol);
-    if (widget && widget.tradebooks && seconds > 50) {
-        // Check for vwap bounce fail tradebook and call status function
-        let tradebooks = widget.tradebooks;
-        for (let tradebookMapEntryPair of tradebooks) {
-            let tradebook = tradebookMapEntryPair[1];
-            if (tradebook.getID() === TradebookID.ShortVwapBounceFailed && tradebook.isEnabled()) {
-                let status = VwapPatterns.getStatusForVwapBounceFail(symbol);
-                Firestore.logInfo(`${symbol} vwap bounce fail status: ${status}`);
-                break;
-            }
         }
     }
 }

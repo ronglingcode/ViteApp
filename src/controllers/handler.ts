@@ -16,7 +16,6 @@ import * as Models from '../models/models';
 import * as TradingState from '../models/tradingState';
 import * as Broker from '../api/broker';
 import * as AdjustExitsHandler from './adjustExitsHandler';
-import { TradebookID } from '../tradebooks/tradebookIds';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
 import * as PartialStopDiscipline from './partialStopDisciplineController';
 import { getFirstSmallestQuantityExitPairIndex } from '../utils/exitPairSelection';
@@ -473,20 +472,6 @@ export const flattenPostionKeyPressed = async (symbol: string) => {
     let finished = Broker.flattenPosition(symbol, netQuantity, logTags);
     return finished;
 };
-export const vwapBounceFail = async (symbol: string, shiftKey: boolean) => {
-    let isLong = false;
-    let tradebooks = Models.getEnabledTradebooksForSingleDirection(symbol, isLong);
-    if (tradebooks.length == 0) {
-        Firestore.logError(`no tradebooks for ${symbol}`);
-        return;
-    }
-    for (let tradebook of tradebooks) {
-        if (tradebook.getID() == TradebookID.ShortVwapBounceFailed) {
-            tradebook.startEntry(shiftKey, false, Models.getDefaultEntryParameters());
-            return;
-        }
-    }
-}
 export const twoWayBreakout = async (symbol: string) => {
     /*
     let isLong = true;

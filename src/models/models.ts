@@ -2045,7 +2045,6 @@ export enum CommonEntryMethods {
     FirstNewLowM15 = 'FirstNewLowM15',
     FirstNewLowM30 = 'FirstNewLowM30',
     FalsePremarketHighBreakout = 'FalsePremarketHighBreakout',
-    VwapBounceFail = 'VwapBounceFail',
     LowOfDay = 'LowOfDay',
     HighOfDay = 'HighOfDay',
 

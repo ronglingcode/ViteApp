@@ -9,13 +9,11 @@ export enum TradebookID {
     GapAndCrapBookmapBidWallBreakdown = 'GapAndCrapBookmapBidWallBreakdown',
     GapAndCrapOfferStepDownReappear = 'GapAndCrapOfferStepDownReappear',
     GapAndCrapBreakdownBidSwingLow = 'GapAndCrapBreakdownBidSwingLow',
-    GapAndCrapShortVwapBounceFailed = 'GapAndCrap-ShortVwapBounceFailed',
 
     // Gap Down & Go Down
     GapDownAndGoDownBookmapBidWallBreakdown = 'GapDownAndGoDownBookmapBidWallBreakdown',
     GapDownAndGoDownOfferStepDownReappear = 'GapDownAndGoDownOfferStepDownReappear',
     GapDownAndGoDownBreakdownBidSwingLow = 'GapDownAndGoDownBreakdownBidSwingLow',
-    GapDownAndGoDownShortVwapBounceFailed = 'GapDownAndGoDown-ShortVwapBounceFailed',
 
     // Gap Down & Go Up
     GapDownAndGoUpBookmapOfferWallBreakout = 'GapDownAndGoUpBookmapOfferWallBreakout',
@@ -25,6 +23,4 @@ export enum TradebookID {
     RangeBoundBidReversal = 'RangeBoundBidReversal',
     RangeBoundOfferReversal = 'RangeBoundOfferReversal',
 
-    // Generic
-    ShortVwapBounceFailed = 'ShortVwapBounceFailed',
 }

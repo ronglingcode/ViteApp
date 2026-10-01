@@ -55,27 +55,14 @@ export interface TradingPlans {
 export interface TradebookCommonConfig {
     enabled?: number,
 }
-export interface VwapBounceFailConfig extends TradebookCommonConfig {
-    waitForClose: boolean,
-}
 export interface TradebooksConfig {
-    level_open_vwap: LevelOpenVwapConfig,
     open_level_vwap: OpenLevelVwapConfig,
     vwap_level_open: VwapLevelOpenConfig,
-    vwap_open_level: VwapOpenLevelConfig,
 }
 export interface VwapLevelOpenConfig {
     shortOpenDrive: TradebookCommonConfig,
-    longVwapPushdownFail: VwapBounceFailConfig,
-}
-export interface VwapOpenLevelConfig {
-    longVwapPushdownFail: VwapBounceFailConfig,
-}
-export interface LevelOpenVwapConfig {
-    shortVwapBounceFail: VwapBounceFailConfig,
 }
 export interface OpenLevelVwapConfig {
-    shortVwapBounceFail: VwapBounceFailConfig,
     longOpenDrive: TradebookCommonConfig,
 }
 export interface AverageTrueRange {
@@ -104,7 +91,6 @@ export interface SingleDirectionPlans {
     finalTargets: SingleExitTarget[],
     /* used strategies begin */
     levelMomentumPlan?: LevelMomentumPlan,
-    vwapBounceFailPlan?: VwapBounceFailPlan,
     allTimeHighVwapContinuationPlan?: AllTimeHighVwapContinuationPlan,
     gapAndCrapPlan?: GapAndCrapPlan,
     gapAndGoPlan?: GapAndGoPlan,
@@ -114,7 +100,6 @@ export interface SingleDirectionPlans {
 
 };
 
-export interface VwapBounceFailPlan extends BasePlan { }
 export interface AllTimeHighVwapContinuationPlan extends BasePlan {
     allTimeHigh: number,
 }

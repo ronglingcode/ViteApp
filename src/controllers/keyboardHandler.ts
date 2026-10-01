@@ -66,8 +66,6 @@ export const handleKeyPressed = (
     }
     else if (code === 'KeyW') {
         Handler.swapPositionKeyPressed(symbol);
-    } else if (code === 'KeyV') {
-        Handler.vwapBounceFail(symbol, shiftKey);
     } else if (code === 'KeyA') {
         Handler.reloadPartialPressed(symbol, shiftKey, sourcePrice);
     } else if (code === 'KeyR') {
