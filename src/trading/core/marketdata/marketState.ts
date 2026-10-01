@@ -21,6 +21,7 @@ export class MarketState {
     private currentPrice = 0;
     private latestPriceTime = 0;
     private latestBucketTime = 0;
+    private firstRegularBucketTime = 0;
     private highOfDay = 0;
     private lowOfDay = 0;
     private premarketHigh = 0;
@@ -38,6 +39,7 @@ export class MarketState {
         this.buckets.clear(); this.seen.clear(); this.vwaps.clear(); this.liveFrom = liveFrom;
         this.totalVolume = this.totalDollars = this.premarketDollars = this.currentPrice = this.latestPriceTime = 0;
         this.latestBucketTime = 0;
+        this.firstRegularBucketTime = 0;
         this.highOfDay = this.lowOfDay = this.premarketHigh = this.premarketLow = 0;
         this.lockedAtMax = false;
         this.correction = correction; this.corrected = false;
@@ -49,6 +51,7 @@ export class MarketState {
             const dollars = candle.volume * typicalPrice(candle);
             this.buckets.set(candle.datetime, { ...candle, dollars, firstTradeTime: candle.datetime, lastTradeTime: candle.datetime + 59999 });
             this.latestBucketTime = candle.datetime;
+            if (!time.isPremarket && !this.firstRegularBucketTime) this.firstRegularBucketTime = candle.datetime;
             this.totalVolume += candle.volume; this.totalDollars += dollars;
             if (time.isPremarket) this.premarketDollars += dollars;
             this.updateLevels(candle.high, candle.low, time.isPremarket);
@@ -62,7 +65,7 @@ export class MarketState {
         const time = marketTime(trade.timestamp), bucketTime = Math.floor(trade.timestamp / 60000) * 60000;
         if (trade.symbol !== this.symbol || time.date !== this.date || time.minutesSinceMarketOpen < -510 || trade.timestamp < this.liveFrom || trade.price <= 0 || trade.size <= 0) return false;
         const latestBucket = this.latestBucketTime;
-        if (bucketTime < latestBucket) return false; // preserve the existing closed-bucket late-trade policy
+        if (bucketTime < latestBucket) return false; // a closed candle is immutable to live prints
         const key = trade.sequence !== undefined ? `q:${trade.sequence}` : trade.id === undefined ? '' : `i:${trade.exchange ?? ''}:${trade.id}`;
         if (bucketTime > latestBucket) this.seen.clear();
         if (key && this.seen.has(key)) return false;
@@ -74,6 +77,7 @@ export class MarketState {
                 volume: 0, vwap: 0, dollars: 0, firstTradeTime: trade.timestamp, lastTradeTime: trade.timestamp };
             this.buckets.set(bucketTime, candle);
             this.latestBucketTime = bucketTime;
+            if (!time.isPremarket && !this.firstRegularBucketTime) this.firstRegularBucketTime = bucketTime;
         }
         if (trade.timestamp < candle.firstTradeTime) { candle.open = trade.price; candle.firstTradeTime = trade.timestamp; }
         if (trade.timestamp >= candle.lastTradeTime) { candle.close = trade.price; candle.lastTradeTime = trade.timestamp; }
@@ -103,6 +107,21 @@ export class MarketState {
         const premarket = candles.filter(candle => marketTime(candle.datetime).isPremarket);
         this.liquidityScale = calculateLiquidityScale(this.currentPrice, regular.map(candle => candle.volume), premarket.at(-1)?.volume ?? 0, this.marketCap, this.lockedAtMax);
         if (this.liquidityScale === 1) this.lockedAtMax = true;
+    }
+    metrics() {
+        const latest = this.buckets.get(this.latestBucketTime);
+        const candle: Candle | undefined = latest ? {
+            symbol: latest.symbol, datetime: latest.datetime, open: latest.open, high: latest.high, low: latest.low,
+            close: latest.close, volume: latest.volume, vwap: latest.vwap,
+        } : undefined;
+        return {
+            currentPrice: this.currentPrice, vwap: this.totalVolume ? this.totalDollars / this.totalVolume : 0,
+            totalVolume: this.totalVolume, totalTradingAmount: this.totalDollars, premarketDollarTraded: this.premarketDollars,
+            highOfDay: this.highOfDay, lowOfDay: this.lowOfDay, premarketHigh: this.premarketHigh, premarketLow: this.premarketLow,
+            openPrice: this.buckets.get(this.firstRegularBucketTime)?.open ?? this.currentPrice,
+            liquidityScale: this.liquidityScale, liquidityScaleLockedAtMax: this.lockedAtMax,
+            candle, firstTradeTime: latest?.firstTradeTime ?? 0, latestPriceTime: this.latestPriceTime,
+        };
     }
     snapshot() {
         const candles: Candle[] = [...this.buckets.values()].map(({ firstTradeTime: _first, lastTradeTime: _last, dollars: _dollars, ...candle }) => ({ ...candle }));

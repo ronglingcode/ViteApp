@@ -1,4 +1,6 @@
 import { impliedMarketCapInBillions } from '../trading/core/marketdata/eligibility.ts';
+import { marketLoader } from '../trading/adapters/browserMarket.ts';
+import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import { addDays } from '../trading/core/marketdata/marketClock.ts';
 import { calculatePremarketVolume } from '../trading/core/marketdata/premarketVolume.ts';
 import * as tradeStationApi from "./tradeStation/api";
@@ -80,9 +82,10 @@ export const getFullPriceHistory = async (symbol: string, isFutures: boolean, to
     };
   }
 
-  const history = await massiveApi.massiveApi.getFullPriceHistory(symbol, todayStringInput);
+  const loaded = await marketLoader.load(symbol, todayStringInput, Models.getMarketCapInMillions(symbol), TradingPlans.getVwapCorrection(symbol));
+  const history = loaded.history;
   return {
-    today1MinuteBars: history.today1MinuteBars.map(massiveApi.toChartCandle),
+    today1MinuteBars: loaded.state.snapshot().candles.map(massiveApi.toChartCandle),
     dailyBars: history.dailyBars.map(massiveApi.toChartCandle),
     premarketDollarCollection: history.premarketDollarCollection,
   };

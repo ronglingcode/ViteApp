@@ -13,7 +13,7 @@ vendor modules must not import browser adapters or `window.HybridApp`.
 `tsconfig.trading.json` checks extracted production modules without DOM libraries.
 
 Massive uses domain candles with epoch milliseconds; chart timestamp conversion
-stays in `api/massive/api.ts`. All history follows `next_url`, sorts and deduplicates
+stays in `adapters/browserMarket.ts`. All history follows `next_url`, sorts and deduplicates
 buckets, accepts successful empty intervals, and reports HTTP/entitlement errors.
 Today uses the explicit New York session date and a 50,000 base-bar limit. The
 30-minute lookback uses date-only arithmetic; no undocumented `extendedHours`
@@ -54,9 +54,11 @@ Migration design and resumable progress are in bookmap-plugin/docs:
 `standalone-native-trading-plan.md` and `standalone-native-trading-progress.md`.
 `core/marketdata` now includes headless `MarketState`, Camarilla, sticky liquidity,
 startup eligibility and the historical consolidation check. Browser callers use
-the extracted pure calculations and trade mapper. The headless state itself is
-not yet the browser DB's source; the history/live loader and adapter are next.
-`npm run test:market` compares 39 headless scenarios and checks real worker batching.
+the extracted pure calculations and trade mapper. `runtime/MarketLoader` seeds
+complete history buckets, backfills individual prints and deduplicates buffered
+live prints. The browser DB now renders this headless state through its adapter.
+`npm run test:market` compares 39 headless scenarios and checks worker batching,
+history/live overlap and the actual browser DB adapter, including startup races.
 
 The worker preserves each print in its 100ms batch, correcting intermediate OHLC
 and traded-dollar/VWAP loss from the former last-price/summed-size merge. Render

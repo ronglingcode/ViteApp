@@ -1,3 +1,4 @@
+import { marketLoader, applyMarketTrade, applyMarketMetrics, coreChartCandle } from '../trading/adapters/browserMarket.ts';
 import * as Chart from '../ui/chart';
 import * as Helper from '../utils/helper';
 import * as TimeHelper from '../utils/timeHelper';
@@ -255,6 +256,20 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyC
         return false;
     }
     let symbolData = Models.getSymbolData(symbol);
+    const coreState = marketLoader.getState(symbol);
+    if (coreState) {
+        // Prints may arrive between the history promise and chart initialization.
+        data = coreState.snapshot().candles.map(candle => coreChartCandle(candle));
+        symbolData.candles = []; symbolData.volumes = []; symbolData.m1Vwaps = [];
+        symbolData.m1Candles = symbolData.candles; symbolData.m1Volumes = symbolData.volumes;
+        symbolData.keyAreaData = []; symbolData.m1ma5 = []; symbolData.m1ma9 = [];
+        symbolData.premktAboveVwapCount = 0; symbolData.premktBelowVwapCount = 0;
+        symbolData.openRange = undefined;
+        symbolData.OpenRangeLineSeriesData = Models.getEmptyOpenRangeLineSeriesData();
+        symbolData.totalVolume = 0; symbolData.totalTradingAmount = 0; symbolData.premarketDollarTraded = 0;
+        symbolData.premktHigh = 0; symbolData.premktLow = Infinity;
+        symbolData.highOfDay = 0; symbolData.lowOfDay = Infinity;
+    }
     let keyAreasToDraw = TradingPlans.getKeyAreasToDraw(symbol);
     let loadedCandlesCount = 0;
     for (let i = 0; i < keyAreasToDraw.length; i++) {
@@ -356,6 +371,11 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyC
     if (loadedCandlesCount == 0) {
         return false;
     }
+    if (coreState) {
+        const core = coreState.snapshot();
+        applyMarketMetrics(symbolData, coreState.metrics());
+        symbolData.m1Vwaps = core.vwaps.map(point => ({ time: Helper.jsDateToTradingViewUTC(new Date(point.datetime)), value: point.value }));
+    }
     for (let i = 1; i < symbolData.volumes.length; i++) {
         setColorForVolume(symbolData.candles, symbolData.volumes, i);
     }
@@ -413,6 +433,8 @@ export const initialize = (symbol: string, inputCandles: Models.Candle[], dailyC
 }
 const updateFromTimeSaleCore = (timesale: Models.TimeSale): TimeSaleApplyMeta | null => {
     let symbol = timesale.symbol;
+    const market = applyMarketTrade(timesale);
+    if (!market?.candle) return null;
     let widget = Models.getChartWidget(symbol);
     if (!widget) {
         return null;
@@ -424,8 +446,7 @@ const updateFromTimeSaleCore = (timesale: Models.TimeSale): TimeSaleApplyMeta | 
     timeframeBucket = TimeHelper.roundToTimeFrameBucketTime(timeframeBucket, 1);
     let newTime = Helper.jsDateToUTC(timeframeBucket);
     let symbolData = Models.getSymbolData(symbol);
-    let lastPrice = timesale.lastPrice ?? 0;
-    let lastSize = timesale.lastSize ?? 0;
+    let lastPrice = market.currentPrice;
     let lastCandle = symbolData.candles[symbolData.candles.length - 1];
     if (!lastCandle) {
         // sometimes timesales data comes in before chart is loaded.
@@ -436,42 +457,20 @@ const updateFromTimeSaleCore = (timesale: Models.TimeSale): TimeSaleApplyMeta | 
     }
     let timeAndSalesTime = Helper.numberToDate(timesale.tradeTime);
     TimeHelper.setCurrentMarketTime(timeAndSalesTime);
-    symbolData.totalVolume += lastSize;
-    symbolData.totalTradingAmount += (lastPrice * lastSize);
-    let newVwapValue = symbolData.totalTradingAmount / symbolData.totalVolume;
+    const newVwapValue = market.vwap;
     let lastVolume = symbolData.volumes[symbolData.volumes.length - 1];
     let lastVwap = symbolData.m1Vwaps[symbolData.m1Vwaps.length - 1];
     if (!lastVolume || !lastVwap) {
         // sometimes timesales data comes in before all chart series data is loaded.
         return null;
     }
-    if (timeframeBucket < Config.Settings.marketOpenTime) {
-        // update pre-market indicators
-        let haspremarketChange = false;
-        if (lastPrice > symbolData.premktHigh) {
-            symbolData.premktHigh = Math.ceil(lastPrice * 100) / 100;
-            Chart.resetPreMarketHighLineSeries(widget);
-            haspremarketChange = true;
-        }
-        if (lastPrice < symbolData.premktLow && lastPrice > 0) {
-            symbolData.premktLow = Math.floor(lastPrice * 100) / 100;
-            Chart.resetPreMarketLowLineSeries(widget);
-            haspremarketChange = true;
-        }
-        if (haspremarketChange) {
-            Chart.drawMomentumLevels(widget);
-            window.dispatchEvent(new CustomEvent('tradingscripts:bookmap-market-levels-updated', {
-                detail: { symbol },
-            }));
-        }
-    } else {
-        // update in-market indicators
-        if (lastPrice > symbolData.highOfDay) {
-            symbolData.highOfDay = Math.ceil(lastPrice * 100) / 100;
-        }
-        if (lastPrice < symbolData.lowOfDay && lastPrice > 0) {
-            symbolData.lowOfDay = Math.floor(lastPrice * 100) / 100;
-        }
+    const previousPremarketHigh = symbolData.premktHigh, previousPremarketLow = symbolData.premktLow;
+    applyMarketMetrics(symbolData, market);
+    if (previousPremarketHigh !== symbolData.premktHigh || previousPremarketLow !== symbolData.premktLow) {
+        if (previousPremarketHigh !== symbolData.premktHigh) Chart.resetPreMarketHighLineSeries(widget);
+        if (previousPremarketLow !== symbolData.premktLow) Chart.resetPreMarketLowLineSeries(widget);
+        Chart.drawMomentumLevels(widget);
+        window.dispatchEvent(new CustomEvent('tradingscripts:bookmap-market-levels-updated', { detail: { symbol } }));
     }
     // Forward the updated trade price/day range immediately, before chart work or account polling.
     publishExecutionMarketData(symbol, lastPrice, symbolData);
@@ -484,21 +483,9 @@ const updateFromTimeSaleCore = (timesale: Models.TimeSale): TimeSaleApplyMeta | 
 
     if (newTime == lastCandle.time) {
         isNewCandleData = false;
-        // update current candle
-        lastVolume.value += lastSize;
-        if (timesale.tradeTime && timesale.tradeTime < lastCandle.firstTradeTime) {
-            lastCandle.open = lastPrice;
-            lastCandle.firstTradeTime = timesale.tradeTime;
-        }
-        if (lastPrice > lastCandle.high) {
-            lastCandle.high = lastPrice;
-        } else if (lastPrice < lastCandle.low) {
-            lastCandle.low = lastPrice;
-        }
-        lastCandle.close = lastPrice;
-        lastCandle.volume += lastSize;
+        Object.assign(lastCandle, coreChartCandle(market.candle, market.firstTradeTime));
+        lastVolume.value = market.candle.volume;
         lastVwap.value = newVwapValue;
-
     } else {
         // moved to a new candle
         // handle newly closed candle
@@ -551,24 +538,12 @@ const updateFromTimeSaleCore = (timesale: Models.TimeSale): TimeSaleApplyMeta | 
         let newDate = Helper.tvTimestampToLocalJsDate(newTime);
         let newCandleIsMarketOpenCandle = Helper.isMarketOpenTime(newDate, Config.Settings.currentDay);
 
-        lastCandle = {
-            symbol: timesale.symbol,
-            time: newTime,
-            open: lastPrice,
-            high: lastPrice,
-            low: lastPrice,
-            close: lastPrice,
-            minutesSinceMarketOpen: Helper.getMinutesSinceMarketOpen(newDate),
-            firstTradeTime: timesale.tradeTime ?? 0,
-            datetime: timesale.tradeTime ?? 0,
-            volume: lastSize,
-            vwap: 0,
-        };
+        lastCandle = coreChartCandle(market.candle, market.firstTradeTime);
         let newCandleIsAfterMaketOpen = lastCandle.minutesSinceMarketOpen >= 0;
         symbolData.candles.push(lastCandle);
         lastVolume = {
             time: newTime,
-            value: lastSize
+            value: market.candle.volume
         };
         symbolData.volumes.push(lastVolume);
         lastVwap = {

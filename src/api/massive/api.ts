@@ -1,19 +1,9 @@
-import * as Secret from '../../config/secret';
-import type * as Models from '../../models/models';
-import * as Helper from '../../utils/helper';
 import * as Firestore from '../../firestore';
-import { MassiveApi } from '../../trading/libraries/massive/api.ts';
-import { browserHttp } from '../../trading/adapters/browserHttp.ts';
+import { massiveApi, toChartCandle } from '../../trading/adapters/browserMarket.ts';
+export { massiveApi, toChartCandle } from '../../trading/adapters/browserMarket.ts';
 import type { Candle } from '../../trading/models/market.ts';
 import { marketTime } from '../../trading/core/marketdata/marketClock.ts';
 
-export const massiveApi = new MassiveApi(browserHttp, () => Secret.massive().apiKey);
-export const toChartCandle = (candle: Candle): Models.CandlePlus => ({
-    ...candle,
-    time: Helper.jsDateToTradingViewUTC(new Date(candle.datetime)),
-    minutesSinceMarketOpen: marketTime(candle.datetime).minutesSinceMarketOpen,
-    firstTradeTime: candle.datetime,
-});
 const chartBars = async (load: Promise<Candle[]>) => (await load).map(toChartCandle);
 export const getPriceHistory = (symbol: string, timeframe: number) =>
     chartBars(massiveApi.getPriceHistory(symbol, timeframe, marketTime(Date.now()).date));
