@@ -1,0 +1,1280 @@
+{
+  "entry": "src/main.ts",
+  "sourceFiles": 128,
+  "runtimeModules": 106,
+  "orphans": [
+    {
+      "file": "src/algorithms/strategies.ts",
+      "line": 1,
+      "lines": 10,
+      "testsUseIt": false
+    },
+    {
+      "file": "src/api/proxyServer.ts",
+      "line": 1,
+      "lines": 20,
+      "testsUseIt": false
+    },
+    {
+      "file": "src/models/atr.ts",
+      "line": 1,
+      "lines": 8,
+      "testsUseIt": false
+    },
+    {
+      "file": "src/patterns/allTimeHigh.ts",
+      "line": 1,
+      "lines": 23,
+      "testsUseIt": false
+    },
+    {
+      "file": "src/patterns/camPivots.ts",
+      "line": 1,
+      "lines": 115,
+      "testsUseIt": false
+    },
+    {
+      "file": "src/tradebooks/singleKeyLevel/commonRules.ts",
+      "line": 1,
+      "lines": 36,
+      "testsUseIt": false
+    },
+    {
+      "file": "src/tradebooks/tradebookUtil.ts",
+      "line": 1,
+      "lines": 7,
+      "testsUseIt": false
+    },
+    {
+      "file": "src/ui/popup.ts",
+      "line": 1,
+      "lines": 91,
+      "testsUseIt": false
+    },
+    {
+      "file": "src/utils/entryThresholdValidator.ts",
+      "line": 1,
+      "lines": 87,
+      "testsUseIt": false
+    }
+  ],
+  "typeOnly": [
+    "src/config/profiles/profiles.ts",
+    "src/notifications/types.ts",
+    "src/workers/marketDataMessages.ts"
+  ],
+  "unusedDeclarations": [
+    {
+      "file": "src/algorithms/autoTrader.ts",
+      "line": 271,
+      "name": "scheduleSecondMinuteCloseEvent",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/gapAndGoAlgo.ts",
+      "line": 30,
+      "name": "validateEntry",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/gapAndGoAlgo.ts",
+      "line": 93,
+      "name": "getAllowedReasonToAddPartial",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 17,
+      "name": "getTotalRange",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 20,
+      "name": "getBodyRatio",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 25,
+      "name": "isRedOpenBar",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 31,
+      "name": "isGreenOpenBar",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 38,
+      "name": "hasBreakoutOccurredForNewCandle",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 45,
+      "name": "isFalseBreakoutForNewCandle",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 54,
+      "name": "hasGreenBarSinceOpen",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 67,
+      "name": "hasRedBarSinceOpen",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 78,
+      "name": "firstBarIsPinBar",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 90,
+      "name": "isPriceOutsideLevel",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 97,
+      "name": "isBarClosed",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 104,
+      "name": "isPriceInLowerRange",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 111,
+      "name": "isPriceInUpperRange",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 118,
+      "name": "hasLostVwapMomentum",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 142,
+      "name": "isPriceAboveVwap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 151,
+      "name": "isFirstRetracement",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 185,
+      "name": "isBarSameDirection",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 193,
+      "name": "isConsecutiveBarsSameDirection",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 210,
+      "name": "analyzeBreakoutPatterns",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 243,
+      "name": "hasClosedBeyondPrice",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 256,
+      "name": "getFirstCandleClosedBeyondPrice",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 268,
+      "name": "hasConfirmationForBreakoutEntry",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 295,
+      "name": "hasFalseHighOfDayBreakout",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 336,
+      "name": "hasFalseBreakout",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 345,
+      "name": "hasConfirmationForMarketEntry",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 371,
+      "name": "getFirstNewHighLowPrice",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 397,
+      "name": "checkFirstNewHighPattern",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 453,
+      "name": "hasPremarketBreakout",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 461,
+      "name": "getOpenExtensionFromVwapInAtr",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 475,
+      "name": "hasRetracementFromPremarket",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 495,
+      "name": "getFirstPullbackStatus",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 568,
+      "name": "isPriceWorseThanVwap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 576,
+      "name": "isPriceWorseThanKeyLevel",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 588,
+      "name": "hasLostKeyLevel",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 712,
+      "name": "hasClosedOutsideVwap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 730,
+      "name": "hasPullbackToVwapBeforeOpen",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 758,
+      "name": "isHigherLows",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 773,
+      "name": "isLowerHighs",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 788,
+      "name": "getMinimumDistanceToVwap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 793,
+      "name": "getDirectionalDistanceToVwap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 800,
+      "name": "getFirstBreakoutCandle",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 816,
+      "name": "hasLevelRetest",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 825,
+      "name": "hasApproachedTargetToAdd",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/riskManager.ts",
+      "line": 54,
+      "name": "orOverride",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/riskManager.ts",
+      "line": 95,
+      "name": "getRiskMultiplerForNextEntry2",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/riskManager.ts",
+      "line": 114,
+      "name": "getRiskInDollarForNextEntry",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 21,
+      "name": "isTimingAndEntryAllowedForHigherTimeframe",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 60,
+      "name": "checkVwap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 90,
+      "name": "checkOpenCandle",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 133,
+      "name": "entryJustHappened",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 143,
+      "name": "checkForMidRangeBreakout",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 159,
+      "name": "atMostHalfPositionForMarketOrder",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 171,
+      "name": "checkForMinimumPositionSize",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 196,
+      "name": "isShortAboveLastResistance",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 213,
+      "name": "isLongBelowLastSupport",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 233,
+      "name": "checkTightenStop",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 254,
+      "name": "isIncreasingTarget",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 265,
+      "name": "isBlockedByTiming",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 269,
+      "name": "isBlockedByDeferTrading",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 275,
+      "name": "isBlockedByAfterTrading",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 282,
+      "name": "isAfterOpeningMomentum",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 299,
+      "name": "isLossWhenHoldingVwap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 307,
+      "name": "isAllowedForAddedPosition",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 329,
+      "name": "isEntryAfterTopPick",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 352,
+      "name": "isEntryPriceInMomentum",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 384,
+      "name": "isSpreadTooLarge",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 417,
+      "name": "isGreaterThanMinimumDistance",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 425,
+      "name": "allowedFirstMinuteByDailyChartGap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 444,
+      "name": "isReverseOfMomentumCandle",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 468,
+      "name": "getDisallowedReasonBasedOnOpenPriceZone",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 502,
+      "name": "isAllowedByVwapContinuation",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 554,
+      "name": "isNewTradeAfterStopOut",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/vwap.ts",
+      "line": 3,
+      "name": "isAgainstPremarketVwapStrongTrend",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/vwap.ts",
+      "line": 8,
+      "name": "isAgainstCurrentVwap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/vwap.ts",
+      "line": 47,
+      "name": "getPremarketTrendText",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/vwap.ts",
+      "line": 59,
+      "name": "isCrossed",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/vwapPatterns.ts",
+      "line": 5,
+      "name": "test",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/vwapPatterns.ts",
+      "line": 121,
+      "name": "getStatusForVwapPushdownFail",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/vwapPatterns.ts",
+      "line": 170,
+      "name": "getAboveWaterMomentumForPrice",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/vwapPatterns.ts",
+      "line": 194,
+      "name": "getStatusForOpenDrive",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/vwapPatterns.ts",
+      "line": 236,
+      "name": "hasTwoConsecutiveCandlesAgainstLevel",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/vwapPatterns.ts",
+      "line": 253,
+      "name": "hasTwoConsecutiveCandlesAgainstLevelAfterCloseAbove",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/vwapPatterns.ts",
+      "line": 286,
+      "name": "hasTwoConsecutiveCandlesAgainstVwap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/vwapPatterns.ts",
+      "line": 312,
+      "name": "hasMostRecentClosedCandleAgainstVwap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/vwapPatterns.ts",
+      "line": 328,
+      "name": "getNumberOfCandlesClosedAgainstVwap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/vwapPatterns.ts",
+      "line": 351,
+      "name": "isVwapContinuationEntry",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/vwapPatterns.ts",
+      "line": 366,
+      "name": "isNearAgainstVwap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/vwapPatterns.ts",
+      "line": 377,
+      "name": "isNearAlignWithVwap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/algorithms/vwapPatterns.ts",
+      "line": 389,
+      "name": "isNearAgainstLevel",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 431,
+      "name": "filterOrdersNotOnSameDay",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 745,
+      "name": "logErrorForObject",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 157,
+      "name": "copyOrder",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 162,
+      "name": "copySingleOrder",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 247,
+      "name": "extractTopLevelCancelableOrdersIds",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 334,
+      "name": "filterToEquityOrders",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 372,
+      "name": "extractEntryOrdersIds",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 544,
+      "name": "isSellOrder",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 667,
+      "name": "extractTradeExecutions",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 728,
+      "name": "generateExecutionScript",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/api.ts",
+      "line": 22,
+      "name": "placeOrderBase",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/api.ts",
+      "line": 52,
+      "name": "getOrdersForSymbol",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/api.ts",
+      "line": 60,
+      "name": "filterOrdersForSymbol",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/api.ts",
+      "line": 73,
+      "name": "getOrderSymbol",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 63,
+      "name": "getClosingOrderLegInstruction",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 131,
+      "name": "copyOrder",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 136,
+      "name": "copySingleOrder",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 169,
+      "name": "createOcoOrder",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 174,
+      "name": "createOcoOrderFromTwoLegs",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 180,
+      "name": "createOneEntryWithTwoExits",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 201,
+      "name": "createOcoExitOrder",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 214,
+      "name": "extractTopLevelCancelableOrdersIds",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 313,
+      "name": "extractEntryOrdersIds",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 473,
+      "name": "isSellOrder",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 572,
+      "name": "extractTradeExecutions",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 633,
+      "name": "generateExecutionScript",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/tradeStation/api.ts",
+      "line": 41,
+      "name": "testOrder",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/tradeStation/api.ts",
+      "line": 57,
+      "name": "test1",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/tradeStation/api.ts",
+      "line": 153,
+      "name": "renewRefreshToken",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/api/tradeStation/api.ts",
+      "line": 170,
+      "name": "buildUrlForGetRefreshToken",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/bookmap/executionBridge.ts",
+      "line": 31,
+      "name": "registerExecutionAccountRefresh",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/bookmap/executionMetadata.ts",
+      "line": 20,
+      "name": "getBrokerObservation",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [
+        "src/bookmap/directExecution.test.ts"
+      ]
+    },
+    {
+      "file": "src/config/secret.ts",
+      "line": 1,
+      "name": "openai",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/controllers/adjustExitsHandler.ts",
+      "line": 10,
+      "name": "onAdjustExits",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/controllers/adjustExitsHandler.ts",
+      "line": 26,
+      "name": "getSnapPriceForAdjustStops",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/controllers/adjustExitsHandler.ts",
+      "line": 65,
+      "name": "adjustAllStopExitsWithoutRule",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/controllers/entryHandler.ts",
+      "line": 12,
+      "name": "getLogTagsForEntryAction",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/controllers/entryHandler.ts",
+      "line": 19,
+      "name": "getOrderType",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/controllers/exitRulesCheckerSimple.ts",
+      "line": 27,
+      "name": "isAllowedForSingle",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/controllers/exitRulesCheckerSimple.ts",
+      "line": 111,
+      "name": "isLessTightThanClosedCandlesForAdjustStop",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/controllers/streamingHandler.ts",
+      "line": 39,
+      "name": "handleMessageData",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/controllers/streamingHandler.ts",
+      "line": 54,
+      "name": "handleTradeUpdates",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/controllers/streamingHandler.ts",
+      "line": 59,
+      "name": "handleOrderRejection",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/data/db.ts",
+      "line": 773,
+      "name": "getPremarketTradingAmountInMillionDollars",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/data/db.ts",
+      "line": 778,
+      "name": "getExtremePrice",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/data/db.ts",
+      "line": 842,
+      "name": "addDataAndUpdateChart",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/models/tradingState.ts",
+      "line": 12,
+      "name": "getDefaultAtr",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/tools/tradingview.ts",
+      "line": 55,
+      "name": "generateForOneTrade",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 245,
+      "name": "updateToolTip",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 263,
+      "name": "updateHoveredCandle",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1442,
+      "name": "runPostCandleCloseIndicators",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1446,
+      "name": "checkVwapBeforeOpen",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1468,
+      "name": "hideButtonAfterSeconds",
+      "kind": "function",
+      "exported": false,
+      "testFiles": []
+    },
+    {
+      "file": "src/ui/chartSettings.ts",
+      "line": 76,
+      "name": "getPopupChartSettings",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    },
+    {
+      "file": "src/utils/calculator.ts",
+      "line": 36,
+      "name": "getPercentageString",
+      "kind": "function",
+      "exported": true,
+      "testFiles": []
+    }
+  ],
+  "exposedModules": [
+    "src/algorithms/autoTrader.ts",
+    "src/algorithms/riskManager.ts",
+    "src/algorithms/takeProfit.ts",
+    "src/algorithms/watchlist.ts",
+    "src/api/broker.ts",
+    "src/api/marketData.ts",
+    "src/api/schwab/api.ts",
+    "src/api/tdAmeritrade/api.ts",
+    "src/config/config.ts",
+    "src/controllers/handler.ts",
+    "src/controllers/orderFlow.ts",
+    "src/controllers/orderFlowManager.ts",
+    "src/controllers/traderFocus.ts",
+    "src/firestore.ts",
+    "src/models/models.ts",
+    "src/models/tradingPlans/tradingPlans.ts",
+    "src/models/tradingState.ts",
+    "src/notifications/notificationEngine.ts",
+    "src/ui/chart.ts",
+    "src/ui/questionPopup.ts",
+    "src/ui/ui.ts",
+    "src/utils/helper.ts",
+    "src/utils/timeHelper.ts",
+    "src/utils/webRequest.ts"
+  ],
+  "unreachableStatements": [
+    {
+      "file": "src/utils/entryThresholdValidator.ts",
+      "line": 37,
+      "endLine": 81,
+      "reason": "Unreachable code detected."
+    }
+  ]
+}

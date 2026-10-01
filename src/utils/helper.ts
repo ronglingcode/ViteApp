@@ -1,10 +1,9 @@
 import type * as LightweightCharts from 'sunrise-tv-lightweight-charts'
 import * as TimeHelper from './timeHelper';
-import * as Runtime from '../replay/runtime';
 import * as GlobalSettings from '../config/globalSettings';
 
 export const getCurrentMarketTime = () => {
-    return Runtime.isReplayMode() ? new Date(TimeHelper.getCurrentMarketTime()) : new Date();
+    return new Date();
 };
 
 export interface EntryMethodConfig {

@@ -3,7 +3,6 @@ import * as gbase from "firebase/firestore"
 import * as secret from './config/secret'
 import * as Helper from './utils/helper';
 import type * as Models from './models/models';
-import * as Runtime from './replay/runtime';
 import { emitBookmapScreenLog, type BookmapScreenLogLevel } from './bookmap/screenLog';
 import { describeError } from './utils/errorDetails';
 declare let window: Models.MyWindow;
@@ -54,9 +53,6 @@ export const logError = async (msg: any, tags: Models.LogTags = {}) => {
     addToLogView(msg, 'Error', tags);
 };
 const log = async (msgType: string, msg: any, tags: Models.LogTags) => {
-    if (!Runtime.capabilities.externalWrites) {
-        return;
-    }
     let now = new Date();
     let expiredAt = new Date();
     expiredAt.setDate(expiredAt.getDate() + 7);
@@ -74,9 +70,6 @@ const log = async (msgType: string, msg: any, tags: Models.LogTags) => {
 };
 export const logOrder = async (order: any, logTags: Models.LogTags) => {
     console.log(order);
-    if (!Runtime.capabilities.externalWrites) {
-        return;
-    }
     let expiredAt = new Date();
     expiredAt.setDate(expiredAt.getDate() + 7);
     gbase.addDoc(gbase.collection(db, `${getCollectionNamePrefix()}-Orders`), {
@@ -159,9 +152,6 @@ export const deleteLogsAndOrders = async (prefix: string) => {
     });
 };
 const deleteCollection = async (collection: any) => {
-    if (!Runtime.capabilities.externalWrites) {
-        return;
-    }
     const q = gbase.query(collection);
     const querySnapshot = await gbase.getDocs(q);
     querySnapshot.forEach((doc: any) => {
@@ -170,9 +160,6 @@ const deleteCollection = async (collection: any) => {
 };
 
 export const setTradingState = async (state: Models.TradingState) => {
-    if (!Runtime.capabilities.externalWrites) {
-        return;
-    }
     let docRef = await gbase.doc(db, `${getStatePrefix()}/tradingState`);
     let d = {
         date: state.date,
@@ -189,9 +176,6 @@ export const setTradingState = async (state: Models.TradingState) => {
     await gbase.setDoc(docRef, d);
 };
 export const logBreakoutTradeState = async (symbol: string, state: Models.BreakoutTradeState) => {
-    if (!Runtime.capabilities.externalWrites) {
-        return;
-    }
     let expiredAt = new Date();
     expiredAt.setDate(expiredAt.getDate() + 3);
     gbase.addDoc(gbase.collection(db, `BreakoutTradeState`), {

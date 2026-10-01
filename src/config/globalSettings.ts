@@ -10,8 +10,6 @@ export const premarketVolumeHardFloorInShares: number = 500000;
 export const maxTradableStocksCount: number = 1; // do not change, trade management requires full attention
 // true: offload time & sales socket receipt + parsing to a Web Worker (main app).
 export const useMarketDataWorker: boolean = true;
-// Capture the worker-to-main market-data batches to local ProxyServer for replay.
-export const enableReplayCapture: boolean = true;
 // false: late T&S records still flow into chart/state updates.
 export const skipLateTimeAndSalesChartUpdates: boolean = false;
 export const allowLiveStats: boolean = true;
@@ -26,9 +24,6 @@ export const enableCamPivots: boolean = true;
 // This controls only candlestick rendering; one-minute candles are still collected and processed.
 export const showCandles: boolean | "auto" = "auto";
 export const showCandlesMinutesAfterMarketOpen: number = 10;
-// true: Lite app renders the simple Lightweight Chart with order price lines.
-// false: Lite app skips chart creation/updates and shows only the minimal trading UI.
-export const showSimpleChart: boolean = false;
 export const notificationSettings = {
     enabled: true,
     soundEnabled: true,

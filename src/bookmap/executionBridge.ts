@@ -2,7 +2,6 @@ import * as Models from '../models/models';
 import * as TradingState from '../models/tradingState';
 import * as Config from '../config/config';
 import * as GlobalSettings from '../config/globalSettings';
-import * as Runtime from '../replay/runtime';
 import * as Secret from '../config/secret';
 import * as Broker from '../api/broker';
 import * as Chart from '../ui/chart';
@@ -31,8 +30,7 @@ let refreshing = false;
 let refreshAccountForExecution = () => Chart.updateAccountUIStatus('native execution');
 export const registerExecutionAccountRefresh = (refresh: () => Promise<void>) => { refreshAccountForExecution = refresh; };
 
-const liveSchwab = () => Runtime.capabilities.liveBroker
-    && Config.getProfileSettings().brokerName === 'Schwab' && Config.getProfileSettings().isEquity;
+const liveSchwab = () => Config.getProfileSettings().brokerName === 'Schwab' && Config.getProfileSettings().isEquity;
 const send = (type: string, data: object = {}) => {
     try {
         if (!socket || socket.readyState !== WebSocket.OPEN) throw new Error('Native execution connection unavailable');

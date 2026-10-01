@@ -14,7 +14,7 @@ Status: implemented, pending review (not committed).
 ## How it worked before
 
 - `Helper.returnDefaultEntryMethods()` returned `["0.5 R", "0.1 R"]`; `getRiskMultiplierFromEntryMethod()` parsed the trailing number.
-- Only `BookmapWallReversal` consumed the entry method. Buttons render from `getEntryMethods()` in the main chart UI, the Lite UI, and the Bookmap plugin definitions. The Bookmap hover hotkey defaults to the first method.
+- Only `BookmapWallReversal` consumed the entry method. Buttons render from `getEntryMethods()` in the main chart UI and the Bookmap plugin definitions. The Bookmap hover hotkey defaults to the first method.
 - Per-trade risk was `allowedSize x getMaxDailyLossLimit()`, where `allowedSize = liquidityScale x getRiskMultiplerForNextEntry(...) x entryMethodMultiplier`. `getRiskMultiplerForNextEntry` defaulted to `0.24` (a fraction of the daily max), so a `"0.5 R"` entry actually risked `0.24 x 0.5 x dailyLimit` (~$600-$1,250).
 - `RiskManager.dailyMax = 5000`, but `getMaxDailyLossLimit()` returned `initialBalance x 0.0575 x 1.2` (~6.9% of account) when the day's initial balance was over $120K, else $5,000.
 - Exit partials came from the global `GlobalSettings.batchCount = 10` (`TakeProfit.BatchCount`). `planConfigs.sizingCount` was already written into the persisted trade plan on entry, but was always 10.
@@ -75,7 +75,7 @@ Deliberately unchanged:
 
 ### 8. No changes needed
 
-- Chart / Lite / Bookmap button rendering picks up the new labels automatically (`0.1 R` is under the two-buttons-per-row length limit).
+- Chart / Bookmap button rendering picks up the new labels automatically (`0.1 R` is under the two-buttons-per-row length limit).
 - Schwab order factory handles a single OCO child (`createOneEntryWithMultipleExits` loops over targets; `extractWorkingExitPairs` accepts one pair).
 - `tradingPlans.populateTargetsLabels` already caps by the actual exit-pair count.
 
@@ -91,7 +91,7 @@ Deliberately unchanged:
 - `npx tsc --noEmit`
 - `npm run build`
 - Manual smoke with the localhost proxy running:
-  - Main and Lite UIs show `1 R` / `0.1 R`; Bookmap plugin receives the new definitions; hover hotkey defaults to `1 R`.
+  - Main UI shows `1 R` / `0.1 R`; Bookmap plugin receives the new definitions; hover hotkey defaults to `1 R`.
   - `1 R` entry -> 10 exit pairs, risk ~$1,000.
   - `0.1 R` entry -> 1 exit pair, risk ~$100.
   - New entries blocked once realized PnL reaches -$4,000.

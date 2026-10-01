@@ -75,7 +75,6 @@ async function capture(name, key, edit = () => {}, shift = false, price = 10) {
             getAddCount: (_, isLong) => direction(isLong).addCount,
             setLowestExitBatchCount: () => {}, clearPendingOrder: () => {}, onPlaceBreakoutTrade: () => {} },
         'controllers/partialStopDisciplineController': { getPhase: (_, isLong) => direction(isLong).stopTightenPhase },
-        'replay/runtime': { capabilities: { liveBroker: true } },
         'algorithms/watchlist': { getWatchlistLimitBlockReason: () => context.watchlistBlockReason },
         'algorithms/vwap': { getStrongPremarketVwapTrend: () => 0 },
         'tradebooks/tradebooksManager': { getTradebookByID: (_, id) => {
@@ -182,7 +181,7 @@ await capture('swap requires active plan', 'KeyW', state => { delete state.entry
 await capture('swap requires position', 'KeyW', state => { state.netQuantity = 0; state.pairs = []; });
 const output = JSON.stringify(fixtures, null, 2) + '\n';
 for (const file of ['src/bookmap/extended-execution-fixtures.json', '../bookmap-plugin/src/test/resources/extended-execution-fixtures.json']) {
-    if (process.argv.includes('--check')) assert.equal(readFileSync(resolve(root, file), 'utf8'), output, `Regenerate ${file}`);
+    if (process.argv.includes('--check')) assert.deepEqual(JSON.parse(readFileSync(resolve(root, file), 'utf8')), fixtures, `Regenerate ${file}`);
     else writeFileSync(resolve(root, file), output);
 }
 console.log(`${process.argv.includes('--check') ? 'Verified' : 'Generated'} ${fixtures.length} fixtures from ViteApp handlers with a recording broker.`);

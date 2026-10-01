@@ -1,4 +1,3 @@
-import { capabilities } from '../../replay/runtime';
 import * as webRequest from '../../utils/webRequest';
 import * as Helper from '../../utils/helper';
 import * as secret from '../../config/secret';
@@ -21,7 +20,6 @@ const getAccessTokenFromStorage = () => {
 
 /* #region Order */
 const placeOrderBase = async (accountId: string, order: any, logTags: Models.LogTags) => {
-    if (!capabilities.liveBroker) return;
     Firestore.logOrder(order, logTags);
     let accessToken = getAccessTokenFromStorage();
     let url = `https://api.tdameritrade.com/v1/accounts/${accountId}/orders`;
@@ -33,7 +31,6 @@ const placeOrderBase = async (accountId: string, order: any, logTags: Models.Log
 };
 
 const replaceOrderBase = async (accountId: string, newOrder: any, oldOrderId: string, logTags: Models.LogTags) => {
-    if (!capabilities.liveBroker) return;
     Firestore.logOrder(newOrder, logTags);
     let accessToken = getAccessTokenFromStorage();
     let url = `https://api.tdameritrade.com/v1/accounts/${accountId}/orders/${oldOrderId}`;

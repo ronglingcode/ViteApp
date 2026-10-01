@@ -285,8 +285,7 @@ the sibling repository at `bookmap-plugin/docs/direct-broker-execution.md`.
 
 `executionMarketData.ts` forwards a compact `execution_market_data` bundle
 synchronously from each applied time-and-sales or level-one quote update:
-symbol, currentPrice, bid, ask, highOfDay, lowOfDay (`priceUnit: "real"`). Lite
-sends it when applying worker snapshots, including quote-only updates. Native
+symbol, currentPrice, bid, ask, highOfDay, lowOfDay (`priceUnit: "real"`). Native
 enable also publishes current market values. No account read, timer, or ack is
 needed for these messages. The main app's upstream trade worker batches incoming
 prints every 100 ms; forwarding itself adds no delay. The three-second account
@@ -297,7 +296,7 @@ initial-entry exposure preflight remains.
 
 `executionMetadata.ts` records OAuth expiry and prevents account reads completing
 out of order from replacing newer data. There are no quote timestamps or execution
-age cutoffs. Both main and Lite runtimes supply the latest values.
+age cutoffs. The main app supplies the latest values.
 
 This is a single-user MVP with one app and one account. There is no ownership
 handshake, session ID, origin allowlist, account-matching check, or reconnect

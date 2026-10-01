@@ -5,7 +5,6 @@ import type { Tradebook } from "./baseTradebook";
 import * as Helper from "../utils/helper";
 import { BookmapWallReversal } from "./bookmapWallReversal";
 import { TradebookID } from "./tradebookIds";
-import * as Runtime from '../replay/runtime';
 
 export interface BookmapTradebookButtonDefinition {
     id: string,
@@ -82,9 +81,6 @@ export const createTradebooksForRangeBoundReversal = (
 
 export const createAllTradebooks = (symbol: string) => {
     let tradebooksMap = new Map<string, Tradebook>();
-    if (!Runtime.capabilities.bookmap) {
-        return tradebooksMap;
-    }
     let plan = TradingPlans.getTradingPlans(symbol);
 
     if (isDirectionEnabled(plan.long)) {

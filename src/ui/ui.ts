@@ -3,7 +3,6 @@ import * as Chart from './chart';
 import * as Config from '../config/config';
 import * as TimeHelper from '../utils/timeHelper';
 import * as Helper from '../utils/helper';
-import * as Runtime from '../replay/runtime';
 declare let window: Models.MyWindow;
 
 /** True while clock diff is in the red zone; used to speak only on transition into bad sync. */
@@ -109,7 +108,7 @@ export const updateClock = (timeAndSalesTime: Date) => {
     let clock = getClockNode();
     if (!clock)
         return;
-    let localTime = Runtime.isReplayMode() ? new Date(timeAndSalesTime) : new Date();
+    let localTime = new Date();
     TimeHelper.setCurrentMarketTime(timeAndSalesTime);
     let localTimeString = TimeHelper.formatDateToHHMMSSMMM(localTime);
     let marketTimeString = TimeHelper.formatDateToHHMMSSMMM(timeAndSalesTime);
@@ -123,7 +122,7 @@ export const updateClock = (timeAndSalesTime: Date) => {
 
     // If difference is larger than 0.5 seconds, show in red
     let secondsSinceMarketOpen = Helper.getSecondsSinceMarketOpen(timeAndSalesTime);
-    if (!Runtime.isReplayMode() && timeDiffSeconds > 0.5 && secondsSinceMarketOpen < 15) {
+    if (timeDiffSeconds > 0.5 && secondsSinceMarketOpen < 15) {
         clock.style.color = 'red';
         if (!clockSyncWarningSpoken) {
             clockSyncWarningSpoken = true;

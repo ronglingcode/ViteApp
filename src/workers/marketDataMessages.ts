@@ -23,40 +23,19 @@ export interface SchwabWorkerConfig {
     levelOneSubscribeRequest: unknown | null;
 }
 
-export interface ReplayCaptureConfig {
-    recordingId: string;
-    socketUrl: string;
-    cutoverEpochMs: number;
-    finalizeAtEpochMs: number;
-    nextSequence: number;
-    recordingStartedAtEpochMs: number;
-}
-
-export interface LiveMarketDataWorkerStartPayload {
-    mode: 'live';
+export interface MarketDataWorkerStartPayload {
     symbols: string[];
     massive: { authParams: string };
     schwab?: SchwabWorkerConfig;
-    capture?: ReplayCaptureConfig;
 }
-
-export interface ReplayMarketDataWorkerStartPayload {
-    mode: 'replay';
-    recordingId: string;
-    socketUrl: string;
-}
-
-export type MarketDataWorkerStartPayload = LiveMarketDataWorkerStartPayload | ReplayMarketDataWorkerStartPayload;
 
 export type MainToWorkerMessage =
     | { type: 'start'; payload: MarketDataWorkerStartPayload }
-    | { type: 'stop' }
-    | { type: 'replayControl'; command: 'play' | 'pause' | 'speed'; speed?: number };
+    | { type: 'stop' };
 
 export type WorkerToMainMessage =
     | { type: 'status'; source: string; status: string }
     | { type: 'timeSaleFlush'; source: TradeSource; trades: ParsedTrade[] }
     | { type: 'quote'; source: QuoteSource; quotes: Models.Quote[] }
     | { type: 'accountActivity'; contents: any[] }
-    | { type: 'replayState'; status: string; speed?: number; marketTimeEpochMs?: number; deliveryLagMs?: number }
     | { type: 'error'; source: string; message: string };

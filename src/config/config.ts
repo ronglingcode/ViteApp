@@ -65,13 +65,4 @@ export const Settings = {
     fetchOrdersByTimeWindows: false,
 };
 
-/** Apply the historical trading session before replay charts and rules initialize. */
-export const setReplayTradingSession = (marketDate: string, marketOpenEpochMs: number) => {
-    const marketOpenTime = new Date(marketOpenEpochMs);
-    Settings.currentDay = new Date(marketOpenTime);
-    Settings.marketOpenTime = marketOpenTime;
-    Settings.dtStartTime = new Date(marketOpenTime.getTime() - 8.5 * 60 * 60 * 1000);
-    TimeHelper.setFixedMarketSession(marketOpenTime);
-    console.log(`replay trading session ${marketDate}, open ${marketOpenTime.toISOString()}`);
-};
 console.log(Settings)

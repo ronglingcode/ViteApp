@@ -15,7 +15,6 @@ import * as UI from '../ui/ui';
 import * as BasicIndicators from '../indicators/basicIndicators';
 import * as CandlestickVisibility from '../utils/candlestickVisibility';
 import * as ChartSeries from '../utils/chartSeries';
-import * as Runtime from '../replay/runtime';
 import { publishExecutionMarketData } from '../bookmap/executionMarketData';
 
 // Create a throttled version of cancelAllEntryOrders that executes once per second
@@ -461,11 +460,9 @@ const updateFromTimeSaleCore = (timesale: Models.TimeSale): TimeSaleApplyMeta | 
         }
         if (haspremarketChange) {
             Chart.drawMomentumLevels(widget);
-            if (Runtime.capabilities.bookmap) {
-                window.dispatchEvent(new CustomEvent('tradingscripts:bookmap-market-levels-updated', {
-                    detail: { symbol },
-                }));
-            }
+            window.dispatchEvent(new CustomEvent('tradingscripts:bookmap-market-levels-updated', {
+                detail: { symbol },
+            }));
         }
     } else {
         // update in-market indicators
@@ -589,11 +586,9 @@ const updateFromTimeSaleCore = (timesale: Models.TimeSale): TimeSaleApplyMeta | 
             widget.orbSeries.update(symbolData.OpenRangeLineSeriesData.orbArea[symbolData.OpenRangeLineSeriesData.orbArea.length - 1]);
         */
         Chart.populatePreMarketLineSeries(newTime, symbolData.premktHigh, symbolData.premktLow, widget);
-        if (Runtime.capabilities.bookmap) {
-            window.dispatchEvent(new CustomEvent('tradingscripts:bookmap-vwap-updated', {
-                detail: { symbol, point: newlyClosedVwap },
-            }));
-        }
+        window.dispatchEvent(new CustomEvent('tradingscripts:bookmap-vwap-updated', {
+            detail: { symbol, point: newlyClosedVwap },
+        }));
         AutoTrader.onMinuteClosed(symbol, newlyClosedCandle, true, symbolData);
         if (newCandleIsMarketOpenCandle) {
             AutoTrader.onFirstDataAfterMarketOpen(symbol, lastPrice);
