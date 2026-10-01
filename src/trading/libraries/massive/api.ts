@@ -1,7 +1,7 @@
 import type { HttpPort } from '../../ports/http.ts';
-import type { Candle } from '../../models/market.ts';
+import type { Candle, Trade } from '../../models/market.ts';
 import { addDays } from '../../core/marketdata/marketClock.ts';
-import { mapAggregate } from './mapper.ts';
+import { mapAggregate, mapRestTrade } from './mapper.ts';
 import { calculatePremarketVolume } from '../../core/marketdata/premarketVolume.ts';
 
 /** Matching Java client: same ranges, pagination, empty results, and numeric mapping. */
@@ -24,7 +24,8 @@ export class MassiveApi {
         const response = await this.http.request(this.authenticatedUrl(path), 'GET', {}, undefined);
         if (response.status !== 200) throw new Error(`Massive read HTTP ${response.status}`);
         let json: Record<string, any>;
-        try { json = JSON.parse(response.body); } catch { throw new Error('Massive read returned invalid JSON'); }
+        // SIP nanoseconds exceed JS integer precision; preserve their lexical value.
+        try { json = JSON.parse(response.body.replace(/("sip_timestamp"\s*:\s*)(\d+)/g, '$1"$2"')); } catch { throw new Error('Massive read returned invalid JSON'); }
         if (!json || typeof json !== 'object' || Array.isArray(json)) throw new Error('Massive read returned invalid JSON object');
         if (json.status === 'ERROR' || json.status === 'NOT_AUTHORIZED') throw new Error(`Massive read failed: ${json.status}`);
         return json;
@@ -72,6 +73,23 @@ export class MassiveApi {
         const json = await this.read(`/v3/reference/tickers/${encodeURIComponent(symbol)}`);
         const shares = json.results?.weighted_shares_outstanding || json.results?.share_class_shares_outstanding || 0;
         return typeof shares === 'number' && Number.isFinite(shares) ? shares : 0;
+    }
+
+    /** Backfill the partial minute/reconnect interval without counting aggregate volume twice. */
+    async getTrades(symbol: string, startMs: number, endMsExcluded: number): Promise<Trade[]> {
+        const start = BigInt(startMs) * 1000000n, end = BigInt(endMsExcluded) * 1000000n;
+        const result: Trade[] = [], seen = new Set<string>();
+        let next = `/v3/trades/${encodeURIComponent(symbol)}?timestamp.gte=${start}&timestamp.lt=${end}&order=asc&sort=timestamp&limit=50000`;
+        while (next) {
+            const page = this.authenticatedUrl(next);
+            if (seen.has(page)) throw new Error('Massive repeated pagination cursor');
+            seen.add(page);
+            const json = await this.read(page);
+            if (json.results !== undefined && !Array.isArray(json.results)) throw new Error('Massive read returned invalid results');
+            for (const value of json.results ?? []) result.push(mapRestTrade(symbol, value));
+            next = typeof json.next_url === 'string' ? json.next_url : '';
+        }
+        return result.sort((a, b) => a.timestamp - b.timestamp);
     }
 
     async getFullPriceHistory(symbol: string, today: string) {

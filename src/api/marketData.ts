@@ -1,3 +1,4 @@
+import { impliedMarketCapInBillions } from '../trading/core/marketdata/eligibility.ts';
 import { addDays } from '../trading/core/marketdata/marketClock.ts';
 import { calculatePremarketVolume } from '../trading/core/marketdata/premarketVolume.ts';
 import * as tradeStationApi from "./tradeStation/api";
@@ -56,9 +57,7 @@ export const getImpliedMarketCapInBillions = (symbol: string): number => {
   let symbolData = Models.getSymbolData(symbol);
   let sharesOutstanding = symbolData.sharesOutstanding;
   let currentPrice = Models.getCurrentPrice(symbol);
-  if (currentPrice <= 0 || sharesOutstanding <= 0) return 0;
-  let impliedMarketCap = sharesOutstanding * currentPrice;
-  return Math.round(impliedMarketCap / 10000000) / 100;
+  return impliedMarketCapInBillions(sharesOutstanding, currentPrice);
 }
 
 export const getFullPriceHistory = async (symbol: string, isFutures: boolean, todayStringInput: string) => {

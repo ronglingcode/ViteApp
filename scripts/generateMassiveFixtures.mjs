@@ -30,6 +30,10 @@ const cases = [
         ok({ results: [bar('2026-10-01T13:30:00Z')] }), ok({ results: [bar('2026-09-30T04:00:00Z')] }),
         ok({ results: [bar('2026-09-30T12:00:00Z', 10, 100), bar('2026-10-01T12:00:00Z', 20, 200)] }),
     ] },
+    { name: 'individual-trade backfill preserves nanoseconds and follows pagination', method: 'getTrades', args: ['AAPL', 1790861400000, 1790861460000], pages: [
+        { status: 200, body: '{"results":[{"sip_timestamp":1790861400000000001,"price":10,"size":100,"sequence_number":1,"id":"abc","exchange":11,"conditions":[]}],"next_url":"https://api.massive.com/trades-page?cursor=next"}' },
+        ok({ results: [{ sip_timestamp: '1790861400001000000', price: 11, size: 200, sequence_number: 2, conditions: [12] }] }),
+    ] },
 ];
 
 const fixtures = [];

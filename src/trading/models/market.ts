@@ -11,6 +11,16 @@ export interface Candle {
 }
 
 export interface PremarketPerDayData { day: string; data: number }
+export interface Trade {
+    symbol: string;
+    timestamp: number;
+    price: number;
+    size: number;
+    sequence?: string;
+    id?: string;
+    exchange?: number;
+    conditions: number[];
+}
 export interface PremarketDollarCollection {
     previousDaysDollar: PremarketPerDayData[];
     previousDaysDollarAverage: number;

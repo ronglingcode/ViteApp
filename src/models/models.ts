@@ -1,3 +1,4 @@
+import { calculateLiquidityScale } from '../trading/core/marketdata/liquidity.ts';
 import type * as LightweightCharts from 'sunrise-tv-lightweight-charts';
 import * as TradingPlans from './tradingPlans/tradingPlans';
 import type * as TradingPlansModels from './tradingPlans/tradingPlansModels';
@@ -1822,81 +1823,16 @@ const lockLiquidityScaleAtMax = (symbolData: SymbolData, scale: number) => {
 };
 
 export const getLiquidityScale = (symbol: string, debug?: boolean) => {
-    let symbolData = getSymbolData(symbol);
-    if (!debug && symbolData.liquidityScaleLockedAtMax) {
-        return 1;
-    }
-    let candles = getVolumesSinceOpen(symbol);
-    let price = getCurrentPrice(symbol);
-    if (candles.length == 0) {
-        return 0;
-    }
-    let oneMillionShares = 1000000;
-    let tenMillion = 10000000;
-    let twentyMillion = 20000000;
-    let quartermillion = 250000;
-    let item = Watchlist.getWatchlistItem(symbol);
-    let threshold = item.marketCapInMillions * 1000;
-    let firstMinuteTradedInDollar = price * candles[0].value;
-    logIf(`first minute trade ${firstMinuteTradedInDollar}`, debug);
-    logIf(`candles.length = ${candles.length}`, debug);
-    logIf(`threshold ${threshold}`, debug);
-    let lastMinuteVolumeBeforeOpen = getLastVolumeBeforeOpen(symbol);
-    if (candles.length == 1) {
-        if (candles[0].value < lastMinuteVolumeBeforeOpen) {
-            return 0;
-        } else if (candles[0].value < quartermillion) {
-            return 0;
-        } else if (firstMinuteTradedInDollar > Math.min(twentyMillion, threshold)) {
-            logIf(`case 1`, debug);
-            return lockLiquidityScaleAtMax(symbolData, 1);
-        } else if (candles[0].value > 10 * lastMinuteVolumeBeforeOpen) {
-            logIf(`case 2`, debug);
-            return lockLiquidityScaleAtMax(symbolData, 1);
-        } else if (candles[0].value > oneMillionShares) {
-            return lockLiquidityScaleAtMax(symbolData, 1);
-        } else if (firstMinuteTradedInDollar > tenMillion) {
-            logIf(`case 3`, debug);
-            return 0.35;
-        } else if (firstMinuteTradedInDollar > threshold) {
-            logIf(`case 4`, debug);
-            return 0.35;
-        } else {
-            logIf(`case 5`, debug);
-            return 0;
-        }
-    }
-
-    let maxVolume = candles[0].value;
-    for (let i = 1; i < candles.length; i++) {
-        if (candles[i].value > maxVolume) {
-            maxVolume = candles[i].value;
-        }
-    }
-    logIf(`max volume: ${maxVolume}`, debug);
-    let dollarTraded = price * maxVolume;
-    if (maxVolume < lastMinuteVolumeBeforeOpen) {
-        return 0;
-    } else if (maxVolume < quartermillion) {
-        return 0;
-    } else if (maxVolume > 10 * lastMinuteVolumeBeforeOpen) {
-        return lockLiquidityScaleAtMax(symbolData, 1);
-    } else if (maxVolume > oneMillionShares) {
-        return lockLiquidityScaleAtMax(symbolData, 1);
-    } else if (dollarTraded > Math.min(twentyMillion, threshold)) {
-        logIf('after case 1', debug);
-        return lockLiquidityScaleAtMax(symbolData, 1);
-    } else if (dollarTraded > tenMillion) {
-        logIf('after case 2', debug);
-        return dollarTraded / twentyMillion;
-    } else if (dollarTraded > threshold) {
-        logIf('after case 3', debug);
-        return 0.35;
-    } else {
-        logIf('after case 4', debug);
-        return 0;
-    }
-}
+    const data = getSymbolData(symbol);
+    if (!debug && data.liquidityScaleLockedAtMax) return 1;
+    const volumes = getVolumesSinceOpen(symbol).map(volume => volume.value);
+    if (!volumes.length) return 0;
+    const scale = calculateLiquidityScale(getCurrentPrice(symbol), volumes,
+        getLastVolumeBeforeOpen(symbol), Watchlist.getWatchlistItem(symbol).marketCapInMillions,
+        !debug && !!data.liquidityScaleLockedAtMax);
+    if (debug) logIf(`liquidity scale ${scale}`, true);
+    return lockLiquidityScaleAtMax(data, scale);
+};
 export const getQuantityDetails = (symbol: string) => {
     let exits = getExitOrdersPairs(symbol);
     let quantityWithBothLegs = 0;

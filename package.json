@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "test:market": "node --experimental-strip-types scripts/generateMarketFixtures.mjs --check && node --experimental-strip-types --test scripts/tradeFlushBuffer.test.mjs",
     "test:services": "node --experimental-strip-types scripts/generateServiceFixtures.mjs --check && node --experimental-strip-types --test src/trading/libraries/broker/schwab/oauth.test.ts",
     "test:massive": "node --experimental-strip-types scripts/generateMassiveFixtures.mjs --check",
     "test:direct-execution": "node --experimental-strip-types --test src/bookmap/directExecution.test.ts src/bookmap/directEntryExecution.test.ts",

@@ -1,3 +1,4 @@
+import { validatePreviousConsolidationArea as validateCorePreviousConsolidationArea } from '../../trading/core/marketdata/eligibility.ts';
 import * as Models from '../models';
 import * as Helper from '../../utils/helper';
 import * as TimeHelper from '../../utils/timeHelper';
@@ -149,9 +150,6 @@ export const validateTradingPlansForOneDirection = (
     return "";
 }
 
-/** Number of previous daily candles that must not have broken the previous consolidation area. */
-const previousConsolidationLookbackDays = 3;
-
 /**
  * Range bound reversal plans only work while the previous consolidation area is intact. A previous
  * day broke the area when it opened inside the area but closed outside of it; the breakout then
@@ -168,32 +166,8 @@ export const validatePreviousConsolidationArea = (
     if (!rangeBoundReversalPlan || !previousDailyCandles || previousDailyCandles.length == 0) {
         return "";
     }
-    let area = rangeBoundReversalPlan.previousConsolidationArea;
-    let areaLow = area ? Math.min(area.low, area.high) : 0;
-    let areaHigh = area ? Math.max(area.low, area.high) : 0;
-    if (!area || !Number.isFinite(areaLow) || !Number.isFinite(areaHigh) ||
-        areaLow <= 0 || areaLow >= areaHigh) {
-        return "missing previous consolidation area for range bound reversal";
-    }
-    let firstIndex = Math.max(0, previousDailyCandles.length - previousConsolidationLookbackDays);
-    for (let i = firstIndex; i < previousDailyCandles.length; i++) {
-        let candle = previousDailyCandles[i];
-        let openedInsideArea = candle.open >= areaLow && candle.open <= areaHigh;
-        if (!openedInsideArea) {
-            continue;
-        }
-        let isBreakout = candle.close > areaHigh;
-        let isBreakdown = candle.close < areaLow;
-        if (isBreakout || isBreakdown) {
-            let direction = isBreakout ? "breakout" : "breakdown";
-            let candleDate = TimeHelper.localTimeToNewYorkTime(new Date(candle.datetime));
-            let day = TimeHelper.getDateString(candleDate);
-            return `previous consolidation ${direction} on ${day}: open ${candle.open} inside [${areaLow}, ${areaHigh}], close ${candle.close}`;
-        }
-    }
-    return "";
-}
-
+    return validateCorePreviousConsolidationArea(rangeBoundReversalPlan.previousConsolidationArea, previousDailyCandles);
+};
 
 export const noZero = (numbers: number[]) => {
     for (let i = 0; i < numbers.length; i++) {

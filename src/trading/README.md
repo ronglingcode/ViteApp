@@ -52,5 +52,18 @@ Firestore writes and token exchanges are exercised only with fake transports.
 
 Migration design and resumable progress are in bookmap-plugin/docs:
 `standalone-native-trading-plan.md` and `standalone-native-trading-progress.md`.
+`core/marketdata` now includes headless `MarketState`, Camarilla, sticky liquidity,
+startup eligibility and the historical consolidation check. Browser callers use
+the extracted pure calculations and trade mapper. The headless state itself is
+not yet the browser DB's source; the history/live loader and adapter are next.
+`npm run test:market` compares 39 headless scenarios and checks real worker batching.
+
+The worker preserves each print in its 100ms batch, correcting intermediate OHLC
+and traded-dollar/VWAP loss from the former last-price/summed-size merge. Render
+throttling remains. The Massive library supports paginated individual-trade
+backfill, preserving nanosecond timestamps before converting to domain milliseconds.
+History/live loading will seed complete buckets and deduplicate overlapping stream
+prints by sequence. The Massive suite now covers 23 scenarios.
+
 The standalone runtime is not yet wired; use the progress document for current
 completion status.

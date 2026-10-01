@@ -1,3 +1,4 @@
+import { premarketEligibility } from '../trading/core/marketdata/eligibility.ts';
 import * as GlobalSettings from '../config/globalSettings';
 import type { PremarketDollarCollection } from '../models/models';
 
@@ -5,7 +6,7 @@ export const checkAbsolutePremarketVolume = ({ lastDayShares }: PremarketDollarC
     const sharesInMillions = lastDayShares / 1000000;
     const threshold = GlobalSettings.premarketVolumeThresholdInMillions;
     return {
-        passed: sharesInMillions >= threshold,
+        passed: premarketEligibility(lastDayShares, 0, 0, threshold, 0).absolutePassed,
         description: `premarket volume ${sharesInMillions.toFixed(2)}M shares (threshold: ${threshold}M)`,
     };
 };
@@ -13,7 +14,7 @@ export const checkAbsolutePremarketVolume = ({ lastDayShares }: PremarketDollarC
 export const checkPremarketVolumeHardFloor = ({ lastDayShares }: PremarketDollarCollection) => {
     const threshold = GlobalSettings.premarketVolumeHardFloorInShares;
     return {
-        passed: lastDayShares >= threshold,
+        passed: premarketEligibility(lastDayShares, 0, threshold, 0, 0).hardFloorPassed,
         description: `premarket volume ${(lastDayShares / 1000).toFixed(0)}K shares (hard floor: ${threshold / 1000}K)`,
     };
 };
@@ -30,7 +31,7 @@ export const checkRelativePremarketVolume = ({ lastDayShares, previousDaysShares
         ? `${(previousDaysSharesAverage / 1000000).toFixed(2)}M shares`
         : 'unavailable';
     return {
-        passed: hasValidVolume && lastDayShares >= previousDaysSharesAverage * threshold,
+        passed: premarketEligibility(lastDayShares, previousDaysSharesAverage, 0, 0, threshold).relativePassed,
         description: `relative premarket volume ${relativeVolumeText} (threshold: ${threshold}x), historical average ${historicalAverageText}`,
     };
 };

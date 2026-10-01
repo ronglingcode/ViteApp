@@ -10,7 +10,7 @@ export function marketTime(epochMs: number) {
         date: `${parts.year}-${parts.month}-${parts.day}`,
         minutesSinceMarketOpen: minutes - 570 + Number(parts.second) / 60 + (epochMs % 1000) / 60000,
         isPremarket: minutes < 570,
-        isRegularSession: minutes >= 570 && minutes < 960,
+        isRegularSession: minutes >= 570 && (minutes < 960 || (minutes === 960 && Number(parts.second) === 0 && epochMs % 1000 === 0)),
     };
 }
 

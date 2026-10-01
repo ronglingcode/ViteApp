@@ -1,9 +1,7 @@
 import * as Secret from '../../config/secret';
 import * as Models from '../../models/models';
-import * as StreamingHandler from '../../controllers/streamingHandler';
-import * as Helper from '../../utils/helper';
+import { createMassiveTimeSale } from '../../streaming/timeSaleParse';
 import * as DB from '../../data/db';
-import * as Firestore from '../../firestore';
 declare let window: Models.MyWindow;
 
 
@@ -71,63 +69,9 @@ export const subscribeLevelOneQuotes = (webSocket: WebSocket) => {
     sendWebsocketRequest(webSocket, request);
 }
 
-const createTimeSale = (c: any) => {
-    let has_non_update = false;
-    let tradeTime = Helper.numberToDate(c.t);
-    if (Helper.isRegularMarketSessionTime(tradeTime)) {
-        if (c.c) {
-            for (let i = 0; i < c["c"].length; i++) {
-                let condition = c["c"][i];
-                if (StreamingHandler.conditionsNotUpdateLastPriceNumbers.includes(condition)) {
-                    has_non_update = true;
-                    break;
-                }
-            }
-        }
-    }
-
-    let symbol = c.sym;
-    let record: Models.TimeSale = {
-        symbol: symbol,
-        receivedTime: new Date(),
-        conditions: [],
-        timestamp: 0,
-    };
-    if (c.t != null) {
-        record.tradeTime = c.t;
-    }
-    if (c.p != null)
-        record.lastPrice = c.p;
-    if (c.s != null)
-        record.lastSize = c.s;
-    if (c.q != null)
-        record.seq = c.q;
-    if (c.i != null)
-        record.tradeID = Number(c.i);
-    record.rawTimestamp = '';
-    if (c.t != null)
-        record.rawTimestamp += `${c.t}`;
-    // Convert c.t (assumed to be epoch milliseconds) to a time-only string like 'HH:MM:SS.mmm'
-    if (c.t != null) {
-        let nanoTime = new Date(c.t);
-        let timeStr = nanoTime.getHours() + ':' + nanoTime.getMinutes() + ':' + nanoTime.getSeconds() + '.' + nanoTime.getMilliseconds();
-        record.rawTimestamp = `${timeStr} ${c.t}`;
-        record.timestamp = c.t;
-    } else {
-        Firestore.logError(`massive missing timestamp`, { symbol: symbol });
-    }
-    if (c.c != null) {
-        for (let i = 0; i < c.c.length; i++) {
-            let condition = c.c[i];
-            record.conditions.push(`${condition}`);
-        }
-    }
-    let shouldFilter = has_non_update;
-    return { record, shouldFilter };
-}
 export const handleTimeAndSalesData = (data: any) => {
     //console.log(data);
-    let { record, shouldFilter } = createTimeSale(data);
+    let { record, shouldFilter } = createMassiveTimeSale(data);
     let updated = DB.tryUpdateMaxTimeSaleTimestamp(record, 'm');
     if (shouldFilter || !updated) {
         return;
