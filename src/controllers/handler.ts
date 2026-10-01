@@ -1,3 +1,4 @@
+import { trailStopPrice, profitResetTargets } from '../trading/core/controllers/workflows.ts';
 import * as Chart from "../ui/chart";
 import * as Firestore from '../firestore';
 import * as OrderFlow from './orderFlow';
@@ -77,33 +78,11 @@ export const trailStop = async (symbol: string, timeFrame: number, shiftKey: boo
     let logTags = Models.generateLogTags(symbol, `${symbol}-trail_stop_${timeFrame}_single`);
     Firestore.logInfo(logTags.logSessionName, logTags);
 
-    let candles = Models.getUndefinedCandlesSinceOpen(symbol);
-    let bars = Models.aggregateCandles(candles, timeFrame);
-    if (bars.length < 2) {
-        Firestore.logError(`not enough bars ${bars.length}`, logTags);
-        return;
-    }
-
-    let lastClosedBar = bars[bars.length - 2];
-    let netQ = Models.getPositionNetQuantity(symbol);
-    let positionIsLong = netQ > 0;
-    if (shiftKey) {
-        if (positionIsLong) {
-            if (!Patterns.hasLowerLow(candles)) {
-                Firestore.logError(`no lower low yet, disable market out trailing stop`, logTags);
-                return;
-            }
-        } else {
-            if (!Patterns.hasHigherHigh(candles)) {
-                Firestore.logError(`no higher high yet, disable market out trailing stop`, logTags);
-                return;
-            }
-        }
-    }
-    let newPrice = positionIsLong ? lastClosedBar.low : lastClosedBar.high;
-    newPrice = Helper.roundPriceWithDirection(symbol, newPrice, !positionIsLong);
-    newPrice = Helper.addMinimumPriceIncrement(symbol, !positionIsLong, newPrice);
-    Firestore.logInfo(`last closed bar, open: ${lastClosedBar.open}, close: ${lastClosedBar.close}, high: ${lastClosedBar.high}, low: ${lastClosedBar.low}`);
+    const candles = Models.getUndefinedCandlesSinceOpen(symbol);
+    const positionIsLong = Models.getPositionNetQuantity(symbol) > 0;
+    let newPrice: number;
+    try { newPrice = trailStopPrice(candles, positionIsLong, timeFrame, shiftKey); }
+    catch (error) { Firestore.logError(error instanceof Error ? error.message : String(error), logTags); return; }
     let pairs = Models.getExitPairs(symbol);
     let selectedPairs = pairs.slice(0, 1);
     let coreTargetResult = shiftKey
@@ -721,6 +700,10 @@ export const replaceWithProfitTakingExitOrders = (symbol: string, marketOutOnePa
         return;
     }
     Firestore.logInfo(`replace profit targets, length is ${profitTargets.length}`);
+    if (!marketOutOnePartial && limitOutPrice === 0) {
+        try { profitTargets = profitResetTargets(profitTargets, Math.abs(netQuantity)).reverse(); }
+        catch (error) { Firestore.logError(error instanceof Error ? error.message : String(error), logTags); return; }
+    }
     let stopLoss = breakoutTradeState.stopLossPrice;
     // cancel current exit orders
     Broker.cancelExitOrders(symbol);

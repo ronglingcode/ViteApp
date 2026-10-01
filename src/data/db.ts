@@ -16,7 +16,6 @@ import * as UI from '../ui/ui';
 import * as BasicIndicators from '../indicators/basicIndicators';
 import * as CandlestickVisibility from '../utils/candlestickVisibility';
 import * as ChartSeries from '../utils/chartSeries';
-import { publishExecutionMarketData } from '../bookmap/executionMarketData';
 
 // Create a throttled version of cancelAllEntryOrders that executes once per second
 const throttledCancelAllEntryOrders = Helper.executeOncePerInterval(
@@ -473,7 +472,6 @@ const updateFromTimeSaleCore = (timesale: Models.TimeSale): TimeSaleApplyMeta | 
         window.dispatchEvent(new CustomEvent('tradingscripts:bookmap-market-levels-updated', { detail: { symbol } }));
     }
     // Forward the updated trade price/day range immediately, before chart work or account polling.
-    publishExecutionMarketData(symbol, lastPrice, symbolData);
     if (lastCandle && !lastCandle.time) {
         console.log('here');
         console.log(lastCandle);
@@ -788,7 +786,6 @@ export const updateFromLevelOneQuote = (quote: Models.Quote) => {
         symbolData.askSize = quote.askSize;
     }
 
-    publishExecutionMarketData(symbol, Models.getCurrentPrice(symbol), symbolData);
     Chart.updateUI(symbol, "bid", `${symbolData.bidPrice}`);
     Chart.updateUI(symbol, "ask", `${symbolData.askPrice}`);
     let spread = Models.getCurrentSpread(symbol);

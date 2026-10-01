@@ -32,6 +32,10 @@ export class SchwabOAuth {
         const value = this.credentials.loadSchwab();
         return this.exchange({ grant_type: 'authorization_code', code, redirect_uri: value.redirectUrl || 'https://127.0.0.1' }, value);
     }
+    authorizationUrl(): string {
+        const value = this.credentials.loadSchwab(); if (!value.appKey) throw new Error('Schwab app key is missing');
+        return `https://api.schwabapi.com/v1/oauth/authorize?${new URLSearchParams({ redirect_uri: value.redirectUrl || 'https://127.0.0.1', client_id: value.appKey })}`;
+    }
     private async exchange(data: Record<string, string>, previous: SchwabCredentials): Promise<SchwabCredentials> {
         if (!previous.appKey || !previous.secret) throw new Error('Schwab app credentials are missing');
         if (data.grant_type === 'refresh_token' && !data.refresh_token) throw new Error('Schwab refresh token is missing; authorize again');

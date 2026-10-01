@@ -17,7 +17,7 @@ import * as Firestore from '../../firestore';
 import * as Config from '../../config/config';
 import * as OrderFactory from './orderFactory';
 import * as GlobalSettings from '../../config/globalSettings';
-import { recordExecutionToken, getExecutionToken, recordBrokerObservation, canApplyBrokerObservation } from '../../bookmap/executionMetadata';
+import { recordBrokerToken, getBrokerToken, recordBrokerObservation, canApplyBrokerObservation } from '../../trading/adapters/browserBrokerMetadata';
 import { brokerResponseError, readBrokerJson, describeError, fetchBrokerResponse } from '../../utils/errorDetails';
 declare let window: Models.MyWindow;
 
@@ -66,9 +66,9 @@ export const generateRefreshTokenUrl = () => {
 const oauth = new SchwabOAuth(browserHttp, browserCredentials, value => btoa(value), () => `${getAuthApiHost()}/v1/oauth/token`);
 const publishToken = (credentials: SchwabCredentials) => {
     window.HybridApp.Secrets.schwab.accessToken = credentials.access_token;
-    const previous = getExecutionToken();
+    const previous = getBrokerToken();
     if (!previous || previous.accessToken !== credentials.access_token || Math.abs(previous.expiresAt - (credentials.expires_at ?? 0)) > 1000)
-        recordExecutionToken(credentials.access_token, ((credentials.expires_at ?? 0) - Date.now()) / 1000);
+        recordBrokerToken(credentials.access_token, ((credentials.expires_at ?? 0) - Date.now()) / 1000);
     return credentials.access_token;
 };
 export const generateRefreshToken = async (url: string) => {

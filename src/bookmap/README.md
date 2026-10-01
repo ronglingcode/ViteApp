@@ -275,77 +275,19 @@ Chart heights are reduced when bookmap is enabled (see `chartSettings.ts` `*With
 - **Databento MBO**: Full depth — all orders at all price levels, reconstructed from individual order events
 - For true full depth across all exchanges, use DBEQ.MAX dataset or direct exchange feeds
 
-## Experimental direct execution
+## Standalone bmtrader execution
 
-`executionBridge.ts` sends updates directly to bmtrader over the existing socket:
-memory-only token metadata and versioned account/quote snapshots. The plugin
-owns migrated broker mutations; ViteApp consumes lifecycle results and refreshes
-its existing UI and trade state. Setup and action coverage are documented in
-the sibling repository at `bookmap-plugin/docs/direct-broker-execution.md`.
+The former execution bridge, executionEntryContext and streaming execution-input
+publishers have been removed. bmtrader reads Massive, Firestore and Schwab directly
+and owns its native trading lifecycle. All supported plugin operations are native;
+there is no extended-execution routing flag or browser fallback.
 
-`executionMarketData.ts` forwards a compact `execution_market_data` bundle
-synchronously from each applied time-and-sales or level-one quote update:
-symbol, currentPrice, bid, ask, highOfDay, lowOfDay (`priceUnit: "real"`). Native
-enable also publishes current market values. No account read, timer, or ack is
-needed for these messages. The main app's upstream trade worker batches incoming
-prints every 100 ms; forwarding itself adds no delay. The three-second account
-refresh remains separate. Java overlays the latest per-symbol bundle when
-building an action, so account snapshots do not overwrite streaming prices.
-Exits/cancel have no broker position/protective-order preflight reads; the
-initial-entry exposure preflight remains.
+ViteApp remains independently usable with its browser UI and broker integrations.
+The modules in [src/trading](../trading/README.md) mirror Java's native engine.
+`bookmapSocket.ts` retains legacy display helpers for browser use; the standalone
+plugin ignores incoming external state/config/credential messages and does not
+forward operations to the browser. Run one app at a time so that only one app owns
+the broker stream.
 
-`executionMetadata.ts` records OAuth expiry and prevents account reads completing
-out of order from replacing newer data. There are no quote timestamps or execution
-age cutoffs. The main app supplies the latest values.
-
-This is a single-user MVP with one app and one account. There is no ownership
-handshake, session ID, origin allowlist, account-matching check, or reconnect
-review requirement. The plugin uses the latest token/account/state updates.
-
-There is no execution fence or reconciliation wait. Browser mutations and native
-clicks submit independently. Unknown native broker outcomes still require review.
-
-Execution errors preserve the operation, exception type/message and nested causes.
-Native HTTP failures include the order ID, status and broker error body, with
-credentials redacted. Java emits `execution_blocked` for plan failures and includes
-the actual reason in `execution_rejected`. Account refresh, initialization and
-socket failures are logged with their causes; failed entry initialization returns
-its reason in `execution_entry_state`. `utils/errorDetails.ts` formats Error objects
-before UI/Firestore storage and preserves broker response text when JSON parsing
-fails. Diagnostics do not add execution checks or retries.
-
-`direct-execution-fixtures.json` matches the plugin test resource byte-for-byte.
-`npm run test:direct-execution` checks production helpers and metadata
-behavior. Plugin tests check Java plans, fake HTTP lifecycle, and the obfuscated
-artifact.
-
-Execution protocol 3 removes session negotiation. Both app and plugin must be
-updated together. The plugin always executes cancel, flatten, market partial exits,
-digit/G/H/T adjustments, and standard flat initial wall-reversal entries natively.
-ViteApp publishes `executionEntryContext.ts` inputs whenever the plugin is running, and sends
-`execution_entry_state` acknowledgement after entry acceptance. Native entry
-results register the accepted trade plan in ViteApp without blocking another
-click on UI initialization or refresh. Same-direction adds preserve the active
-trade/core state. Accepted entries are initialized even if subsequent old-entry
-cancellation fails; no broker mutation is repeated by a lifecycle handler.
-
-The default-off `experimentalDirectBrokerExecution` plugin flag is labeled
-**Experimental: Extended Native Execution (Schwab)** and controls opposite-position
-entries, entries with pending orders, and generic non-chart B/S selection. Off
-forwards those actions to ViteApp; on uses Java. Add Partial/reload, Swap, flat
-initial wall-reversal entries, and same-direction adds without pending entry orders
-always use Java, with any risk-method label. Existing protective exit pairs do not
-prevent a same-direction add from using Java. Risk labels do not bypass the flag
-for opposite-position entries or entries with pending orders.
-Status `enabled`, `entriesEnabled`, and `exitsEnabled` remain true while running;
-`extendedEnabled` reports this separate flag. Tokens and account/market inputs
-continue to flow when the flag is off.
-
-Current ViteApp tradebooks all belong to the mirrored Bookmap wall-reversal family.
-See the sibling plugin's `docs/direct-broker-execution.md` for the exact operation
-table, existing-risk sizing, reload rules, and Swap's same-direction semantics.
-`npm run test:extended-execution` verifies fixtures recorded from the production
-ViteApp reload/swap handlers with a recording broker and tests preserved trade state.
-Regenerate entry parity fixtures with
-`node --experimental-strip-types scripts/generateDirectEntryFixtures.mjs`.
-
+See [standalone setup and operations](../../../bookmap-plugin/docs/direct-broker-execution.md)
+and [migration progress](../../../bookmap-plugin/docs/standalone-native-trading-progress.md).

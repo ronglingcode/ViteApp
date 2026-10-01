@@ -3,12 +3,14 @@ import assert from 'node:assert/strict';
 import * as Ledger from '../src/trading/core/account/tradeLedger.ts';
 import * as State from '../src/trading/core/state/tradeState.ts';
 import * as Config from '../src/trading/core/configuration/tradingConfig.ts';
+import * as Views from '../src/trading/core/controllers/nativeViews.ts';
+import * as Workflows from '../src/trading/core/controllers/workflows.ts';
 import { createExecutionInputs, defaultTradingPolicy } from '../src/trading/core/controllers/executionInputs.ts';
 const fixtures = [], base = Date.parse('2026-10-01T13:30:00Z');
 const fill = (buy, quantity, price, offset = 0) => ({ symbol: 'AAPL', orderID: String(offset), timestamp: base + offset, quantity, price, isBuy: buy, positionEffectIsOpen: buy });
 function add(name, kind, method, args) {
     const fixture = { name, kind, method, args };
-    try { fixture.result = (kind === 'ledger' ? Ledger : kind === 'state' ? State : Config)[method](...args); } catch (e) { fixture.error = e.message; }
+    try { fixture.result = (kind === 'ledger' ? Ledger : kind === 'state' ? State : kind === 'workflow' ? Workflows : kind === 'views' ? Views : Config)[method](...args); } catch (e) { fixture.error = e.message; }
     fixtures.push(fixture); return fixture.result;
 }
 add('no executions', 'ledger', 'projectTradeLedger', [{}]);
@@ -81,6 +83,48 @@ assert.deepEqual(longInputs.entryContext.volumes, [2000]); assert.equal(longInpu
 inputs('local execution inputs short ordered limits descending', -90, { ...saved, stateBySymbol: { AAPL: { ...saved.stateBySymbol.AAPL, breakoutTradeStateForShort: State.acceptedBreakout({ ...entry, isLong: false, stopOutPrice: 11 }, base) } } });
 inputs('local execution inputs flat reload direction', 0, null);
 inputs('single large exit disables split partials', 100, { ...saved, stateBySymbol: { AAPL: { ...saved.stateBySymbol.AAPL, breakoutTradeStateForLong: State.acceptedBreakout({ ...entry, submitEntryResult: { ...entry.submitEntryResult, isSingleOrder: true, totalQuantity: 10 } }, base) } } }, { account: { exitPairs: { AAPL: [{ STOP: { orderID: 'large', quantity: 100, price: 9 } }] } } });
+const candles = [0, 4, 5, 14, 15, 29, 30].map((minute, index) => ({ symbol: 'AAPL', datetime: base + minute * 60000, open: 10, close: 10, low: 9 - index * .1, high: 11 + index * .1, volume: 1000, vwap: 10 }));
+for (const timeframe of [5, 15, 30]) for (const long of [true, false]) for (const shift of [true, false]) add(`trail ${timeframe} ${long} ${shift}`, 'workflow', 'trailStopPrice', [candles, long, timeframe, shift]);
+add('trail insufficient bars', 'workflow', 'trailStopPrice', [candles.slice(0, 2), true, 5, false]);
+add('market trail requires lower low', 'workflow', 'trailStopPrice', [candles.map(c => ({ ...c, low: 9 })), true, 5, true]);
+const reset = add('reset clips final target to remaining position', 'workflow', 'profitResetTargets', [[{ quantity: 10, target: 11 }, { quantity: 10, target: 12 }, { quantity: 10, target: 13 }], 15]);
+assert.equal(reset.reduce((sum, target) => sum + target.quantity, 0), 15);
+add('reset insufficient targets', 'workflow', 'profitResetTargets', [[{ quantity: 10, target: 11 }, { quantity: 10, target: 12 }], 25]);
+for (const phase of ['idle', 'needs_tighten', 'done']) for (const quantity of [0, 50, 80, 100]) add(`discipline ${phase} ${quantity}`, 'workflow', 'stopDiscipline', [phase, quantity, 100, true, [{ STOP: { quantity: 30, price: 9.5 } }], 9, 11]);
+const pending = { orderID: 'old', isBuy: true, price: 10, exitStopPrice: 9 };
+add('pending stop widens inside five minutes', 'workflow', 'pendingStopRefresh', [[pending], 0, 1, '', 8, 12]);
+add('pending old replacement suppressed', 'workflow', 'pendingStopRefresh', [[pending], 0, 1, 'old', 8, 12]);
+add('pending stop does not tighten', 'workflow', 'pendingStopRefresh', [[pending], 0, 1, '', 9.5, 12]);
+add('pending timer stops after five minutes', 'workflow', 'pendingStopRefresh', [[pending], 0, 300, '', 8, 12]);
+add('pending filled entry not replaced', 'workflow', 'pendingStopRefresh', [[pending], 1, 1, '', 8, 12]);
+const touchPosition = { positionKey: 'long:123:10.23:10', entryPrice: 10.23, entryVwap: 11, isLong: true };
+add('first VWAP touch pending', 'workflow', 'firstVwapTouch', [{}, touchPosition, 10.5, 11]);
+const touched = add('first VWAP touch alerts once', 'workflow', 'firstVwapTouch', [{}, touchPosition, 11, 11]);
+assert.equal(touched.notify, true);
+add('first VWAP touch does not repeat', 'workflow', 'firstVwapTouch', [touched.state, touchPosition, 12, 11]);
+add('new VWAP position resets reminder', 'workflow', 'firstVwapTouch', [touched.state, { ...touchPosition, positionKey: 'new' }, 12, 11]);
+add('short first dip to VWAP', 'workflow', 'firstVwapTouch', [{}, { positionKey: 'short', entryPrice: 12, entryVwap: 11, isLong: false }, 10, 11]);
+add('entered near VWAP no reminder', 'workflow', 'firstVwapTouch', [{}, { ...touchPosition, entryPrice: 11 }, 12, 11]);
+add('flat VWAP reminder preserves state', 'workflow', 'firstVwapTouch', [touched.state, null, 12, 11]);
+add('partial completion requires removed pair', 'workflow', 'completedPartials', [100, 40, 8, 10]);
+add('no initial quantity partial fallback', 'workflow', 'completedPartials', [0, 40, 8, 10]);
+for (const input of fixtures.filter(f => f.kind === 'inputs')) {
+    const args = structuredClone(input.args), view = { type: 'account_ready', symbol: args[0], timestamp: args[10], plan: args[1], market: args[2], account: args[4], ledger: args[5], state: args[6], policy: { ...args[12], coreTargetEnabled: true }, history: { dailyBars: [{ high: 12, low: 8, close: 10 }] } };
+    view.plan.keyLevels = { otherLevels: [{ price: 10.5, label: 'key' }, { price: 10.5, label: 'duplicate' }, { price: -1 }], zones: [{ low: 11, high: 9, label: 'zone', color: 'red' }, { low: 9, high: 11 }, { low: 0, high: 1 }] };
+    view.plan.analysis.waitForBidRetest = 'yes'; view.plan.analysis.waitForOfferRetest = 'warning';
+    view.account.executions = { AAPL: [{ price: 11, quantity: 30, isBuy: false, positionEffectIsOpen: false, timestamp: args[10] }] };
+    const projected = add('local views: ' + input.name, 'views', 'nativeViews', [view]);
+    assert.equal(projected[1].levels.length, 1); assert.equal(projected[1].zones.filter(zone => zone.low === 9 && zone.high === 11).length, 1);
+    add('live VWAP: ' + input.name, 'views', 'nativeViews', [{ type: 'market_update', symbol: args[0], timestamp: args[10], market: { vwap: 11, latestPriceTime: args[10] - 1, closedVwap: { datetime: args[10] - 60000, value: 10.05 } } }]);
+}
+add('empty held-symbol display clears old buttons and levels', 'views', 'nativeViews', [{ type: 'account_ready', symbol: 'MSFT', timestamp: base, account: { positions: { MSFT: { netQuantity: -100, averagePrice: 20 } } } }]);
+add('risk clips protective coverage at current remaining position', 'views', 'positionRisk', [30, 10, [{ STOP: { price: 9, quantity: 100 } }], 8, 12]);
+add('risk includes unprotected position day extreme', 'views', 'positionRisk', [-100, 10, [{ STOP: { price: 11, quantity: 30 } }], 8, 12]);
+for (const available of [2000, 1000, 600, 500, 0]) add('buying power allocation ' + available, 'workflow', 'buyingPowerTargets', [[{ target: 11, quantity: 40 }, { target: 12, quantity: 60 }], 10, available]);
+const closedView = { type: 'market_ready', symbol: 'AAPL', timestamp: base + 90000, market: { vwaps: [{ datetime: base - 60000, value: 10 }, { datetime: base, value: 11 }, { datetime: base + 60000, value: 12 }] } };
+const seeded = add('VWAP seeds only closed history points', 'views', 'nativeViews', [closedView]).filter(message => message.type === 'vwap_update');
+assert.deepEqual(seeded.map(message => message.vwap), [10, 11]); assert.deepEqual(seeded.map(message => message.effectiveTimeMs), [base, base + 60000]);
+assert.deepEqual(add('VWAP partial minute has no closed point', 'views', 'nativeViews', [{ type: 'market_update', symbol: 'AAPL', timestamp: base, market: { vwap: 12 } }]), []);
 const text = JSON.stringify(fixtures, null, 2) + '\n';
 for (const url of [new URL('../src/trading/state-fixtures.json', import.meta.url), new URL('../../bookmap-plugin/src/test/resources/state-fixtures.json', import.meta.url)]) {
     if (process.argv.includes('--check')) { if (readFileSync(url, 'utf8') !== text) throw new Error(`Fixture drift: ${url}`); } else writeFileSync(url, text);

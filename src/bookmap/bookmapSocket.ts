@@ -7,7 +7,6 @@
 import * as Helper from "../utils/helper";
 import * as Firestore from '../firestore';
 import { describeError } from '../utils/errorDetails';
-import { attachExecutionBridge, disconnectExecutionBridge, handleExecutionMessage } from './executionBridge';
 import * as Models from "../models/models";
 import * as GlobalSettings from "../config/globalSettings";
 import type * as TradingPlansModels from "../models/tradingPlans/tradingPlansModels";
@@ -176,7 +175,6 @@ export const createWebSocket = () => {
     registerMarketLevelRefreshListener();
     registerVwapUpdateListener();
     websocket = new WebSocket(BOOKMAP_WS_URL);
-    attachExecutionBridge(websocket);
 
     websocket.onopen = function () {
         console.log("[BookmapSocket] Connected");
@@ -193,7 +191,6 @@ export const createWebSocket = () => {
             Firestore.logError(`Parse Bookmap WebSocket message failed: ${describeError(error)}`);
             return;
         }
-        if (handleExecutionMessage(data)) return;
         let type = data.type;
         if (!isSupportedBookmapWirePriceUnit(data.priceUnit)) {
             console.warn(`[BookmapSocket] Ignoring ${type || "message"} with unsupported priceUnit`, data);
@@ -216,7 +213,6 @@ export const createWebSocket = () => {
     };
 
     websocket.onclose = function () {
-        disconnectExecutionBridge();
         console.log(`[BookmapSocket] Disconnected, reconnecting in ${RECONNECT_DELAY_MS}ms...`);
         stopPeriodicConfigPush();
         lastSentVwapTimeBySymbol.clear();

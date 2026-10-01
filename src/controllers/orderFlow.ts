@@ -1,3 +1,4 @@
+import { buyingPowerTargets } from '../trading/core/controllers/workflows';
 import * as RiskManager from '../algorithms/riskManager';
 import * as TakeProfit from '../algorithms/takeProfit';
 import * as Models from '../models/models';
@@ -186,32 +187,10 @@ export const submitEntryOrders = (symbol: string, isLong: boolean,
     logTags: Models.LogTags,
     orderIdToReplace: string) => {
 
-    let totalQuantity = 0;
-    profitTargets.forEach((profitTarget: any) => {
-        let quantity = profitTarget.quantity;
-        totalQuantity += quantity;
-    });
-    let hasEnoughBuyingPower = RiskManager.hasEnoughBuyingPower(entryPrice, totalQuantity);
-    // reduce to half size when not having enough buying power, it's probably a trade with too tight stops
-    if (!hasEnoughBuyingPower) {
-        hasEnoughBuyingPower = RiskManager.hasEnoughBuyingPower(entryPrice, totalQuantity / 2);
-        if (hasEnoughBuyingPower) {
-            totalQuantity = 0;
-            for (let i = 0; i < profitTargets.length; i++) {
-                profitTargets[i].quantity = profitTargets[i].quantity / 2;
-                totalQuantity += profitTargets[i].quantity;
-            }
-        } else {
-            Firestore.logError(`Not enough buying power after reducing to half size for ${totalQuantity} shares at ${entryPrice}`, logTags);
-            let result: Models.SubmitEntryResult = {
-                totalQuantity: totalQuantity,
-                profitTargets: profitTargets,
-                isSingleOrder: false,
-                tradeBookID: tradebookID,
-            };
-            return result;
-        }
-    }
+    const allocation = buyingPowerTargets(profitTargets, entryPrice, RiskManager.getAvailableBuyingPower());
+    profitTargets = allocation.targets;
+    const totalQuantity = allocation.totalQuantity;
+    if (allocation.insufficient) Firestore.logError('Estimated buying power insufficient after half sizing; broker will decide', logTags);
     Broker.submitEntryOrderWithMultipleBrackets(
         symbol, totalQuantity, isLong, orderType, entryPrice, profitTargets, stopOutPrice, logTags,
         orderIdToReplace

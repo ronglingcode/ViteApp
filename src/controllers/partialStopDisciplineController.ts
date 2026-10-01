@@ -1,3 +1,4 @@
+import { stopDiscipline } from '../trading/core/controllers/workflows.ts';
 import * as Models from '../models/models';
 import * as TradingState from '../models/tradingState';
 import * as Firestore from '../firestore';
@@ -26,57 +27,17 @@ export const checkAndUpdatePhase = (symbol: string, isLong: boolean) => {
     const initialQty = bts.initialQuantity;
     if (initialQty <= 0) return;
 
-    // Re-check 'done' state: adding back partials can push more than half back to loose stop
-    if (bts.stopTightenPhase === 'done') {
-        if (!isStopTightenedEnough(symbol, isLong, currentQty, initialQty)) {
-            bts.stopTightenPhase = 'needs_tighten';
-            startReminder(symbol, isLong);
-            triggerReminder(symbol, isLong, currentQty, initialQty);
-        }
-        return;
-    }
-
-    if (bts.stopTightenPhase === 'needs_tighten') {
-        if (isStopTightenedEnough(symbol, isLong, currentQty, initialQty)) {
-            bts.stopTightenPhase = 'done';
-            clearReminder(symbol, isLong);
-            Firestore.logInfo(`${symbol}: stop tightened. discipline complete.`);
-            return;
-        }
-        triggerReminder(symbol, isLong, currentQty, initialQty);
-        return;
-    }
-
-    // idle: check if partials threshold crossed (current < 90% of initial)
-    if (currentQty < initialQty * 0.90) {
-        bts.stopTightenPhase = 'needs_tighten';
+    const data = Models.getSymbolData(symbol);
+    const previous = bts.stopTightenPhase;
+    const decision = stopDiscipline(previous, currentQty, initialQty, isLong, Models.getExitOrdersPairs(symbol), data.lowOfDay, data.highOfDay);
+    bts.stopTightenPhase = decision.phase as Models.BreakoutTradeState['stopTightenPhase'];
+    if (decision.phase === 'done') {
+        clearReminder(symbol, isLong);
+        if (previous !== 'done') Firestore.logInfo(`${symbol}: stop tightened. discipline complete.`);
+    } else if (decision.phase === 'needs_tighten') {
         startReminder(symbol, isLong);
-        triggerReminder(symbol, isLong, currentQty, initialQty);
+        if (decision.remind) triggerReminder(symbol, isLong, currentQty, initialQty);
     }
-};
-
-// Stop is tightened for a long when its stop price > lowOfDay (short: stop < highOfDay).
-// We need enough shares tightened: at least (currentQty - initialQty * 0.5) shares.
-const isStopTightenedEnough = (
-    symbol: string, isLong: boolean, currentQty: number, initialQty: number,
-): boolean => {
-    const symbolData = Models.getSymbolData(symbol);
-    const pairs = Models.getExitOrdersPairs(symbol);
-    const requiredTightenedQty = Math.max(0, currentQty - initialQty * 0.5);
-    if (requiredTightenedQty === 0) return true;
-
-    let tightenedQty = 0;
-    for (const pair of pairs) {
-        if (pair.STOP?.price !== undefined) {
-            const isTightened = isLong
-                ? pair.STOP.price > symbolData.lowOfDay
-                : pair.STOP.price < symbolData.highOfDay;
-            if (isTightened) {
-                tightenedQty += pair.STOP.quantity;
-            }
-        }
-    }
-    return tightenedQty >= requiredTightenedQty;
 };
 
 const blinkAllChartsRed = (symbol: string) => {

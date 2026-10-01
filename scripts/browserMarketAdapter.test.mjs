@@ -57,7 +57,6 @@ test('actual browser DB uses headless prints, including prints before chart init
         '../controllers/orderFlowManager': {}, '../ui/chartSettings': {}, '../api/broker': { cancelAllEntryOrders: noop },
         '../ui/ui': { updateClock: noop }, '../indicators/basicIndicators': { updateIndicators: noop },
         '../utils/candlestickVisibility': { shouldShowCandles: () => true }, '../utils/chartSeries': { safeUpdateSeries: noop },
-        '../bookmap/executionMarketData': { publishExecutionMarketData: noop },
     });
     const print = (price, size, offset, seq) => ({ symbol: 'AAPL', tradeTime: base + offset, timestamp: base + offset, lastPrice: price, lastSize: size, seq, conditions: [] });
     db.updateFromTimeSale(print(10, 100, 1, 1));

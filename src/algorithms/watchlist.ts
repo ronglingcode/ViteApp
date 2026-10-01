@@ -1,3 +1,4 @@
+import { validateTradingPlan } from '../trading/core/configuration/tradingConfig';
 import * as Config from '../config/config';
 import * as GlobalSettings from '../config/globalSettings';
 import * as Firestore from '../firestore';
@@ -5,11 +6,6 @@ import * as Models from '../models/models';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as Helper from '../utils/helper';
-import * as GapAndGoAlgo from './gapAndGoAlgo';
-import * as GapAndCrapAlgo from './gapAndCrapAlgo';
-import * as GapDownAndGoDownAlgo from './gapDownAndGoDownAlgo';
-import * as GapDownAndGoUpAlgo from './gapDownAndGoUpAlgo';
-import * as SupportResistance from '../models/tradingPlans/supportResistance';
 
 declare let window: Models.MyWindow;
 
@@ -191,152 +187,8 @@ const checkStockSelection = (watchlist: Models.WatchlistItem[]) => {
     return "OK";
 }
 
-/**
- * Trading plans are loaded as runtime data, so TypeScript cannot guarantee the flag's type.
- * A missing flag is valid and preserves the legacy one-sided entry rule; when supplied, the
- * flag must be a boolean so a malformed value cannot silently relax entry validation.
- */
-const verifyEntryRangeFlag = (
-    symbol: string,
-    areaName: string,
-    area: TradingPlansModels.SupportResistanceArea | undefined,
-) => {
-    if (!area) {
-        Firestore.logError(`${symbol} missing ${areaName}`);
-        return false;
-    }
-    if (!SupportResistance.hasValidEntryRangeFlag(area)) {
-        Firestore.logError(`${symbol} ${areaName} requireEntryWithinRange must be a boolean`);
-        return false;
-    }
-    return true;
-};
-
 const verifyTradingPlans = (symbol: string, plan: TradingPlansModels.TradingPlans) => {
-    const corePlanLength = typeof plan.corePlan === 'string' ? plan.corePlan.trim().length : 0;
-    if (corePlanLength <= 50) {
-        Firestore.logError(`${symbol} core plan must contain more than 50 characters`);
-        return false;
-    }
-
-    let longPlan = plan.long;
-    let shortPlan = plan.short;
-    let hasRangeBoundReversalPlan = !!plan.rangeBoundReversalPlan;
-    if (plan.rangeBoundReversalPlan) {
-        let rawSupport = plan.rangeBoundReversalPlan.support;
-        let rawResistance = plan.rangeBoundReversalPlan.resistance;
-        if (!rawSupport || !Number.isFinite(rawSupport.low) || !Number.isFinite(rawSupport.high) ||
-            Math.min(rawSupport.low, rawSupport.high) <= 0 ||
-            rawSupport.low === rawSupport.high) {
-            Firestore.logError(`${symbol} missing support zone for range bound reversal`);
-            return false;
-        }
-        if (!rawResistance || !Number.isFinite(rawResistance.low) || !Number.isFinite(rawResistance.high) ||
-            Math.min(rawResistance.low, rawResistance.high) <= 0 ||
-            rawResistance.low === rawResistance.high) {
-            Firestore.logError(`${symbol} missing resistance zone for range bound reversal`);
-            return false;
-        }
-        if (!verifyEntryRangeFlag(symbol, 'range bound reversal support', rawSupport) ||
-            !verifyEntryRangeFlag(symbol, 'range bound reversal resistance', rawResistance)) {
-            return false;
-        }
-        let support = {
-            low: Math.min(rawSupport.low, rawSupport.high),
-            high: Math.max(rawSupport.low, rawSupport.high),
-        };
-        let resistance = {
-            low: Math.min(rawResistance.low, rawResistance.high),
-            high: Math.max(rawResistance.low, rawResistance.high),
-        };
-        if (support.high >= resistance.low) {
-            Firestore.logError(`${symbol} range bound reversal support zone must be below resistance zone`);
-            return false;
-        }
-    }
-    if (!verifyTradingPlansForSingleDirection(symbol, longPlan, true, hasRangeBoundReversalPlan)) {
-        return false;
-    }
-    if (!verifyTradingPlansForSingleDirection(symbol, shortPlan, false, hasRangeBoundReversalPlan)) {
-        return false;
-    }
-
-    return true;
-}
-/**
- * @returns false if trading plans for a single direction are not valid.
- */
-const verifyTradingPlansForSingleDirection = (
-    symbol: string,
-    plan: TradingPlansModels.SingleDirectionPlans,
-    isLong: boolean,
-    hasTopLevelTradebook = false) => {
-    if (!plan.enabled) {
-        return true;
-    }
-    if (Models.getFirstTargetToAdd(symbol, isLong) === 0) {
-        Firestore.logError(`${symbol} missing first target to add`);
-        return false;
-    }
-    if (plan.finalTargets.length < 2) {
-        Firestore.logError(`${symbol} need at least 2 final targets, length is ${plan.finalTargets.length}`);
-        return false;
-    }
-    for (let i = 0; i < plan.finalTargets.length; i++) {
-        let target = plan.finalTargets[i];
-        if (target.partialCount == 0) {
-            Firestore.logError(`${symbol} missing partial count for final target[${i}]`);
-            return false;
-        }
-        if (target.text == "") {
-            Firestore.logError(`${symbol} missing text for final target[${i}]`);
-            return false;
-        }
-        if (target.rrr == 0 && target.level == 0 && target.atr == 0) {
-            Firestore.logError(`${symbol} missing atr,rrr,level for final target[${i}]`);
-            return false;
-        }
-    }
-    let hasBestTradebook = false;
-    if (plan.gapAndCrapPlan) {
-        if (!verifyEntryRangeFlag(symbol, 'gap and crap resistance', plan.gapAndCrapPlan.resistance)) {
-            return false;
-        }
-        if (!GapAndCrapAlgo.hasAtLeastOneReasonSet(plan.gapAndCrapPlan, symbol)) {
-            return false;
-        }
-        hasBestTradebook = true;
-    }
-    if (plan.gapAndGoPlan) {
-        if (!verifyEntryRangeFlag(symbol, 'gap and go support', plan.gapAndGoPlan.support)) {
-            return false;
-        }
-        if (!GapAndGoAlgo.hasAtLeastOneReasonSet(plan.gapAndGoPlan, symbol)) {
-            return false;
-        }
-        hasBestTradebook = true;
-    }
-    if (plan.gapDownAndGoDownPlan) {
-        if (!verifyEntryRangeFlag(symbol, 'gap down and go down resistance', plan.gapDownAndGoDownPlan.resistance)) {
-            return false;
-        }
-        if (!GapDownAndGoDownAlgo.hasAtLeastOneReasonSet(plan.gapDownAndGoDownPlan, symbol)) {
-            return false;
-        }
-        hasBestTradebook = true;
-    }
-    if (plan.gapDownAndGoUpPlan) {
-        if (!verifyEntryRangeFlag(symbol, 'gap down and go up support', plan.gapDownAndGoUpPlan.support)) {
-            return false;
-        }
-        if (!GapDownAndGoUpAlgo.hasAtLeastOneReasonSet(plan.gapDownAndGoUpPlan, symbol)) {
-            return false;
-        }
-        hasBestTradebook = true;
-    }
-    if (!hasBestTradebook && !hasTopLevelTradebook) {
-        Firestore.logError(`${symbol} missing best tradebook`);
-        return false;
-    }
-    return true;
-}
+    const reason = validateTradingPlan({ ...plan, symbol });
+    if (reason) Firestore.logError(reason);
+    return !reason;
+};

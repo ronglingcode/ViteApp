@@ -285,35 +285,13 @@ export const isPaperCut = (entryPrice: number, stopLossPrice: number, exitPrice:
     return currentLoss <= originalRisk * 0.15;
 }
 
-export const hasEnoughBuyingPower = (currentPrice: number, quantity: number) => {
-    let account = Models.getBrokerAccount();
-    if (!account) {
-        return false;
-    }
-    let buyingPower = account.currentBalance * 3.9; // leave some room
-    let required = currentPrice * quantity;
-    let used = 0;
-
-    let watchlist = Models.getWatchlist();
-    let symbolsInWatchlist: Map<string, boolean> = new Map<string, boolean>();
-    watchlist.forEach(item => {
-        symbolsInWatchlist.set(item.symbol, true);
-    });
-
-    account.positions.forEach((position, symbol) => {
-        if (symbolsInWatchlist.has(symbol)) {
-            let positionPrice = Models.getCurrentPrice(symbol);
-            used += Math.abs(position.netQuantity) * positionPrice;
-        }
-    });
-
-    if ((buyingPower - used) <= required) {
-        Firestore.logError(`buying power: ${buyingPower}, used: ${used}, required: ${required}`);
-        return false;
-    } else {
-        return true;
-    }
-}
+export const getAvailableBuyingPower = () => {
+    const account = Models.getBrokerAccount(); if (!account) return 0;
+    const symbols = new Set(Models.getWatchlist().map(item => item.symbol)); let used = 0;
+    account.positions.forEach((position, symbol) => { if (symbols.has(symbol)) used += Math.abs(position.netQuantity) * Models.getCurrentPrice(symbol); });
+    return account.currentBalance * 3.9 - used;
+};
+export const hasEnoughBuyingPower = (currentPrice: number, quantity: number) => getAvailableBuyingPower() > currentPrice * quantity;
 
 export const isRealizedProfitLossOverThreshold = (symbol: string) => {
     let profitLoss = Models.getRealizedProfitLossForSymbol(symbol);

@@ -24,3 +24,13 @@ test('loading backfills the partial minute and counts overlapping buffered print
     assert.equal(result.totalVolume, 300); assert.equal(result.totalTradingAmount, 3400);
     assert.equal(result.candles[0].high, 12); assert.equal(result.currentPrice, 12);
 });
+
+test('removed or prior-session history cannot replace a newer load', async () => {
+    let release!: () => void, call = 0;
+    const blocked = new Promise<void>(resolve => { release = resolve; });
+    const loader = new MarketLoader({ getFullPriceHistory: async () => { if (++call === 1) await blocked; return { today1MinuteBars: [], dailyBars: [], premarketDollarCollection: calculatePremarketVolume([]) }; }, getTrades: async () => [] }, () => Date.parse('2026-10-02T13:30:00Z'));
+    const old = loader.load('AAPL', '2026-10-01', 10000, { volumeSum: 0, tradingSum: 0 });
+    const rejection = assert.rejects(old, /replaced or stopped/); loader.forget('AAPL');
+    const next = await loader.load('AAPL', '2026-10-02', 10000, { volumeSum: 0, tradingSum: 0 }); release(); await rejection;
+    assert.equal(loader.getState('AAPL'), next.state); assert.equal(next.state.snapshot().date, '2026-10-02'); loader.close();
+});

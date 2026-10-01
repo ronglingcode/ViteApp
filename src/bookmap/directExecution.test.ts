@@ -6,8 +6,7 @@ import { createClosingEquityOrder } from '../api/schwab/closingOrderFactory.ts';
 import { getFirstSmallestQuantityExitPairIndex } from '../utils/exitPairSelection.ts';
 import { evaluateCoreTargetRule } from '../controllers/coreTargetRule.ts';
 import { recordBrokerObservation, getBrokerObservation,
-    canApplyBrokerObservation, recordExecutionToken, getExecutionToken } from './executionMetadata.ts';
-import { registerExecutionMarketDataPublisher, publishExecutionMarketData } from './executionMarketData.ts';
+    canApplyBrokerObservation, recordBrokerToken, getBrokerToken } from '../trading/adapters/browserBrokerMetadata.ts';
 import { describeError, readBrokerJson, brokerResponseError, fetchBrokerResponse } from '../utils/errorDetails.ts';
 
 const fixtures = JSON.parse(readFileSync(new URL('./direct-execution-fixtures.json', import.meta.url), 'utf8'));
@@ -29,19 +28,6 @@ test('diagnostics retain the request, HTTP error text and exception causes witho
     const detail = describeError(rejection);
     assert.match(detail, /POST new order HTTP 400.*Insufficient buying power/);
     assert.ok(!detail.includes('another-token')); assert.ok(!detail.includes('refresh-value'));
-});
-test('market handlers publish the complete latest bundle synchronously, without an account update', () => {
-    const received: any[] = [];
-    registerExecutionMarketDataPublisher(data => received.push(data));
-    const data = { bidPrice: 10, askPrice: 10.02, highOfDay: 10.1, lowOfDay: 9.5 };
-    publishExecutionMarketData('AAPL', 10.01, data);
-    assert.deepEqual(received, [{ symbol: 'AAPL', currentPrice: 10.01, bid: 10, ask: 10.02,
-        highOfDay: 10.1, lowOfDay: 9.5 }]);
-    data.bidPrice = 10.03; data.askPrice = 10.05; data.highOfDay = 10.2;
-    publishExecutionMarketData('AAPL', 10.2, data);
-    assert.equal(received.length, 2);
-    assert.equal(received[1].bid, 10.03); assert.equal(received[1].highOfDay, 10.2);
-    assert.equal(received[0].bid, 10); // Earlier messages keep their values.
 });
 test('sanitized native fixtures agree with the production TS decisions and closing payloads', () => {
     for (const fixture of fixtures) {
@@ -74,11 +60,11 @@ test('out-of-order broker reads cannot overwrite a newer observation', () => {
         assert.equal(canApplyBrokerObservation(100), false);
         recordBrokerObservation(100);
         assert.equal(getBrokerObservation()?.startedAt, 200);
-        recordExecutionToken('fake-token', 120);
-        const first = getExecutionToken()!;
-        recordExecutionToken('replacement-fake-token', 120);
-        assert.ok(getExecutionToken()!.generation > first.generation);
-        assert.ok(getExecutionToken()!.expiresAt > Date.now());
-        assert.throws(() => recordExecutionToken('invalid-token', Number.NaN));
+        recordBrokerToken('fake-token', 120);
+        const first = getBrokerToken()!;
+        recordBrokerToken('replacement-fake-token', 120);
+        assert.ok(getBrokerToken()!.generation > first.generation);
+        assert.ok(getBrokerToken()!.expiresAt > Date.now());
+        assert.throws(() => recordBrokerToken('invalid-token', Number.NaN));
     } finally { Reflect.deleteProperty(globalThis, 'window'); }
 });

@@ -15,6 +15,7 @@ export class MarketLoader {
     private closed = false;
     constructor(api: Pick<MassiveApi, 'getFullPriceHistory' | 'getTrades'>, now = Date.now) { this.api = api; this.now = now; }
     getState(symbol: string) { return this.states.get(symbol); }
+    forget(symbol: string) { this.states.delete(symbol); this.loading.delete(symbol); }
     acceptTrade(trade: Trade): boolean {
         if (this.closed || shouldFilterTrade(trade)) return false;
         this.loading.get(trade.symbol)?.buffer.push(trade);
@@ -27,13 +28,13 @@ export class MarketLoader {
         const pending: Loading = { buffer: [] }; this.loading.set(symbol, pending);
         const liveFrom = Math.floor(this.now() / 60000) * 60000;
         pending.promise = this.performLoad(symbol, date, marketCap, correction, liveFrom, pending)
-            .finally(() => { this.loading.delete(symbol); });
+            .finally(() => { if (this.loading.get(symbol) === pending) this.loading.delete(symbol); });
         return pending.promise;
     }
     private async performLoad(symbol: string, date: string, marketCap: number, correction: VwapCorrection, liveFrom: number, pending: Loading) {
         const history = await this.api.getFullPriceHistory(symbol, date);
         const backfill = await this.api.getTrades(symbol, liveFrom, this.now());
-        if (this.closed) throw new Error('Market loader stopped');
+        if (this.closed || this.loading.get(symbol) !== pending) throw new Error('Market load replaced or stopped');
         const state = new MarketState(symbol, date, marketCap); state.initialize(history.today1MinuteBars, liveFrom, correction);
         // Backfill can overlap live buffering. Deduplication lives in MarketState.
         const prints = [...backfill, ...pending.buffer].sort((a, b) => a.timestamp - b.timestamp);

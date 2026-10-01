@@ -114,7 +114,9 @@ export class MarketState {
             symbol: latest.symbol, datetime: latest.datetime, open: latest.open, high: latest.high, low: latest.low,
             close: latest.close, volume: latest.volume, vwap: latest.vwap,
         } : undefined;
+        const closedTime = [...this.vwaps.keys()].at(-2);
         return {
+            ...(closedTime === undefined ? {} : { closedVwap: { datetime: closedTime, value: this.vwaps.get(closedTime)! } }),
             currentPrice: this.currentPrice, vwap: this.totalVolume ? this.totalDollars / this.totalVolume : 0,
             totalVolume: this.totalVolume, totalTradingAmount: this.totalDollars, premarketDollarTraded: this.premarketDollars,
             highOfDay: this.highOfDay, lowOfDay: this.lowOfDay, premarketHigh: this.premarketHigh, premarketLow: this.premarketLow,
