@@ -330,11 +330,13 @@ trade/core state. Accepted entries are initialized even if subsequent old-entry
 cancellation fails; no broker mutation is repeated by a lifecycle handler.
 
 The default-off `experimentalDirectBrokerExecution` plugin flag is labeled
-**Experimental: Extended Native Execution (Schwab)** and controls entries with
-existing positions/pending orders and generic non-chart B/S selection. Off forwards
-those actions to ViteApp; on uses Java. Add Partial/reload, Swap, and flat initial
-wall-reversal entries with any risk-method label always use Java. Risk labels do
-not bypass the flag for entries with existing positions or pending orders.
+**Experimental: Extended Native Execution (Schwab)** and controls opposite-position
+entries, entries with pending orders, and generic non-chart B/S selection. Off
+forwards those actions to ViteApp; on uses Java. Add Partial/reload, Swap, flat
+initial wall-reversal entries, and same-direction adds without pending entry orders
+always use Java, with any risk-method label. Existing protective exit pairs do not
+prevent a same-direction add from using Java. Risk labels do not bypass the flag
+for opposite-position entries or entries with pending orders.
 Status `enabled`, `entriesEnabled`, and `exitsEnabled` remain true while running;
 `extendedEnabled` reports this separate flag. Tokens and account/market inputs
 continue to flow when the flag is off.
