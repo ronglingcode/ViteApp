@@ -81,3 +81,10 @@ share the authentication/subscription, partial-message and reconnect contracts.
 `npm run test:streams` checks 18 protocol scenarios and fake-socket lifecycle.
 The existing browser worker uses the new parser and LOGIN result check; runtime
 adoption is ongoing. Native JDK transport is independent of Bookmap and proxies.
+
+`core/account/tradeLedger`, `core/state/tradeState`, `core/configuration/tradingConfig`
+and `core/controllers/executionInputs` now mirror Java's local trading inputs.
+Browser fill grouping, accepted state, tradebook construction and bridge context
+use the core. The ledger splits position-reversing fills at zero and retains
+weighted entry prices/per-minute add semantics. Same-day persisted state retains
+captured plans and sizing. `npm run test:state` checks 39 shared scenarios.

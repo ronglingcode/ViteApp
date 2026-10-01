@@ -1,3 +1,6 @@
+import { defaultBreakout, acceptedBreakout } from '../trading/core/state/tradeState.ts';
+import { addedPartialStack } from '../trading/core/account/tradeLedger.ts';
+import { toCoreFill } from '../trading/adapters/browserAccount.ts';
 import * as Firestore from '../firestore';
 import * as Config from '../config/config';
 import * as GlobalSettings from '../config/globalSettings';
@@ -18,45 +21,8 @@ const getDefaultAtr = () => {
     }
     return result;
 }
-const getDefaultBreakoutTradeState = (isLong: boolean) => {
-    let result: Models.BreakoutTradeState = {
-        hasValue: false,
-        entryPrice: 0,
-        stopLossPrice: 0,
-        coreInvalidationLevel: -1,
-        riskLevel: 0,
-        initialQuantity: 0,
-        submitTime: Timestamp.now(),
-        isLong: isLong,
-        status: Models.BreakoutTradeStatus.None,
-        isMarketOrder: false,
-        lowestExitBatchCount: -1,
-        sizeMultipler: 0,
-        maxPullbackAllowed: 0,
-        maxPullbackReached: 0,
-        adjustedTargetDueToMaxPullback: false,
-        exitDescription: "",
-        closedOutsideRatio: -1,
-        stopTightenPhase: 'idle',
-        coreTargetReminderShown: false,
-        submitEntryResult: {
-            isSingleOrder: false,
-            profitTargets: [],
-            totalQuantity: 0,
-            tradeBookID: "",
-        },
-        plan: {
-            planConfigs: {
-                requireReversal: true,
-            },
-            coreTarget: 0,
-            coreCount: 0,
-            runnerCount: 0,
-            runnerTriggerCondition: "",
-        }
-    }
-    return result;
-}
+const getDefaultBreakoutTradeState = (isLong: boolean): Models.BreakoutTradeState =>
+    ({ ...defaultBreakout(isLong, Date.now()), submitTime: Timestamp.now() } as Models.BreakoutTradeState);
 export const getDefaultSymbolState = () => {
     let result: Models.SymbolState = {
         breakoutTradeStateForLong: getDefaultBreakoutTradeState(true),
@@ -201,29 +167,10 @@ const onPlaceTrade = async (symbol: string, isLong: boolean, isMarketOrder: bool
     let readOnlyState: Models.ReadOnlySymbolState = {
         atr: atr,
     };
-    let bts: Models.BreakoutTradeState = {
-        hasValue: true,
-        isLong: isLong,
-        entryPrice: entryPrice,
-        stopLossPrice: stopLossPrice,
-        coreInvalidationLevel: -1,
-        riskLevel: riskLevel,
-        initialQuantity: submitEntryResult.totalQuantity,
-        submitTime: Timestamp.now(),
-        status: Models.BreakoutTradeStatus.Pending,
-        isMarketOrder: isMarketOrder,
-        lowestExitBatchCount: -1,
-        submitEntryResult: submitEntryResult,
-        plan: plan,
-        sizeMultipler: sizeMultipler,
-        maxPullbackAllowed: Helper.getPullbackPrice(symbol, entryPrice, stopLossPrice, isLong, 0.75),
-        maxPullbackReached: 0,
-        adjustedTargetDueToMaxPullback: false,
-        exitDescription: "",
-        closedOutsideRatio: -1,
-        stopTightenPhase: 'idle',
-        coreTargetReminderShown: false,
-    };
+    const bts = { ...acceptedBreakout({
+        isLong, useMarketOrder: isMarketOrder, entryPrice, stopOutPrice: stopLossPrice,
+        multiplier: sizeMultipler, basePlan: plan, submitEntryResult,
+    }, Date.now(), price => Helper.roundPrice(symbol, price)), riskLevel, submitTime: Timestamp.now() } as Models.BreakoutTradeState;
     if (isLong) {
         symbolState.breakoutTradeStateForLong = bts;
     } else {
@@ -333,42 +280,8 @@ export const getAddCount = (symbol: string, isLong: boolean) => {
 
 
 export const getAddedPartialStack = (symbol: string, isLong: boolean) => {
-    let trade = Models.getCurrentOpenTrade(symbol);
-    if (!trade) {
-        return [];
-    }
-    let stack: number[] = [];
-    let executions: Models.OrderExecution[] = [];
-    trade.entries.forEach(entry => {
-        executions.push(entry);
-    });
-    trade.exits.forEach(exit => {
-        executions.push(exit);
-    });
-    executions.sort((a, b) => {
-        let timeA = a.time;
-        let timeB = b.time;
-        return timeA.getTime() - timeB.getTime();
-    });
-    let state = getBreakoutTradeState(symbol, isLong);
-    let initialQuantity = state.initialQuantity;
-    let currentQuantity = 0;
-    let hasExit = false;
-    for (let i = 0; i < executions.length; i++) {
-        let cur = executions[i];
-        if (cur.positionEffectIsOpen) {
-            currentQuantity += cur.quantity;
-            let isAdd = (currentQuantity > initialQuantity) || hasExit;
-            if (isAdd) {
-                stack.push(cur.price);
-            }
-        } else {
-            hasExit = true;
-            currentQuantity -= cur.quantity;
-            if (stack.length > 0) {
-                stack.pop();
-            }
-        }
-    }
-    return stack;
-}
+    const trade = Models.getCurrentOpenTrade(symbol);
+    if (!trade) return [];
+    return addedPartialStack({ ...trade, entries: trade.entries.map(toCoreFill), exits: trade.exits.map(toCoreFill) },
+        getBreakoutTradeState(symbol, isLong).initialQuantity);
+};

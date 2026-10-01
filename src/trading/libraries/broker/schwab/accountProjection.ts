@@ -1,4 +1,6 @@
 import { marketTime } from '../../../core/marketdata/marketClock.ts';
+import type { AccountFill } from '../../../models/account.ts';
+export type { AccountFill } from '../../../models/account.ts';
 
 type VendorOrder = Record<string, any>;
 export interface AccountOrder {
@@ -7,10 +9,6 @@ export interface AccountOrder {
     exitStopPrice?: number; exitLimitPrice?: number;
 }
 export interface AccountExitPair { symbol: string; source: string; parentOrderID: string; STOP?: AccountOrder; LIMIT?: AccountOrder }
-export interface AccountFill {
-    symbol: string; orderID: string; timestamp: number; quantity: number; price: number;
-    isBuy: boolean; positionEffectIsOpen: boolean;
-}
 const terminal = ['FILLED', 'CANCELED', 'REPLACED', 'REJECTED', 'EXPIRED'];
 const working = ['PENDING_ACTIVATION', 'QUEUED', 'WORKING', 'AWAITING_PARENT_ORDER', 'PARTIALLY_FILLED'];
 export const orderSymbol = (order: VendorOrder): string => order.orderLegCollection?.[0]?.instrument?.symbol

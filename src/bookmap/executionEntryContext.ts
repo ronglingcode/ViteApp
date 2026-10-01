@@ -2,7 +2,11 @@ import * as Models from '../models/models';
 import * as Chart from '../ui/chart';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import * as Watchlist from '../algorithms/watchlist';
-import * as Helper from '../utils/helper';
+import { createExecutionInputs, defaultTradingPolicy } from '../trading/core/controllers/executionInputs.ts';
+import { projectTradeLedger } from '../trading/core/account/tradeLedger.ts';
+import { marketLoader } from '../trading/adapters/browserMarket.ts';
+import { toCoreFill } from '../trading/adapters/browserAccount.ts';
+import * as GlobalSettings from '../config/globalSettings';
 import * as RiskManager from '../algorithms/riskManager';
 import * as Broker from '../api/broker';
 import { BookmapWallReversal } from '../tradebooks/bookmapWallReversal';
@@ -33,42 +37,27 @@ export const createExecutionEntryContext = (symbol: string) => {
     const account = Models.getBrokerAccount();
     if (!account) return undefined;
     Broker.rebuildBrokerAccount();
-    const watchlist = new Set(Models.getWatchlist().map(item => item.symbol));
-    let usedBuyingPower = 0;
-    account.positions.forEach((position, positionSymbol) => {
-        if (watchlist.has(positionSymbol)) usedBuyingPower += Math.abs(position.netQuantity) * Models.getCurrentPrice(positionSymbol);
-    });
-    const data = Models.getSymbolData(symbol);
-    return {
-        definitions,
-        // Keep the legacy field for installed Bookmap plugins that require it.
-        attendanceAllowed: true,
-        watchlistBlockReason: Watchlist.getWatchlistLimitBlockReason(),
-        realizedPnl: Models.getRealizedProfitLoss(), dailyMaxLoss: RiskManager.dailyMax, riskDollars: RiskManager.R,
-        liquidityScale: Models.getLiquidityScale(symbol),
-        secondsSinceMarketOpen: Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime()),
-        openPrice: Models.getOpenPrice(symbol), vwap: Models.getCurrentVwap(symbol),
-        atr: plan.atr.average, maxQuantity: plan.atr.maxQuantity,
-        watchAreas: plan.analysis.watchAreas, noTradeZones: plan.analysis.noTradeZones,
-        volumes: Models.getVolumesSinceOpen(symbol).map(volume => volume.value),
-        highOfDay: data.highOfDay, lowOfDay: data.lowOfDay,
-        customEntryPrice: widget.entryPriceLine?.options().price ?? 0,
-        customStopLong: Chart.getCustomStopLossPrice(symbol, true),
-        customStopShort: Chart.getCustomStopLossPrice(symbol, false),
-        fixedQuantity: Models.getFixedQuantityFromInput(symbol),
-        availableBuyingPower: account.currentBalance * 3.9 - usedBuyingPower,
-        // Observations for the experimental workflows; Java makes the action decision.
-        reloadIsLong: Models.isLongForReload(symbol),
-        lastExitSize: Models.getLastExitSize(symbol),
-        crosshairPrice: Chart.getCrossHairPrice(symbol),
-        todayRange: Models.getTodayRange(plan.atr),
-        longState: directionState(symbol, true), shortState: directionState(symbol, false),
-        activeBasePlan: TradingState.getSymbolState(symbol).activeBasePlan,
-        isGappedUp: Models.isGappedUp(symbol),
-        premarketHigh: data.premktHigh, premarketLow: data.premktLow,
-        addTargetLong: Models.getFirstTargetToAdd(symbol, true),
-        addTargetShort: Models.getFirstTargetToAdd(symbol, false),
-        maxRiskMultipleWithExistingPosition: RiskManager.maxRiskMultipleWithExistingPosition,
-        allowAddIfBelow: RiskManager.allowAddIfBelow,
+    const market = marketLoader.getState(symbol)?.snapshot();
+    if (!market) return undefined;
+    const order = (value: Models.OrderModel) => ({ ...value, price: value.price ?? 0, rawOrder: value.rawOrder ?? {} });
+    const projection = {
+        positions: Object.fromEntries(account.positions),
+        entryOrders: Object.fromEntries([...account.entryOrders].map(([key, values]) => [key, values.map(order)])),
+        exitPairs: Object.fromEntries([...account.exitPairs].map(([key, values]) => [key, values.map(pair => ({ ...pair,
+            STOP: pair.STOP ? order(pair.STOP) : undefined, LIMIT: pair.LIMIT ? order(pair.LIMIT) : undefined }))])),
+        executions: Object.fromEntries([...account.orderExecutions].map(([key, fills]) => [key, fills.map(toCoreFill)])),
+        currentBalance: account.currentBalance, rawOrders: account.rawAccount,
     };
+    const watchlist = Models.getWatchlist().map(item => item.symbol);
+    const inputs = createExecutionInputs(symbol, plan, market, Models.getSymbolData(symbol), projection,
+        projectTradeLedger(projection.executions, RiskManager.dailyMax),
+        { symbol: TradingState.getSymbolState, direction: TradingState.getBreakoutTradeState }, watchlist,
+        Object.fromEntries(watchlist.map(stock => [stock, { currentPrice: Models.getCurrentPrice(stock) }])),
+        { customEntryPrice: widget.entryPriceLine?.options().price ?? 0, customStopLong: Chart.getCustomStopLossPrice(symbol, true),
+            customStopShort: Chart.getCustomStopLossPrice(symbol, false), fixedQuantity: Models.getFixedQuantityFromInput(symbol), crosshairPrice: Chart.getCrossHairPrice(symbol) },
+        Date.now(), 0, { ...defaultTradingPolicy, riskDollars: RiskManager.R, dailyMaxLoss: RiskManager.dailyMax,
+            batchCount: GlobalSettings.batchCount, coreTargetEnabled: GlobalSettings.enableCoreTargetExitFeature,
+            maxRiskMultipleWithExistingPosition: RiskManager.maxRiskMultipleWithExistingPosition, allowAddIfBelow: RiskManager.allowAddIfBelow });
+    return { ...inputs.entryContext, definitions, watchlistBlockReason: Watchlist.getWatchlistLimitBlockReason(),
+        longState: directionState(symbol, true), shortState: directionState(symbol, false) };
 };

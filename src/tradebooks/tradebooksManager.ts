@@ -1,3 +1,4 @@
+import { createTradebookDefinitions } from '../trading/core/configuration/tradingConfig.ts';
 import * as Models from "../models/models";
 import * as TradingPlans from "../models/tradingPlans/tradingPlans";
 import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
@@ -80,35 +81,12 @@ export const createTradebooksForRangeBoundReversal = (
 }
 
 export const createAllTradebooks = (symbol: string) => {
-    let tradebooksMap = new Map<string, Tradebook>();
-    let plan = TradingPlans.getTradingPlans(symbol);
-
-    if (isDirectionEnabled(plan.long)) {
-        if (plan.long.gapAndGoPlan) {
-            createTradebooksForGapAndGo(symbol, plan.long.gapAndGoPlan, tradebooksMap);
-        }
-
-        if (plan.long.gapDownAndGoUpPlan) {
-            createTradebooksForGapDownAndGoUp(symbol, plan.long.gapDownAndGoUpPlan, tradebooksMap);
-        }
+    const tradebooksMap = new Map<string, Tradebook>();
+    for (const definition of createTradebookDefinitions(TradingPlans.getTradingPlans(symbol))) {
+        tradebooksMap.set(definition.tradebookID, new BookmapWallReversal(symbol, definition.tradebookID, definition.basePlan, definition.entryArea));
     }
-
-    if (isDirectionEnabled(plan.short)) {
-        if (plan.short.gapAndCrapPlan) {
-            createTradebooksForGapAndCrap(symbol, plan.short.gapAndCrapPlan, tradebooksMap);
-        }
-
-        if (plan.short.gapDownAndGoDownPlan) {
-            createTradebooksForGapDownAndGoDown(symbol, plan.short.gapDownAndGoDownPlan, tradebooksMap);
-        }
-    }
-
-    if (plan.rangeBoundReversalPlan) {
-        createTradebooksForRangeBoundReversal(symbol, plan.rangeBoundReversalPlan, tradebooksMap);
-    }
-
     return tradebooksMap;
-}
+};
 
 export const updateTradebooksStatusHighLevelCall = (symbol: string) => {
     let widget = Models.getChartWidget(symbol);

@@ -2,12 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import ts from 'typescript';
+const coreState = {};
+const coreSource = readFileSync(new URL('../src/trading/core/state/tradeState.ts', import.meta.url), 'utf8');
+new Function('exports', ts.transpileModule(coreSource, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText)(coreState);
 
 test('accepted adds preserve the active trade even if refreshed account state changes', async () => {
     // Exercise the actual tradingState export with only its browser/storage dependencies replaced.
     const source = readFileSync(new URL('../src/models/tradingState.ts', import.meta.url), 'utf8');
     let writes = 0;
     const mocks = {
+        '../trading/core/state/tradeState.ts': coreState,
         '../firestore': { setTradingState: () => { writes++; } },
         './models': { BreakoutTradeStatus: { None: 'None', Pending: 'Pending' },
             getPositionNetQuantity: () => 0, getAtr: () => ({ average: 1 }) },

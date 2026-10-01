@@ -1,3 +1,5 @@
+import { groupTradeExecutions } from '../trading/core/account/tradeLedger.ts';
+import { toCoreFill, toBrowserFill } from '../trading/adapters/browserAccount.ts';
 import * as tradeStationApi from "./tradeStation/api";
 import * as schwabApi from './schwab/api';
 import * as config from '../config/config'
@@ -434,53 +436,10 @@ const positionEffectIsOpen = (isBuy: boolean, currentNetQuantity: number) => {
         return !isBuy;
 }
 
-export const getTradeExecutions = (symbol: string, executions: Models.OrderExecution[]) => {
-    let trades: Models.TradeExecution[] = [];
-    let currentNetQuantity = 0;
-    for (let i = 0; i < executions.length; i++) {
-        let execution = executions[i];
-        let netQuantityChange = execution.isBuy ? execution.quantity : -execution.quantity;
-        if (positionEffectIsOpen(execution.isBuy, currentNetQuantity)) {
-            if (currentNetQuantity == 0) {
-                // open a new position
-                trades.push({
-                    symbol: symbol,
-                    entries: [execution],
-                    exits: [],
-                    realizedPnL: 0,
-                    isLong: execution.isBuy,
-                    isClosed: false,
-                });
-            } else {
-                // add to existing position
-                if (trades[trades.length - 1]) {
-                    trades[trades.length - 1].entries.push(execution);
-                }
-                else {
-                    Firestore.logError(`should have at least one trade in getTradeExecutions() for ${symbol}`);
-                }
-            }
-        } else {
-            if (trades[trades.length - 1]) {
-                trades[trades.length - 1].exits.push(execution);
-            } else {
-                Firestore.logError(`should not see exits before entries in getTradeExecutions() for ${symbol}`);
-            }
-        }
-        currentNetQuantity += netQuantityChange;
-    }
-    trades.forEach(trade => {
-        trade.realizedPnL = getRealizedPnL(trade);
-        trade.isClosed = isTradeClosed(trade);
-        trade.entries = aggregateEntriesExecutions(trade.entries);
-    });
-    trades.sort((a, b) => {
-        let timeA = a.entries[0].time;
-        let timeB = b.entries[0].time;
-        return timeA.getTime() - timeB.getTime();
-    });
-    return trades;
-};
+export const getTradeExecutions = (symbol: string, executions: Models.OrderExecution[]): Models.TradeExecution[] =>
+    groupTradeExecutions(symbol, executions.map(toCoreFill)).map(trade => ({
+        ...trade, entries: trade.entries.map(toBrowserFill), exits: trade.exits.map(toBrowserFill),
+    }));
 
 const aggregateEntriesExecutions = (executions: Models.OrderExecution[]) => {
     let entriesMap = new Map<number, Models.OrderExecution[]>();

@@ -6,6 +6,7 @@
   "scripts": {
     "test:broker-read": "node --experimental-strip-types scripts/generateBrokerReadFixtures.mjs --check",
     "test:streams": "node --experimental-strip-types scripts/generateStreamFixtures.mjs --check && node --experimental-strip-types --test src/trading/runtime/marketStreams.test.ts",
+    "test:state": "node --experimental-strip-types scripts/generateStateFixtures.mjs --check",
     "test:market": "node --experimental-strip-types scripts/generateMarketFixtures.mjs --check && node --experimental-strip-types --test scripts/tradeFlushBuffer.test.mjs scripts/browserMarketAdapter.test.mjs src/trading/runtime/marketLoader.test.ts",
     "test:services": "node --experimental-strip-types scripts/generateServiceFixtures.mjs --check && node --experimental-strip-types --test src/trading/libraries/broker/schwab/oauth.test.ts",
     "test:massive": "node --experimental-strip-types scripts/generateMassiveFixtures.mjs --check",
