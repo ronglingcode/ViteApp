@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import assert from 'node:assert/strict';
 import { MassiveApi } from '../src/trading/libraries/massive/api.ts';
 import { calculatePremarketVolume } from '../src/trading/core/marketdata/premarketVolume.ts';
-import { marketTime } from '../src/trading/runtime/marketClock.ts';
+import { marketTime } from '../src/trading/core/marketdata/marketClock.ts';
 
 const bar = (date, price = 10, volume = 100, vw = price) => ({ t: Date.parse(date), o: price, h: price + 1, l: price - 1, c: price, v: volume, ...(vw === undefined ? {} : { vw }) });
 const ok = body => ({ status: 200, body: JSON.stringify(body) });

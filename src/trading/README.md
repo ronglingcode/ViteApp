@@ -6,7 +6,8 @@ bookmap-plugin, with matching `core`, `libraries`, `models`, `ports`, and `runti
 folders. Old browser module paths temporarily re-export extracted pure functions.
 
 `core` contains computations and decisions. `libraries` knows vendor JSON and API
-paths. `ports` describes I/O. `runtime` owns session time and will own orchestration.
+paths. `ports` describes I/O. Session-time calculations are pure `core/marketdata`
+functions. `runtime` will own orchestration.
 `adapters` is the browser boundary; it may use fetch, DOM, and UI models. Core and
 vendor modules must not import browser adapters or `window.HybridApp`.
 `tsconfig.trading.json` checks extracted production modules without DOM libraries.
@@ -30,6 +31,24 @@ Massive credentials rather than a literal embedded key.
 library. Java runs the versioned fixture copy with fake HTTP. Generate changed
 fixtures with `node --experimental-strip-types scripts/generateMassiveFixtures.mjs`.
 No live vendor requests or broker mutations are used by these tests.
+
+Firestore REST clients use explicit codecs for scalar/array/map/timestamp values,
+the existing `state-{profile}/tradingState` document, and the latest configuration
+snapshot query. `LogRepository` preserves log/order/breakout payloads and TTLs.
+The browser still uses Firebase SDK for its optional log-maintenance functions.
+Log dates now use the current Eastern session date instead of a startup-captured
+host date. Log documents use generated IDs, avoiding same-millisecond collisions.
+
+Schwab OAuth coalesces concurrent refreshes, uses returned expiry, persists rotated
+refresh tokens, and handles manual callback-code exchange. Browser adapters retain
+the `tradingscripts.schwab` schema and preserve unknown credential fields. The
+browser checks expiry every 30 seconds and exposes token-refresh failures. Existing
+broker mutation error handling and action concurrency remain unchanged. Startup
+now actually awaits the user-preference request before opening the stream.
+
+`npm run test:services` checks 22 production Firestore/OAuth/log scenarios and token
+refresh concurrency. Java also tests local-file rotation/restart and concurrency.
+Firestore writes and token exchanges are exercised only with fake transports.
 
 Migration design and resumable progress are in bookmap-plugin/docs:
 `standalone-native-trading-plan.md` and `standalone-native-trading-progress.md`.

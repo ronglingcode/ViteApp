@@ -1,3 +1,7 @@
+import { SchwabOAuth } from '../../trading/libraries/broker/schwab/oauth.ts';
+import type { SchwabCredentials } from '../../trading/ports/credentials.ts';
+import { browserCredentials } from '../../trading/adapters/browserCredentials.ts';
+import { browserHttp } from '../../trading/adapters/browserHttp.ts';
 /*
 https://github.com/tylerebowers/Schwab-API-Python/blob/main/tests/api_demo.py
 */
@@ -10,7 +14,7 @@ import * as Firestore from '../../firestore';
 import * as Config from '../../config/config';
 import * as OrderFactory from './orderFactory';
 import * as GlobalSettings from '../../config/globalSettings';
-import { recordExecutionToken, recordBrokerObservation, canApplyBrokerObservation } from '../../bookmap/executionMetadata';
+import { recordExecutionToken, getExecutionToken, recordBrokerObservation, canApplyBrokerObservation } from '../../bookmap/executionMetadata';
 import { brokerResponseError, readBrokerJson, describeError, fetchBrokerResponse } from '../../utils/errorDetails';
 declare let window: Models.MyWindow;
 
@@ -56,77 +60,30 @@ export const generateRefreshTokenUrl = () => {
     let url = `${API_HOST}/v1/oauth/authorize?redirect_uri=https%3A%2F%2F127.0.0.1&client_id=${appKey}`;
     return url;
 };
-const sampleReturnUrl = `https://127.0.0.1/?code=C0.b2F1dGgyLmJkYy5zY2h3YWIuY29t.r9lE95m3NVI2lYlQyL_hVIL_WcVf3MGTbqKgF_1xnQE%40&session=bfd1b647-ab28-4140-a451-69145237e0cc`;
-
-export const extractCodeFromUrl = (url: string) => {
-    let raw_code = url.split('code=')[1];
-    raw_code = raw_code.split('%40&')[0];
-    return raw_code + '@';
+const oauth = new SchwabOAuth(browserHttp, browserCredentials, value => btoa(value), () => `${getAuthApiHost()}/v1/oauth/token`);
+const publishToken = (credentials: SchwabCredentials) => {
+    window.HybridApp.Secrets.schwab.accessToken = credentials.access_token;
+    const previous = getExecutionToken();
+    if (!previous || previous.accessToken !== credentials.access_token || Math.abs(previous.expiresAt - (credentials.expires_at ?? 0)) > 1000)
+        recordExecutionToken(credentials.access_token, ((credentials.expires_at ?? 0) - Date.now()) / 1000);
+    return credentials.access_token;
 };
-export const makeAuthHeader = () => {
-    let appKey = secret.schwab().appKey;
-    let appSecret = secret.schwab().secret;
-    let headers = new Headers();
-    headers.append('Content-Type', 'application/x-www-form-urlencoded');
-    headers.append('Authorization', 'Basic ' + btoa(appKey + ":" + appSecret));
-    return headers;
-}
 export const generateRefreshToken = async (url: string) => {
-    let code = extractCodeFromUrl(url);
-    let endpoint = `${API_HOST}/v1/oauth/token`;
-    let data = {
-        grant_type: 'authorization_code',
-        code: code,
-        redirect_uri: `https://127.0.0.1`,
-    };
-
-    fetch(endpoint, {
-        method: 'POST',
-        headers: makeAuthHeader(),
-        body: new URLSearchParams(data)
-    })
-        .then(response => response.json())
-        .then(data => {
-            console.log(data);
-            let toLog = {
-                access_token: data['access_token'],
-                id_token: data['id_token'],
-                refresh_token: data['refresh_token']
-            };
-            let logString = `
-            access_token: "${data['access_token']}",
-            refresh_token: "${data['refresh_token']}",
-            `
-            console.log(JSON.stringify(toLog));
-            console.log(logString);
-        })
-        .catch((error) => console.error('Error:', error));
+    publishToken(await oauth.exchangeAuthorizationCode(url));
+    Firestore.logInfo('Schwab authorization tokens saved locally.');
 };
-export const refreshAccessToken = async () => {
-    const AUTH_URL = `${getAuthApiHost()}/v1/oauth/token`;
-    const data = {
-        grant_type: "refresh_token",
-        refresh_token: secret.schwab().refreshToken,
-    }
-    let response = await fetch(AUTH_URL, {
-        method: 'POST',
-        headers: makeAuthHeader(),
-        body: new URLSearchParams(data)
-    });
-
-    let json = await readBrokerJson(response, 'POST Schwab token refresh', secret.schwab().refreshToken);
-    if (!response.ok) throw brokerResponseError('POST Schwab token refresh', response, json, secret.schwab().refreshToken);
-    recordExecutionToken(json.access_token, Number(json.expires_in));
-    return json.access_token as string;
+export const refreshAccessToken = async () => publishToken(await oauth.refresh());
+export const maintainAccessToken = async () => {
+    await oauth.accessToken();
+    return publishToken(browserCredentials.loadSchwab());
 };
-
 const getAccessTokenFromStorage = () => {
     return window.HybridApp.Secrets.schwab.accessToken;
 };
 
 export const getUserPreference = async () => {
     let url = `${getTraderApiHost()}/userPreference`;
-    fetchBrokerResponse('GET Schwab userPreference', webRequest.asyncGet(url, getAccessTokenFromStorage())).then(async response => {
+    return fetchBrokerResponse('GET Schwab userPreference', webRequest.asyncGet(url, getAccessTokenFromStorage())).then(async response => {
         if (response.status != 200) {
             Firestore.logError(brokerResponseError('GET Schwab userPreference', response, await response.text(), getAccessTokenFromStorage()));
             return null;

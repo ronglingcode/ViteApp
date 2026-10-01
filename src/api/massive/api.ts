@@ -5,7 +5,7 @@ import * as Firestore from '../../firestore';
 import { MassiveApi } from '../../trading/libraries/massive/api.ts';
 import { browserHttp } from '../../trading/adapters/browserHttp.ts';
 import type { Candle } from '../../trading/models/market.ts';
-import { marketTime } from '../../trading/runtime/marketClock.ts';
+import { marketTime } from '../../trading/core/marketdata/marketClock.ts';
 
 export const massiveApi = new MassiveApi(browserHttp, () => Secret.massive().apiKey);
 export const toChartCandle = (candle: Candle): Models.CandlePlus => ({

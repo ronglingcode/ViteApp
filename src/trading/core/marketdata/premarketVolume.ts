@@ -1,5 +1,5 @@
 import type { Candle, PremarketDollarCollection } from '../../models/market.ts';
-import { marketTime } from '../../runtime/marketClock.ts';
+import { marketTime } from './marketClock.ts';
 
 export function typicalPrice(candle: Pick<Candle, 'vwap' | 'low' | 'high' | 'close'>): number {
     return candle.vwap > 0 && candle.vwap >= candle.low && candle.vwap <= candle.high
