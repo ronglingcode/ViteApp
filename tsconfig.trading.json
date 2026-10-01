@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "lib": ["ES2022"], "types": ["node"] },
+  "include": ["src/trading/core/**/*.ts", "src/trading/models/**/*.ts", "src/trading/ports/**/*.ts", "src/trading/libraries/**/*.ts", "src/trading/runtime/**/*.ts"],
+  "exclude": ["src/trading/adapters"]
+}

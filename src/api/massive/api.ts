@@ -1,116 +1,32 @@
 import * as Secret from '../../config/secret';
-import * as Models from '../../models/models';
-import * as TimeHelper from '../../utils/timeHelper';
+import type * as Models from '../../models/models';
 import * as Helper from '../../utils/helper';
 import * as Firestore from '../../firestore';
+import { MassiveApi } from '../../trading/libraries/massive/api.ts';
+import { browserHttp } from '../../trading/adapters/browserHttp.ts';
+import type { Candle } from '../../trading/models/market.ts';
+import { marketTime } from '../../trading/runtime/marketClock.ts';
 
-export const getPriceHistory = async (symbol: string, timeframe: number) => {
-    let apiKey = Secret.massive().apiKey;
-    let host = 'https://api.massive.com';
-    let today = new Date();
-    let todayString = TimeHelper.formatDateToYYYYMMDD(today);
-
-    let tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-    let tomorrowString = TimeHelper.formatDateToYYYYMMDD(tomorrow);
-
-    let url = `${host}/v2/aggs/ticker/${symbol}/range/${timeframe}/minute/${todayString}/${tomorrowString}?adjusted=true&sort=asc&limit=1000&apiKey=${apiKey}`;
-
-    return getBars(symbol, url);
-};
-
-export const getPriceHistoryFromOldDateForHigherTimeframe = async (symbol: string, timeframe: number,
-    startDate: string, endDate: string) => {
-    let apiKey = Secret.massive().apiKey;
-    let host = 'https://api.massive.com';
-
-    let url = `${host}/v2/aggs/ticker/${symbol}/range/${timeframe}/minute/${startDate}/${endDate}?adjusted=true&extendedHours=true&sort=asc&limit=50000&apiKey=${apiKey}`;
-
-    return getBars(symbol, url);
-};
-
-export const getBars = async (symbol: string, url: string) => {
-    const config = {
-        method: 'GET',
-    };
-    let response = await fetch(url, config);
-    let responseJson = await response.json();
-    let results = responseJson.results;
-    let candles: Models.CandlePlus[] = [];
-    if (!response.ok || !Array.isArray(results)) {
-        let failedResponse = {
-            status: response.status,
-            statusText: response.statusText,
-            response: responseJson,
-        };
-        Firestore.logError(`[Massive] ${symbol} history API failed: ${JSON.stringify(failedResponse)}`);
-        console.error(`[Massive] ${symbol} history API failed`, failedResponse);
-        throw new Error(`[Massive] ${symbol} history API failed: ${JSON.stringify(failedResponse)}`);
-    }
-    results.forEach((result: any) => {
-        let startTime = result.t;
-        let startDate = new Date(startTime);
-        let candle: Models.CandlePlus = {
-            time: Helper.jsDateToTradingViewUTC(startDate),
-            open: result.o,
-            close: result.c,
-            high: result.h,
-            low: result.l,
-            symbol: symbol,
-            volume: result.v,
-            datetime: startTime,
-            vwap: result.vw,
-            minutesSinceMarketOpen: Helper.getMinutesSinceMarketOpen(startDate),
-            firstTradeTime: startTime,
-        };
-        candles.push(candle);
-    });
-    return candles;
-};
-
+export const massiveApi = new MassiveApi(browserHttp, () => Secret.massive().apiKey);
+export const toChartCandle = (candle: Candle): Models.CandlePlus => ({
+    ...candle,
+    time: Helper.jsDateToTradingViewUTC(new Date(candle.datetime)),
+    minutesSinceMarketOpen: marketTime(candle.datetime).minutesSinceMarketOpen,
+    firstTradeTime: candle.datetime,
+});
+const chartBars = async (load: Promise<Candle[]>) => (await load).map(toChartCandle);
+export const getPriceHistory = (symbol: string, timeframe: number) =>
+    chartBars(massiveApi.getPriceHistory(symbol, timeframe, marketTime(Date.now()).date));
+export const getPriceHistoryFromOldDateForHigherTimeframe = (symbol: string, timeframe: number, startDate: string, endDate: string) =>
+    chartBars(massiveApi.getPriceHistoryFromOldDateForHigherTimeframe(symbol, timeframe, startDate, endDate));
+export const getBars = (symbol: string, url: string) => chartBars(massiveApi.getBars(symbol, url));
+export const getDailyCandlesForLastNDays = (symbol: string, nDays: number, endDateExcluded: string) =>
+    chartBars(massiveApi.getDailyCandlesForLastNDays(symbol, nDays, endDateExcluded));
 export const getSharesOutstanding = async (symbol: string): Promise<number> => {
-    const apiKey = Secret.massive().apiKey;
-    const host = 'https://api.massive.com';
-    const url = `${host}/v3/reference/tickers/${symbol}?apiKey=${apiKey}`;
-    const config = { method: 'GET' };
-    try {
-        const response = await fetch(url, config);
-        const json = await response.json();
-        console.log(json);
-        const sharesOutstanding = json.results?.weighted_shares_outstanding || json.results?.share_class_shares_outstanding || 0;
-        return sharesOutstanding;
-    } catch (err) {
-        console.log(`Failed to get shares outstanding for ${symbol}`, err);
+    try { return await massiveApi.getSharesOutstanding(symbol); }
+    catch (error) {
+        const message = error instanceof Error ? error.message : 'Massive reference read failed';
+        Firestore.logError(`[Massive] ${symbol}: ${message}`);
         return 0;
     }
-};
-
-/**
- * Get daily candles for the last N days
- * @param symbol - Stock symbol
- * @param nDays - Number of days to fetch
- * @param endDateExcluded - End date in YYYY-MM-DD format
- * @returns Array of daily candles
- */
-export const getDailyCandlesForLastNDays = async (
-    symbol: string,
-    nDays: number,
-    endDateExcluded: string
-): Promise<Models.CandlePlus[]> => {
-    const apiKey = Secret.massive().apiKey;
-    const host = 'https://api.massive.com';
-
-    // Calculate start date
-    const end = new Date(endDateExcluded + 'T00:00:00');
-    end.setDate(end.getDate() - 1);
-    const start = new Date(end);
-    start.setDate(start.getDate() - nDays - 1);
-
-    const startDateStr = TimeHelper.formatDateToYYYYMMDD(start);
-    const endDateStr = TimeHelper.formatDateToYYYYMMDD(end);
-
-    // Use daily aggregation endpoint
-    const url = `${host}/v2/aggs/ticker/${symbol}/range/1/day/${startDateStr}/${endDateStr}?adjusted=true&sort=asc&limit=50000&apiKey=${apiKey}`;
-
-    return getBars(symbol, url);
 };

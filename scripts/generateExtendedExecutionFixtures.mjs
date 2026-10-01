@@ -114,7 +114,7 @@ async function capture(name, key, edit = () => {}, shift = false, price = 10) {
         },
     };
     const real = new Set(['controllers/handler', 'controllers/orderFlow', 'controllers/entryHandler',
-        'controllers/entryRulesChecker', 'algorithms/riskManager', 'algorithms/riskSizing', 'tradebooks/tradebookIds']);
+        'controllers/entryRulesChecker', 'algorithms/riskManager', 'algorithms/riskSizing', 'trading/core/algorithms/riskSizing', 'tradebooks/tradebookIds']);
     const rules = {
         isOverDailyMaxLoss: () => context.realizedPnl <= -context.dailyMaxLoss,
         isEntryMoreThanHalfDailyRange: (_, isLong, entry) => context.todayRange !== 0 && context.secondsSinceMarketOpen >= 0

@@ -1,3 +1,5 @@
+import { addDays } from '../trading/runtime/marketClock.ts';
+import { calculatePremarketVolume } from '../trading/core/marketdata/premarketVolume.ts';
 import * as tradeStationApi from "./tradeStation/api";
 import * as tdAmeritradeApi from "./tdAmeritrade/api";
 import * as schwabApi from "./schwab/api";
@@ -79,31 +81,11 @@ export const getFullPriceHistory = async (symbol: string, isFutures: boolean, to
     };
   }
 
-  // massiveApi.getPriceHistory() already returns only today's bars (today to tomorrow)
-  let today1MinuteBars: Candle[] = await massiveApi.getPriceHistory(symbol, 1);
-
-  // 2. Get daily bars excluding today, starting from 3 years ago
-  let dailyBars: Candle[] = [];
-  // Calculate number of days (approximately 3 years = ~1095 days)
-  let nDays = 3 * 365; // 3 years
-
-  // Calculate today's date (to exclude today, we pass today as endDateExcluded)
-  let today = new Date();
-  let todayString = TimeHelper.formatDateToYYYYMMDD(today);
-
-  // Use Massive API's daily candles method (always use Massive API for daily bars)
-  dailyBars = await massiveApi.getDailyCandlesForLastNDays(symbol, nDays, todayString);
-
-  // Filter out today's bars if any (as a safety measure)
-  dailyBars = dailyBars.filter(candle => {
-    let candleDate = new Date(candle.datetime);
-    return candleDate.toDateString() !== today.toDateString();
-  });
-  let premarketDollarCollection = await getPremarketDollarFromDate(symbol, todayStringInput);
+  const history = await massiveApi.massiveApi.getFullPriceHistory(symbol, todayStringInput);
   return {
-    today1MinuteBars: today1MinuteBars,
-    dailyBars: dailyBars,
-    premarketDollarCollection: premarketDollarCollection,
+    today1MinuteBars: history.today1MinuteBars.map(massiveApi.toChartCandle),
+    dailyBars: history.dailyBars.map(massiveApi.toChartCandle),
+    premarketDollarCollection: history.premarketDollarCollection,
   };
 }
 export const getPriceHistory = async (symbol: string, isFutures: boolean, timeframe: number) => {
@@ -163,108 +145,16 @@ export const getPreviousTradingDate = async () => {
 }
 
 export const get30MinuteChartFromLastNDays = async (symbol: string, nDays: number, todayString: string) => {
-  let today = new Date(todayString);
-  let date = new Date(today);
-  date.setDate(date.getDate() - nDays);
-  let startDate = TimeHelper.getDateString(date);
+  const startDate = addDays(todayString, -nDays);
 
   let candles = await massiveApi.getPriceHistoryFromOldDateForHigherTimeframe(symbol, 30, startDate, todayString);
   return candles;
 }
 
-interface VolumePair {
-  dollar: number,
-  shares: number,
-}
-
 export const getPremarketDollarFromDate = async (symbol: string, startDate: string) => {
-  let candles = await get30MinuteChartFromLastNDays(symbol, 20, startDate);
-  let dollarTradeByDay: Map<string, VolumePair> = new Map();
-  let volumeBarsByDay: Map<string, number[]> = new Map();
-  for (let i = 0; i < candles.length; i++) {
-    let c = candles[i];
-    let candleDatetime = new Date(c.datetime);
-    //console.log(candleDatetime.toLocaleTimeString());
-    if (!TimeHelper.isBeforeMarketOpenHours(candleDatetime)) {
-      continue;
-    }
-    let day = TimeHelper.getDateString(candleDatetime);
-    let typicalPrice = Models.getTypicalPrice(c);
-    let dollarTrade = Math.round(typicalPrice * c.volume);
-    let existingDollarTrade = dollarTradeByDay.get(day);
-    let existingVolumeBars = volumeBarsByDay.get(day);
-    if (existingVolumeBars) {
-      existingVolumeBars.push(Math.round(c.volume));
-    } else {
-      existingVolumeBars = [Math.round(c.volume)];
-    }
-    volumeBarsByDay.set(day, existingVolumeBars);
-    if (existingDollarTrade) {
-      existingDollarTrade.dollar += dollarTrade;
-      existingDollarTrade.shares += c.volume;
-    } else {
-      existingDollarTrade = {
-        dollar: dollarTrade,
-        shares: c.volume
-      };
-    }
-    dollarTradeByDay.set(day, existingDollarTrade);
-  }
-
-  let premarketDollarCollection: Models.PremarketDollarCollection = {
-    previousDaysDollar: [],
-    previousDaysDollarAverage: 0,
-    previousDaysDollarMedian: 0,
-    lastDayDollar: 0,
-    previousDaysShares: [],
-    lastDayShares: 0,
-    previousDaysSharesAverage: 0,
-    rvol: 0
-  }
-
-  // Convert Map to array of entries and sort by day to ensure correct order
-  const entries = Array.from(dollarTradeByDay.entries()).sort(([dayA], [dayB]) => dayA.localeCompare(dayB));
-
-  if (entries.length > 0) {
-    // Get the last day's dollar value
-    const lastEntry = entries[entries.length - 1];
-    premarketDollarCollection.lastDayDollar = lastEntry[1].dollar;
-    premarketDollarCollection.lastDayShares = lastEntry[1].shares;
-
-    // Add all except the last day to previousDays
-    for (let i = 0; i < entries.length - 1; i++) {
-      const [day, dollar] = entries[i];
-      premarketDollarCollection.previousDaysDollar.push({
-        day: day,
-        data: dollar.dollar
-      });
-      premarketDollarCollection.previousDaysShares.push({
-        day: day,
-        data: dollar.shares
-      });
-    }
-
-    // Calculate average of previous days
-    if (premarketDollarCollection.previousDaysDollar.length > 0) {
-      const sumDollar = premarketDollarCollection.previousDaysDollar.reduce((acc, item) => acc + item.data, 0);
-      premarketDollarCollection.previousDaysDollarAverage = sumDollar / premarketDollarCollection.previousDaysDollar.length;
-      const sumShares = premarketDollarCollection.previousDaysShares.reduce((acc, item) => acc + item.data, 0);
-      premarketDollarCollection.previousDaysSharesAverage = sumShares / premarketDollarCollection.previousDaysShares.length;
-      premarketDollarCollection.previousDaysDollarMedian = Calculator.median(
-        premarketDollarCollection.previousDaysDollar.map(item => item.data)
-      );
-
-      // Calculate rvol (relative volume) as lastDay / previousDaysAverage
-
-      if (premarketDollarCollection.previousDaysDollarMedian > 0) {
-        premarketDollarCollection.rvol = premarketDollarCollection.lastDayDollar / premarketDollarCollection.previousDaysDollarMedian;
-      }
-    }
-  }
-
-  return premarketDollarCollection;
+  const candles = await get30MinuteChartFromLastNDays(symbol, 20, startDate);
+  return calculatePremarketVolume(candles);
 }
-
 export const getPremarketDollarStats = (symbol: string, premarketDollar: Models.PremarketDollarCollection) => {
   // Build string from previousDays and lastDay
   const previousDaysStr = premarketDollar.previousDaysDollar

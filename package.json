@@ -4,10 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "test:massive": "node --experimental-strip-types scripts/generateMassiveFixtures.mjs --check",
     "test:direct-execution": "node --experimental-strip-types --test src/bookmap/directExecution.test.ts src/bookmap/directEntryExecution.test.ts",
     "test:extended-execution": "node --experimental-strip-types scripts/generateExtendedExecutionFixtures.mjs --check && node --test scripts/nativeEntryState.test.mjs",
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc -p tsconfig.trading.json && tsc && vite build",
     "preview": "vite preview",
     "test:bookmap-price": "node --experimental-strip-types --test src/bookmap/priceNormalization.test.ts",
     "test:bookmap-vwap": "node --experimental-strip-types --test src/bookmap/vwapUpdate.test.ts",

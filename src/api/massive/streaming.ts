@@ -1,3 +1,4 @@
+import * as Secret from '../../config/secret';
 import * as Models from '../../models/models';
 import * as StreamingHandler from '../../controllers/streamingHandler';
 import * as Helper from '../../utils/helper';
@@ -49,7 +50,7 @@ export const sendLoginRequest = (webSocket: WebSocket) => {
 export const createLoginRequest = () => {
     return {
         "action": "auth",
-        "params": "_wR6hX8YIGKWyyTVsmrT0puXVGymRZlW"
+        "params": Secret.massive().apiKey
     }
 }
 export const subscribeLevelOneQuotes = (webSocket: WebSocket) => {
