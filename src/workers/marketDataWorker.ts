@@ -2,6 +2,7 @@ import * as LevelOneQuoteParse from '../streaming/levelOneQuoteParse';
 import * as TimeSaleParse from '../streaming/timeSaleParse';
 import * as TradeFlushBuffer from './tradeFlushBuffer';
 import type * as Messages from './marketDataMessages';
+import { parseStreamMessage } from '../trading/libraries/broker/schwab/streamingProtocol.ts';
 
 const MASSIVE_URL = 'wss://socket.massive.com/stocks';
 
@@ -84,6 +85,10 @@ class MarketDataStreamManager {
             if (messageData.response) {
                 messageData.response.forEach((res: any) => {
                     if (res.service === 'ADMIN' && res.command === 'LOGIN') {
+                        if (parseStreamMessage({ response: [res] }).login !== 'success') {
+                            this.post({ type: 'error', source: 'schwab', message: 'stream authentication failed' });
+                            socket.close(); return;
+                        }
                         if (config.levelOneSubscribeRequest) {
                             this.send(socket, config.levelOneSubscribeRequest);
                         }

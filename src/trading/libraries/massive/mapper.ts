@@ -11,8 +11,8 @@ export function mapWebSocketTrade(value: Record<string, any>): Trade | null {
     if (value.ev !== 'T' || typeof value.sym !== 'string' || !valid(value.t) || !valid(value.p) || !valid(value.s) || value.p <= 0 || value.s <= 0) return null;
     return {
         symbol: value.sym, timestamp: value.t, price: value.p, size: value.s,
-        ...(value.q === undefined ? {} : { sequence: String(value.q) }),
-        ...(value.i === undefined ? {} : { id: String(value.i) }),
+        ...(value.q == null ? {} : { sequence: String(value.q) }),
+        ...(value.i == null ? {} : { id: String(value.i) }),
         ...(valid(value.x) ? { exchange: value.x } : {}),
         conditions: Array.isArray(value.c) ? value.c.filter(valid) : [],
     };
@@ -23,8 +23,8 @@ export function mapRestTrade(symbol: string, value: Record<string, any>): Trade 
     if (!valid(value.price) || !valid(value.size) || value.price <= 0 || value.size <= 0) throw new Error('Massive trade missing price/size');
     return {
         symbol, timestamp, price: value.price, size: value.size,
-        ...(value.sequence_number === undefined ? {} : { sequence: String(value.sequence_number) }),
-        ...(value.id === undefined ? {} : { id: String(value.id) }),
+        ...(value.sequence_number == null ? {} : { sequence: String(value.sequence_number) }),
+        ...(value.id == null ? {} : { id: String(value.id) }),
         ...(valid(value.exchange) ? { exchange: value.exchange } : {}),
         conditions: Array.isArray(value.conditions) ? value.conditions.filter(valid) : [],
     };

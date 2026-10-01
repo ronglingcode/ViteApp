@@ -69,3 +69,15 @@ prints by sequence. The Massive suite now covers 23 scenarios.
 
 The standalone runtime is not yet wired; use the progress document for current
 completion status.
+
+Schwab `ReadApi` and `accountProjection` now provide account/preferences/daily
+orders to the browser. Projection includes partial/canceled/replaced fills and
+remaining working quantities. Capped order reads subdivide down to a minute;
+an unresolved cap fails explicitly. Browser UI dates/enums live in `browserAccount`.
+`npm run test:broker-read` checks 23 matching TS/Java scenarios.
+
+Vendor `streamingProtocol` modules and `runtime/MarketStreams`/`ManagedSocket`
+share the authentication/subscription, partial-message and reconnect contracts.
+`npm run test:streams` checks 18 protocol scenarios and fake-socket lifecycle.
+The existing browser worker uses the new parser and LOGIN result check; runtime
+adoption is ongoing. Native JDK transport is independent of Bookmap and proxies.

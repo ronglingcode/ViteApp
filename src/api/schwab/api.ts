@@ -1,3 +1,6 @@
+import { SchwabReadApi } from '../../trading/libraries/broker/schwab/readApi.ts';
+import { projectAccount } from '../../trading/libraries/broker/schwab/accountProjection.ts';
+import { toBrowserAccount } from '../../trading/adapters/browserAccount.ts';
 import { SchwabOAuth } from '../../trading/libraries/broker/schwab/oauth.ts';
 import type { SchwabCredentials } from '../../trading/ports/credentials.ts';
 import { browserCredentials } from '../../trading/adapters/browserCredentials.ts';
@@ -77,28 +80,15 @@ export const maintainAccessToken = async () => {
     await oauth.accessToken();
     return publishToken(browserCredentials.loadSchwab());
 };
+const readApi = new SchwabReadApi(browserHttp, getTraderApiHost);
 const getAccessTokenFromStorage = () => {
     return window.HybridApp.Secrets.schwab.accessToken;
 };
 
 export const getUserPreference = async () => {
-    let url = `${getTraderApiHost()}/userPreference`;
-    return fetchBrokerResponse('GET Schwab userPreference', webRequest.asyncGet(url, getAccessTokenFromStorage())).then(async response => {
-        if (response.status != 200) {
-            Firestore.logError(brokerResponseError('GET Schwab userPreference', response, await response.text(), getAccessTokenFromStorage()));
-            return null;
-        }
-        return readBrokerJson(response, 'GET Schwab userPreference', getAccessTokenFromStorage());
-    })
-        .then(json => {
-            let streamerInfo = json?.streamerInfo[0];
-            window.HybridApp.Secrets.schwab.schwabClientChannel = streamerInfo?.schwabClientChannel;
-            window.HybridApp.Secrets.schwab.schwabClientCorrelId = streamerInfo?.schwabClientCorrelId;
-            window.HybridApp.Secrets.schwab.schwabClientCustomerId = streamerInfo?.schwabClientCustomerId;
-            window.HybridApp.Secrets.schwab.schwabClientFunctionId = streamerInfo?.schwabClientFunctionId;
-            window.HybridApp.Secrets.schwab.streamerSocketUrl = streamerInfo?.streamerSocketUrl;
-            return json;
-        }).catch(error => Firestore.logError(`GET Schwab userPreference failed: ${describeError(error)}`));
+    const streamerInfo = await readApi.getStreamerInfo(getAccessTokenFromStorage());
+    Object.assign(window.HybridApp.Secrets.schwab, streamerInfo);
+    return streamerInfo;
 }
 export const getOptionsChain = async (symbol: string) => {
     let prefix = `${API_HOST}/marketdata/v1/chains`;
@@ -191,34 +181,12 @@ export const getFundamentals = async (symbol: string) => {
 export const getAccountInfo = async () => {
     const observationStartedAt = Date.now();
     const accountHash = secret.schwab().accountHash;
-    let url = `${getTraderApiHost()}/accounts?fields=positions`;
-    let accessToken = window.HybridApp.Secrets.schwab.accessToken;
-    let response = await fetchBrokerResponse('GET Schwab accounts', webRequest.asyncGet(url, accessToken));
-    let accounts = await readBrokerJson(response, 'GET Schwab accounts', accessToken);
-    if (!response.ok || !Array.isArray(accounts) || !accounts[0]?.securitiesAccount) {
-        throw brokerResponseError('GET Schwab accounts', response,
-            response.ok ? 'expected an account array containing securitiesAccount' : accounts, accessToken);
-    }
-    let account = accounts[0].securitiesAccount;
+    const accessToken = getAccessTokenFromStorage();
+    const account = await readApi.getAccount(accessToken);
     const ordersData = Config.Settings.fetchOrdersByTimeWindows
         ? await getAllOrdersByTimeWindows(accountHash, accessToken)
         : await getAllOrders(accountHash, accessToken);
-    //console.log(ordersData);
-    //console.log(account);
-    let entryOrders = OrderFactory.extractEntryOrders(ordersData);
-    //console.log(entryOrders);
-    let result: Models.BrokerAccount = {
-        trades: new Map<string, Models.TradeExecution[]>(),
-        tradesCount: 0,
-        nonBreakevenTradesCount: 0,
-        realizedPnL: 0,
-        orderExecutions: OrderFactory.extractOrderExecutionsFromAllSymbols(ordersData),
-        entryOrders: OrderFactory.buildEntryOrderModelBySymbol(entryOrders),
-        exitPairs: OrderFactory.extractWorkingExitPairs(ordersData),
-        positions: buildPositionModel(account),
-        rawAccount: ordersData,
-        currentBalance: account.currentBalances.liquidationValue,
-    };
+    const result = toBrowserAccount(projectAccount(account, ordersData, TimeHelper.getTodayString(), Models.getCurrentPrice));
     if (!canApplyBrokerObservation(observationStartedAt)) return window.HybridApp.AccountCache;
     window.HybridApp.AccountCache = result;
     recordBrokerObservation(observationStartedAt);
@@ -226,180 +194,11 @@ export const getAccountInfo = async () => {
     return result;
 }
 
-const buildPositionModel = (account: any) => {
-    let positions = new Map<string, Models.Position>();
-    if (!account || !account.positions) {
-        return positions;
-    }
-    account.positions.forEach((position: any) => {
-        let symbol = position.instrument.symbol;
-        let p: Models.Position = {
-            symbol: symbol,
-            ...position,
-        };
-        if (position.longQuantity > 0) {
-            p.netQuantity = position.longQuantity;
-        } else if (position.shortQuantity > 0) {
-            p.netQuantity = -position.shortQuantity;
-        }
-        positions.set(symbol, p);
-    });
-    return positions;
-};
-export const getAllOrders = async (accountId: string, accessToken: string) => {
-    let from = TimeHelper.getTodayString() + 'T00:00:00.000Z';
-    let tomorrow = TimeHelper.getTomorrowString() + 'T00:00:00.000Z';
-    let ordersUrl = `${getTraderApiHost()}/accounts/${accountId}/orders?fromEnteredTime=${from}&toEnteredTime=${tomorrow}`;
-    let ordersResponse = await fetchBrokerResponse('GET Schwab orders', webRequest.asyncGet(ordersUrl, accessToken));
-    let ordersData = await readBrokerJson(ordersResponse, 'GET Schwab orders', accessToken, accountId);
-    if (!ordersResponse.ok || !Array.isArray(ordersData)) throw brokerResponseError('GET Schwab orders', ordersResponse,
-        ordersResponse.ok ? 'expected an orders array' : ordersData, accessToken, accountId);
-    /*
-    let equityOrders = OrderFactory.filterToEquityOrders(ordersData);
-    return equityOrders;
-    */
-    return ordersData;
-};
+export const getAllOrders = (accountId: string, accessToken: string) =>
+    readApi.getOrders(accountId, accessToken, TimeHelper.getTodayString());
+export const getAllOrdersByTimeWindows = (accountId: string, accessToken: string) =>
+    readApi.getOrders(accountId, accessToken, TimeHelper.getTodayString(), true);
 
-const ORDERS_PAGE_SIZE = 500;
-const toTimeStr = (dateStr: string, hour: number, min: number = 0) =>
-    `${dateStr}T${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}:00.000Z`;
-
-/** Add minutes to an ISO date string, return new ISO string. */
-const addMinutesToIso = (iso: string, minutes: number) =>
-    new Date(new Date(iso).getTime() + minutes * 60 * 1000).toISOString();
-
-const getOrdersInWindow = async (
-    accountId: string, accessToken: string, from: string, to: string
-): Promise<{ orders: any[]; full: boolean }> => {
-    const url = `${getTraderApiHost()}/accounts/${accountId}/orders?fromEnteredTime=${encodeURIComponent(from)}&toEnteredTime=${encodeURIComponent(to)}&maxResults=${ORDERS_PAGE_SIZE}`;
-    const operation = `GET Schwab orders from ${from} to ${to}`;
-    const res = await fetchBrokerResponse(operation, webRequest.asyncGet(url, accessToken));
-    const data = await readBrokerJson(res, operation, accessToken, accountId);
-    if (!res.ok || (!Array.isArray(data) && !Array.isArray(data?.orders))) throw brokerResponseError(operation, res,
-        res.ok ? 'expected an orders array' : data, accessToken, accountId);
-    const orders: any[] = Array.isArray(data) ? data : data.orders;
-    return { orders, full: orders.length >= ORDERS_PAGE_SIZE };
-};
-
-/**
- * Fetch all orders for today by splitting the day into time windows. Uses fine buckets
- * (6 x 5 min) for the first 30 minutes after market open; 1-hour buckets for the rest.
- * Use this if getAllOrders misses orders. Same signature as getAllOrders.
- */
-export const getAllOrdersByTimeWindows = async (accountId: string, accessToken: string): Promise<any[]> => {
-    const today = TimeHelper.getTodayString();
-    const tomorrow = TimeHelper.getTomorrowString();
-    const allOrders: any[] = [];
-    const seenIds = new Set<string>();
-
-    const addOrders = (orders: any[]) => {
-        for (const o of orders) {
-            const id = o.orderId ?? o.orderID;
-            if (id != null && !seenIds.has(String(id))) {
-                seenIds.add(String(id));
-                allOrders.push(o);
-            }
-        }
-    };
-
-    // Market open (9:30 AM Eastern) in UTC for today
-    const marketOpenDate = TimeHelper.getMarketOpenTimeInLocal();
-    const marketOpenIso = marketOpenDate.toISOString();
-    const marketOpenMs = marketOpenDate.getTime();
-    const openUtcHour = marketOpenDate.getUTCHours();
-    const openUtcMin = marketOpenDate.getUTCMinutes();
-
-    for (let hour = 0; hour < 24; hour++) {
-        const hourStart = toTimeStr(today, hour);
-        const hourEnd = hour === 23 ? `${tomorrow}T00:00:00.000Z` : toTimeStr(today, hour + 1);
-
-        if (hour === openUtcHour) {
-            // This hour contains market open: split into before-open, 6 x 5-min morning, after-morning
-            if (openUtcMin > 0) {
-                const beforeOpenEnd = toTimeStr(today, openUtcHour, openUtcMin);
-                const { orders, full } = await getOrdersInWindow(accountId, accessToken, hourStart, beforeOpenEnd);
-                addOrders(orders);
-                if (full) {
-                    for (let m = 0; m < openUtcMin; m++) {
-                        const fromM = toTimeStr(today, hour, m);
-                        const toM = toTimeStr(today, hour, m + 1);
-                        const { orders: om } = await getOrdersInWindow(accountId, accessToken, fromM, toM);
-                        addOrders(om);
-                    }
-                }
-            }
-            // First 30 min after market open: 6 x 5-minute buckets
-            for (let slot = 0; slot < 6; slot++) {
-                const fromSlot = addMinutesToIso(marketOpenIso, slot * 5);
-                const toSlot = addMinutesToIso(marketOpenIso, (slot + 1) * 5);
-                const { orders: slotOrders, full: slotFull } = await getOrdersInWindow(accountId, accessToken, fromSlot, toSlot);
-                addOrders(slotOrders);
-                if (!slotFull) continue;
-                for (let m = 0; m < 5; m++) {
-                    const fromM = addMinutesToIso(marketOpenIso, slot * 5 + m);
-                    const toM = addMinutesToIso(marketOpenIso, slot * 5 + m + 1);
-                    const { orders: om } = await getOrdersInWindow(accountId, accessToken, fromM, toM);
-                    addOrders(om);
-                }
-            }
-            // From market open + 30 min to end of this hour (skip if open is at :30 so range would be empty)
-            if (openUtcMin + 30 < 60) {
-                const morningEndIso = addMinutesToIso(marketOpenIso, 30);
-                const { orders: afterOrders, full: afterFull } = await getOrdersInWindow(accountId, accessToken, morningEndIso, hourEnd);
-                addOrders(afterOrders);
-                if (afterFull) {
-                    for (let m = 30; m < 60; m++) {
-                        const fromM = addMinutesToIso(marketOpenIso, m);
-                        const toM = m === 59 ? hourEnd : addMinutesToIso(marketOpenIso, m + 1);
-                        const { orders: om } = await getOrdersInWindow(accountId, accessToken, fromM, toM);
-                        addOrders(om);
-                    }
-                }
-            }
-            continue;
-        }
-
-        const { orders, full } = await getOrdersInWindow(accountId, accessToken, hourStart, hourEnd);
-        addOrders(orders);
-        if (!full) continue;
-        for (let sub = 0; sub < 6; sub++) {
-            const minFrom = hour * 60 + sub * 10;
-            const minTo = minFrom + 10;
-            const fromSub = toTimeStr(today, Math.floor(minFrom / 60), minFrom % 60);
-            const toSub = minTo >= 24 * 60 ? `${tomorrow}T00:00:00.000Z` : toTimeStr(today, Math.floor(minTo / 60), minTo % 60);
-            const { orders: subOrders, full: subFull } = await getOrdersInWindow(accountId, accessToken, fromSub, toSub);
-            addOrders(subOrders);
-            if (!subFull) continue;
-            const startMin = hour * 60 + sub * 10;
-            for (let m = 0; m < 10; m++) {
-                const totalMin = startMin + m;
-                const fromMin = toTimeStr(today, Math.floor(totalMin / 60), totalMin % 60);
-                const endMin = totalMin + 1;
-                const toMin = endMin >= 24 * 60 ? `${tomorrow}T00:00:00.000Z` : toTimeStr(today, Math.floor(endMin / 60), endMin % 60);
-                const { orders: minOrders } = await getOrdersInWindow(accountId, accessToken, fromMin, toMin);
-                addOrders(minOrders);
-            }
-        }
-    }
-    return allOrders;
-};
-
-const filterOrdersNotOnSameDay = (orders: any) => {
-    let result: any[] = [];
-    let startTime = Config.Settings.dtStartTime;
-    orders.forEach((o: any) => {
-        if (!o.closeTime) {
-            result.push(o);
-        } else {
-            let closeTime = new Date(o.closeTime);
-            if (closeTime > startTime) {
-                result.push(o);
-            }
-        }
-    });
-    return result;
-}
 /* #endregion */
 
 /* #region Orders */

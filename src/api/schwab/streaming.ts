@@ -4,6 +4,7 @@ import * as Chart from '../../ui/chart';
 import * as DB from '../../data/db';
 import * as LevelOneQuote from '../../models/levelOneQuote';
 import * as Firestore from '../../firestore';
+import * as StreamProtocol from '../../trading/libraries/broker/schwab/streamingProtocol.ts';
 declare let window: Models.MyWindow;
 
 
@@ -29,6 +30,9 @@ export const createWebSocket = async () => {
                 let command = res.command;
                 if (service === "ADMIN") {
                     if (command === "LOGIN") {
+                        if (StreamProtocol.parseStreamMessage({ response: [res] }).login !== 'success') {
+                            Firestore.logError('Schwab stream authentication failed'); websocket.close(); return;
+                        }
                         if (DB.levelOneQuoteSource == DB.levelOneQuoteSourceSchwab) {
                             subscribeLevelOneQuotes(websocket);
                         }
