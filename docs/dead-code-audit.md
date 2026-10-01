@@ -1,8 +1,8 @@
 # Dead-code review after removing replay and Lite
 
-Audit of the main app, [src/main.ts](C:/Users/lingr/trading/ViteApp/src/main.ts:1), and its worker. 128 TypeScript source files inspected; 106 modules have a potential runtime import path. No review candidates below have been deleted.
+Audit of the main app, [src/main.ts](C:/Users/lingr/trading/ViteApp/src/main.ts:1), and its worker. 127 TypeScript source files inspected; 106 modules have a potential runtime import path. No review candidates below have been deleted.
 
-Findings: **9 disconnected source files**, **24 private functions without a static path**, **122 other exported functions without a static path**, **1 test-only exported function**, and **1 compiler-confirmed unreachable block**.
+Findings: **8 disconnected source files**, **24 private functions without a static path**, **121 other exported functions without a static path**, **1 test-only exported function**, and **1 compiler-confirmed unreachable block**.
 
 Enter yes or no in the **Remove? (yes/no)** column. Blank means undecided. Decisions are preserved when the audit is regenerated.
 
@@ -22,7 +22,6 @@ These files have no dependency path from either application entry, including typ
 | File | Approximate lines | What it contains | Remove? (yes/no) |
 | --- | ---: | --- | --- |
 | [src/algorithms/strategies.ts](C:/Users/lingr/trading/ViteApp/src/algorithms/strategies.ts:1) | 10 | Unused R2 target configuration. |  |
-| [src/api/proxyServer.ts](C:/Users/lingr/trading/ViteApp/src/api/proxyServer.ts:1) | 20 | Unused agent-response persistence client. |  |
 | [src/models/atr.ts](C:/Users/lingr/trading/ViteApp/src/models/atr.ts:1) | 8 | Unused ATR percentage formatting helper. |  |
 | [src/patterns/allTimeHigh.ts](C:/Users/lingr/trading/ViteApp/src/patterns/allTimeHigh.ts:1) | 23 | Unused all-time-high detector. |  |
 | [src/patterns/camPivots.ts](C:/Users/lingr/trading/ViteApp/src/patterns/camPivots.ts:1) | 115 | Unused Camarilla pattern logic; the active indicators/camPivots.ts is separate. |  |
@@ -176,7 +175,6 @@ These are absent from the reachable call graph and are not exposed as whole name
 | [src/api/tradeStation/api.ts](C:/Users/lingr/trading/ViteApp/src/api/tradeStation/api.ts:153) | renewRefreshToken |  |
 | [src/api/tradeStation/api.ts](C:/Users/lingr/trading/ViteApp/src/api/tradeStation/api.ts:170) | buildUrlForGetRefreshToken |  |
 | [src/bookmap/executionBridge.ts](C:/Users/lingr/trading/ViteApp/src/bookmap/executionBridge.ts:31) | registerExecutionAccountRefresh |  |
-| [src/config/secret.ts](C:/Users/lingr/trading/ViteApp/src/config/secret.ts:1) | openai |  |
 | [src/controllers/adjustExitsHandler.ts](C:/Users/lingr/trading/ViteApp/src/controllers/adjustExitsHandler.ts:10) | onAdjustExits |  |
 | [src/controllers/adjustExitsHandler.ts](C:/Users/lingr/trading/ViteApp/src/controllers/adjustExitsHandler.ts:26) | getSnapPriceForAdjustStops |  |
 | [src/controllers/adjustExitsHandler.ts](C:/Users/lingr/trading/ViteApp/src/controllers/adjustExitsHandler.ts:65) | adjustAllStopExitsWithoutRule |  |

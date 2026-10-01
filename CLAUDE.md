@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is a personal intraday trading bot (day trading) built as a single-page web application. It uses TradingView Lightweight Charts to display candlestick charts and connects to broker APIs (primarily Charles Schwab) for live order execution. The app enforces trading discipline by codifying strategies into "tradebooks" — each tradebook implements a specific pattern/setup with entry rules, exit rules, and risk management. An AI assistant (OpenAI/ChatGPT) is integrated for trade analysis.
+This is a personal intraday trading bot (day trading) built as a single-page web application. It uses TradingView Lightweight Charts to display candlestick charts and connects to broker APIs (primarily Charles Schwab) for live order execution. The app enforces trading discipline by codifying strategies into "tradebooks" — each tradebook implements a specific pattern/setup with entry rules, exit rules, and risk management. Replay and AI/chat tools are removed.
 
 **Deployed at**: https://tradingapp-84f28.web.app/ (Firebase Hosting)
 
@@ -12,7 +12,6 @@ This is a personal intraday trading bot (day trading) built as a single-page web
 - **Charts**: `sunrise-tv-lightweight-charts` (TradingView Lightweight Charts v4 wrapper)
 - **Database/Logging**: Firebase Firestore
 - **UI**: jQuery + jQuery UI (collapsible panels, popups)
-- **AI**: OpenAI ChatGPT API
 - **No backend server** — pure frontend SPA that calls broker APIs directly (with a localhost proxy at port 3000 for CORS)
 
 ## Commands
@@ -159,7 +158,6 @@ A localhost proxy (`http://localhost:3000`) handles CORS for broker API calls. T
 Copy `src/config/secret_template.ts` → `src/config/secret.ts` and fill in:
 - Schwab: app key, secret, OAuth tokens
 - Firebase: project config
-- OpenAI: API key
 - TradeStation/TD Ameritrade: if using those brokers
 
 ### Global Settings (`src/config/globalSettings.ts`)

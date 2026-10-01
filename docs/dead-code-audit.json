@@ -1,18 +1,12 @@
 {
   "entry": "src/main.ts",
-  "sourceFiles": 128,
+  "sourceFiles": 127,
   "runtimeModules": 106,
   "orphans": [
     {
       "file": "src/algorithms/strategies.ts",
       "line": 1,
       "lines": 10,
-      "testsUseIt": false
-    },
-    {
-      "file": "src/api/proxyServer.ts",
-      "line": 1,
-      "lines": 20,
       "testsUseIt": false
     },
     {
@@ -1057,14 +1051,6 @@
       "testFiles": [
         "src/bookmap/directExecution.test.ts"
       ]
-    },
-    {
-      "file": "src/config/secret.ts",
-      "line": 1,
-      "name": "openai",
-      "kind": "function",
-      "exported": true,
-      "testFiles": []
     },
     {
       "file": "src/controllers/adjustExitsHandler.ts",

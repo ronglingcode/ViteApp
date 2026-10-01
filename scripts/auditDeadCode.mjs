@@ -187,7 +187,6 @@ fs.writeFileSync('docs/dead-code-audit.json', JSON.stringify(output, null, 2) + 
 const link = (file, line = 1, label = file) => `[${label}](${norm(file)}:${line})`;
 const roles = {
     'src/algorithms/strategies.ts': 'Unused R2 target configuration.',
-    'src/api/proxyServer.ts': 'Unused agent-response persistence client.',
     'src/models/atr.ts': 'Unused ATR percentage formatting helper.',
     'src/patterns/allTimeHigh.ts': 'Unused all-time-high detector.',
     'src/patterns/camPivots.ts': 'Unused Camarilla pattern logic; the active indicators/camPivots.ts is separate.',
