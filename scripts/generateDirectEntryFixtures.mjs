@@ -43,6 +43,8 @@ function add(name, edit = () => {}, expected = {}) {
 add('long full risk stop with ten protective pairs');
 add('short full risk stop', f => { f.action.tradebook_id = 'RangeBoundOfferReversal'; f.state.entryContext.customEntryPrice = 10; });
 add('small entry has one pair', f => { f.action.entry_method = '0.1 R'; }, { multiplier: 0.1, count: 1, shares: 196 });
+add('other numeric risk method uses two risk units', f => { f.action.entry_method = '2 R'; }, { multiplier: 2, shares: 3921 });
+add('unparsed risk method uses default risk', f => { f.action.entry_method = 'unparsed method'; });
 add('market estimate uses larger long Bookmap price', f => { f.action.use_market_order = true; f.action.estimated_entry_price = 10.2; },
     { type: 'MARKET', entryPrice: 10.2, orderEntry: 10.21, shares: 1408 });
 add('short market estimate uses smaller Bookmap price', f => { f.action.tradebook_id = 'RangeBoundOfferReversal'; f.action.use_market_order = true; f.action.estimated_entry_price = 9.8; },
@@ -76,7 +78,6 @@ for (const [name, edit] of [
     ['retest blocked', f => { f.action.retest_blocked = true; }],
     ['wrong chart side', f => { f.key = 'KeyS'; f.action.source = 'bookmap_chart_hotkey'; f.action.price = 10; }],
     ['no protective risk', f => { f.state.entryContext.customStopLong = 10; }],
-    ['unsupported method', f => { f.action.entry_method = '2 R'; }],
 ]) add(name, edit, { error: true });
 const json = JSON.stringify(fixtures, null, 2) + '\n';
 writeFileSync(new URL('../src/bookmap/direct-entry-fixtures.json', import.meta.url), json);

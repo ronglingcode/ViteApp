@@ -330,10 +330,11 @@ trade/core state. Accepted entries are initialized even if subsequent old-entry
 cancellation fails; no broker mutation is repeated by a lifecycle handler.
 
 The default-off `experimentalDirectBrokerExecution` plugin flag is labeled
-**Experimental: Extended Native Execution (Schwab)** and controls Add Partial/reload,
-Swap, entries with existing positions/pending orders, generic non-chart B/S selection,
-and additional parsed risk methods. Off forwards those actions to ViteApp; on uses
-Java. Standard initial entries still require a flat symbol without pending orders.
+**Experimental: Extended Native Execution (Schwab)** and controls entries with
+existing positions/pending orders and generic non-chart B/S selection. Off forwards
+those actions to ViteApp; on uses Java. Add Partial/reload, Swap, and flat initial
+wall-reversal entries with any risk-method label always use Java. Risk labels do
+not bypass the flag for entries with existing positions or pending orders.
 Status `enabled`, `entriesEnabled`, and `exitsEnabled` remain true while running;
 `extendedEnabled` reports this separate flag. Tokens and account/market inputs
 continue to flow when the flag is off.
@@ -341,7 +342,7 @@ continue to flow when the flag is off.
 Current ViteApp tradebooks all belong to the mirrored Bookmap wall-reversal family.
 See the sibling plugin's `docs/direct-broker-execution.md` for the exact operation
 table, existing-risk sizing, reload rules, and Swap's same-direction semantics.
-`npm run test:extended-execution` verifies 20 fixtures recorded from the production
+`npm run test:extended-execution` verifies fixtures recorded from the production
 ViteApp reload/swap handlers with a recording broker and tests preserved trade state.
 Regenerate entry parity fixtures with
 `node --experimental-strip-types scripts/generateDirectEntryFixtures.mjs`.

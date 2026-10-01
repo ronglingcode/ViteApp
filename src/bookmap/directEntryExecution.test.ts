@@ -27,7 +27,9 @@ test('native entry fixtures agree with production risk, rule, target and bracket
         assert.deepEqual(targets, entry.submitEntryResult.profitTargets, fixture.name);
         assert.deepEqual(createBracketedEquityEntry('AAPL', entry.isLong, body.orderType, quantity, orderPrice, targets, orderStop), body, fixture.name);
         const decision = evaluateEntryPriceAndVolumeRules({ ...context, entryPrice: 10, isLong: entry.isLong, initialSize: context.liquidityScale });
-        assert.equal(decision.multiplier * (fixture.action.entry_method === '0.1 R' ? 0.1 : 1), entry.multiplier, fixture.name);
+        const methodMatch = fixture.action.entry_method?.trim().match(/(?:^|\s)(\d+(?:\.\d+)?)\s*R$/i);
+        const methodMultiplier = methodMatch && Number(methodMatch[1]) > 0 ? Number(methodMatch[1]) : 1;
+        assert.equal(decision.multiplier * methodMultiplier, entry.multiplier, fixture.name);
     }
 });
 test('entry area and no-trade-zone boundary behavior remains precise', () => {
