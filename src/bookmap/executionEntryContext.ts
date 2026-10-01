@@ -5,7 +5,6 @@ import * as Watchlist from '../algorithms/watchlist';
 import * as Helper from '../utils/helper';
 import * as RiskManager from '../algorithms/riskManager';
 import * as Broker from '../api/broker';
-import { allowEntry } from '../attendance/attendance';
 import { BookmapWallReversal } from '../tradebooks/bookmapWallReversal';
 import * as TradingState from '../models/tradingState';
 import * as PartialStopDiscipline from '../controllers/partialStopDisciplineController';
@@ -41,7 +40,9 @@ export const createExecutionEntryContext = (symbol: string) => {
     });
     const data = Models.getSymbolData(symbol);
     return {
-        definitions, attendanceAllowed: allowEntry(),
+        definitions,
+        // Keep the legacy field for installed Bookmap plugins that require it.
+        attendanceAllowed: true,
         watchlistBlockReason: Watchlist.getWatchlistLimitBlockReason(),
         realizedPnl: Models.getRealizedProfitLoss(), dailyMaxLoss: RiskManager.dailyMax, riskDollars: RiskManager.R,
         liquidityScale: Models.getLiquidityScale(symbol),

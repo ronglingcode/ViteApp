@@ -1,4 +1,3 @@
-import '../attendance/bootstrap';
 import './ui/lite.css';
 import * as ConfigDataLite from './api/configDataLite';
 import * as AppVersion from '../config/appVersion';

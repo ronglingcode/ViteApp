@@ -16,8 +16,6 @@ export const enableReplayCapture: boolean = true;
 export const skipLateTimeAndSalesChartUpdates: boolean = false;
 export const allowLiveStats: boolean = true;
 export const enableLeftPaneFeatures: boolean = true;
-// Temporary switch for missed clock-ins. Set back to true to restore the attendance gate.
-export const requireClockInAttendance: boolean = true;
 export const showBestPlans: boolean = enableLeftPaneFeatures && false;
 export const showTradebooksForPosition: boolean = enableLeftPaneFeatures && false;
 export const checkMaxEntryThreshold: boolean = false;

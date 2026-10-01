@@ -1,9 +1,8 @@
+import { capabilities } from '../../replay/runtime';
 /*
 https://github.com/tylerebowers/Schwab-API-Python/blob/main/tests/api_demo.py
 */
 import * as webRequest from '../../utils/webRequest';
-import { allowEntry } from '../../attendance/attendance';
-import { isClosingSchwabOrder } from '../../attendance/policy';
 import * as Helper from '../../utils/helper';
 import * as TimeHelper from '../../utils/timeHelper';
 import * as secret from '../../config/secret';
@@ -453,7 +452,7 @@ export const placeOrderBase = async (order: any, logTags: Models.LogTags) => {
     catch (error) { Firestore.logError(`POST Schwab order failed: ${describeError(error)}`, logTags); }
 };
 const placeOrderBaseCore = async (order: any, logTags: Models.LogTags) => {
-    if (!isClosingSchwabOrder(order) && !allowEntry()) return;
+    if (!capabilities.liveBroker) return;
     Firestore.logOrder(order, logTags);
     let start = new Date();
     let accessToken = getAccessTokenFromStorage();
@@ -484,7 +483,7 @@ const replaceOrderBase = async (newOrder: any, oldOrderId: string, logTags: Mode
     catch (error) { Firestore.logError(`PUT Schwab order ${oldOrderId} failed: ${describeError(error)}`, logTags); }
 };
 const replaceOrderBaseCore = async (newOrder: any, oldOrderId: string, logTags: Models.LogTags) => {
-    if (!isClosingSchwabOrder(newOrder) && !allowEntry()) return;
+    if (!capabilities.liveBroker) return;
     if (replacedOrderIds.has(oldOrderId)) {
         // Avoid replacing the same order multiple times in a short period
         Firestore.logError(`Order with ID ${oldOrderId} already replaced`);

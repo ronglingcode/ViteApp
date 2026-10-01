@@ -75,7 +75,6 @@ async function capture(name, key, edit = () => {}, shift = false, price = 10) {
             getAddCount: (_, isLong) => direction(isLong).addCount,
             setLowestExitBatchCount: () => {}, clearPendingOrder: () => {}, onPlaceBreakoutTrade: () => {} },
         'controllers/partialStopDisciplineController': { getPhase: (_, isLong) => direction(isLong).stopTightenPhase },
-        'attendance/attendance': { allowEntry: () => context.attendanceAllowed, attendanceMessage: () => 'attendance blocked' },
         'replay/runtime': { capabilities: { liveBroker: true } },
         'algorithms/watchlist': { getWatchlistLimitBlockReason: () => context.watchlistBlockReason },
         'algorithms/vwap': { getStrongPremarketVwapTrend: () => 0 },
@@ -98,7 +97,7 @@ async function capture(name, key, edit = () => {}, shift = false, price = 10) {
             rebuildBrokerAccount: () => {},
             cancelOrders: orders => orders.forEach(order => record('DELETE', typeof order === 'string' ? order : order.orderID)),
             submitEntryOrderWithBracket: (_, quantity, isLong, type, entry, target, stop) => {
-                if (context.attendanceAllowed) record('POST', '', createBracketedEquityEntry('AAPL', isLong, type, quantity, entry, [{ target, quantity }], stop));
+                record('POST', '', createBracketedEquityEntry('AAPL', isLong, type, quantity, entry, [{ target, quantity }], stop));
             },
             submitEntryOrderWithMultipleBrackets: (_, quantity, isLong, type, entry, targets, stop) =>
                 record('POST', '', createBracketedEquityEntry('AAPL', isLong, type, quantity, entry, targets, stop)),
@@ -155,7 +154,6 @@ await capture('reload low risk overrides tighten discipline', 'KeyA', state => {
 await capture('reload high risk requires tightening', 'KeyA', state => {
     state.pairs.forEach(pair => { pair.STOP.price = 8.9; }); state.entryContext.longState.stopTightenPhase = 'needs_tighten';
 }, true);
-await capture('reload attendance blocks even low risk override', 'KeyA', state => { state.entryContext.attendanceAllowed = false; }, true);
 await capture('reload watchlist blocks high risk add', 'KeyA', state => {
     state.pairs.forEach(pair => { pair.STOP.price = 8.9; }); state.entryContext.watchlistBlockReason = 'watchlist limit';
 }, true);

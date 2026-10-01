@@ -7,7 +7,6 @@ import * as Chart from '../ui/chart';
 import * as RiskManager from '../algorithms/riskManager';
 import * as Helper from '../utils/helper';
 import * as Runtime from '../replay/runtime';
-import { allowEntry } from '../attendance/attendance';
 
 declare let window: Models.MyWindow;
 
@@ -41,7 +40,6 @@ export const refreshAccessToken = async () => {
  */
 export const test1 = () => {
     if (!allowLiveBrokerAction('test1')) return;
-    if (!allowEntry()) return;
     let symbol = 'AAPL';
     let entryPrice = 0;
     let stopPrice = 0;
@@ -174,7 +172,6 @@ export const submitEntryOrderWithBracket = (
     symbol: string, quantity: number, isLong: boolean, orderType: Models.OrderType,
     entryPrice: number, limitPrice: number, stopPrice: number, logTags: Models.LogTags) => {
     if (!allowLiveBrokerAction('submitEntryOrderWithBracket')) return;
-    if (!allowEntry()) return;
     emitBookmapActionLog(symbol, `Submit ${isLong ? 'long' : 'short'} ${quantity} ${formatOrderPrice(orderType, entryPrice)}`);
     submitEntryOrderWithBracketCore(
         symbol, quantity, isLong, orderType, entryPrice, limitPrice, stopPrice, logTags
@@ -186,7 +183,6 @@ export const submitEntryOrderWithMultipleBrackets = (
     entryPrice: number, profitTargets: Models.ProfitTarget[], stopPrice: number, logTags: Models.LogTags,
     orderIdToReplace: string) => {
     if (!allowLiveBrokerAction('submitEntryOrderWithMultipleBrackets')) return;
-    if (!allowEntry()) return;
     emitBookmapActionLog(symbol, `Submit ${isLong ? 'long' : 'short'} ${quantity} ${formatOrderPrice(orderType, entryPrice)}`);
     let brokerName = config.getProfileSettings().brokerName;
     if (brokerName == 'Schwab') {
@@ -228,7 +224,6 @@ export const submitExitOrderWithBroker = (
 export const submitSingleOrder = async (symbol: string, orderType: Models.OrderType, quantity: number, price: number,
     isLong: boolean, positionEffectIsOpen: boolean, logTags: Models.LogTags, emitActionLog = true) => {
     if (!allowLiveBrokerAction('submitSingleOrder')) return;
-    if (positionEffectIsOpen && !allowEntry()) return;
     if (emitActionLog) {
         emitBookmapActionLog(symbol, `Submit ${isLong ? 'buy' : 'sell'} ${quantity} ${formatOrderPrice(orderType, price)}`);
     }
@@ -250,7 +245,6 @@ export const submitSingleOrder = async (symbol: string, orderType: Models.OrderT
 export const submitPremarketOrder = async (symbol: string, quantity: number, price: number,
     isLong: boolean, positionEffectIsOpen: boolean, logTags: Models.LogTags) => {
     if (!allowLiveBrokerAction('submitPremarketOrder')) return;
-    if (positionEffectIsOpen && !allowEntry()) return;
     emitBookmapActionLog(symbol, `Submit premarket ${isLong ? 'buy' : 'sell'} ${quantity} $${price}`);
     let brokerName = config.getProfileSettings().brokerName;
     let isEquity = config.getProfileSettings().isEquity;
