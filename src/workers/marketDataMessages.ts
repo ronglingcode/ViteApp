@@ -1,4 +1,5 @@
 import type * as Models from '../models/models';
+import type { StreamPhase } from '../health/integrationHealth.ts';
 
 /** Trade source: 'm' = massive (matches DB.tryUpdateMaxTimeSaleTimestamp). */
 export type TradeSource = 'm';
@@ -34,6 +35,7 @@ export type MainToWorkerMessage =
     | { type: 'stop' };
 
 export type WorkerToMainMessage =
+    | { type: 'massiveHealth'; phase: StreamPhase; error?: string }
     | { type: 'status'; source: string; status: string }
     | { type: 'timeSaleFlush'; source: TradeSource; trades: ParsedTrade[] }
     | { type: 'quote'; source: QuoteSource; quotes: Models.Quote[] }

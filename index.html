@@ -16,6 +16,12 @@
 </head>
 
 <body>
+  <div id="integrationHealth" class="integrationHealth" aria-label="API integration status">
+    <details id="health-account"><summary>Schwab account · Not checked</summary><div class="healthDetail"></div></details>
+    <details id="health-history"><summary>Massive history · Not checked</summary><div class="healthDetail"></div></details>
+    <details id="health-stream"><summary>Massive trades · Not connected</summary><div class="healthDetail"></div></details>
+    <button id="check_api_health" type="button">Check APIs now</button>
+  </div>
   <div id="notificationCenter" class="notificationCenter" aria-live="assertive"
     aria-label="Trading notifications"></div>
   <table>
@@ -248,7 +254,6 @@
     <button id="test_popup">Test popup</button>
   </div>
 
-  <div id="network">network: </div>
   <div id="clock">clock: </div>
   <script type="module" src="/src/main.ts"></script>
 </body>

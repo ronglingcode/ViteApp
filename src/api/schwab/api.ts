@@ -5,6 +5,8 @@ import { SchwabOAuth } from '../../trading/libraries/broker/schwab/oauth.ts';
 import type { SchwabCredentials } from '../../trading/ports/credentials.ts';
 import { browserCredentials } from '../../trading/adapters/browserCredentials.ts';
 import { browserHttp } from '../../trading/adapters/browserHttp.ts';
+import { readHttp } from '../../health/readHttp.ts';
+import { integrationHealth as health, errorMessage } from '../../health/integrationHealth.ts';
 /*
 https://github.com/tylerebowers/Schwab-API-Python/blob/main/tests/api_demo.py
 */
@@ -81,6 +83,31 @@ export const maintainAccessToken = async () => {
     return publishToken(browserCredentials.loadSchwab());
 };
 const readApi = new SchwabReadApi(browserHttp, getTraderApiHost);
+const accountReadApi = new SchwabReadApi(readHttp, getTraderApiHost);
+let pendingAccountRead: Promise<Record<string, any>> | undefined;
+const readObservedAccount = () => {
+    if (pendingAccountRead) return pendingAccountRead;
+    health.begin(health.account);
+    pendingAccountRead = Promise.resolve().then(() => accountReadApi.getAccount(getAccessTokenFromStorage())).then(account => {
+        try { health.accountSuccess(account); }
+        catch (error) { health.fail(health.account, error); }
+        return account;
+    }).catch(error => {
+        health.fail(health.account, error);
+        throw error;
+    }).finally(() => { pendingAccountRead = undefined; });
+    return pendingAccountRead;
+};
+/** Read-only probe, independent of order history and the trading account cache. */
+export const checkAccountConnection = async () => {
+    try {
+        await readObservedAccount();
+        if (health.account.error) throw new Error(health.account.error);
+    } catch (error) {
+        health.account.error = errorMessage(error);
+        throw error;
+    }
+};
 const getAccessTokenFromStorage = () => {
     return window.HybridApp.Secrets.schwab.accessToken;
 };
@@ -182,7 +209,7 @@ export const getAccountInfo = async () => {
     const observationStartedAt = Date.now();
     const accountHash = secret.schwab().accountHash;
     const accessToken = getAccessTokenFromStorage();
-    const account = await readApi.getAccount(accessToken);
+    const account = await readObservedAccount();
     const ordersData = Config.Settings.fetchOrdersByTimeWindows
         ? await getAllOrdersByTimeWindows(accountHash, accessToken)
         : await getAllOrders(accountHash, accessToken);

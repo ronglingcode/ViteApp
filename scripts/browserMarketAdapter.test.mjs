@@ -30,7 +30,7 @@ test('actual browser DB uses headless prints, including prints before chart init
     const loader = { getState: () => state, acceptTrade: trade => state.applyTrade(trade) };
     const adapter = load('../src/trading/adapters/browserMarket.ts', {
         '../runtime/marketLoader.ts': { MarketLoader: class { constructor() { return loader; } } },
-        '../libraries/massive/api.ts': { MassiveApi: class {} }, './browserHttp.ts': { browserHttp: {} },
+        '../../health/observedMassiveApi.ts': { ObservedMassiveApi: class {} }, '../../health/readHttp.ts': { readHttp: {} },
         '../../config/secret': {}, '../../utils/helper': helper, '../core/marketdata/marketClock.ts': { marketTime },
     });
     const noop = () => {}, series = { setData: noop, update: noop };

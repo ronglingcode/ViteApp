@@ -1,14 +1,14 @@
 import { MarketLoader } from '../runtime/marketLoader.ts';
 import type { Trade } from '../models/market.ts';
 import type { MarketState } from '../core/marketdata/marketState.ts';
-import { MassiveApi } from '../libraries/massive/api.ts';
-import { browserHttp } from './browserHttp.ts';
+import { ObservedMassiveApi } from '../../health/observedMassiveApi.ts';
+import { readHttp } from '../../health/readHttp.ts';
 import * as Secret from '../../config/secret';
 import * as Helper from '../../utils/helper';
 import { marketTime } from '../core/marketdata/marketClock.ts';
 import type * as Models from '../../models/models';
 
-export const massiveApi = new MassiveApi(browserHttp, () => Secret.massive().apiKey);
+export const massiveApi = new ObservedMassiveApi(readHttp, () => Secret.massive().apiKey);
 export const marketLoader = new MarketLoader(massiveApi);
 export const toChartCandle = (candle: import('../models/market.ts').Candle): Models.CandlePlus => ({
     ...candle, time: Helper.jsDateToTradingViewUTC(new Date(candle.datetime)),

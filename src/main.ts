@@ -38,6 +38,8 @@ import * as AppVersion from './config/appVersion';
 import * as Rules from './algorithms/rules';
 import * as PremarketVolume from './algorithms/premarketVolume';
 import * as NotificationEngine from './notifications/notificationEngine';
+import { integrationHealth as health } from './health/integrationHealth.ts';
+import { initializeIntegrationHealthUI, startIntegrationChecks } from './ui/integrationHealthUI';
 declare let window: Models.MyWindow;
 
 console.log('main.ts loaded');
@@ -147,12 +149,14 @@ const getErrorMessage = (error: unknown) => {
 };
 
 const loadHistoricalChartsWithRetry = async (symbol: string, todayString: string) => {
+    health.historyLoads.set(symbol, 'Loading');
     let lastFailure = '';
     for (let attempt = 1; attempt <= historicalChartLoadAttemptCount; attempt++) {
         try {
             let priceHistory = await MarketData.getFullPriceHistory(symbol, todayString);
             let initialized = DB.initialize(symbol, priceHistory.today1MinuteBars, priceHistory.dailyBars);
             if (initialized) {
+                health.historyLoads.set(symbol, 'Loaded');
                 BookmapSocket.sendKeyLevelConfigForSymbol(symbol);
                 BookmapSocket.sendVwapUpdatesForSymbol(symbol);
                 return priceHistory;
@@ -172,6 +176,7 @@ const loadHistoricalChartsWithRetry = async (symbol: string, todayString: string
     }
 
     let finalMessage = `${symbol} HISTORICAL CHARTS FAILED after ${historicalChartLoadAttemptCount} attempts. Time and sales updates require historical candles; live chart updates are blocked. Last failure: ${lastFailure}`;
+    health.historyLoads.set(symbol, 'Failed after 3 attempts; live chart updates blocked');
     Firestore.logError(finalMessage);
     throw new Error(finalMessage);
 };
@@ -182,6 +187,7 @@ const setupAppUi = () => {
 };
 
 const startLive = () => window.TradingApp.TOS.initialize().then(async () => {
+    startIntegrationChecks();
     setInterval(() => schwabApi.maintainAccessToken().catch(Firestore.logError), 30000);
     setupAppUi();
 
@@ -276,12 +282,16 @@ const startApplication = async () => {
     try {
         await startLive();
     } catch (error) {
+        if (health.account.lastSuccess === undefined && !health.account.error)
+            health.account.error = 'Startup failed before account access was verified';
+        startIntegrationChecks();
         console.error('Application startup failed', error);
         Firestore.addToLogView(`startup failed: ${getErrorMessage(error)}`, 'Error');
     }
 };
 
 NotificationEngine.initialize();
+initializeIntegrationHealthUI();
 startApplication();
 
 let htmlBody = document.getElementsByTagName("body")[0];

@@ -60,6 +60,7 @@ ViteApp/
 ## Documentation
 
 - [Notification engine](docs/notification-engine.md)
+- [Live API indicators](docs/integration-health.md)
 - [Mirrored trading libraries and validation](src/trading/README.md)
 - [Standalone Bookmap setup and operations](../bookmap-plugin/docs/direct-broker-execution.md)
 

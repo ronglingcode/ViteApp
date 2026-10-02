@@ -3,6 +3,7 @@ import * as TimeSaleParse from '../streaming/timeSaleParse';
 import * as TradeFlushBuffer from './tradeFlushBuffer';
 import type * as Messages from './marketDataMessages';
 import { parseStreamMessage } from '../trading/libraries/broker/schwab/streamingProtocol.ts';
+import { massiveStreamStatus } from '../health/massiveStreamStatus.ts';
 
 const MASSIVE_URL = 'wss://socket.massive.com/stocks';
 
@@ -46,16 +47,22 @@ class MarketDataStreamManager {
         let socket = new WebSocket(MASSIVE_URL);
         this.massiveSocket = socket;
         socket.onopen = () => {
+            this.post({ type: 'massiveHealth', phase: 'authenticating' });
             this.send(socket, { action: 'auth', params: payload.massive.authParams });
         };
         socket.onmessage = (messageEvent) => {
-            let messageData = JSON.parse(String(messageEvent.data));
+            let messageData;
+            try { messageData = JSON.parse(String(messageEvent.data)); }
+            catch { this.post({ type: 'massiveHealth', phase: 'failed', error: 'Massive stream returned invalid JSON' }); return; }
             if (!Array.isArray(messageData)) {
                 return;
             }
             let trades: Messages.ParsedTrade[] = [];
             messageData.forEach((message: any) => {
+                if (!message || typeof message !== 'object') return;
                 if (message.ev === 'status') {
+                    const status = massiveStreamStatus(message);
+                    if (status) this.post({ type: 'massiveHealth', ...status });
                     if (message.status === 'auth_success') {
                         let params = payload.symbols.map(symbol => `T.${symbol}`).join(',');
                         this.send(socket, { action: 'subscribe', params });
@@ -68,7 +75,8 @@ class MarketDataStreamManager {
                 this.enqueueTrades(trades, 'm');
             }
         };
-        socket.onerror = () => this.post({ type: 'error', source: 'massive', message: 'socket error' });
+        socket.onerror = () => this.post({ type: 'massiveHealth', phase: 'failed', error: 'Massive socket error' });
+        socket.onclose = () => this.post({ type: 'massiveHealth', phase: 'disconnected' });
     }
 
     private connectSchwab(config: Messages.SchwabWorkerConfig) {

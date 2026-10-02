@@ -3,6 +3,29 @@ body {
     margin: 1px;
 }
 
+.integrationHealth {
+    position: sticky;
+    top: 0;
+    z-index: 9000;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 6px;
+    background: #f3f4f6;
+    border-bottom: 1px solid #9ca3af;
+    font-size: 13px;
+}
+.integrationHealth details { background: white; border: 1px solid #9ca3af; border-radius: 4px; max-width: 460px; }
+.integrationHealth summary { cursor: pointer; padding: 5px 8px; font-weight: bold; }
+.integrationHealth summary::before { content: '●'; margin-right: 6px; color: #6b7280; }
+.integrationHealth .healthy summary::before { color: #15803d; }
+.integrationHealth .warning summary::before { color: #b45309; }
+.integrationHealth .failed summary::before { color: #b91c1c; }
+.integrationHealth .failed { border-color: #b91c1c; background: #fff1f2; }
+.integrationHealth .warning { border-color: #b45309; background: #fffbeb; }
+.healthDetail { padding: 4px 8px 8px; white-space: pre-line; line-height: 1.5; overflow-wrap: anywhere; }
+
 .notificationCenter {
     position: fixed;
     top: 8px;
