@@ -6,7 +6,6 @@ window.HybridApp = {
     },
     Secrets: {
         tdameritrade: {},
-        tradeStation: {},
         schwab: {},
     },
     SymbolData: new Map(),

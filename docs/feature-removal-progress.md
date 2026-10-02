@@ -33,7 +33,7 @@ copy, print, or commit real secrets as part of this work.
 | Chart/trading UI | `index.html`, `src/ui/chart.ts`, `src/ui/ui.ts`, `src/controllers/keyboardHandler.ts`, `src/controllers/traderFocus.ts`; chart-generated controls require inspection beyond static HTML. |
 | Execution review/export tools | `show_execution`, `show_execution_detail`, `export_trades`, `check_quantity`, `update_account_ui`, and no-op `test_popup` listeners in `src/main.ts`; broker/tool/UI consumers differ. |
 | Strategies and plans | `src/tradebooks/tradebooksManager.ts` constructs wall-reversal tradebooks through shared `core/configuration/tradingConfig.ts`; plans, sizing, entry/exit controllers and saved state are connected. |
-| Broker profiles | `src/config/config.ts` selects Schwab, futures, TradeStation equity and momentumSimple profiles; `src/api/broker.ts` dispatches broker operations. |
+| Broker profiles | `src/config/config.ts` selects Schwab and momentumSimple profiles; `src/api/broker.ts` dispatches Schwab broker operations. |
 | Market data and indicators | `src/data/db.ts`, worker bridge, Massive/Schwab transports, chart adapters and mirrored market libraries/core; preserve data used by retained risk/eligibility rules. |
 | Notifications and logging | `src/notifications`, `src/ui/notificationCenter.ts`, `src/firestore.ts`, speech/sound settings; Firestore also imports Bookmap screen logging. |
 | Bookmap browser integration | `src/bookmap/bookmapSocket.ts`, startup calls, `src/firestore.ts` screen log, wall-reversal tradebooks, price normalization in `src/utils/exitOrderPairs.ts`; a folder deletion alone could break retained behavior. |

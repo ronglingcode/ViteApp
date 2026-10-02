@@ -1,4 +1,4 @@
-// day trading equities in TradeStation
+// day trading equities in Schwab
 import type { Profile } from "./profiles";
 export const settings: Profile = {
     name: "schwab",

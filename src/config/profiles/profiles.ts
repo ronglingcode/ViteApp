@@ -3,7 +3,7 @@ export interface SystemProfile {
     name: string,
     maxTotalTrades: number,
 };
-export type BrokerName = "Schwab" | "TradeStation";
+export type BrokerName = "Schwab";
 export interface Profile {
     name: string,
     brokerName: BrokerName,

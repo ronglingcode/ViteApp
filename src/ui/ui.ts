@@ -1,6 +1,5 @@
 import * as Models from '../models/models';
 import * as Chart from './chart';
-import * as Config from '../config/config';
 import * as TimeHelper from '../utils/timeHelper';
 import * as Helper from '../utils/helper';
 declare let window: Models.MyWindow;
@@ -64,22 +63,6 @@ export const reviewNextChart = () => {
         hasNextChart = true;
     }
     return hasNextChart;
-};
-
-export const syncAndUpdate = (delaySeconds: number) => {
-    if (Config.getProfileSettings().brokerName == "TradeStation") {
-        setTimeout(() => {
-            Chart.updateAccountUIStatus('sync and update');
-        }, delaySeconds * 1000);
-    }
-};
-
-export const setupAutoSync = () => {
-    if (Config.getProfileSettings().brokerName == "TradeStation") {
-        setInterval(() => {
-            syncAndUpdate(0);
-        }, 15000);
-    }
 };
 
 export const displayState = (state: Models.TradingState) => {

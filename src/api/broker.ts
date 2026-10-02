@@ -1,6 +1,5 @@
 import { groupTradeExecutions } from '../trading/core/account/tradeLedger.ts';
 import { toCoreFill, toBrowserFill } from '../trading/adapters/browserAccount.ts';
-import * as tradeStationApi from "./tradeStation/api";
 import * as schwabApi from './schwab/api';
 import * as config from '../config/config'
 import * as Models from '../models/models';
@@ -17,10 +16,7 @@ export const getBrokerApi = () => {
 export const refreshAccessToken = async () => {
     let brokerName = config.getProfileSettings().brokerName;
     console.log(`brokerName ${brokerName}`);
-    if (brokerName == "TradeStation") {
-        let accessToken = await tradeStationApi.refreshAccessToken();
-        window.HybridApp.Secrets.tradeStation.accessToken = accessToken;
-    } else if (brokerName == 'Schwab') {
+    if (brokerName == 'Schwab') {
         let accessToken = await schwabApi.refreshAccessToken();
         window.HybridApp.Secrets.schwab.accessToken = accessToken;
     }
@@ -121,14 +117,9 @@ const submitEntryOrderWithBracketCore = (
     symbol: string, quantity: number, isLong: boolean, orderType: Models.OrderType,
     entryPrice: number, limitPrice: number, stopPrice: number, logTags: Models.LogTags) => {
     let brokerName = config.getProfileSettings().brokerName;
-    let isEquity = config.getProfileSettings().isEquity;
     if (brokerName == 'Schwab') {
         schwabApi.entryWithBracket(
             symbol, quantity, isLong, orderType, entryPrice, limitPrice, stopPrice, logTags
-        );
-    } else if (brokerName == "TradeStation") {
-        tradeStationApi.entryWithBracket(
-            symbol, quantity, isLong, isEquity, orderType, entryPrice, limitPrice, stopPrice, logTags
         );
     } else {
         logUnsupportedBroker(brokerName, 'submitEntryOrderWithBracket', logTags);
@@ -154,14 +145,6 @@ export const submitEntryOrderWithMultipleBrackets = (
             symbol, quantity, isLong, orderType, entryPrice, profitTargets, stopPrice, logTags,
             orderIdToReplace
         );
-    } else if (brokerName == "TradeStation") {
-        profitTargets.forEach((profitTarget: any) => {
-            let partialQuantity = profitTarget.quantity;
-            let limitPrice = profitTarget.target;
-            submitEntryOrderWithBracketCore(
-                symbol, partialQuantity, isLong, orderType, entryPrice, limitPrice, stopPrice, logTags
-            );
-        });
     } else {
         logUnsupportedBroker(brokerName, 'submitEntryOrderWithMultipleBrackets', logTags);
     }
@@ -176,8 +159,6 @@ export const submitExitOrderWithBroker = (
         schwabApi.exitWithBracket(
             symbol, quantity, positionIsLong, targetPrice, stopLossPrice, logTags
         );
-    } else if (brokerName == "TradeStation") {
-        Firestore.logError(`not implemented submitExitOrderWithBroker()`);
     } else {
         logUnsupportedBroker(brokerName, 'submitExitOrderWithBroker', logTags);
     }
@@ -190,14 +171,9 @@ export const submitSingleOrder = async (symbol: string, orderType: Models.OrderT
         emitBookmapActionLog(symbol, `Submit ${isLong ? 'buy' : 'sell'} ${quantity} ${formatOrderPrice(orderType, price)}`);
     }
     let brokerName = config.getProfileSettings().brokerName;
-    let isEquity = config.getProfileSettings().isEquity;
     if (brokerName == 'Schwab') {
         schwabApi.submitSingleOrder(
             symbol, orderType, quantity, price, isLong, positionEffectIsOpen, logTags,
-        );
-    } else if (brokerName == "TradeStation") {
-        tradeStationApi.submitSingleOrder(
-            symbol, isEquity, orderType, quantity, price, isLong, positionEffectIsOpen, logTags
         );
     } else {
         logUnsupportedBroker(brokerName, 'submitSingleOrder', logTags);
@@ -208,7 +184,6 @@ export const submitPremarketOrder = async (symbol: string, quantity: number, pri
     isLong: boolean, positionEffectIsOpen: boolean, logTags: Models.LogTags) => {
     emitBookmapActionLog(symbol, `Submit premarket ${isLong ? 'buy' : 'sell'} ${quantity} $${price}`);
     let brokerName = config.getProfileSettings().brokerName;
-    let isEquity = config.getProfileSettings().isEquity;
     if (brokerName == 'Schwab') {
         schwabApi.submitPremarketOrder(
             symbol, quantity, price, isLong, positionEffectIsOpen, logTags,
@@ -255,8 +230,6 @@ export const cancelOrders = async (orderIds: string[]) => {
     }
     if (brokerName == 'Schwab') {
         schwabApi.cancelOrders(orderIds);
-    } else if (brokerName == "TradeStation") {
-        tradeStationApi.cancelOrders(orderIds);
     } else {
         logUnsupportedBroker(brokerName, 'cancelOrders');
     }
@@ -268,8 +241,6 @@ export const replaceWithMarketOrder = async (order: Models.OrderModel, logTags: 
     let brokerName = config.getProfileSettings().brokerName;
     if (brokerName == 'Schwab') {
         schwabApi.replaceSingleOrderWithMarketOrder(order, logTags);
-    } else if (brokerName == "TradeStation") {
-        tradeStationApi.replaceWithMarketOrder(order, logTags);
     } else {
         Firestore.logError(`replaceWithMarketOrder not implemented`);
     }
@@ -279,8 +250,6 @@ export const replaceSimpleOrderWithNewPrice = async (order: Models.OrderModel, n
     let brokerName = config.getProfileSettings().brokerName;
     if (brokerName == 'Schwab') {
         schwabApi.replaceSingleOrderWithNewPrice(order, newPrice, logTags);
-    } else if (brokerName == "TradeStation") {
-        tradeStationApi.replaceSingleOrderWithNewPrice(order, newPrice, logTags);
     } else {
         logUnsupportedBroker(brokerName, 'replaceSimpleOrderWithNewPrice', logTags);
     }
@@ -294,11 +263,6 @@ export const replaceExitPairWithNewPrice = async (
     if (brokerName == 'Schwab') {
         //schwabApi.cancelAndReplaceExitPairWithNewPrice(pair, newPrice, isStopLeg, positionIsLong, logTags);
         schwabApi.replaceExitPairDirectlyWithNewPrice(pair, newPrice, isStopLeg, positionIsLong, logTags);
-    } else if (brokerName == "TradeStation") {
-        let orderToReplace = isStopLeg ? pair.STOP : pair.LIMIT;
-        if (orderToReplace) {
-            tradeStationApi.replaceSingleOrderWithNewPrice(orderToReplace, newPrice, logTags);
-        }
     } else {
         logUnsupportedBroker(brokerName, 'replaceExitPairWithNewPrice', logTags);
     }
@@ -323,8 +287,6 @@ export const instantOutOneExitPair = (
     if (brokerName == 'Schwab') {
         schwabApi.replaceExitPairWithOneMarketOrderLeg(symbol, positionIsLong, pair, logTags);
         //schwabApi.cancelAndReplaceWithMarketOrder(symbol, positionIsLong, pair, logTags);
-    } else if (brokerName == 'TradeStation') {
-        instantOutOneExitPairByReplace(pair, logTags);
     } else {
         logUnsupportedBroker(brokerName, 'instantOutOneExitPair', logTags);
     }
@@ -333,15 +295,6 @@ export const instantOutOneExitPair = (
     }
     return quantity;
 };
-export const instantOutOneExitPairByReplace = async (pair: Models.ExitPair, logTags: Models.LogTags) => {
-    if (pair.LIMIT) {
-        tradeStationApi.replaceWithMarketOrder(pair.LIMIT, logTags);
-
-    } else if (pair.STOP) {
-        tradeStationApi.replaceWithMarketOrder(pair.STOP, logTags);
-    }
-    onOrderEvent();
-}
 /* #endregion */
 
 export const syncAccount = async (source: string) => {
@@ -349,12 +302,7 @@ export const syncAccount = async (source: string) => {
     let previousExecutionKeys = snapshotOrderExecutionKeys();
     let brokerName = config.getProfileSettings().brokerName;
     //console.log(brokerName);
-    if (brokerName == "TradeStation") {
-        let result = await tradeStationApi.getAccount();
-        if (!result) {
-            console.error('cannot sync ts account');
-        }
-    } else if (brokerName == 'Schwab') {
+    if (brokerName == 'Schwab') {
         let result = await schwabApi.getAccountInfo();
         if (!result) {
             Firestore.logError('cannot sync schwab account');
@@ -580,31 +528,21 @@ export const marketOutExitPairsButOne = async (symbol: string, netQuantity: numb
     for (let i = 0; i < exitPairs.length - 1; i++) {
         pairs.push(exitPairs[i]);
     }
-    if (config.getProfileSettings().brokerName == "TradeStation") {
-        pairs.forEach(pte => {
-            if (pte.LIMIT) {
-                replaceWithMarketOrder(pte['LIMIT'], logTags);
-            } else if (pte.STOP) {
-                replaceWithMarketOrder(pte['STOP'], logTags);
-            }
-        });
-    } else {
-        let toCancel: string[] = [];
-        let quantity = 0;
-        pairs.forEach(pte => {
-            if (pte.LIMIT) {
-                toCancel.push(pte.LIMIT.orderID);
-                quantity += pte.LIMIT.quantity;
-            } else if (pte.STOP) {
-                toCancel.push(pte.STOP.orderID);
-                quantity += pte.STOP.quantity;
-            }
-        });
-        cancelOrders(toCancel);
-        setTimeout(() => {
-            submitSingleOrder(symbol, Models.OrderType.MARKET, quantity, 0, exitIsBuyOrder, false, logTags);
-        }, 750);
-    }
+    let toCancel: string[] = [];
+    let quantity = 0;
+    pairs.forEach(pte => {
+        if (pte.LIMIT) {
+            toCancel.push(pte.LIMIT.orderID);
+            quantity += pte.LIMIT.quantity;
+        } else if (pte.STOP) {
+            toCancel.push(pte.STOP.orderID);
+            quantity += pte.STOP.quantity;
+        }
+    });
+    cancelOrders(toCancel);
+    setTimeout(() => {
+        submitSingleOrder(symbol, Models.OrderType.MARKET, quantity, 0, exitIsBuyOrder, false, logTags);
+    }, 750);
     return true;
 }
 export const flattenPosition = async (symbol: string, netQuantity: number, logTags: Models.LogTags) => {
@@ -614,23 +552,11 @@ export const flattenPosition = async (symbol: string, netQuantity: number, logTa
     let exitPairs = Models.getExitPairs(symbol);
     let exitIsBuyOrder = netQuantity > 0 ? false : true;
     let brokerName = config.getProfileSettings().brokerName;
-    if (brokerName == "TradeStation" || brokerName == "Schwab") {
-        if (brokerName == "TradeStation") {
-            exitPairs.forEach(pte => {
-                if (pte.LIMIT) {
-                    remainingQuantity -= pte['LIMIT'].quantity;
-                    replaceWithMarketOrder(pte['LIMIT'], logTags);
-                } else if (pte.STOP) {
-                    remainingQuantity -= pte['STOP'].quantity;
-                    replaceWithMarketOrder(pte['STOP'], logTags);
-                }
-            });
-        } else if (brokerName == "Schwab") {
-            exitPairs.forEach(pte => {
-                let q = instantOutOneExitPair(symbol, netQuantity > 0, pte, logTags, false);
-                remainingQuantity -= q;
-            })
-        }
+    if (brokerName == "Schwab") {
+        exitPairs.forEach(pte => {
+            let q = instantOutOneExitPair(symbol, netQuantity > 0, pte, logTags, false);
+            remainingQuantity -= q;
+        });
         // market out leftover shares
         if (remainingQuantity > 0) {
             console.log(`remaining q: ${remainingQuantity}`);

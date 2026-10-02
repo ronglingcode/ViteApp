@@ -3,7 +3,6 @@ import { marketLoader } from '../trading/adapters/browserMarket.ts';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
 import { addDays } from '../trading/core/marketdata/marketClock.ts';
 import { calculatePremarketVolume } from '../trading/core/marketdata/premarketVolume.ts';
-import * as tradeStationApi from "./tradeStation/api";
 import * as tdAmeritradeApi from "./tdAmeritrade/api";
 import * as schwabApi from "./schwab/api";
 import * as massiveApi from "./massive/api";
@@ -19,24 +18,20 @@ declare let window: Models.MyWindow;
 
 export const getQuote = async (symbol: string) => {
   if (Helper.isFutures(symbol)) {
-    return tradeStationApi.getQuote(symbol);
-  } else {
-    let quote = await tdAmeritradeApi.getQuote(symbol);
-    console.log(quote);
-    let q: Quote = {
-      symbol: quote.symbol,
-      bidPrice: quote.bidPrice,
-      askPrice: quote.askPrice,
-    };
-    return q;
+    throw new Error('Futures quotes are not supported');
   }
+  let quote = await tdAmeritradeApi.getQuote(symbol);
+  console.log(quote);
+  let q: Quote = {
+    symbol: quote.symbol,
+    bidPrice: quote.bidPrice,
+    askPrice: quote.askPrice,
+  };
+  return q;
 };
 export const getFundamentals = async (symbol: string) => {
   return schwabApi.getFundamentals(symbol);
 }
-export const testGetQuote = async (symbol: string) => {
-  return tradeStationApi.getQuote(symbol);
-};
 
 export const setPreviousDayPremarketVolume = async (symbol: string, premarketDollarCollection: Models.PremarketDollarCollection) => {
   let symbolData = Models.getSymbolData(symbol);
@@ -91,32 +86,10 @@ export const getFullPriceHistory = async (symbol: string, isFutures: boolean, to
   };
 }
 export const getPriceHistory = async (symbol: string, isFutures: boolean, timeframe: number) => {
-  let candles: Candle[] = [];
   if (isFutures) {
-    let response = await tradeStationApi.getPriceHistory(symbol);
-    // for tradestation 1 minute bar, they use end time instead of begin time for a candle bar, 
-    // so I need to decrease the time by one minute
-    response.Bars.forEach((bar: any) => {
-      let candleEnd = bar.Epoch;
-      let candleBegin = candleEnd - 60 * 1000;
-      let newD = new Date(candleBegin);
-      //console.log(newD.toLocaleTimeString());
-      candles.push({
-        symbol: symbol,
-        time: Helper.jsDateToUTC(newD),
-        datetime: candleBegin,
-        open: Number(bar.Open),
-        close: Number(bar.Close),
-        high: Number(bar.High),
-        low: Number(bar.Low),
-        volume: Number(bar.TotalVolume),
-        vwap: 0,
-      });
-      // console.log(`${symbol}: ${bar.IsEndOfHistory}, ${bar.IsRealtime}`);
-    });
-  } else {
-    candles = await massiveApi.getPriceHistory(symbol, timeframe);
+    throw new Error('Futures price history is not supported');
   }
+  let candles: Candle[] = await massiveApi.getPriceHistory(symbol, timeframe);
   return candles;
 };
 

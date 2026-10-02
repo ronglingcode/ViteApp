@@ -182,14 +182,7 @@ const setupAppUi = () => {
 };
 
 const startLive = () => window.TradingApp.TOS.initialize().then(async () => {
-    // tos initialized with new access token
-    // tos access token expires in 30 minutes, so refresh before that
-    // tradestation token expires in 20 minutes
-    if (Config.getProfileSettings().brokerName === 'Schwab') {
-        setInterval(() => schwabApi.maintainAccessToken().catch(Firestore.logError), 30000);
-    } else {
-        setInterval(Broker.refreshAccessToken, 1150 * 1000);
-    }
+    setInterval(() => schwabApi.maintainAccessToken().catch(Firestore.logError), 30000);
     setupAppUi();
 
     const watchlist = Models.getWatchlist();
@@ -276,9 +269,7 @@ const startLive = () => window.TradingApp.TOS.initialize().then(async () => {
             console.error(`${symbol} startup stopped because historical charts did not load`, error);
         });
     }
-    UI.setupAutoSync();
     AutoTrader.scheduleEvents();
-    // MarketData.testTradeStationStreamBar();
 });
 
 const startApplication = async () => {

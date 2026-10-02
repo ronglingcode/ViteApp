@@ -87,12 +87,8 @@ export interface MyWindow extends Window {
         StockSelections: string[],
         TradingData: TradingData,
         tosAccountCache: any,
-        tsAccountCache: any,
         Secrets: {
             tdameritrade: {
-                accessToken: string,
-            },
-            tradeStation: {
                 accessToken: string,
             },
             schwab: {

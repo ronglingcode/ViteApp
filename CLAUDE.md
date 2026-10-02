@@ -30,7 +30,7 @@ npm run preview  # Preview production build locally
 src/
 ├── main.ts                    # App entry — initializes all modules, sets up window.HybridApp
 ├── firestore.ts               # Firebase logging
-├── tosClient.ts               # TradeStation client init
+├── tosClient.ts               # Broker client init
 │
 ├── api/                       # Broker API integrations
 │   ├── broker.ts              # Broker abstraction layer
@@ -41,7 +41,6 @@ src/
 │   │   └── orderFactory.ts    # Bracket order construction
 │   ├── alpaca/                # Alpaca (market data + trading)
 │   ├── tdAmeritrade/          # TD Ameritrade (legacy)
-│   ├── tradeStation/          # TradeStation (futures)
 │   ├── massive/               # Massive Blocks (shares outstanding data)
 │   ├── interactiveBroker/     # Interactive Brokers
 │   └── googleDocs/            # Google Docs for trading plans
@@ -105,7 +104,7 @@ src/
 │   ├── globalSettings.ts      # Feature flags and global settings
 │   ├── secret.ts              # API keys (NOT in template — create from secret_template.ts)
 │   ├── secret_template.ts     # Template for secrets
-│   └── profiles/              # Trading profiles (schwab, futures, etc.)
+│   └── profiles/              # Trading profiles (schwab, momentumSimple)
 │
 ├── indicators/                # Technical indicators
 │   ├── basicIndicators.ts     # Moving averages, basic calcs
@@ -158,7 +157,7 @@ A localhost proxy (`http://localhost:3000`) handles CORS for broker API calls. T
 Copy `src/config/secret_template.ts` → `src/config/secret.ts` and fill in:
 - Schwab: app key, secret, OAuth tokens
 - Firebase: project config
-- TradeStation/TD Ameritrade: if using those brokers
+- TD Ameritrade: for legacy API helpers
 
 ### Global Settings (`src/config/globalSettings.ts`)
 Key flags:
@@ -173,7 +172,6 @@ Key flags:
 ### Profiles (`src/config/profiles/`)
 Trading profiles define broker, asset type, entry/exit rules:
 - `schwab.ts` — Schwab equity trading (primary)
-- `futures.ts` — Futures trading
 - `momentumSimple.ts` — Simple momentum strategy
 
 ## Key Conventions

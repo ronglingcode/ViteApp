@@ -1,18 +1,3 @@
-export const tradeStation = {
-    'AccountIDs': {
-        'Futures': "123456",
-    },
-    'key': '123',
-    'secret': '123',
-    "access_token": "123..",
-    "refresh_token": "123",
-    "id_token": "",
-    "scope": "openid profile MarketData ReadAccount Trade Crypto offline_access",
-    "expires_in": 1200,
-    "token_type": "Bearer",
-    "code": "123"
-};
-
 export const tdameritrade = {
     'AccountID': '12334',
     'refresh_token': '1324',

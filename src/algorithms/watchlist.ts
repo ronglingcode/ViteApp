@@ -9,18 +9,6 @@ import * as Helper from '../utils/helper';
 
 declare let window: Models.MyWindow;
 
-export const getFutures = () => {
-    let futures = window.TradingData.StockSelection.futures as string[];
-    // override to just one futures
-    //futures = ['MNQ'];
-    let results: string[] = [];
-    futures.forEach(f => {
-        let quarter = Helper.getFuturesQuarter(f);
-        results.push(`${f}${quarter}`);
-    });
-    return results;
-};
-
 export const getWatchlistItem = (symbol: string) => {
     if (!window.HybridApp.Watchlist)
         return buildDefaultWatchlistItem(symbol);
@@ -37,8 +25,6 @@ export const createWatchlist = async () => {
     let bestStocksToTradeToday = window.HybridApp.StockSelections;
     if (Config.getProfileSettings().indexOnly) {
         bestStocksToTradeToday = window.TradingData.StockSelection['index'];
-    } else if (Config.getProfileSettings().isFutures) {
-        bestStocksToTradeToday = getFutures();
     }
 
     let watchlist: Models.WatchlistItem[] = [];

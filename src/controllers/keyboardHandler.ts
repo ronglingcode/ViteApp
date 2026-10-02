@@ -2,7 +2,6 @@ import * as Models from '../models/models';
 import * as TradingState from '../models/tradingState';
 import * as Helper from '../utils/helper';
 import * as Chart from '../ui/chart';
-import * as UI from '../ui/ui';
 import * as Handler from './handler';
 import * as EntryHandler from './entryHandler';
 import * as Broker from '../api/broker';
@@ -97,7 +96,6 @@ export const handleKeyPressed = (
         let sourceText = source ? ` from ${source}` : "";
         let priceText = sourcePrice !== undefined ? ` at ${sourcePrice}` : "";
         Firestore.logInfo(`${symbol} ${code} pressed ${hasShiftKey}${sourceText}${priceText}`);
-        UI.syncAndUpdate(1);
     }
 };
 

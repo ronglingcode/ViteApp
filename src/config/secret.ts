@@ -1,27 +1,4 @@
-export const tradeStation = () => {
-    let td = localStorage.getItem('tradingscripts.tradeStation');
-    if (td == null) {
-        console.error(`no secrets in local storage`)
-        td = '{}';
-    }
 
-    let data = JSON.parse(td);
-    return {
-        'AccountIDs': {
-            'Equity': data.AccountIDs.Equity,
-            'Futures': data.AccountIDs.Futures,
-        },
-        'key': data.key,
-        'secret': data.secret,
-        "access_token": data.access_token,
-        "refresh_token": data.refresh_token,
-        "id_token": data.id_token,
-        "scope": data.scope,
-        "expires_in": 1200,
-        "token_type": "Bearer",
-        "code": data.code,
-    }
-};
 export const schwab = () => {
     let td = localStorage.getItem('tradingscripts.schwab');
     if (td == null) {

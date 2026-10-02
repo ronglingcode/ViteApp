@@ -1,9 +1,6 @@
-import * as profileFutures from './profiles/futures'
 import * as momentumSimple from './profiles/momentumSimple';
-import * as tradeStationEquity from './profiles/tradeStationEquity';
 import * as schwab from './profiles/schwab';
 import * as TimeHelper from '../utils/timeHelper';
-import * as secret from './secret'
 import type * as Models from '../models/models';
 declare let window: Models.MyWindow;
 
@@ -20,11 +17,7 @@ export const getProfileSettingsForSymbol = (symbol: string) => {
 };
 const getProfileSettingsForName = (name: string) => {
     let activeProfileName = name;
-    if (activeProfileName == "futures") {
-        return profileFutures.settings;
-    } else if (activeProfileName == tradeStationEquity.settings.name) {
-        return tradeStationEquity.settings;
-    } else if (activeProfileName == schwab.settings.name) {
+    if (activeProfileName == schwab.settings.name) {
         return schwab.settings;
     } else {
         // default
@@ -36,14 +29,6 @@ export const getProfileSettings = () => {
     return getProfileSettingsForName(window.HybridApp.TradingData.activeProfileName);
 };
 
-export const getAccountID = () => {
-    let activeProfileName = window.HybridApp.TradingData.activeProfileName;
-    if (activeProfileName == "futures") {
-        return secret.tradeStation().AccountIDs.Futures;
-    } else {
-        return secret.tradeStation().AccountIDs.Equity;
-    }
-};
 export const isEquity = (): boolean => {
     const settings = getProfileSettings();
     return settings.isEquity;
