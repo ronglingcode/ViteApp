@@ -34,6 +34,9 @@ const cases = [
         { status: 200, body: '{"results":[{"sip_timestamp":1790861400000000001,"price":10,"size":100,"sequence_number":1,"id":"abc","exchange":11,"conditions":[]}],"next_url":"https://api.massive.com/trades-page?cursor=next"}' },
         ok({ results: [{ sip_timestamp: '1790861400001000000', price: 11, size: 200, sequence_number: 2, conditions: [12] }] }),
     ] },
+    { name: 'fractional trade backfill uses exact size when integer size is zero', method: 'getTrades', args: ['NVDA', 1790861400000, 1790861460000], pages: [
+        { status: 200, body: '{"results":[{"sip_timestamp":1790861400000000001,"price":237.32,"size":0,"decimal_size":"0.25","conditions":[37]}]}' },
+    ] },
 ];
 
 const fixtures = [];

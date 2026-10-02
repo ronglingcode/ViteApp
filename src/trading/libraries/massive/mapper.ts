@@ -8,9 +8,10 @@ export function shouldFilterTrade(trade: Trade): boolean {
 }
 
 export function mapWebSocketTrade(value: Record<string, any>): Trade | null {
-    if (value.ev !== 'T' || typeof value.sym !== 'string' || !valid(value.t) || !valid(value.p) || !valid(value.s) || value.p <= 0 || value.s <= 0) return null;
+    const size = tradeSize(value.ds, value.s);
+    if (value.ev !== 'T' || typeof value.sym !== 'string' || !valid(value.t) || !valid(value.p) || value.p <= 0 || size === null) return null;
     return {
-        symbol: value.sym, timestamp: value.t, price: value.p, size: value.s,
+        symbol: value.sym, timestamp: value.t, price: value.p, size,
         ...(value.q == null ? {} : { sequence: String(value.q) }),
         ...(value.i == null ? {} : { id: String(value.i) }),
         ...(valid(value.x) ? { exchange: value.x } : {}),
@@ -20,9 +21,10 @@ export function mapWebSocketTrade(value: Record<string, any>): Trade | null {
 
 export function mapRestTrade(symbol: string, value: Record<string, any>): Trade {
     const timestamp = Number(BigInt(String(value.sip_timestamp)) / 1000000n);
-    if (!valid(value.price) || !valid(value.size) || value.price <= 0 || value.size <= 0) throw new Error('Massive trade missing price/size');
+    const size = tradeSize(value.decimal_size, value.size);
+    if (!valid(value.price) || value.price <= 0 || size === null) throw new Error('Massive trade missing price/size');
     return {
-        symbol, timestamp, price: value.price, size: value.size,
+        symbol, timestamp, price: value.price, size,
         ...(value.sequence_number == null ? {} : { sequence: String(value.sequence_number) }),
         ...(value.id == null ? {} : { id: String(value.id) }),
         ...(valid(value.exchange) ? { exchange: value.exchange } : {}),
@@ -30,6 +32,13 @@ export function mapRestTrade(symbol: string, value: Record<string, any>): Trade 
     };
 }
 function valid(value: unknown): value is number { return typeof value === 'number' && Number.isFinite(value); }
+
+function tradeSize(decimalSize: unknown, wholeSize: unknown): number | null {
+    // Fractional prints report zero in the legacy integer field.
+    const exact = typeof decimalSize === 'string' && decimalSize.trim() !== '' ? Number(decimalSize) : NaN;
+    if (Number.isFinite(exact) && exact > 0) return exact;
+    return valid(wholeSize) && wholeSize > 0 ? wholeSize : null;
+}
 
 export function mapAggregate(symbol: string, value: Record<string, unknown>): Candle {
     const number = (name: string): number => {

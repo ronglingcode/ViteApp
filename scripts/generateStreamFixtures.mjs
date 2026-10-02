@@ -21,6 +21,7 @@ add('massive login success', 'massive', 'parseStreamMessage', [[{ ev: 'status', 
 add('massive login failure', 'massive', 'parseStreamMessage', [[{ ev: 'status', status: 'auth_failed' }]]);
 add('massive prints and conditions', 'massive', 'parseStreamMessage', [[{ ev: 'T', sym: 'AAPL', p: 10, s: 100, t, q: 1, i: 'large-id', x: 2 }, { ev: 'T', sym: 'AAPL', p: 99, s: 100, t, c: [37] }]]);
 add('premarket condition permitted', 'massive', 'parseStreamMessage', [[{ ev: 'T', sym: 'AAPL', p: 10, s: 100, t: t - 1, c: [37] }]]);
+add('premarket fractional print uses exact size', 'massive', 'parseStreamMessage', [[{ ev: 'T', sym: 'AAPL', p: 10, s: 0, ds: '0.25', t: t - 1, c: [37] }]]);
 add('null identifiers and malformed prints', 'massive', 'parseStreamMessage', [[{ ev: 'T', sym: 'AAPL', p: 10, s: 100, t, q: null, i: null }, { ev: 'T', sym: null, p: 10, s: 100, t }, { ev: 'T', sym: 'AAPL', p: 0, s: 100, t }]]);
 const text = JSON.stringify(scenarios, null, 2) + '\n';
 for (const url of [new URL('../src/trading/stream-fixtures.json', import.meta.url), new URL('../../bookmap-plugin/src/test/resources/stream-fixtures.json', import.meta.url)]) {

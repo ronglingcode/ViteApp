@@ -59,10 +59,11 @@ Run `npm run build` and the following package scripts after relevant changes:
   including closed-minute VWAP history/projection and risk/target coverage.
 - `test:market`: 39 shared headless cases plus actual browser DB/worker and
   history/live/replaced-load regression tests.
-- `test:massive`: 23 REST/mapper cases.
+- `test:massive`: 24 REST/mapper cases, including fractional trade backfill.
 - `test:services`: 22 Firestore/OAuth/audit cases plus concurrent token refresh.
 - `test:broker-read`: 23 broker read/projection cases.
-- `test:streams`: 18 protocol cases plus fake-socket reconnect lifecycle.
+- `test:streams`: 19 protocol cases, including fractional WebSocket prints,
+  plus fake-socket reconnect lifecycle.
 - `test:direct-execution`, `test:extended-execution`,
   `test:core-target-exits`: production entry/exit/risk/request parity and captured
   add/core state. The old 'extended' test name refers to workflow coverage, not a flag.
