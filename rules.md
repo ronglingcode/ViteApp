@@ -12,37 +12,12 @@ This document summarizes the concrete tradebook classes under `src/tradebooks`. 
 - Base `Tradebook` defaults are important: partial adds are disallowed by default, while single-order limit moves, single-order stop moves, market-outs, flattening, and adjusting all exit pairs are allowed by default unless a tradebook overrides them.
 - `BaseBreakoutTradebook` adds shared exit protection for `AboveWaterBreakout` and `EmergingStrengthBreakout`: after the generic exit helper it can allow exits when the key level is lost, block changes that make price worse than the key level, and constrain stop moves to the first pullback pivot or the breakout/breakdown candle.
 
-## GapAndCrapBookmapBidWallBreakdown
-
-- Source: `src/tradebooks/gapAndCrapBookmapBidWallBreakdown.ts`
-- Entry rules: requires `allowEntryRulesForGapAndCrap(...)`, then `checkBasicGlobalEntryRules(...)`. Manual entry also requires a custom stop from the chart; Bookmap-triggered entry uses the supplied stop.
-- Sizing rules: accepted size is quartered (`allowedSize / 4`).
-- Add rules: delegates to `GapAndCrapAlgo.getAllowedReasonToAddPartial(...)`, which only allows adds when the add price is below current VWAP.
-- Exit rules: no custom exit restrictions; base `Tradebook` defaults apply.
-
 ## GapAndCrapBookmapRejection
 
 - Source: `src/tradebooks/gapAndCrapBookmapRejection.ts`
 - Entry rules: uses the shared `runGapAndCrapBookmapShortEntryPipeline(...)`, so it applies `allowEntryRulesForGapAndCrap(...)` and `checkBasicGlobalEntryRules(...)`. Stop-out is always the current high of day.
 - Sizing rules: applies a risk multiplier of `0.15` for `wall reject 0.15R` and `0.25` for `wall reject 0.25R`.
 - Add rules: delegates to `GapAndCrapAlgo.getAllowedReasonToAddPartial(...)`, so adds are only allowed below VWAP.
-- Exit rules: no custom exit restrictions; base `Tradebook` defaults apply.
-
-## GapAndGoBookmapOfferWallBreakout
-
-- Source: `src/tradebooks/gapAndGoBookmapOfferWallBreakout.ts`
-- Plan-validation rule: `hasAtLeastOneReasonSet(...)` requires at least one of `higherTimeframeSupportReversal`, `recentPullback`, `nearAboveConsolidationRange`, `nearBelowConsolidationRangeTop`, `nearPreviousKeyEventLevel`, `previousInsideDay`, or `allTimeHigh`.
-- Entry rules: this book is effectively Bookmap-only because `triggerEntry(...)` is disabled. In `triggerEntryCommon(...)`, it applies `checkBasicGlobalEntryRules(...)`.
-- Sizing rules: accepted size is quartered (`allowedSize / 4`).
-- Add rules: partial adds are only allowed once the add price is at or above premarket high.
-- Exit rules: no custom exit restrictions; base `Tradebook` defaults apply.
-
-## GapDownAndGoDownBookmapBidWallBreakdown
-
-- Source: `src/tradebooks/gapDownAndGoDownBookmapBidWallBreakdown.ts`
-- Entry rules: applies `checkBasicGlobalEntryRules(...)`. Manual entry also requires a custom stop from the chart; Bookmap-triggered entry uses the supplied stop.
-- Sizing rules: accepted size is quartered (`allowedSize / 4`).
-- Add rules: explicitly disallows adds.
 - Exit rules: no custom exit restrictions; base `Tradebook` defaults apply.
 
 ## GapDownAndGoDown
