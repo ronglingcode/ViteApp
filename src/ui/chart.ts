@@ -437,20 +437,19 @@ export const getStopLossPrice = (symbol: string, isLong: boolean, allowChartDraw
         return roundStopLossPrice(symbol, isLong, p);
     }
 
-    let isFutures = Helper.isFutures(symbol);
     if (isLong) {
-        p = Models.getLowestPrice(symbol, isFutures);
+        p = Models.getLowestPrice(symbol, false);
     } else {
-        p = Models.getHighestPrice(symbol, isFutures);
+        p = Models.getHighestPrice(symbol, false);
     }
     return roundStopLossPrice(symbol, isLong, p);
 };
 
 const roundStopLossPrice = (symbol: string, isLong: boolean, p: number) => {
     if (isLong) {
-        return Helper.roundToCentsOrOz(symbol, p, false);
+        return Helper.roundToCentsWithDirection(p, false);
     } else {
-        return Helper.roundToCentsOrOz(symbol, p, true);
+        return Helper.roundToCentsWithDirection(p, true);
     }
 };
 export const hasCustomEntryPrice = (symbol: string) => {
@@ -500,9 +499,9 @@ export const getBreakoutEntryPrice = (symbol: string, isLong: boolean, marketOrd
         }
     }
     if (isLong) {
-        return Helper.roundToCentsOrOz(symbol, p, true);
+        return Helper.roundToCentsWithDirection(p, true);
     } else {
-        return Helper.roundToCentsOrOz(symbol, p, false);
+        return Helper.roundToCentsWithDirection(p, false);
     }
 };
 
@@ -1662,26 +1661,4 @@ export const lightChart = (symbol: string) => {
     });
 
     chart.isDark = false;
-}
-
-
-export const updateToolTipPriceLine = (symbol: string, text: string) => {
-    let chart = Models.getChartWidget(symbol);
-    if (!chart)
-        return;
-    let m1Chart = chart.timeframeChartM1;
-    let currentPrice = Models.getCurrentPrice(symbol);
-    if (m1Chart.toolTipPriceLine) {
-        let options = m1Chart.toolTipPriceLine.options();
-        if (options.price == currentPrice && options.title == text) {
-            return;
-        }
-        m1Chart.toolTipPriceLine.applyOptions({
-            price: currentPrice,
-            title: text,
-        });
-        return;
-    }
-    m1Chart.toolTipPriceLine = createPriceLine(
-        m1Chart.candleSeries, currentPrice, text, "black", 1, false, "dashed");
 }

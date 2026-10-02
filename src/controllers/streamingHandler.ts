@@ -41,7 +41,6 @@ export const handleMessageData = (data: any[]) => {
         let service = element.service;
         let contents = element.content;
         if (["TIMESALE_EQUITY"].includes(service)) {
-        } else if (service === "TIMESALE_FUTURES") {
         } else if (service === "QUOTE") {
         } else if (service === "ACCT_ACTIVITY") {
         } else {

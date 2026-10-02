@@ -5,7 +5,7 @@ export function defaultBreakout(isLong: boolean, now: number): StateObject {
     return {
         hasValue: false, entryPrice: 0, stopLossPrice: 0, coreInvalidationLevel: -1, riskLevel: 0, initialQuantity: 0,
         submitTime: timestamp(now), isLong, status: 'None', isMarketOrder: false, lowestExitBatchCount: -1, sizeMultipler: 0,
-        maxPullbackAllowed: 0, maxPullbackReached: 0, adjustedTargetDueToMaxPullback: false, exitDescription: '', closedOutsideRatio: -1,
+        maxPullbackAllowed: 0, maxPullbackReached: 0, adjustedTargetDueToMaxPullback: false, exitDescription: '',
         stopTightenPhase: 'idle', coreTargetReminderShown: false,
         submitEntryResult: { isSingleOrder: false, profitTargets: [], totalQuantity: 0, tradeBookID: '' },
         plan: { planConfigs: { requireReversal: true }, coreTarget: 0, coreCount: 0, runnerCount: 0, runnerTriggerCondition: '' },

@@ -174,7 +174,6 @@ export interface BreakoutTradeState {
     maxPullbackReached: number,
     adjustedTargetDueToMaxPullback: boolean,
     exitDescription: string,
-    closedOutsideRatio: number,
     stopTightenPhase: 'idle' | 'needs_tighten' | 'done',
     coreTargetReminderShown?: boolean,
 };
@@ -207,7 +206,6 @@ export interface TimeFrameChart {
     momentumLevels: LightweightCharts.IPriceLine[],
     camPivotLevels: LightweightCharts.IPriceLine[],
     previousDayLevels: LightweightCharts.IPriceLine[],
-    toolTipPriceLine?: LightweightCharts.IPriceLine,
 }
 export interface ChartState {
     crosshairPrice: number,

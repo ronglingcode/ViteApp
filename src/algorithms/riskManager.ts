@@ -1,7 +1,6 @@
 import * as Models from '../models/models';
 import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels'
 import * as Firestore from '../firestore';
-import * as Helper from '../utils/helper';
 import * as Rules from './rules';
 import { sharesForRisk } from './riskSizing';
 // Dollar risk of one full-size trade.
@@ -41,14 +40,9 @@ export const calculateTotalShares = (
     return totalShares;
 };
 
-export const getRiskPerShare = (symbol: string, entryPrice: number, stopLossPrice: number) => {
+export const getRiskPerShare = (_symbol: string, entryPrice: number, stopLossPrice: number) => {
     let risk = Math.abs(entryPrice - stopLossPrice);
-    let delta = Helper.getDelta(symbol);
-    if (delta == 1) {
-        return risk;
-    } else {
-        return risk * delta;
-    }
+    return risk;
 }
 
 const orOverride = (original: number, override: number) => {

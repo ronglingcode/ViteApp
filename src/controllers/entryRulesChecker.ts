@@ -8,7 +8,6 @@ import * as Models from '../models/models';
 import * as TradingState from '../models/tradingState';
 import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as TradingPlans from '../models/tradingPlans/tradingPlans';
-import * as VwapPatterns from '../algorithms/vwapPatterns';
 import * as Watchlist from '../algorithms/watchlist';
 declare let window: Models.MyWindow;
 

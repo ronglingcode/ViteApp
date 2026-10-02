@@ -4,7 +4,6 @@ export const settings: Profile = {
     name: "schwab",
     brokerName: "Schwab",
     isEquity: true,
-    isFutures: false,
     indexOnly: false,
     entryRules: {
         requireVwapSameDirection: true,

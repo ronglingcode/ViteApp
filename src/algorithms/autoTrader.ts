@@ -7,7 +7,6 @@ import * as TradingState from '../models/tradingState';
 import * as Patterns from '../algorithms/patterns';
 import * as OrderFlow from '../controllers/orderFlow';
 import * as TradebooksManager from '../tradebooks/tradebooksManager';
-import * as VwapPatterns from './vwapPatterns';
 import * as GlobalSettings from '../config/globalSettings';
 import * as NotificationEngine from '../notifications/notificationEngine';
 import * as RiskManager from './riskManager';
@@ -315,7 +314,6 @@ export const onMinuteClosed = (
             }
 
         }
-        getBreakoutEntryClosePercentage(symbol, newlyClosedCandle);
     }
     if (seconds > 10) {
         TradebooksManager.onNewCandleCloseForSymbol(symbol);
@@ -337,42 +335,6 @@ export const onMinuteClosed = (
         }
     }
 }
-/**
- * If the newly closed candle is a breakout entry candle
- * calculate its percentage of the close price
- * 
- */
-export const getBreakoutEntryClosePercentage = (symbol: string,
-    newlyClosedCandle: Models.CandlePlus) => {
-    let position = Models.getPosition(symbol);
-    if (!position || position.netQuantity == 0) {
-        return;
-    }
-    let isLong = position.netQuantity > 0;
-    let closePrice = newlyClosedCandle.close;
-    let breakoutState = TradingState.getBreakoutTradeState(symbol, isLong);
-    if (breakoutState.closedOutsideRatio != -1) {
-        // already had the breakout closed ratio
-        return;
-    }
-    let entryPrice = breakoutState.entryPrice;
-    let stopLossPrice = breakoutState.stopLossPrice;
-    let risk = Math.abs(entryPrice - stopLossPrice);
-    let breakoutGain = isLong ? (closePrice - entryPrice) : (entryPrice - closePrice);
-    let percentRatio = breakoutGain / risk;
-    percentRatio = Math.round(percentRatio * 100) / 100;
-    breakoutState.closedOutsideRatio = percentRatio;
-    TradingState.update();
-    let percentage = `${percentRatio * 100}%`;
-    if (percentRatio <= 0) {
-        Firestore.logError(`${symbol} breakout closed inside, ${percentage}`);
-        Helper.speak(`${symbol} breakout closed inside`);
-    } else {
-        Firestore.logInfo(`${symbol} breakout closed ${percentage}`);
-        Helper.speak(`${symbol} breakout closed ${percentage}. prepare first pullback`);
-    }
-}
-
 export const updateAllAlgo = (symbol: string) => {
     let netQuantity = Models.getPositionNetQuantity(symbol);
     if (netQuantity != 0) {
@@ -468,13 +430,11 @@ export const refreshEntryStopLoss = () => {
     }
     let items = Models.getWatchlist();
     items.forEach(item => {
-        if (!Helper.isFutures(item.symbol)) {
-            let logTags: Models.LogTags = {
-                symbol: item.symbol,
-                logSessionName: 'refresh-entry-stop-loss'
-            };
-            refreshEntryStopLossForSymbol(item.symbol, logTags);
-        }
+        let logTags: Models.LogTags = {
+            symbol: item.symbol,
+            logSessionName: 'refresh-entry-stop-loss'
+        };
+        refreshEntryStopLossForSymbol(item.symbol, logTags);
     });
 }
 export const refreshEntryStopLossForSymbol = (symbol: string, logTags: Models.LogTags) => {
@@ -590,10 +550,6 @@ export const onNewTimeAndSalesData = (symbol: string, newPrice: number, isNewCan
     if (!shouldUpdateLiveChartAnnotations(symbol)) {
         return;
     }
-    let status = getChartAnalysis(symbol);
-    if (status) {
-        Chart.updateToolTipPriceLine(symbol, status);
-    }
     Chart.drawRiskLevels(symbol);
 }
 export const checkTimingForEntry = (symbol: string) => {
@@ -634,27 +590,4 @@ export const detectOverRisk = (symbol: string) => {
         Helper.speakRepeated(`size too big for ${symbol}, position risk ${rounded} R`, 3);
         Firestore.logError(`size too big for ${symbol}, position risk ${rounded}R`);
     }
-}
-
-export const getChartAnalysis = (symbol: string) => {
-    let netQ = Models.getPositionNetQuantity(symbol);
-    if (netQ == 0) {
-        return "";
-    }
-    let openPrice = Models.getOpenPrice(symbol);
-    let isLong = netQ > 0;
-    let plan = TradingPlans.getTradingPlans(symbol);
-    let singleMomentumKeyLevel = plan.analysis.singleMomentumKeyLevel[0];
-    if (!singleMomentumKeyLevel) {
-        return "";
-    }
-    let inflectionLevel = singleMomentumKeyLevel.high;
-    let openVwap = Models.getLastVwapBeforeOpen(symbol);
-    let symbolData = Models.getSymbolData(symbol);
-    if (symbolData.premktHigh >= openPrice && openPrice >= openVwap && openVwap >= inflectionLevel) {
-        if (isLong) {
-            return VwapPatterns.getStatusForVwapContinuationLongWithPremarketHigh(symbol, 0);
-        }
-    }
-    return "";
 }

@@ -46,12 +46,11 @@ Last full review: 2026-05-22.
    - Preferred fix: compute liquidity scale on new M1 candle or at most once per second per symbol; cache the result for chart color and entry checks.
 
 4. `AutoTrader.onNewTimeAndSalesData()` runs several analysis hooks every accepted tick.
-   - Files: `src/algorithms/autoTrader.ts`, `src/tradebooks/tradebooksManager.ts`, `src/controllers/entryRulesChecker.ts`, `src/algorithms/vwapPatterns.ts`.
+   - Files: `src/algorithms/autoTrader.ts`, `src/tradebooks/tradebooksManager.ts`, `src/algorithms/vwapPatterns.ts`.
    - Current every-tick calls:
      - `checkAlgoPendingCondition(symbol)` is currently a no-op.
      - `updatePullbackDepth(symbol, newPrice)`.
      - `alertHigherVolume(symbol)`.
-     - `saveRedToGreenState(symbol)`. Removed on 2026-06-02 (see item 14).
      - `TradebooksManager.onNewTimeAndSalesDataForSymbol(symbol, newPrice)`.
      - `getChartAnalysis(symbol)`.
      - `Chart.updateToolTipPriceLine(symbol, status)` when status text exists.
@@ -62,8 +61,7 @@ Last full review: 2026-05-22.
 5. Account sync and chart redraw timers can overlap with open-time load.
    - Files: `src/algorithms/autoTrader.ts`, `src/api/broker.ts`, `src/ui/chart.ts`, `src/ui/ui.ts`.
    - Current scheduled work:
-     - `AutoTrader.scheduleEvents()` calls `Chart.updateAccountUIStatus([], 'every 5 seconds')`.
-     - `UI.setupAutoSync()` can also sync every 5 seconds for TradeStation.
+      - `AutoTrader.scheduleEvents()` calls `Chart.updateAccountUIStatus('every 15 seconds')`.
      - `Broker.UpdateAccountUIWithDelay()` schedules two account UI refreshes after order events.
    - Why it matters: account sync fetches broker state, rebuilds account cache, then redraws filled lines, target lines, working orders, execution markers, and account UI. If an account event happens near a scheduled sync, the work can stack.
    - Preferred fix: add an in-flight/coalescing guard around account sync/update. Let one sync run, remember a pending request, and run one more after the current one finishes if needed.
@@ -233,7 +231,7 @@ Suggested split:
   - tooltip price line updates
   - risk-level drawing if re-enabled later
 - Remove or stop calling `checkAlgoPendingCondition(symbol)` if it remains a no-op.
-- `saveRedToGreenState(symbol)` no longer applies; the red/green reversal state was removed on 2026-06-02 (item 14).
+- The red/green reversal state was removed on 2026-06-02 (item 14), so it is not part of this hot path.
 
 Acceptance:
 - Tooltip status still updates, but at a bounded rate.
@@ -314,8 +312,8 @@ Implementation notes:
 - If a sync is in progress, mark a pending refresh instead of starting another.
 - When current sync finishes, run one pending refresh if requested.
 - Revisit timers:
-  - `AutoTrader.scheduleEvents()` every 5 seconds.
-  - `UI.setupAutoSync()` every 5 seconds for TradeStation.
+  - `AutoTrader.scheduleEvents()` every 15 seconds.
+  - `AutoTrader.scheduleEvents()` every 15 seconds.
   - `Broker.UpdateAccountUIWithDelay()` two delayed refreshes.
 - Draw working-order price lines only when account state changed, if feasible.
 

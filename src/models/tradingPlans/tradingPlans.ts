@@ -1,6 +1,5 @@
 import { validatePreviousConsolidationArea as validateCorePreviousConsolidationArea } from '../../trading/core/marketdata/eligibility.ts';
 import * as Models from '../models';
-import * as Helper from '../../utils/helper';
 import * as TimeHelper from '../../utils/timeHelper';
 import * as Firestore from '../../firestore';
 import * as TradingPlansModels from './tradingPlansModels';
@@ -54,22 +53,12 @@ export const getDualMomentumLevels = (plan: TradingPlansModels.TradingPlans) => 
 
 export const getTradingPlansWithoutDefault = (symbol: string) => {
     let stocksTradingPlans = window.HybridApp.TradingPlans;
-    let isFutures = Helper.isFutures(symbol);
     for (let i = 0; i < stocksTradingPlans.length; i++) {
         const element = stocksTradingPlans[i];
-        if (isFutures) {
-            if (symbol.startsWith(element.symbol) &&
-                element.isFutures == true) {
-                return {
-                    ...element
-                };
-            }
-        } else {
-            if (element.symbol == symbol) {
-                return {
-                    ...element
-                };
-            }
+        if (element.symbol == symbol) {
+            return {
+                ...element
+            };
         }
     }
     return undefined;

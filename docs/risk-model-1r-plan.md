@@ -18,7 +18,7 @@ Status: implemented, pending review (not committed).
 - Per-trade risk was `allowedSize x getMaxDailyLossLimit()`, where `allowedSize = liquidityScale x getRiskMultiplerForNextEntry(...) x entryMethodMultiplier`. `getRiskMultiplerForNextEntry` defaulted to `0.24` (a fraction of the daily max), so a `"0.5 R"` entry actually risked `0.24 x 0.5 x dailyLimit` (~$600-$1,250).
 - `RiskManager.dailyMax = 5000`, but `getMaxDailyLossLimit()` returned `initialBalance x 0.0575 x 1.2` (~6.9% of account) when the day's initial balance was over $120K, else $5,000.
 - Exit partials came from the global `GlobalSettings.batchCount = 10` (`TakeProfit.BatchCount`). `planConfigs.sizingCount` was already written into the persisted trade plan on entry, but was always 10.
-- Downstream code (`handler.getPartialQuantity`, `handler.trailStop`, `exitRulesCheckerSimple.isAllowedForSingle`, `coreTargetExitRules.getOriginalPartialNumber`, `bookmapSocket.getPartialsTaken`) assumed 10 partials.
+- Downstream partial-management code (`handler.getPartialQuantity`, `exitRulesCheckerSimple.isAllowedForSingle`, `coreTargetExitRules.getOriginalPartialNumber`, `bookmapSocket.getPartialsTaken`) assumed 10 partials.
 
 ## Changes
 
@@ -57,7 +57,6 @@ Status: implemented, pending review (not committed).
 ### 6. Downstream consumers use the trade's count
 
 - `handler.getPartialQuantity` - KeyA reload size uses the trade's count (1R -> 1/10 of initial; 0.1R -> full position, per decision).
-- `handler.trailStop` - `getBatchIndex` uses the trade's count.
 - `exitRulesCheckerSimple.isAllowedForSingle` - early single-exit allowance uses `planConfigs.sizingCount`.
 - `coreTargetExitRules.getOriginalPartialNumber` - partial numbering uses the trade's count (feature is behind `enableCoreTargetExitFeature = false`).
 - `bookmapSocket.getPartialsTaken` - passes the trade's count to `estimateCompletedPartials` (same feature flag).

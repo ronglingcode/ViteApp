@@ -39,32 +39,17 @@ export interface Gap {
 export interface TradingPlans {
     symbol: string,
     analysis: Analysis,
-    isFutures?: boolean,
     vwapCorrection: VwapCorrection,
     atr: AverageTrueRange,
     marketCapInMillions: number,
     fixedQuantity?: number,
     keyLevels: keyLevels,
     defaultConfigs: PlanConfigs,
-    tradebooksConfig: TradebooksConfig,
     rangeBoundReversalPlan?: RangeBoundReversalPlan,
     long: SingleDirectionPlans,
     short: SingleDirectionPlans,
     corePlan: string,
 };
-export interface TradebookCommonConfig {
-    enabled?: number,
-}
-export interface TradebooksConfig {
-    open_level_vwap: OpenLevelVwapConfig,
-    vwap_level_open: VwapLevelOpenConfig,
-}
-export interface VwapLevelOpenConfig {
-    shortOpenDrive: TradebookCommonConfig,
-}
-export interface OpenLevelVwapConfig {
-    longOpenDrive: TradebookCommonConfig,
-}
 export interface AverageTrueRange {
     average: number,
     mutiplier: number,
@@ -90,8 +75,6 @@ export interface SingleDirectionPlans {
     firstTargetToAdd: PriceReference,
     finalTargets: SingleExitTarget[],
     /* used strategies begin */
-    levelMomentumPlan?: LevelMomentumPlan,
-    allTimeHighVwapContinuationPlan?: AllTimeHighVwapContinuationPlan,
     gapAndCrapPlan?: GapAndCrapPlan,
     gapAndGoPlan?: GapAndGoPlan,
     gapDownAndGoDownPlan?: GapDownAndGoDownPlan,
@@ -99,10 +82,6 @@ export interface SingleDirectionPlans {
     /* used strategies end */
 
 };
-
-export interface AllTimeHighVwapContinuationPlan extends BasePlan {
-    allTimeHigh: number,
-}
 export interface KeyLevel {
     price: number,
     label: string,
@@ -143,9 +122,6 @@ export interface PlanConfigs {
     sizingCount?: number,
     requireReversal: boolean,
 }
-export interface LevelMomentumPlan extends BasePlan {
-}
-export interface PremarketPlan extends BasePlan { }
 export interface GapAndGoPlan extends LongMomentumPlan {
     /** the min support on daily chart, below it, we cannot long */
     support: SupportResistanceArea,

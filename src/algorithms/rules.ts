@@ -1,14 +1,11 @@
 import * as Models from '../models/models';
 import * as Helper from '../utils/helper';
-import * as Patterns from './patterns';
 import * as Config from '../config/config';
 import * as RiskManager from '../algorithms/riskManager';
-import * as Watchlist from '../algorithms/watchlist';
 import * as Firestore from '../firestore';
 import * as TradingState from '../models/tradingState';
 import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as OrderFlowManager from '../controllers/orderFlowManager';
-import * as VwapPatterns from './vwapPatterns';
 import * as SetupQuality from './setupQuality';
 declare let window: Models.MyWindow;
 
@@ -56,79 +53,6 @@ export const isTimingAndEntryAllowedForHigherTimeframe = (
     Firestore.logError(`entry price ${entryPrice} is not higher than at least of the closed candles`, logTags);
     return false;
 }
-
-export const checkVwap = (symbol: string,
-    isLong: boolean, entryPrice: number, stopOutPrice: number,
-    currentVwap: number, secondsSinceMarketOpen: number,
-    logTags: Models.LogTags) => {
-    if (!Config.getProfileSettingsForSymbol(symbol).entryRules.requireVwapSameDirection) {
-        return true;
-    }
-    if (secondsSinceMarketOpen < 0) {
-        return true;
-    }
-
-    let isAgainstVwap = Helper.isAgainstVwap(currentVwap, entryPrice, isLong);
-    if (!isAgainstVwap) {
-        return true
-    }
-    // allow 2R setup to vwap
-    // https://sunrisetrading.atlassian.net/browse/TPS-192
-    let distanceToVwap = Math.abs(entryPrice - currentVwap);
-    let risk = Math.abs(entryPrice - stopOutPrice);
-    let ratio = distanceToVwap / risk;
-    if (ratio >= 2 || ratio <= 0.25) {
-        return true;
-    }
-    Firestore.logError(`against vwap or less than 2R from vwap`, logTags);
-    return false;
-};
-
-
-
-// avoid chase the first candle during second candle
-export const checkOpenCandle = (symbol: string,
-    isLong: boolean, openingCandle: Models.Candle | undefined) => {
-    /*
-        if (!Config.getProfileSettingsForSymbol(symbol).entryRules.openCandleMustBeReversal) {
-        return true;
-    }*/
-    if (!openingCandle)
-        return true;
-
-    let seconds = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
-    if (seconds >= 120)
-        return true;
-
-    if (Watchlist.isTopPick(symbol)) {
-        return true;
-    }
-
-    let currentCandle = Models.getCurrentCandle(symbol);
-    // During 2nd minute, allow if the 2nd candle is retracing.
-    if (60 < seconds && seconds < 120) {
-        if (isLong && Patterns.isRedBar(currentCandle) ||
-            (!isLong && Patterns.isGreenOpenBar(currentCandle))) {
-            return true;
-        }
-    }
-
-    if (isLong) {
-        // try to go long
-        if (Patterns.isGreenOpenBar(openingCandle)) {
-            return false;
-        }
-    } else {
-        // try to go short
-        if (Patterns.isRedOpenBar(openingCandle)) {
-            return false;
-        }
-    }
-    return true;
-};
-
-
-
 
 export const entryJustHappened = (symbol: string) => {
     let secondsSinceEntry = Models.getLastEntryTimeFromNowInSeconds(symbol);
@@ -280,9 +204,6 @@ export const isBlockedByAfterTrading = (stopAfterSeconds: number, secondsSinceMa
 }
 
 export const isAfterOpeningMomentum = (symbol: string) => {
-    if (Helper.isFutures(symbol))
-        return false;
-
     let m = Helper.getMinutesSinceMarketOpen(Helper.getCurrentMarketTime());
     if (m > 20) {
         Firestore.logError(`is after 20 minutes since market open`);
@@ -291,18 +212,6 @@ export const isAfterOpeningMomentum = (symbol: string) => {
     return false;
 
 }
-
-
-/**
- * Is taking a loss when it's still holding vwap
- */
-export const isLossWhenHoldingVwap = (symbol: string, isLong: boolean, price: number) => {
-    let cost = Models.getAveragePrice(symbol);
-    let isLoss = isLong ? price < cost : price > cost;
-    let isHoldingVwap = Patterns.isPriceAboveVwap(symbol, isLong, price);
-    return isLoss && isHoldingVwap;
-}
-
 
 export const isAllowedForAddedPosition = (symbol: string, isLong: boolean, isMarketOrder: boolean, newPrice: number, keyIndex: number,
     requireBetterPrice: boolean
@@ -332,7 +241,7 @@ export const isEntryAfterTopPick = (symbol: string) => {
         return true;
     }
     let topPick = wl[0].symbol;
-    if (topPick == symbol || symbol == 'SPY' || symbol == 'QQQ' || Helper.isFutures(symbol))
+    if (topPick == symbol || symbol == 'SPY' || symbol == 'QQQ')
         return true;
     let trades = Models.getTradeExecutions(topPick);
     if (trades.length > 0)
@@ -361,9 +270,6 @@ export const isEntryPriceInMomentum = (isLong: boolean, entryPrice: number, mome
 export const isEntryMoreThanHalfDailyRange = (symbol: string,
     isLong: boolean, entryPrice: number, dailyRange: number,
     logTags: Models.LogTags) => {
-    if (Helper.isFutures(symbol)) {
-        return false;
-    }
     if (dailyRange == 0)
         return false;
 
@@ -499,39 +405,6 @@ export const getDisallowedReasonBasedOnOpenPriceZone = (
         }
     }
 }
-export const isAllowedByVwapContinuation = (symbol: string, isLong: boolean, entryPrice: number) => {
-    if (!VwapPatterns.isVwapContinuationEntry(symbol, isLong, entryPrice)) {
-        return true;
-    }
-    if (!VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(symbol, isLong, 1)) {
-        return true;
-    };
-    // if already closed 2 candles against vwap, must wait for 10 minutes
-    let minutesSinceMarketOpen = Helper.getMinutesSinceMarketOpen(Helper.getCurrentMarketTime());
-    if (minutesSinceMarketOpen < 10) {
-        return false;
-    }
-    // after 10 minutes, need to make sure 5 minute candle is still following vwap
-    if (!VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(symbol, isLong, 5)) {
-        return true;
-    }
-    // if 5 minute candle is not following vwap, need to wait for 30 minutes to check 15-minute candle
-    if (minutesSinceMarketOpen < 30) {
-        return false;
-    }
-    if (!VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(symbol, isLong, 15)) {
-        return true;
-    }
-    // if 15 minute candle is not following vwap, need to wait for 60 minutes to check 30-minute candle
-    if (minutesSinceMarketOpen < 60) {
-        return false;
-    }
-    if (!VwapPatterns.hasTwoConsecutiveCandlesAgainstVwap(symbol, isLong, 30)) {
-        return true;
-    }
-    return false;
-}
-
 export const shouldAllowEarlyEntry = (symbol: string, secondsSinceMarketOpen: number) => {
     let result: Models.CheckRulesResult = {
         allowed: true,

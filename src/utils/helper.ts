@@ -120,59 +120,11 @@ export const roundToCentsWithDirection = (price: number, up: boolean) => {
         return Math.floor(price * 100) / 100;
     }
 }
-export const roundToQuarters = (price: number) => {
-    return Math.round(price * 4) / 4;
+export const roundPrice = (_symbol: string, price: number) => {
+    return roundToCents(price);
 };
-export const roundToQuartersWithDirection = (price: number, up: boolean) => {
-    if (up) {
-        return Math.ceil(price * 4) / 4;
-    } else {
-        return Math.floor(price * 4) / 4;
-    }
-};
-export const roundToOz = (price: number) => {
-    return Math.round(price * 32) / 32;
-}
-export const roundToOzWithDirection = (price: number, up: boolean) => {
-    if (up) {
-        return Math.ceil(price * 32) / 32;
-    } else {
-        return Math.floor(price * 32) / 32;
-    }
-}
-export const roundPrice = (symbol: string, price: number) => {
-    if (isFutures(symbol)) {
-        if (symbol.startsWith("US"))
-            return roundToOz(price);
-        else
-            return roundToQuarters(price);
-    } else {
-        return roundToCents(price);
-    }
-};
-export const roundPriceWithDirection = (symbol: string, price: number, up: boolean) => {
-    if (isFutures(symbol)) {
-        if (symbol.startsWith("US"))
-            return roundToOzWithDirection(price, up);
-        else
-            return roundToQuartersWithDirection(price, up);
-    } else {
-        return roundToCentsWithDirection(price, up);
-    }
-}
-export const roundToCentsOrOz = (symbol: string, price: number, up: boolean) => {
-    if (symbol.startsWith("US") && symbol.length == 5) {
-        if (up) {
-            return Math.ceil(price * 32) / 32;
-        } else {
-            return Math.floor(price * 32) / 32;
-        }
-    } else {
-        if (up)
-            return Math.ceil(price * 100) / 100;
-        else
-            return Math.floor(price * 100) / 100;
-    }
+export const roundPriceWithDirection = (_symbol: string, price: number, up: boolean) => {
+    return roundToCentsWithDirection(price, up);
 }
 export const tvTimestampToLocalJsDate = (timestamp: number) => {
     let d = new Date(timestamp * 1000);
@@ -223,31 +175,6 @@ export const jsDateToTradingViewUTCForTimeframe = (jsDateObj: Date, timeframe: n
 
     return jsDateToUTC(newD);
 };
-export const isFutures = (symbol: string) => {
-    let futuresSymbols = ['MESZ22', 'ESZ22', 'ES', 'MES'];
-    if (futuresSymbols.includes(symbol))
-        return true;
-    if ((symbol.startsWith("MES") && symbol.length == 6) ||
-        (symbol.startsWith("ES") && symbol.length == 5))
-        return true;
-    if ((symbol.startsWith("MNQ") && symbol.length == 6) ||
-        (symbol.startsWith("NQ") && symbol.length == 5))
-        return true;
-    if (symbol.startsWith("US") && symbol.length == 5) {
-        return true;
-    }
-    return false;
-};
-export const addMinimumPriceIncrement = (symbol: string, isLong: boolean, price: number) => {
-    if (isFutures(symbol)) {
-        return price;
-    }
-    if (isLong) {
-        return price + 0.01;
-    } else {
-        return price - 0.01;
-    }
-}
 export const isIndex = (symbol: string) => {
     return ['SPY', 'QQQ', 'IWM', 'DIA', 'TQQQ', 'SQQQ', 'UPRO'].includes(symbol);
 }
@@ -334,63 +261,6 @@ export const isNewPriceMoreProfitableThanCurrentPrice = (currentPrice: number, n
         return newPrice <= currentPrice;
     }
 };
-
-export const isAgainstVwap = (currentVwap: number, entryPrice: number, isLong: boolean) => {
-    return ((isLong && entryPrice < currentVwap) ||
-        (!isLong && entryPrice > currentVwap));
-};
-
-export const getFuturesQuarter = (symbol: string) => {
-    let now = new Date();
-    let year = now.getFullYear() % 2000;
-    let month = now.getMonth() + 1;
-    let day = now.getDate();
-    // May 29th => 0529;
-    let today = month * 100 + day;
-    let dateStr = `${today}`;
-    if (month < 10) {
-        dateStr = '0' + dateStr;
-    }
-    if (symbol.startsWith('ZB') || symbol.startsWith('US')) {
-        if ('0224' <= dateStr && dateStr < '0530') {
-            return `M${year}`;
-        } else if ('0530' <= dateStr && dateStr < '0829') {
-            return `U${year}`;
-        } else if ('0829' <= dateStr && dateStr < '1128') {
-            return `Z${year}`;
-        } else {
-            return `H${year}`;
-        }
-    } else {
-        if ('0313' <= dateStr && dateStr < '0610') {
-            return `M${year}`;
-        } else if ('0610' <= dateStr && dateStr < '0912') {
-            return `U${year}`;
-        } else if ('0912' <= dateStr && dateStr < '1212') {
-            return `Z${year}`;
-        } else {
-            return `H${year}`;
-        }
-    }
-}
-
-export const getDelta = (symbol: string) => {
-    if (isFutures(symbol)) {
-        if (symbol.startsWith('MES')) {
-            return 5;
-        } else if (symbol.startsWith('ES')) {
-            return 50;
-        } else if (symbol.startsWith('MNQ')) {
-            return 2;
-        } else if (symbol.startsWith('NQ')) {
-            return 20;
-        } else if (symbol.startsWith('US')) {
-            return 1000;
-        }
-    }
-
-    return 1;
-}
 
 export const roundListToCents = (numbers: number[]) => {
     let r: number[] = [];

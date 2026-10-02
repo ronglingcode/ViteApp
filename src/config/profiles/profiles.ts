@@ -8,7 +8,6 @@ export interface Profile {
     name: string,
     brokerName: BrokerName,
     isEquity: boolean,
-    isFutures: boolean,
     indexOnly: boolean,
     entryRules: EntryRulesConfig,
     exitRules: ExitRulesConfig,

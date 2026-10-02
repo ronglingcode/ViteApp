@@ -14,27 +14,6 @@ export const isGreenBar = (bar: Models.SimpleCandle) => {
     return bar.close > bar.open;
 };
 
-const getTotalRange = (bar: Models.Candle) => {
-    return bar.high - bar.low;
-};
-export const getBodyRatio = (bar: Models.Candle) => {
-    let total = getTotalRange(bar);
-    let body = Math.abs(bar.open - bar.close);
-    return body / total;
-}
-export const isRedOpenBar = (bar: Models.Candle) => {
-    if (!isRedBar(bar))
-        return false;
-    // body is more than 1/3 of the total candle
-    return getBodyRatio(bar) >= 0.34;
-};
-export const isGreenOpenBar = (bar: Models.Candle) => {
-    if (!isGreenBar(bar))
-        return false;
-    // body is more than 1/3 of the total candle
-    return getBodyRatio(bar) >= 0.34;
-};
-
 export const hasBreakoutOccurredForNewCandle = (breakoutPrice: number, isLong: boolean, newCandle: Models.Candle) => {
     if (isLong) {
         return newCandle.high >= breakoutPrice;
@@ -137,15 +116,6 @@ export const hasLostVwapMomentum = (symbol: string, isLong: boolean, entryTime: 
         }
     }
     return false;
-}
-
-export const isPriceAboveVwap = (symbol: string, isLong: boolean, price: number) => {
-    let vwap = Models.getCurrentVwap(symbol);
-    if (isLong) {
-        return price >= vwap;
-    } else {
-        return price <= vwap;
-    }
 }
 
 export const isFirstRetracement = (symbol: string, isLong: boolean) => {

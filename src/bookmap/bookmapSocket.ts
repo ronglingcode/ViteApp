@@ -546,7 +546,7 @@ export const sendVwapUpdatesForSymbol = (symbol: string) => {
     if (!websocket || websocket.readyState !== WebSocket.OPEN) {
         return;
     }
-    if (!symbol || Helper.isFutures(symbol)) {
+    if (!symbol) {
         return;
     }
 
@@ -653,7 +653,7 @@ const registerVwapUpdateListener = () => {
             symbol?: string,
             point?: Models.LineSeriesData,
         }>).detail;
-        if (!detail?.symbol || !detail.point || Helper.isFutures(detail.symbol)) {
+        if (!detail?.symbol || !detail.point) {
             return;
         }
         sendVwapUpdate(buildVwapUpdate(detail.symbol, detail.point));

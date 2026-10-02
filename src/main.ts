@@ -150,7 +150,7 @@ const loadHistoricalChartsWithRetry = async (symbol: string, todayString: string
     let lastFailure = '';
     for (let attempt = 1; attempt <= historicalChartLoadAttemptCount; attempt++) {
         try {
-            let priceHistory = await MarketData.getFullPriceHistory(symbol, Helper.isFutures(symbol), todayString);
+            let priceHistory = await MarketData.getFullPriceHistory(symbol, todayString);
             let initialized = DB.initialize(symbol, priceHistory.today1MinuteBars, priceHistory.dailyBars);
             if (initialized) {
                 BookmapSocket.sendKeyLevelConfigForSymbol(symbol);

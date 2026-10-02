@@ -6,7 +6,6 @@ import { calculatePremarketVolume } from '../trading/core/marketdata/premarketVo
 import * as tdAmeritradeApi from "./tdAmeritrade/api";
 import * as schwabApi from "./schwab/api";
 import * as massiveApi from "./massive/api";
-import * as Helper from '../utils/helper';
 import * as TimeHelper from '../utils/timeHelper';
 import type { Quote, Candle } from '../models/models';
 import * as Models from '../models/models';
@@ -17,9 +16,6 @@ import * as SetupQuality from '../algorithms/setupQuality';
 declare let window: Models.MyWindow;
 
 export const getQuote = async (symbol: string) => {
-  if (Helper.isFutures(symbol)) {
-    throw new Error('Futures quotes are not supported');
-  }
   let quote = await tdAmeritradeApi.getQuote(symbol);
   console.log(quote);
   let q: Quote = {
@@ -57,26 +53,7 @@ export const getImpliedMarketCapInBillions = (symbol: string): number => {
   return impliedMarketCapInBillions(sharesOutstanding, currentPrice);
 }
 
-export const getFullPriceHistory = async (symbol: string, isFutures: boolean, todayStringInput: string) => {
-  // For futures, return empty data for now
-  if (isFutures) {
-    let defaultPremarketDollarCollection: Models.PremarketDollarCollection = {
-      previousDaysDollar: [],
-      previousDaysDollarAverage: 0,
-      previousDaysDollarMedian: 0,
-      lastDayDollar: 0,
-      previousDaysShares: [],
-      lastDayShares: 0,
-      previousDaysSharesAverage: 0,
-      rvol: 0,
-    }
-    return {
-      today1MinuteBars: [],
-      dailyBars: [],
-      premarketDollarCollection: defaultPremarketDollarCollection,
-    };
-  }
-
+export const getFullPriceHistory = async (symbol: string, todayStringInput: string) => {
   const loaded = await marketLoader.load(symbol, todayStringInput, Models.getMarketCapInMillions(symbol), TradingPlans.getVwapCorrection(symbol));
   const history = loaded.history;
   return {
@@ -85,10 +62,7 @@ export const getFullPriceHistory = async (symbol: string, isFutures: boolean, to
     premarketDollarCollection: history.premarketDollarCollection,
   };
 }
-export const getPriceHistory = async (symbol: string, isFutures: boolean, timeframe: number) => {
-  if (isFutures) {
-    throw new Error('Futures price history is not supported');
-  }
+export const getPriceHistory = async (symbol: string, timeframe: number) => {
   let candles: Candle[] = await massiveApi.getPriceHistory(symbol, timeframe);
   return candles;
 };
@@ -97,12 +71,8 @@ export const hasWeeklyOptions = async (symbol: string) => {
   if (symbol == 'ARM') {
     return true;
   }
-  if (Helper.isFutures(symbol)) {
-    return true;
-  } else {
-    let result = await tdAmeritradeApi.hasWeeklyOptions(symbol);
-    return result;
-  }
+  let result = await tdAmeritradeApi.hasWeeklyOptions(symbol);
+  return result;
 }
 
 export const getPreviousTradingDate = async () => {

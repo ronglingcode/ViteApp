@@ -56,7 +56,6 @@ async function capture(name, key, edit = () => {}, shift = false, price = 10) {
     Object.assign(context, { premktHigh: context.premarketHigh, premktLow: context.premarketLow });
     const helper = {
         roundPrice: (_, value) => Math.round(value * 100) / 100,
-        getDelta: () => 1, isFutures: () => false,
         getCurrentMarketTime: () => new Date(0), getSecondsSinceMarketOpen: () => context.secondsSinceMarketOpen,
         speak: () => {}, roundToCents: value => Math.round(value * 100) / 100,
     };

@@ -1,3 +1,4 @@
+import { executionScript, executionBubbleScript, aggregateExecutionBubbles } from '../trading/core/account/executionExports.ts';
 import { groupTradeExecutions } from '../trading/core/account/tradeLedger.ts';
 import { toCoreFill, toBrowserFill } from '../trading/adapters/browserAccount.ts';
 import * as schwabApi from './schwab/api';
@@ -346,34 +347,11 @@ Sample output:
 AddChartBubble(GetSymbol() == "NVD" and time == 60, 903.33, "+85", GlobalColor("BubbleGreen"), 0);
 */
 export const generateExecutionScript = (showDetails: boolean) => {
-    let text = '';
-    let oes = Models.getAllOrderExecutions(undefined);
-    let agg: Models.OrderExecution[] = [];
-    if (showDetails) {
-        agg = aggregateExecutionsPerMinutePerSidePerPrice(oes);
-    } else {
-        agg = aggregateExecutionsPerMinutePerSide(oes);
-    }
-    text += generateExecutionScriptForOrderExecutions(agg);
-    console.log(text);
+    console.log(executionScript(Models.getAllOrderExecutions(undefined).map(toCoreFill), showDetails));
 };
 
-export const generateExecutionScriptForOrderExecutions = (oes: Models.OrderExecution[]) => {
-    let text = '';
-    oes.forEach((oe) => {
-        //console.log(oe);
-        let price = oe.roundedPrice;
-        let symbol = oe.symbol;
-        let secondsSinceOpen = oe.minutesSinceOpen * 60;
-        let condition = `GetSymbol() == "${symbol}" and time == ${secondsSinceOpen}`;
-        if (oe.isBuy) {
-            text += `AddChartBubble(${condition}, ${price}, "+${oe.quantity}", GlobalColor("BubbleGreen"), 0);\n`;
-        } else {
-            text += `AddChartBubble(${condition}, ${price}, "-${oe.quantity}", GlobalColor("BubbleRed"), 1);\n`;
-        }
-    });
-    return text;
-}
+export const generateExecutionScriptForOrderExecutions = (oes: Models.OrderExecution[]) =>
+    executionBubbleScript(oes.map(toCoreFill));
 
 const positionEffectIsOpen = (isBuy: boolean, currentNetQuantity: number) => {
     if (currentNetQuantity == 0)
@@ -409,67 +387,10 @@ const aggregateEntriesExecutions = (executions: Models.OrderExecution[]) => {
     results.sort((a, b) => (a.time > b.time ? 1 : -1));
     return results;
 };
-const getClusteredPrice = (price: number): number => {
-    if (price > 200) {
-        // Cluster by 5 cents
-        return Math.floor(price * 100 / 5) * 5 / 100;
-    } else if (price > 100) {
-        // Cluster by 4 cents
-        return Math.floor(price * 100 / 4) * 4 / 100;
-    } else if (price > 50) {
-        // Cluster by 3 cents
-        return Math.floor(price * 100 / 3) * 3 / 100;
-    } else if (price > 25) {
-        // Cluster by 2 cents
-        return Math.floor(price * 100 / 2) * 2 / 100;
-    }
-    return price;
-}
-export const aggregateExecutionsPerMinutePerSidePerPrice = (executions: Models.OrderExecution[]) => {
-    let map = new Map<string, Models.OrderExecution[]>();
-    executions.forEach(element => {
-        let clusteredPrice = getClusteredPrice(element.roundedPrice);
-        let key = `${element.symbol}-${element.minutesSinceOpen}-${element.isBuy}-${clusteredPrice}`;
-        let v = map.get(key);
-        if (v) {
-            v.push(element);
-        } else {
-            map.set(key, [element]);
-        }
-    });
-    let result: Models.OrderExecution[] = [];
-    map.forEach((value, key) => {
-        if (value.length > 1) {
-            let agg = aggregateExecutions(value);
-            result.push(agg);
-        } else {
-            result.push(value[0]);
-        }
-    });
-    return result;
-}
-export const aggregateExecutionsPerMinutePerSide = (executions: Models.OrderExecution[]) => {
-    let map = new Map<string, Models.OrderExecution[]>();
-    executions.forEach(element => {
-        let key = `${element.symbol}-${element.minutesSinceOpen}-${element.isBuy}`;
-        let v = map.get(key);
-        if (v) {
-            v.push(element);
-        } else {
-            map.set(key, [element]);
-        }
-    });
-    let result: Models.OrderExecution[] = [];
-    map.forEach((value, key) => {
-        if (value.length > 1) {
-            let agg = aggregateExecutions(value);
-            result.push(agg);
-        } else {
-            result.push(value[0]);
-        }
-    });
-    return result;
-}
+export const aggregateExecutionsPerMinutePerSidePerPrice = (executions: Models.OrderExecution[]) =>
+    aggregateExecutionBubbles(executions.map(toCoreFill), true).map(toBrowserFill);
+export const aggregateExecutionsPerMinutePerSide = (executions: Models.OrderExecution[]) =>
+    aggregateExecutionBubbles(executions.map(toCoreFill), false).map(toBrowserFill);
 export const aggregateExecutions = (executions: Models.OrderExecution[]) => {
     let totalAmount = 0;
     let totalQuantity = 0;

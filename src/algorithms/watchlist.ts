@@ -134,9 +134,6 @@ export const finishedStockAnalysis = (symbol: string, plan: TradingPlansModels.T
 
 
 export const isTopPick = (symbol: string) => {
-    if (Helper.isFutures(symbol))
-        return true;
-
     let wl = window.HybridApp.Watchlist;
     if (!wl || wl.length < 1) {
         return false;
@@ -161,7 +158,7 @@ export const isFocusedOnBestStock = (watchlist: Models.WatchlistItem[]) => {
     }
     for (let i = 0; i < watchlist.length; i++) {
         let symbol = watchlist[i].symbol;
-        if (!Helper.isFutures(symbol) && !Helper.isIndex(symbol)) {
+        if (!Helper.isIndex(symbol)) {
             return false;
         }
     }
