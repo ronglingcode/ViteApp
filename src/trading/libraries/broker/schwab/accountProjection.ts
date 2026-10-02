@@ -11,6 +11,12 @@ export interface AccountOrder {
 export interface AccountExitPair { symbol: string; source: string; parentOrderID: string; STOP?: AccountOrder; LIMIT?: AccountOrder }
 const terminal = ['FILLED', 'CANCELED', 'REPLACED', 'REJECTED', 'EXPIRED'];
 const working = ['PENDING_ACTIVATION', 'QUEUED', 'WORKING', 'AWAITING_PARENT_ORDER', 'PARTIALLY_FILLED'];
+const isEquityLeg = (leg: VendorOrder) =>
+    (leg.instrument?.assetType === undefined || leg.instrument.assetType === 'EQUITY')
+    && (leg.orderLegType === undefined || leg.orderLegType === 'EQUITY');
+const isEquityOrder = (order: VendorOrder): boolean =>
+    (order.orderLegCollection ?? []).every(isEquityLeg)
+    && (order.childOrderStrategies ?? []).every(isEquityOrder);
 export const orderSymbol = (order: VendorOrder): string => order.orderLegCollection?.[0]?.instrument?.symbol
     ?? (order.childOrderStrategies?.[0] ? orderSymbol(order.childOrderStrategies[0]) : '');
 
@@ -48,6 +54,7 @@ function add<T>(map: Record<string, T[]>, symbol: string, value: T) { (map[symbo
 export function projectAccount(account: VendorOrder, orders: VendorOrder[], date: string, currentPrice = (_symbol: string) => 0) {
     const positions: Record<string, any> = {}, entryOrders: Record<string, AccountOrder[]> = {}, exitPairs: Record<string, AccountExitPair[]> = {}, executions: Record<string, AccountFill[]> = {};
     for (const position of account.positions ?? []) {
+        if (position.instrument?.assetType !== undefined && position.instrument.assetType !== 'EQUITY') continue;
         const symbol = position.instrument?.symbol;
         if (typeof symbol !== 'string') throw new Error('Schwab position missing symbol');
         positions[symbol] = { ...position, symbol, netQuantity: Number(position.longQuantity ?? 0) - Number(position.shortQuantity ?? 0) };
@@ -69,7 +76,8 @@ export function projectAccount(account: VendorOrder, orders: VendorOrder[], date
         }
         for (const child of order.childOrderStrategies ?? []) visitFills(child);
     };
-    for (const order of orders) {
+    const equityOrders = orders.filter(isEquityOrder);
+    for (const order of equityOrders) {
         visitFills(order);
         const symbol = orderSymbol(order);
         if (!symbol) continue;
@@ -95,5 +103,5 @@ export function projectAccount(account: VendorOrder, orders: VendorOrder[], date
     for (const fills of Object.values(executions)) fills.sort((a, b) => a.timestamp - b.timestamp);
     const balance = Number(account.currentBalances?.liquidationValue);
     if (!Number.isFinite(balance)) throw new Error('Schwab account missing liquidationValue');
-    return { positions, entryOrders, exitPairs, executions, currentBalance: balance, rawOrders: orders };
+    return { positions, entryOrders, exitPairs, executions, currentBalance: balance, rawOrders: equityOrders };
 }

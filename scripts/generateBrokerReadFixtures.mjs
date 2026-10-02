@@ -10,6 +10,12 @@ const single = (id, type = 'LIMIT', status = 'WORKING', quantity = 100, opening 
     orderId: id, orderType: type, orderStrategyType: 'SINGLE', status, quantity, price: 10, stopPrice: 9,
     orderLegCollection: [{ legId: 1, instrument: { symbol: 'AAPL', assetType: 'EQUITY' }, instruction: opening ? 'BUY' : 'SELL', positionEffect: opening ? 'OPENING' : 'CLOSING', quantity }],
 });
+const optionOrder = (id, type = 'LIMIT', status = 'WORKING') => ({
+    ...single(id, type, status, 1),
+    orderLegCollection: [{ legId: 1, orderLegType: 'OPTION',
+        instrument: { symbol: 'AAPL 261016C00250000', assetType: 'OPTION' },
+        instruction: 'BUY_TO_OPEN', positionEffect: 'OPENING', quantity: 1 }],
+});
 const fill = (quantity, price, time = '2026-10-01T13:30:01Z') => ({ activityType: 'EXECUTION', executionType: 'FILL', executionLegs: [{ legId: 1, quantity, price, time }] });
 function projection(name, orders, account = base) {
     const fixture = { name, kind: 'projection', args: [account, orders, '2026-10-01'] };
@@ -17,6 +23,14 @@ function projection(name, orders, account = base) {
     scenarios.push(fixture);
 }
 projection('empty daily orders and signed positions', []);
+projection('option positions and order history are excluded', [
+    single(1), optionOrder(2), { ...optionOrder(3, 'MARKET', 'FILLED'),
+        orderActivityCollection: [fill(1, 5)] },
+    { orderId: 4, orderStrategyType: 'OCO', childOrderStrategies: [optionOrder(5, 'STOP')] },
+], { currentBalances: { liquidationValue: 25000 }, positions: [
+    { instrument: { symbol: 'AAPL', assetType: 'EQUITY' }, longQuantity: 100, shortQuantity: 0 },
+    { instrument: { symbol: 'AAPL 261016C00250000', assetType: 'OPTION' }, longQuantity: 1, shortQuantity: 0 },
+] });
 projection('pending bracket and exit prices', [{ ...single(1), orderStrategyType: 'TRIGGER', cancelable: true, childOrderStrategies: [{ orderId: 2, orderStrategyType: 'OCO', childOrderStrategies: [single(3, 'STOP', 'AWAITING_PARENT_ORDER', 100, false), single(4, 'LIMIT', 'AWAITING_PARENT_ORDER', 100, false)] }] }]);
 projection('filled bracket with working exits', [{ ...single(1, 'MARKET', 'FILLED'), orderStrategyType: 'TRIGGER', filledQuantity: 100, orderActivityCollection: [fill(100, 10)], childOrderStrategies: [{ orderId: 2, orderStrategyType: 'OCO', childOrderStrategies: [single(3, 'STOP', 'WORKING', 100, false), single(4, 'LIMIT', 'WORKING', 100, false)] }] }]);
 projection('partial canceled replaced fills survive', [

@@ -44,8 +44,9 @@ export class IntegrationHealth {
         const positions = account.positions ?? [];
         if (positions.some((p: any) => !p || typeof p.instrument?.symbol !== 'string'))
             throw new Error('Schwab account returned invalid positions');
-        this.balance = balances.liquidationValue; this.cash = cash; this.positionCount = positions.length;
-        this.success(this.account, `${positions.length} positions`, false, now);
+        const equityCount = positions.filter((p: any) => p.instrument.assetType === undefined || p.instrument.assetType === 'EQUITY').length;
+        this.balance = balances.liquidationValue; this.cash = cash; this.positionCount = equityCount;
+        this.success(this.account, `${equityCount} positions`, false, now);
     }
     startStream(symbols: string[], now = Date.now()) {
         this.stream = { phase: 'connecting', since: now, symbols: [...symbols], trades: new Map() };

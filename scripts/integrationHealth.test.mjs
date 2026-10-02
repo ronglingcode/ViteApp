@@ -33,6 +33,16 @@ test('zero cash/empty or omitted positions still prove a valid Schwab connection
     assert.throws(() => health.accountSuccess({ ...account, positions: {} }), /positions/);
 });
 
+test('account status counts equity positions without swing options', () => {
+    const health = new IntegrationHealth();
+    health.accountSuccess({ ...account, positions: [
+        { instrument: { symbol: 'AAPL', assetType: 'EQUITY' } },
+        { instrument: { symbol: 'AAPL 261016C00250000', assetType: 'OPTION' } },
+    ] }, now);
+    assert.equal(health.positionCount, 1);
+    assert.equal(health.account.detail, '1 positions');
+});
+
 test('read failures remain visible with the last balance, and valid recovery clears the error', () => {
     const health = new IntegrationHealth();
     health.accountSuccess(account, now);
