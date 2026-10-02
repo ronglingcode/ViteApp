@@ -33,7 +33,6 @@ import {
     withBookmapWirePriceUnit,
 } from "./priceNormalization";
 import { buildVwapUpdate } from "./vwapUpdate";
-import { isNewPositionTransition } from "./newPositionTransition";
 import {
     BOOKMAP_SCREEN_LOG_EVENT,
     type BookmapScreenLogDetail,
@@ -96,16 +95,6 @@ interface BookmapExecutionConfig {
     timeMs: number;
 }
 
-interface BookmapNewPositionSignal {
-    type: "new_position";
-    symbol: string;
-    isLong: boolean;
-    netQuantity: number;
-    averagePrice?: number;
-    eventId: string;
-    timestamp: number;
-}
-
 interface BookmapCorePlanConfig {
     type: "core_plan_config";
     symbol: string;
@@ -152,12 +141,6 @@ let vwapUpdateListenerRegistered = false;
 const knownAccountSnapshotSymbols = new Set<string>();
 const lastSentVwapTimeBySymbol = new Map<string, number>();
 const pendingScreenLogs: BookmapScreenLogDetail[] = [];
-const observedPositionQuantityBySymbol = new Map<string, number>();
-const pendingNewPositionSignals = new Map<string, BookmapNewPositionSignal>();
-// Feature flag: set to true to re-enable the "New Position Reminder" popup in
-// the Bookmap plugin. When false, ViteApp never sends the "new_position"
-// signal, so the plugin's reminder dialog stays dormant (code kept intact).
-const NEW_POSITION_REMINDER_ENABLED = false;
 
 export const createWebSocket = () => {
     if (websocket && (websocket.readyState === WebSocket.CONNECTING || websocket.readyState === WebSocket.OPEN)) {
@@ -354,7 +337,6 @@ export const sendAccountStateForSymbol = (symbol: string) => {
             timestamp: Date.now(),
         })));
     }
-    observeNewPositionTransition(symbol);
 };
 
 const getTimestampTimeMs = (value: unknown): number => {
@@ -587,7 +569,6 @@ const registerAccountUiRefreshListener = () => {
         return;
     }
     accountUiRefreshListenerRegistered = true;
-    initializePositionTransitionBaselines();
     window.addEventListener('tradingscripts:account-ui-symbol-updated', event => {
         let symbol = (event as CustomEvent<{ symbol?: string }>).detail?.symbol;
         if (symbol) {
@@ -676,7 +657,6 @@ const sendActionLog = (symbol: string | undefined, message: string | undefined) 
 const getAccountSnapshotSymbols = () => {
     const symbols = new Set<string>();
     knownAccountSnapshotSymbols.forEach(symbol => symbols.add(symbol));
-    pendingNewPositionSignals.forEach((_signal, symbol) => symbols.add(symbol));
     Models.getWatchlist().forEach(item => symbols.add(item.symbol));
 
     const account = Models.getBrokerAccount();
@@ -685,64 +665,6 @@ const getAccountSnapshotSymbols = () => {
     account?.exitPairs.forEach((_pairs, symbol) => symbols.add(symbol));
 
     return Array.from(symbols).sort();
-};
-
-const initializePositionTransitionBaselines = () => {
-    getAccountSnapshotSymbols().forEach(symbol => {
-        observedPositionQuantityBySymbol.set(symbol, Models.getPositionNetQuantity(symbol));
-    });
-};
-
-const observeNewPositionTransition = (symbol: string) => {
-    if (!NEW_POSITION_REMINDER_ENABLED) {
-        pendingNewPositionSignals.delete(symbol);
-        return;
-    }
-    let currentQuantity = Models.getPositionNetQuantity(symbol);
-    let previousQuantity = observedPositionQuantityBySymbol.get(symbol);
-    observedPositionQuantityBySymbol.set(symbol, currentQuantity);
-
-    if (previousQuantity === undefined) {
-        return;
-    }
-    if (currentQuantity === 0) {
-        pendingNewPositionSignals.delete(symbol);
-        return;
-    }
-    if (isNewPositionTransition(previousQuantity, currentQuantity)) {
-        let position = Models.getPosition(symbol);
-        let averagePrice = normalizeBookmapWirePrice(position?.averagePrice);
-        pendingNewPositionSignals.set(symbol, {
-            type: "new_position",
-            symbol,
-            isLong: currentQuantity > 0,
-            netQuantity: currentQuantity,
-            averagePrice,
-            eventId: `${symbol}:${currentQuantity > 0 ? "long" : "short"}:${Date.now()}`,
-            timestamp: Date.now(),
-        });
-    } else {
-        let pending = pendingNewPositionSignals.get(symbol);
-        if (pending && pending.isLong !== (currentQuantity > 0)) {
-            pendingNewPositionSignals.delete(symbol);
-        }
-    }
-    flushPendingNewPositionSignal(symbol);
-};
-
-const flushPendingNewPositionSignal = (symbol: string) => {
-    let signal = pendingNewPositionSignals.get(symbol);
-    if (!signal || !websocket || websocket.readyState !== WebSocket.OPEN) {
-        return;
-    }
-    let currentQuantity = Models.getPositionNetQuantity(symbol);
-    if (currentQuantity === 0 || signal.isLong !== (currentQuantity > 0)) {
-        pendingNewPositionSignals.delete(symbol);
-        return;
-    }
-    websocket.send(JSON.stringify(withBookmapWirePriceUnit(signal)));
-    pendingNewPositionSignals.delete(symbol);
-    console.log(`[BookmapSocket] Sent new ${signal.isLong ? "long" : "short"} position reminder for ${symbol}`);
 };
 
 const buildPositionConfig = (symbol: string): BookmapPositionConfig | undefined => {
