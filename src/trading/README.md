@@ -13,7 +13,7 @@ in core, orchestration in runtime and browser globals/DOM/transports in adapters
 | `core/marketdata` | Eastern session clock, candles/VWAP, Camarilla, liquidity and startup eligibility |
 | `core/account`, `core/state` | Fill ledger/P&L/add stack and captured/persisted trading state |
 | `core/configuration` | Selected-plan validation and active wall-reversal definitions |
-| `core/controllers` | Risk/rule/entry/target/exit decisions, Q/P/trailing/discipline jobs, execution inputs and local views |
+| `core/controllers` | Risk/rule/entry/target/exit decisions, Q/P/discipline jobs, execution inputs and local views |
 | `runtime` | History/live handoff, reconnecting streams and standalone startup/timers/state ownership |
 | `ports` | Injectable HTTP/socket/credential contracts |
 | `adapters` | Browser fetch/localStorage, account/UI conversions and observation metadata |

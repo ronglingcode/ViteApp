@@ -1,4 +1,4 @@
-import { trailStopPrice, profitResetTargets } from '../trading/core/controllers/workflows.ts';
+import { profitResetTargets } from '../trading/core/controllers/workflows.ts';
 import * as Chart from "../ui/chart";
 import * as Firestore from '../firestore';
 import * as OrderFlow from './orderFlow';
@@ -64,94 +64,11 @@ export const onAdjustExits = (symbol: string) => {
     if (8 < totalCount) {
         Helper.speak("manage first pullback, raise stop instead of lower target");
     } else if (5 <= totalCount) {
-        Helper.speak("partial at key levels and use trailing stop");
+        Helper.speak("partial at key levels");
     } else if (totalCount > 0) {
         Helper.speak("higher timeframe and re-entry");
     }*/
 }
-export const trailStop = async (symbol: string, timeFrame: number, shiftKey: boolean) => {
-    let widget = Models.getChartWidget(symbol);
-    if (!widget || !widget.exitOrderPairs || widget.exitOrderPairs.length <= 0) {
-        return;
-    }
-    let logTags = Models.generateLogTags(symbol, `${symbol}-trail_stop_${timeFrame}_single`);
-    Firestore.logInfo(logTags.logSessionName, logTags);
-
-    const candles = Models.getUndefinedCandlesSinceOpen(symbol);
-    const positionIsLong = Models.getPositionNetQuantity(symbol) > 0;
-    let newPrice: number;
-    try { newPrice = trailStopPrice(candles, positionIsLong, timeFrame, shiftKey); }
-    catch (error) { Firestore.logError(error instanceof Error ? error.message : String(error), logTags); return; }
-    let pairs = Models.getExitPairs(symbol);
-    let selectedPairs = pairs.slice(0, 1);
-    let coreTargetResult = shiftKey
-        ? CoreTargetExitRules.checkMarketExit(symbol, selectedPairs)
-        : CoreTargetExitRules.checkPriceAdjustment(symbol, selectedPairs, newPrice, true);
-    if (!coreTargetResult.allowed) {
-        Firestore.logError(`core target blocked trail stop: ${coreTargetResult.reason}`, logTags);
-        Helper.speak(`core target blocked ${symbol} exit`);
-        return;
-    }
-    for (let i = 0; i < pairs.length; i++) {
-        let p = pairs[i];
-        if (p.STOP && p.STOP.price && p.STOP.price != newPrice) {
-            let keyIndex = i;
-            let partialsCount = TradingState.getPartialsCount(symbol, positionIsLong);
-            let batchIndex = Helper.getBatchIndex(keyIndex, partialsCount, pairs.length);
-            if (ExitRulesChecker.checkTrailStopSingleRules(symbol, batchIndex, timeFrame, logTags)) {
-                if (shiftKey) {
-                    Broker.instantOutOneExitPair(symbol, positionIsLong, p, logTags);
-                } else {
-                    OrderFlow.adjustExitPairsWithNewPrice(symbol, [p], newPrice, true, positionIsLong, logTags);
-                }
-            }
-            break;
-        }
-    }
-    onAdjustExits(symbol);
-}
-
-export const trailStopBatch = async (symbol: string, timeFrame: number) => {
-    let widget = Models.getChartWidget(symbol);
-    if (!widget || !widget.exitOrderPairs || widget.exitOrderPairs.length <= 0) {
-        return;
-    }
-    let logTags = Models.generateLogTags(symbol, `${symbol}-trail_stop_${timeFrame}`);
-    Firestore.logInfo(logTags.logSessionName, logTags);
-
-
-    let candles = Models.getUndefinedCandlesSinceOpen(symbol);
-    let bars = Models.aggregateCandles(candles, timeFrame);
-    if (bars.length < 2) {
-        Firestore.logError(`not enough bars ${bars.length}`, logTags);
-        return;
-    }
-    let allowedCount = ExitRulesChecker.checkTrailStopRules(symbol, timeFrame, logTags);
-
-    let lastClosedBar = bars[bars.length - 2];
-    let netQ = Models.getPositionNetQuantity(symbol);
-    let positionIsLong = netQ > 0;
-    let newPrice = positionIsLong ? lastClosedBar.low : lastClosedBar.high;
-    Firestore.logInfo(`last closed bar, open: ${lastClosedBar.open}, close: ${lastClosedBar.close}, high: ${lastClosedBar.high}, low: ${lastClosedBar.low}`);
-    let pairs = Models.getExitPairs(symbol);
-    let i = pairs.length - 1;
-    let pairsToTrail = [];
-
-    while (i >= 0 && pairsToTrail.length < allowedCount) {
-        pairsToTrail.push(pairs[i]);
-        i--;
-    }
-    let coreTargetResult = CoreTargetExitRules.checkPriceAdjustment(
-        symbol, pairsToTrail, newPrice, true);
-    if (!coreTargetResult.allowed) {
-        Firestore.logError(`core target blocked batch trail stop: ${coreTargetResult.reason}`, logTags);
-        Helper.speak(`core target blocked ${symbol} exit`);
-        return;
-    }
-    OrderFlow.adjustExitPairsWithNewPrice(symbol, pairsToTrail, newPrice, true, positionIsLong, logTags);
-    Helper.speak("trail stop");
-}
-
 export const numberKeyPressed = async (symbol: string, keyCode: string, isFromBatch: boolean) => {
     let logTags = Models.generateLogTags(symbol, `${symbol}-adjust_exit`);
     let newPrice = Chart.getCrossHairPrice(symbol);

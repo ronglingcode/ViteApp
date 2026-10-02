@@ -80,12 +80,6 @@ export const handleKeyPressed = (
         Handler.replaceWithProfitTakingExitOrders(symbol, false, 0);
     } else if (code === 'KeyU') {
         // unused
-    } else if (code == 'KeyJ') {
-        Handler.trailStop(symbol, 5, shiftKey);
-    } else if (code == 'KeyK') {
-        Handler.trailStop(symbol, 15, shiftKey);
-    } else if (code == 'KeyL') {
-        Handler.trailStop(symbol, 30, shiftKey);
     }
     else {
         codeIsUsed = false;

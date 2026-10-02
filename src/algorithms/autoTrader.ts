@@ -134,7 +134,6 @@ export const scheduleEvents = () => {
     scheduleMarketPreOpenEvent(now);
     scheduleMarketOpenEvent(now);
     schedule5MinutePreCheckEvent(now);
-    schedule5MinutePostCheckEvent(now);
     scheduleFirstMinuteCloseEvent(now);
     scheduleHigherTimeFrameRefreshEvent(now);
     setInterval(refreshAlgoPeriodically, 2 * 1000);
@@ -177,30 +176,6 @@ const schedule5MinutePreCheckEvent = (now: Date) => {
                 Firestore.logInfo(`five minute check`);
             }, waitTime);
         }
-    }
-}
-
-const schedule5MinutePostCheckEvent = (now: Date) => {
-    let targetTime = new Date();
-    targetTime.setHours(6);
-    targetTime.setMinutes(30);
-    targetTime.setSeconds(5);
-    for (let i = 1; i <= 5; i++) {
-        targetTime.setMinutes(targetTime.getMinutes() + 5);
-        let waitTime = targetTime.getTime() - now.getTime();
-        if (waitTime > 0) {
-            setTimeout(() => {
-                run5MinutePostCheck();
-            }, waitTime);
-        }
-    }
-}
-
-const run5MinutePostCheck = () => {
-    let positions = Models.getOpenPositions();
-    if (positions.length > 0) {
-        Helper.speak('consider trail on 5 minute');
-        Firestore.logInfo(`consider trail on 5 minute`);
     }
 }
 

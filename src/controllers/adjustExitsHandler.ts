@@ -17,7 +17,7 @@ export const onAdjustExits = (symbol: string) => {
     if (8 < totalCount) {
         Helper.speak("manage first pullback, raise stop instead of lower target");
     } else if (5 <= totalCount) {
-        Helper.speak("partial at key levels and use trailing stop");
+        Helper.speak("partial at key levels");
     } else if (totalCount > 0) {
         Helper.speak("higher timeframe and re-entry");
     }*/

@@ -86,24 +86,6 @@ export const checkFlattenRules = (symbol: string, logTags: Models.LogTags) => {
 };
 
 
-export const checkTrailStopRules = (symbol: string, timeFrame: number, logTags: Models.LogTags) => {
-    return TakeProfit.BatchCount;
-}
-export const checkTrailStopSingleRules = (symbol: string, batchIndex: number, timeFrame: number, logTags: Models.LogTags) => {
-    if (timeFrame == 1) {
-        let seconds = Helper.getSecondsSinceMarketOpen(Helper.getCurrentMarketTime());
-        if (seconds < 5 * 60) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-    if (timeFrame >= 5) {
-        return true;
-    }
-    Firestore.logError(`unknown time frame ${timeFrame}`, logTags);
-    return false;
-}
 /**
  * if it's not the first 1 minute or the entry candle and it's 
  * within the first 5 minutes, cannot move stop tighter than a previously closed candle * 

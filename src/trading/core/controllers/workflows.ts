@@ -1,20 +1,6 @@
-import { marketTime } from '../marketdata/marketClock.ts';
-import type { Candle } from '../../models/market.ts';
 import type { StateObject } from '../state/tradeState.ts';
 
 /** Domain decisions used by manual workflows and periodic jobs in both applications. */
-export function trailStopPrice(candles: Candle[], isLong: boolean, timeframe: number, shift: boolean) {
-    if (![5, 15, 30].includes(timeframe)) throw new Error('Unsupported trailing timeframe');
-    const regular = candles.filter(c => marketTime(c.datetime).isRegularSession).sort((a, b) => a.datetime - b.datetime);
-    const groups = new Map<number, { high: number; low: number }>();
-    for (const candle of regular) { const key = Math.floor(marketTime(candle.datetime).minutesSinceMarketOpen / timeframe), value = groups.get(key);
-        if (value) { value.high = Math.max(value.high, candle.high); value.low = Math.min(value.low, candle.low); } else groups.set(key, { high: candle.high, low: candle.low }); }
-    if (groups.size < 2) throw new Error('Not enough trailing bars');
-    if (shift && !regular.some((c, index) => index > 0 && (isLong ? c.low < regular[index - 1].low : c.high > regular[index - 1].high)))
-        throw new Error(isLong ? 'No lower low for market trailing exit' : 'No higher high for market trailing exit');
-    const closed = [...groups.values()].at(-2)!;
-    return isLong ? (Math.floor(closed.low * 100) - 1) / 100 : (Math.ceil(closed.high * 100) + 1) / 100;
-}
 export function profitResetTargets(targets: { quantity: number; target: number }[], remaining: number) {
     if (targets.length <= 1) throw new Error('Profit reset requires multiple captured targets');
     if (!(remaining > 0)) throw new Error('No position for profit reset');

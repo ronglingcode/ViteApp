@@ -83,10 +83,6 @@ assert.deepEqual(longInputs.entryContext.volumes, [2000]); assert.equal(longInpu
 inputs('local execution inputs short ordered limits descending', -90, { ...saved, stateBySymbol: { AAPL: { ...saved.stateBySymbol.AAPL, breakoutTradeStateForShort: State.acceptedBreakout({ ...entry, isLong: false, stopOutPrice: 11 }, base) } } });
 inputs('local execution inputs flat reload direction', 0, null);
 inputs('single large exit disables split partials', 100, { ...saved, stateBySymbol: { AAPL: { ...saved.stateBySymbol.AAPL, breakoutTradeStateForLong: State.acceptedBreakout({ ...entry, submitEntryResult: { ...entry.submitEntryResult, isSingleOrder: true, totalQuantity: 10 } }, base) } } }, { account: { exitPairs: { AAPL: [{ STOP: { orderID: 'large', quantity: 100, price: 9 } }] } } });
-const candles = [0, 4, 5, 14, 15, 29, 30].map((minute, index) => ({ symbol: 'AAPL', datetime: base + minute * 60000, open: 10, close: 10, low: 9 - index * .1, high: 11 + index * .1, volume: 1000, vwap: 10 }));
-for (const timeframe of [5, 15, 30]) for (const long of [true, false]) for (const shift of [true, false]) add(`trail ${timeframe} ${long} ${shift}`, 'workflow', 'trailStopPrice', [candles, long, timeframe, shift]);
-add('trail insufficient bars', 'workflow', 'trailStopPrice', [candles.slice(0, 2), true, 5, false]);
-add('market trail requires lower low', 'workflow', 'trailStopPrice', [candles.map(c => ({ ...c, low: 9 })), true, 5, true]);
 const reset = add('reset clips final target to remaining position', 'workflow', 'profitResetTargets', [[{ quantity: 10, target: 11 }, { quantity: 10, target: 12 }, { quantity: 10, target: 13 }], 15]);
 assert.equal(reset.reduce((sum, target) => sum + target.quantity, 0), 15);
 add('reset insufficient targets', 'workflow', 'profitResetTargets', [[{ quantity: 10, target: 11 }, { quantity: 10, target: 12 }], 25]);

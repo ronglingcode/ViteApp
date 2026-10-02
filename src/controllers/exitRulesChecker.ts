@@ -18,13 +18,6 @@ export const checkFlattenRules = (symbol: string, logTags: Models.LogTags) => {
 };
 
 
-export const checkTrailStopRules = (symbol: string, timeFrame: number, logTags: Models.LogTags) => {
-    return exitRulesCheckerSimple.checkTrailStopRules(symbol, timeFrame, logTags);
-}
-export const checkTrailStopSingleRules = (symbol: string, batchIndex: number, timeFrame: number, logTags: Models.LogTags) => {
-    return exitRulesCheckerSimple.checkTrailStopSingleRules(symbol, batchIndex, timeFrame, logTags);
-}
-
 const getCommonInfo = (symbol: string) => {
     let symbolState = TradingState.getSymbolState(symbol);
     let planConfigs = symbolState.activeBasePlan?.planConfigs;
