@@ -51,6 +51,12 @@ add('short market estimate uses smaller Bookmap price', f => { f.action.tradeboo
     { type: 'MARKET', entryPrice: 9.8, orderEntry: 9.79, shares: 1408 });
 add('hover stop entry uses price and ignores shift market', f => { f.key = 'KeyB'; f.action.source = 'bookmap_chart_hotkey'; f.action.price = 10.2; f.action.shiftKey = true; },
     { entryPrice: 10.2, orderEntry: 10.21, shares: 1408 });
+for (const seconds of [-1, 0, 23400, 23401]) {
+    add(`common entry rules have no session gate at ${seconds} seconds`, f => { f.state.entryContext.secondsSinceMarketOpen = seconds; });
+}
+add('common entry rules do not cap size multiplier at one', f => { f.state.entryContext.liquidityScale = 2; }, { multiplier: 2, shares: 3921 });
+add('manual prices do not require day levels', f => { f.state.entryContext.highOfDay = 0; f.state.entryContext.lowOfDay = 0; f.state.entryContext.customEntryPrice = 10; });
+add('protective stop side is left to broker', f => { f.state.entryContext.customStopLong = 10.5; }, { stopOutPrice: 10.5, orderStop: 10.49, shares: 2040 });
 add('liquidity downgrade reduces risk and pairs', f => { f.state.entryContext.liquidityScale = 0.35; }, { multiplier: 0.35, count: 4, shares: 686 });
 add('thin volume halves initial risk', f => { f.state.entryContext.volumes = [500000, 80000, 60000]; }, { multiplier: 0.5, count: 5, shares: 980 });
 add('opposing vwap halves risk only with watch areas', f => { f.state.entryContext.watchAreas = [20]; f.state.entryContext.vwap = 10.1; }, { multiplier: 0.5, count: 5, shares: 980 });
@@ -73,11 +79,8 @@ for (const [name, edit] of [
     ['opposing watch area', f => { f.state.entryContext.watchAreas = [10.1]; }],
     ['inside no trade zone', f => { f.state.entryContext.noTradeZones = [{ low: 9.9, high: 10.1 }]; }],
     ['outside required entry range', f => { f.state.entryContext.definitions[0].entryArea = { low: 11, high: 12, requireEntryWithinRange: true }; }],
-    ['existing position requires next migration', f => { f.state.netQuantity = 1; }],
-    ['pending entries require next migration', f => { f.state.entries = [{ orderID: '101', orderType: 'STOP', quantity: 1, isBuy: true, price: 10 }]; }],
     ['retest blocked', f => { f.action.retest_blocked = true; }],
     ['wrong chart side', f => { f.key = 'KeyS'; f.action.source = 'bookmap_chart_hotkey'; f.action.price = 10; }],
-    ['no protective risk', f => { f.state.entryContext.customStopLong = 10; }],
 ]) add(name, edit, { error: true });
 const json = JSON.stringify(fixtures, null, 2) + '\n';
 writeFileSync(new URL('../src/bookmap/direct-entry-fixtures.json', import.meta.url), json);
