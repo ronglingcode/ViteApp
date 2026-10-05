@@ -74,7 +74,12 @@ const publishToken = (credentials: SchwabCredentials) => {
     return credentials.access_token;
 };
 export const generateRefreshToken = async (url: string) => {
-    publishToken(await oauth.exchangeAuthorizationCode(url));
+    const credentials = await oauth.exchangeAuthorizationCode(url);
+    publishToken(credentials);
+    console.log(JSON.stringify({
+        access_token: credentials.access_token,
+        refresh_token: credentials.refresh_token,
+    }));
     Firestore.logInfo('Schwab authorization tokens saved locally.');
 };
 export const refreshAccessToken = async () => publishToken(await oauth.refresh());
