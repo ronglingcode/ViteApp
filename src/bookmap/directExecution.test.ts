@@ -32,7 +32,7 @@ test('diagnostics retain the request, HTTP error text and exception causes witho
 test('sanitized native fixtures agree with the production TS decisions and closing payloads', () => {
     for (const fixture of fixtures) {
         const { state, checks, requests } = fixture;
-        if (checks.cancel) assert.deepEqual(selectEntryOrdersToCancel(state.entries, state.pairs.length, state.batchCount)
+        if (checks.cancel) assert.deepEqual(selectEntryOrdersToCancel(state.entries)
             .map((order: any) => order.orderID), requests.map((request: any) => request.orderId), fixture.name);
         if (checks.smallest) {
             const index = getFirstSmallestQuantityExitPairIndex(state.pairs);

@@ -36,13 +36,8 @@ export const handleKeyPressed = (
     } else if (code === 'Space') {
         Chart.clearPriceLines(symbol);
     } else if (code === "KeyC") {
-        // shift + c or just c: cancel all
+        // shift + c or just c: cancel breakout entry orders
         Handler.cancelKeyPressed(symbol);
-        Firestore.logInfo("cancel all for " + symbol);
-    } else if (code === "KeyQ") {
-        // shift + q or just q: cancel entry orders
-        Broker.cancelBreakoutEntryOrders(symbol);
-        TradingState.clearPendingOrder(symbol);
         Firestore.logInfo("cancel new entries for " + symbol);
     } else if (code === "KeyF") {
         Handler.flattenPostionKeyPressed(symbol);

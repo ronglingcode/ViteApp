@@ -1,4 +1,4 @@
-/** Shared pure decision used by Handler.cancelKeyPressed and the Java parity fixtures. */
+/** STOP-entry cancellation selection checked against the Java parity fixtures. */
 export const selectEntryOrdersToCancel = <T extends { orderType: string }>(
-    entries: readonly T[], exitPairsCount: number, batchCount: number,
-): T[] => entries.filter(order => exitPairsCount < batchCount * 0.4 || order.orderType === 'STOP');
+    entries: readonly T[],
+): T[] => entries.filter(order => order.orderType === 'STOP');
