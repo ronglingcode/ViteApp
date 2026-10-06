@@ -12,9 +12,10 @@ export interface EntryMethodConfig {
     partialsCount: number,
 }
 // 1R risks $1000 across the default number of exit partials. Reduced-risk methods
-// risk less and use a single exit pair.
+// risk less and use proportionally fewer exit pairs.
 const entryMethodConfigs: EntryMethodConfig[] = [
     { label: "1 R", riskMultiple: 1, partialsCount: GlobalSettings.batchCount },
+    { label: "0.5 R", riskMultiple: 0.5, partialsCount: Math.max(1, Math.round(GlobalSettings.batchCount * 0.5)) },
     { label: "0.1 R", riskMultiple: 0.1, partialsCount: 1 },
 ];
 export const returnDefaultEntryMethods = () => {

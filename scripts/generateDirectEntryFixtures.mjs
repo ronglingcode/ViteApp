@@ -43,6 +43,10 @@ function add(name, edit = () => {}, expected = {}) {
 add('long full risk stop with ten protective pairs');
 add('short full risk stop', f => { f.action.tradebook_id = 'RangeBoundOfferReversal'; f.state.entryContext.customEntryPrice = 10; });
 add('small entry has one pair', f => { f.action.entry_method = '0.1 R'; }, { multiplier: 0.1, count: 1, shares: 196 });
+add('half risk long entry has five pairs', f => { f.action.entry_method = '0.5 R'; }, { multiplier: 0.5, count: 5, shares: 980 });
+add('half risk short entry has five pairs', f => { f.action.entry_method = '0.5 R'; f.action.tradebook_id = 'RangeBoundOfferReversal'; f.state.entryContext.customEntryPrice = 10; }, { multiplier: 0.5, count: 5, shares: 980 });
+add('half risk fixed quantity keeps five pairs', f => { f.action.entry_method = '0.5 R'; f.state.entryContext.fixedQuantity = 23; }, { multiplier: 0.5, count: 5, shares: 23 });
+add('half risk thin volume reduces risk and pairs further', f => { f.action.entry_method = '0.5 R'; f.state.entryContext.volumes = [500000, 80000, 60000]; }, { multiplier: 0.25, count: 3, shares: 490 });
 add('other numeric risk method uses two risk units', f => { f.action.entry_method = '2 R'; }, { multiplier: 2, shares: 3921 });
 add('unparsed risk method uses default risk', f => { f.action.entry_method = 'unparsed method'; });
 add('market estimate uses larger long Bookmap price', f => { f.action.use_market_order = true; f.action.estimated_entry_price = 10.2; },

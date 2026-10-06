@@ -5,8 +5,22 @@ import { calculateEntryTargets } from '../algorithms/entryTargets.ts';
 import { sharesForRisk } from '../algorithms/riskSizing.ts';
 import { createBracketedEquityEntry } from '../api/schwab/entryOrderFactory.ts';
 import { evaluateEntryPriceAndVolumeRules } from '../controllers/entryRuleDecision.ts';
+import ts from 'typescript';
 
 const fixtures = JSON.parse(readFileSync(new URL('./direct-entry-fixtures.json', import.meta.url), 'utf8'));
+
+test('default entry methods include half risk with five exit pairs', () => {
+    const source = readFileSync(new URL('../utils/helper.ts', import.meta.url), 'utf8');
+    const compiled = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } });
+    const helper: any = {};
+    new Function('require', 'exports', compiled.outputText)(
+        (id: string) => id === '../config/globalSettings' ? { batchCount: 10 } : {}, helper);
+    assert.deepEqual(helper.returnDefaultEntryMethods(), ['1 R', '0.5 R', '0.1 R']);
+    for (const [method, risk, count] of [['1 R', 1, 10], ['0.5 R', 0.5, 5], ['0.1 R', 0.1, 1]]) {
+        assert.equal(helper.getRiskMultiplierFromEntryMethod(method), risk);
+        assert.equal(helper.getPartialCountFromEntryMethod(method), count);
+    }
+});
 test('native entry fixtures agree with production risk, rule, target and bracket helpers', () => {
     for (const fixture of fixtures.filter((value: any) => !value.error)) {
         const context = fixture.state.entryContext, entry = fixture.entry;
