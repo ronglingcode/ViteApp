@@ -41,6 +41,7 @@ export function createExecutionInputs(symbol: string, plan: TradingPlans, market
             activeTrade: active, longTrade: state.direction(symbol, true), shortTrade: state.direction(symbol, false), candles: market.candles,
             definitions: createTradebookDefinitions(plan), attendanceAllowed: true,
             watchlistBlockReason: watchlist.length > 1 ? `more than 1 stocks in watchlist: ${watchlist.join(', ')}` : '',
+            startupBlockReason: '',
             realizedPnl: ledger.realizedPnL, dailyMaxLoss: policy.dailyMaxLoss, riskDollars: policy.riskDollars,
             liquidityScale: market.liquidityScale, secondsSinceMarketOpen: marketTime(now).minutesSinceMarketOpen * 60,
             openPrice: market.openPrice, vwap: market.vwap, atr: plan.atr.average, maxQuantity: plan.atr.maxQuantity,

@@ -179,7 +179,7 @@ export class TradingRuntime {
         if (!market || !plan) { this.execution.receive({ type: 'execution_state', version: 3, symbols: [this.exitInputs(symbol)] }); return; }
         const inputs = createExecutionInputs(symbol, plan, market.snapshot(), this.quotes[symbol] ?? {}, this.account, this.ledger, this.state, this.config.symbols,
             Object.fromEntries(this.config.symbols.map(stock => [stock, { currentPrice: this.price(stock) }])), this.manual[symbol] ?? {}, this.now(), ++this.revision, this.policy);
-        const reason = this.eligibility[symbol] ?? 'startup eligibility pending'; if (reason) inputs.entryContext.watchlistBlockReason = reason;
+        inputs.entryContext.startupBlockReason = this.eligibility[symbol] ?? 'startup eligibility pending';
         this.execution.receive({ type: 'execution_state', version: 3, symbols: [inputs] });
     }
     private exitInputs(symbol: string) { const position = this.account?.positions[symbol], net = position?.netQuantity ?? 0, active = this.state!.direction(symbol, net > 0);
