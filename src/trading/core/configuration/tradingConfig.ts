@@ -49,9 +49,10 @@ export function validateTradingPlan(plan: TradingPlans): string {
     for (const side of ['long', 'short']) {
         const direction = raw[side]; if (!direction) return `${symbol} missing ${side} plan`;
         if (direction.enabled === false) continue;
-        // A live reference is valid before the market loader has produced its value.
+        // Live references are valid before history loads; negative values select the automatic gap-based threshold.
         const target = direction.firstTargetToAdd;
-        if (!['vwap', 'premarketHigh', 'premarketLow'].includes(target) && !(Number(target) > 0)) return `${symbol} missing first target to add`;
+        const price = Number(target);
+        if (!['vwap', 'premarketHigh', 'premarketLow'].includes(target) && (!Number.isFinite(price) || price === 0)) return `${symbol} missing first target to add`;
         if (!Array.isArray(direction.finalTargets) || direction.finalTargets.length < 2) return `${symbol} need at least 2 final targets`;
         for (const [index, target] of direction.finalTargets.entries()) {
             if (!target.partialCount) return `${symbol} missing partial count for final target[${index}]`;

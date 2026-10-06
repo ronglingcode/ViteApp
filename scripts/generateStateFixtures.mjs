@@ -52,6 +52,8 @@ store('core target wrong direction rejected', saved, [['updateCorePlan', 'AAPL',
 const finalTargets = [{ partialCount: 5, rrr: 1, level: 0, atr: 0, text: 'first' }, { partialCount: 5, rrr: 2, level: 0, atr: 0, text: 'second' }];
 const plan = { symbol: 'AAPL', corePlan: 'A specific momentum plan with support, risk, invalidation and follow-through rules.', analysis: { gap: { pdc: 10 }, watchAreas: [], noTradeZones: [] }, atr: { average: 1, mutiplier: 2, minimumMultipler: 1, maxQuantity: 1000 }, vwapCorrection: { volumeSum: 0, tradingSum: 0 }, marketCapInMillions: 10000, long: { enabled: true, firstTargetToAdd: 'vwap', finalTargets, gapAndGoPlan: { ...entry.basePlan, support: { low: 9, high: 10 }, recentPullback: 10 } }, short: { enabled: false, finalTargets: [] } };
 add('valid plan with live add target before history loads', 'config', 'validateTradingPlan', [plan]);
+const automaticLongPlan = { ...plan, long: { ...plan.long, firstTargetToAdd: '-1' } };
+const automaticShortPlan = { ...plan, symbol: 'PCVX', long: { ...plan.long, enabled: false }, short: { enabled: true, firstTargetToAdd: '-1', finalTargets, gapAndCrapPlan: { ...entry.basePlan, resistance: { low: 11, high: 12 }, earnings: true } } };
 add('missing core thesis', 'config', 'validateTradingPlan', [{ ...plan, corePlan: 'short' }]);
 add('missing analysis', 'config', 'validateTradingPlan', [{ ...plan, analysis: {} }]);
 add('missing atr', 'config', 'validateTradingPlan', [{ ...plan, atr: {} }]);
@@ -73,6 +75,7 @@ function inputs(name, netQuantity, restored, options = {}) {
     const ledger = Ledger.projectTradeLedger({ AAPL: [fill(netQuantity >= 0, 100, 10), fill(netQuantity < 0, 10, 11, 60000)] });
     const args = ['AAPL', plan, market, { bidPrice: 10.99, askPrice: 11.01 }, account, ledger, restored, ['AAPL'], { AAPL: market }, { customStopLong: 9.5, fixedQuantity: 0 }, base + 1000, 2, defaultTradingPolicy];
     Object.assign(account, options.account); args[12] = { ...defaultTradingPolicy, ...options.policy };
+    if (options.plan) args[1] = options.plan;
     const result = createExecutionInputs(...args.slice(0, 6), new State.TradeState('2026-10-01', 25000, base, restored), ...args.slice(7));
     fixtures.push({ name, kind: 'inputs', args, result }); return result;
 }
@@ -121,6 +124,15 @@ const closedView = { type: 'market_ready', symbol: 'AAPL', timestamp: base + 900
 const seeded = add('VWAP seeds only closed history points', 'views', 'nativeViews', [closedView]).filter(message => message.type === 'vwap_update');
 assert.deepEqual(seeded.map(message => message.vwap), [10, 11]); assert.deepEqual(seeded.map(message => message.effectiveTimeMs), [base, base + 60000]);
 assert.deepEqual(add('VWAP partial minute has no closed point', 'views', 'nativeViews', [{ type: 'market_update', symbol: 'AAPL', timestamp: base, market: { vwap: 12 } }]), []);
+assert.equal(add('negative long add target selects automatic threshold', 'config', 'validateTradingPlan', [automaticLongPlan]), '');
+assert.equal(add('negative short add target selects automatic threshold', 'config', 'validateTradingPlan', [automaticShortPlan]), '');
+add('selected short plan with automatic add target loads', 'config', 'readTradingConfig', [{ plans: [automaticShortPlan], stockSelections: ['PCVX'], activeProfileName: 'schwab' }]);
+for (const target of ['0', '', 'invalid', 'NaN', 'Infinity', '-Infinity', undefined]) {
+    const invalid = { ...plan, long: { ...plan.long, firstTargetToAdd: target } };
+    assert.equal(add('invalid add target ' + String(target), 'config', 'validateTradingPlan', [invalid]), 'AAPL missing first target to add');
+}
+assert.equal(inputs('automatic long add threshold preserved in execution inputs', 90, saved, { plan: automaticLongPlan }).entryContext.addTargetLong, -1);
+assert.equal(inputs('automatic short add threshold preserved in execution inputs', -90, saved, { plan: automaticShortPlan }).entryContext.addTargetShort, -1);
 const text = JSON.stringify(fixtures, null, 2) + '\n';
 for (const url of [new URL('../src/trading/state-fixtures.json', import.meta.url), new URL('../../bookmap-plugin/src/test/resources/state-fixtures.json', import.meta.url)]) {
     if (process.argv.includes('--check')) { if (readFileSync(url, 'utf8') !== text) throw new Error(`Fixture drift: ${url}`); } else writeFileSync(url, text);

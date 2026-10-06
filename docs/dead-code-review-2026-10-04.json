@@ -1,0 +1,4529 @@
+{
+  "entry": "src/main.ts",
+  "sourceFiles": 173,
+  "runtimeModules": 134,
+  "orphans": [
+    {
+      "file": "src/algorithms/strategies.ts",
+      "line": 1,
+      "lines": 10,
+      "testsUseIt": false,
+      "toolConsumers": []
+    },
+    {
+      "file": "src/bookmap/wallThreshold.ts",
+      "line": 1,
+      "lines": 2,
+      "testsUseIt": true,
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/atr.ts",
+      "line": 1,
+      "lines": 8,
+      "testsUseIt": false,
+      "toolConsumers": []
+    },
+    {
+      "file": "src/patterns/allTimeHigh.ts",
+      "line": 1,
+      "lines": 23,
+      "testsUseIt": false,
+      "toolConsumers": []
+    },
+    {
+      "file": "src/patterns/camPivots.ts",
+      "line": 1,
+      "lines": 115,
+      "testsUseIt": false,
+      "toolConsumers": []
+    },
+    {
+      "file": "src/tradebooks/singleKeyLevel/commonRules.ts",
+      "line": 1,
+      "lines": 36,
+      "testsUseIt": false,
+      "toolConsumers": []
+    },
+    {
+      "file": "src/tradebooks/tradebookUtil.ts",
+      "line": 1,
+      "lines": 7,
+      "testsUseIt": false,
+      "toolConsumers": []
+    },
+    {
+      "file": "src/trading/adapters/browserSockets.ts",
+      "line": 1,
+      "lines": 13,
+      "testsUseIt": false,
+      "toolConsumers": []
+    },
+    {
+      "file": "src/trading/core/controllers/executionInputs.ts",
+      "line": 1,
+      "lines": 61,
+      "testsUseIt": true,
+      "toolConsumers": [
+        "scripts/generateStateFixtures.mjs"
+      ]
+    },
+    {
+      "file": "src/trading/core/controllers/nativeViews.ts",
+      "line": 1,
+      "lines": 63,
+      "testsUseIt": true,
+      "toolConsumers": [
+        "scripts/generateStateFixtures.mjs"
+      ]
+    },
+    {
+      "file": "src/trading/core/marketdata/startupEligibility.ts",
+      "line": 1,
+      "lines": 15,
+      "testsUseIt": true,
+      "toolConsumers": []
+    },
+    {
+      "file": "src/trading/libraries/massive/streamingProtocol.ts",
+      "line": 1,
+      "lines": 15,
+      "testsUseIt": true,
+      "toolConsumers": [
+        "scripts/generateStreamFixtures.mjs"
+      ]
+    },
+    {
+      "file": "src/trading/ports/socket.ts",
+      "line": 1,
+      "lines": 8,
+      "testsUseIt": true,
+      "toolConsumers": []
+    },
+    {
+      "file": "src/trading/runtime/managedSocket.ts",
+      "line": 1,
+      "lines": 45,
+      "testsUseIt": true,
+      "toolConsumers": []
+    },
+    {
+      "file": "src/trading/runtime/marketStreams.ts",
+      "line": 1,
+      "lines": 45,
+      "testsUseIt": true,
+      "toolConsumers": []
+    },
+    {
+      "file": "src/trading/runtime/tradingRuntime.ts",
+      "line": 1,
+      "lines": 271,
+      "testsUseIt": true,
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/popup.ts",
+      "line": 1,
+      "lines": 91,
+      "testsUseIt": false,
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/entryThresholdValidator.ts",
+      "line": 1,
+      "lines": 87,
+      "testsUseIt": false,
+      "toolConsumers": []
+    }
+  ],
+  "typeOnly": [
+    "src/config/profiles/profiles.ts",
+    "src/notifications/types.ts",
+    "src/trading/models/account.ts",
+    "src/trading/models/market.ts",
+    "src/trading/ports/credentials.ts",
+    "src/trading/ports/http.ts",
+    "src/workers/marketDataMessages.ts"
+  ],
+  "unusedDeclarations": [
+    {
+      "file": "src/algorithms/autoTrader.ts",
+      "line": 244,
+      "name": "scheduleSecondMinuteCloseEvent",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/gapAndCrapAlgo.ts",
+      "line": 5,
+      "name": "hasAtLeastOneReasonSet",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/gapAndGoAlgo.ts",
+      "line": 8,
+      "name": "hasAtLeastOneReasonSet",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/gapAndGoAlgo.ts",
+      "line": 30,
+      "name": "validateEntry",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/gapAndGoAlgo.ts",
+      "line": 93,
+      "name": "getAllowedReasonToAddPartial",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/gapDownAndGoDownAlgo.ts",
+      "line": 5,
+      "name": "hasAtLeastOneReasonSet",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/gapDownAndGoUpAlgo.ts",
+      "line": 5,
+      "name": "hasAtLeastOneReasonSet",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 17,
+      "name": "hasBreakoutOccurredForNewCandle",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 24,
+      "name": "isFalseBreakoutForNewCandle",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 33,
+      "name": "hasGreenBarSinceOpen",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 46,
+      "name": "hasRedBarSinceOpen",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 57,
+      "name": "firstBarIsPinBar",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 69,
+      "name": "isPriceOutsideLevel",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 76,
+      "name": "isBarClosed",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 83,
+      "name": "isPriceInLowerRange",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 90,
+      "name": "isPriceInUpperRange",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 97,
+      "name": "hasLostVwapMomentum",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 121,
+      "name": "isFirstRetracement",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 155,
+      "name": "isBarSameDirection",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 163,
+      "name": "isConsecutiveBarsSameDirection",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 180,
+      "name": "analyzeBreakoutPatterns",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 213,
+      "name": "hasClosedBeyondPrice",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 226,
+      "name": "getFirstCandleClosedBeyondPrice",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 238,
+      "name": "hasConfirmationForBreakoutEntry",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 265,
+      "name": "hasFalseHighOfDayBreakout",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 306,
+      "name": "hasFalseBreakout",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 315,
+      "name": "hasConfirmationForMarketEntry",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 341,
+      "name": "getFirstNewHighLowPrice",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 367,
+      "name": "checkFirstNewHighPattern",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 423,
+      "name": "hasPremarketBreakout",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 431,
+      "name": "getOpenExtensionFromVwapInAtr",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 445,
+      "name": "hasRetracementFromPremarket",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 465,
+      "name": "getFirstPullbackStatus",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 538,
+      "name": "isPriceWorseThanVwap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 546,
+      "name": "isPriceWorseThanKeyLevel",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 558,
+      "name": "hasLostKeyLevel",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 657,
+      "name": "hasLowerLow",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 669,
+      "name": "hasHigherHigh",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 682,
+      "name": "hasClosedOutsideVwap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 700,
+      "name": "hasPullbackToVwapBeforeOpen",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 728,
+      "name": "isHigherLows",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 743,
+      "name": "isLowerHighs",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 758,
+      "name": "getMinimumDistanceToVwap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 763,
+      "name": "getDirectionalDistanceToVwap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 770,
+      "name": "getFirstBreakoutCandle",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 786,
+      "name": "hasLevelRetest",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 795,
+      "name": "hasApproachedTargetToAdd",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/riskManager.ts",
+      "line": 48,
+      "name": "orOverride",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/riskManager.ts",
+      "line": 89,
+      "name": "getRiskMultiplerForNextEntry2",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/riskManager.ts",
+      "line": 108,
+      "name": "getRiskInDollarForNextEntry",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 18,
+      "name": "isTimingAndEntryAllowedForHigherTimeframe",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 57,
+      "name": "entryJustHappened",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 67,
+      "name": "checkForMidRangeBreakout",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 83,
+      "name": "atMostHalfPositionForMarketOrder",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 95,
+      "name": "checkForMinimumPositionSize",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 120,
+      "name": "isShortAboveLastResistance",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 137,
+      "name": "isLongBelowLastSupport",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 157,
+      "name": "checkTightenStop",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 178,
+      "name": "isIncreasingTarget",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 189,
+      "name": "isBlockedByTiming",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 193,
+      "name": "isBlockedByDeferTrading",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 199,
+      "name": "isBlockedByAfterTrading",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 206,
+      "name": "isAfterOpeningMomentum",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 216,
+      "name": "isAllowedForAddedPosition",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 238,
+      "name": "isEntryAfterTopPick",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 261,
+      "name": "isEntryPriceInMomentum",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 290,
+      "name": "isSpreadTooLarge",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 323,
+      "name": "isGreaterThanMinimumDistance",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 331,
+      "name": "allowedFirstMinuteByDailyChartGap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 350,
+      "name": "isReverseOfMomentumCandle",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 374,
+      "name": "getDisallowedReasonBasedOnOpenPriceZone",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 427,
+      "name": "isNewTradeAfterStopOut",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/vwap.ts",
+      "line": 3,
+      "name": "isAgainstPremarketVwapStrongTrend",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/vwap.ts",
+      "line": 8,
+      "name": "isAgainstCurrentVwap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/vwap.ts",
+      "line": 47,
+      "name": "getPremarketTrendText",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/vwap.ts",
+      "line": 59,
+      "name": "isCrossed",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/broker.ts",
+      "line": 356,
+      "name": "positionEffectIsOpen",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/broker.ts",
+      "line": 370,
+      "name": "aggregateEntriesExecutions",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/broker.ts",
+      "line": 411,
+      "name": "getRealizedPnL",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/broker.ts",
+      "line": 430,
+      "name": "isTradeClosed",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/massive/api.ts",
+      "line": 12,
+      "name": "getBars",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 528,
+      "name": "logErrorForObject",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 75,
+      "name": "getOrderSymbol",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 86,
+      "name": "getPositionEffectIsOpen",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 157,
+      "name": "copyOrder",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 162,
+      "name": "copySingleOrder",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 247,
+      "name": "extractTopLevelCancelableOrdersIds",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 260,
+      "name": "buildEntryOrderModelBySymbol",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 284,
+      "name": "extractExitPrices",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 317,
+      "name": "buildOrderModelBySymbol",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 334,
+      "name": "filterToEquityOrders",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 352,
+      "name": "isSingleOrderOpenStatus",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 355,
+      "name": "extractEntryOrders",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 372,
+      "name": "extractEntryOrdersIds",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 382,
+      "name": "extractFilledOrders",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 417,
+      "name": "extractWorkingExitPairs",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 477,
+      "name": "extractWorkingExitPairsFromOTOChild",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 508,
+      "name": "isFilledOTO",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 511,
+      "name": "extractWorkingChildOrdersFromOCO",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 529,
+      "name": "extractOrderPrice",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 541,
+      "name": "isBuyOrder",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 544,
+      "name": "isSellOrder",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 547,
+      "name": "buildOrderModel",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 571,
+      "name": "splitOrdersBySymbol",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 585,
+      "name": "extractOrderExecutionsFromAllSymbols",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 597,
+      "name": "extractOrderExecutions",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 641,
+      "name": "aggregateExecutionLegs",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 667,
+      "name": "extractTradeExecutions",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 728,
+      "name": "generateExecutionScript",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/api.ts",
+      "line": 22,
+      "name": "placeOrderBase",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/api.ts",
+      "line": 52,
+      "name": "getOrdersForSymbol",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/api.ts",
+      "line": 60,
+      "name": "filterOrdersForSymbol",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/api.ts",
+      "line": 73,
+      "name": "getOrderSymbol",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 63,
+      "name": "getClosingOrderLegInstruction",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 131,
+      "name": "copyOrder",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 136,
+      "name": "copySingleOrder",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 169,
+      "name": "createOcoOrder",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 174,
+      "name": "createOcoOrderFromTwoLegs",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 180,
+      "name": "createOneEntryWithTwoExits",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 201,
+      "name": "createOcoExitOrder",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 214,
+      "name": "extractTopLevelCancelableOrdersIds",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 313,
+      "name": "extractEntryOrdersIds",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 473,
+      "name": "isSellOrder",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 572,
+      "name": "extractTradeExecutions",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 633,
+      "name": "generateExecutionScript",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/adjustExitsHandler.ts",
+      "line": 10,
+      "name": "onAdjustExits",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/adjustExitsHandler.ts",
+      "line": 26,
+      "name": "getSnapPriceForAdjustStops",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/adjustExitsHandler.ts",
+      "line": 65,
+      "name": "adjustAllStopExitsWithoutRule",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/entryHandler.ts",
+      "line": 12,
+      "name": "getLogTagsForEntryAction",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/entryHandler.ts",
+      "line": 19,
+      "name": "getOrderType",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/exitRulesCheckerSimple.ts",
+      "line": 27,
+      "name": "isAllowedForSingle",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/exitRulesCheckerSimple.ts",
+      "line": 93,
+      "name": "isLessTightThanClosedCandlesForAdjustStop",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/streamingHandler.ts",
+      "line": 39,
+      "name": "handleMessageData",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/streamingHandler.ts",
+      "line": 53,
+      "name": "handleTradeUpdates",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/streamingHandler.ts",
+      "line": 58,
+      "name": "handleOrderRejection",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/data/db.ts",
+      "line": 746,
+      "name": "getPremarketTradingAmountInMillionDollars",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/data/db.ts",
+      "line": 751,
+      "name": "getExtremePrice",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/data/db.ts",
+      "line": 814,
+      "name": "addDataAndUpdateChart",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/tradingState.ts",
+      "line": 15,
+      "name": "getDefaultAtr",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/tradebooks/tradebooksManager.ts",
+      "line": 19,
+      "name": "isDirectionEnabled",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/tradebooks/tradebooksManager.ts",
+      "line": 23,
+      "name": "createTradebooksForGapAndGo",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/tradebooks/tradebooksManager.ts",
+      "line": 29,
+      "name": "createTradebooksForGapAndCrap",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/tradebooks/tradebooksManager.ts",
+      "line": 36,
+      "name": "createTradebooksForGapDownAndGoDown",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/tradebooks/tradebooksManager.ts",
+      "line": 42,
+      "name": "createTradebooksForGapDownAndGoUp",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/tradebooks/tradebooksManager.ts",
+      "line": 48,
+      "name": "createTradebooksForRangeBoundReversal",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/trading/adapters/browserBrokerMetadata.ts",
+      "line": 18,
+      "name": "getBrokerObservation",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [
+        "src/bookmap/directExecution.test.ts"
+      ],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/trading/core/account/tradeLedger.ts",
+      "line": 34,
+      "name": "projectTradeLedger",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": [
+        "scripts/generateStateFixtures.mjs"
+      ]
+    },
+    {
+      "file": "src/trading/core/configuration/tradingConfig.ts",
+      "line": 72,
+      "name": "readTradingConfig",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": [
+        "scripts/generateStateFixtures.mjs"
+      ]
+    },
+    {
+      "file": "src/trading/core/controllers/workflows.ts",
+      "line": 25,
+      "name": "pendingStopRefresh",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": [
+        "scripts/generateStateFixtures.mjs"
+      ]
+    },
+    {
+      "file": "src/trading/core/controllers/workflows.ts",
+      "line": 32,
+      "name": "firstVwapTouch",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": [
+        "scripts/generateStateFixtures.mjs"
+      ]
+    },
+    {
+      "file": "src/trading/core/controllers/workflows.ts",
+      "line": 41,
+      "name": "completedPartials",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": [
+        "scripts/generateStateFixtures.mjs"
+      ]
+    },
+    {
+      "file": "src/trading/core/state/tradeState.ts",
+      "line": 3,
+      "name": "dateLabel",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": [
+        "scripts/generateStateFixtures.mjs"
+      ]
+    },
+    {
+      "file": "src/trading/core/state/tradeState.ts",
+      "line": 14,
+      "name": "defaultSymbolState",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": [
+        "scripts/generateStateFixtures.mjs"
+      ]
+    },
+    {
+      "file": "src/trading/core/state/tradeState.ts",
+      "line": 25,
+      "name": "TradeState",
+      "kind": "class",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": [
+        "scripts/generateStateFixtures.mjs"
+      ]
+    },
+    {
+      "file": "src/trading/libraries/broker/schwab/streamingProtocol.ts",
+      "line": 6,
+      "name": "request",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": [
+        "scripts/generateStreamFixtures.mjs"
+      ]
+    },
+    {
+      "file": "src/trading/libraries/broker/schwab/streamingProtocol.ts",
+      "line": 9,
+      "name": "loginRequest",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": [
+        "scripts/generateStreamFixtures.mjs"
+      ]
+    },
+    {
+      "file": "src/trading/libraries/broker/schwab/streamingProtocol.ts",
+      "line": 12,
+      "name": "quoteSubscribeRequest",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": [
+        "scripts/generateStreamFixtures.mjs"
+      ]
+    },
+    {
+      "file": "src/trading/libraries/broker/schwab/streamingProtocol.ts",
+      "line": 15,
+      "name": "activitySubscribeRequest",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": [
+        "scripts/generateStreamFixtures.mjs"
+      ]
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 245,
+      "name": "updateToolTip",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 263,
+      "name": "updateHoveredCandle",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1441,
+      "name": "runPostCandleCloseIndicators",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1445,
+      "name": "checkVwapBeforeOpen",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1467,
+      "name": "hideButtonAfterSeconds",
+      "kind": "function",
+      "exported": false,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chartSettings.ts",
+      "line": 76,
+      "name": "getPopupChartSettings",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/calculator.ts",
+      "line": 36,
+      "name": "getPercentageString",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/calculator.ts",
+      "line": 57,
+      "name": "median",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [],
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/errorDetails.ts",
+      "line": 27,
+      "name": "fetchBrokerResponse",
+      "kind": "function",
+      "exported": true,
+      "testFiles": [
+        "src/bookmap/directExecution.test.ts"
+      ],
+      "toolConsumers": []
+    }
+  ],
+  "exposedModules": [
+    "src/algorithms/autoTrader.ts",
+    "src/algorithms/riskManager.ts",
+    "src/algorithms/takeProfit.ts",
+    "src/algorithms/watchlist.ts",
+    "src/api/broker.ts",
+    "src/api/marketData.ts",
+    "src/api/schwab/api.ts",
+    "src/api/tdAmeritrade/api.ts",
+    "src/config/config.ts",
+    "src/controllers/handler.ts",
+    "src/controllers/orderFlow.ts",
+    "src/controllers/orderFlowManager.ts",
+    "src/controllers/traderFocus.ts",
+    "src/firestore.ts",
+    "src/models/models.ts",
+    "src/models/tradingPlans/tradingPlans.ts",
+    "src/models/tradingState.ts",
+    "src/notifications/notificationEngine.ts",
+    "src/ui/chart.ts",
+    "src/ui/questionPopup.ts",
+    "src/ui/ui.ts",
+    "src/utils/helper.ts",
+    "src/utils/timeHelper.ts",
+    "src/utils/webRequest.ts"
+  ],
+  "unreachableStatements": [
+    {
+      "file": "src/utils/entryThresholdValidator.ts",
+      "line": 37,
+      "endLine": 81,
+      "reason": "Unreachable code detected."
+    }
+  ],
+  "unreferencedMembers": [
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 35,
+      "class": "Tradebook",
+      "name": "getCommonLiveStats",
+      "kind": "method"
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 58,
+      "class": "Tradebook",
+      "name": "getButtonForLabel",
+      "kind": "method"
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 85,
+      "class": "Tradebook",
+      "name": "includeFirstNewHighEntry",
+      "kind": "method"
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 149,
+      "class": "Tradebook",
+      "name": "hasPositionForTradebook",
+      "kind": "method"
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 70,
+      "class": "BookmapWallReversal",
+      "name": "getNativeExecutionDefinition",
+      "kind": "method"
+    }
+  ],
+  "browserGlobalOnly": [
+    {
+      "file": "src/utils/timeHelper.ts",
+      "line": 21,
+      "name": "formatDateToHHMMSS",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/timeHelper.ts",
+      "line": 36,
+      "name": "getPreciseTimeString",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/timeHelper.ts",
+      "line": 100,
+      "name": "localTimeToNewYorkTime",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/timeHelper.ts",
+      "line": 112,
+      "name": "isBeforeMarketOpenHours",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/timeHelper.ts",
+      "line": 139,
+      "name": "getTomorrowString",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/timeHelper.ts",
+      "line": 145,
+      "name": "getYesterdayString",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/helper.ts",
+      "line": 45,
+      "name": "numberToString",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/helper.ts",
+      "line": 82,
+      "name": "getMarketCloseTime",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/helper.ts",
+      "line": 85,
+      "name": "getSecondsToNextMinute",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/helper.ts",
+      "line": 95,
+      "name": "getMillisecondsSinceMarketOpen",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/helper.ts",
+      "line": 98,
+      "name": "getSecondsToMarketOpen",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/helper.ts",
+      "line": 102,
+      "name": "isInActiveHoursOfMarket",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/helper.ts",
+      "line": 106,
+      "name": "isRegularMarketSessionTime",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/helper.ts",
+      "line": 135,
+      "name": "toUserTimeString",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/helper.ts",
+      "line": 144,
+      "name": "playOrderSubmissionSound",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/helper.ts",
+      "line": 166,
+      "name": "jsDateToTradingViewUTCForTimeframe",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/helper.ts",
+      "line": 178,
+      "name": "isIndex",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/helper.ts",
+      "line": 182,
+      "name": "getTargetPrice",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/helper.ts",
+      "line": 229,
+      "name": "isToday",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/helper.ts",
+      "line": 257,
+      "name": "isNewPriceMoreProfitableThanCurrentPrice",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/helper.ts",
+      "line": 265,
+      "name": "roundListToCents",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/helper.ts",
+      "line": 273,
+      "name": "printBar",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/helper.ts",
+      "line": 277,
+      "name": "generateUniqueString",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/helper.ts",
+      "line": 285,
+      "name": "getPullbackPrice",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/helper.ts",
+      "line": 323,
+      "name": "updateHtmlIfChanged",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/helper.ts",
+      "line": 364,
+      "name": "throttle",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/config/config.ts",
+      "line": 32,
+      "name": "isEquity",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/orderFlowManager.ts",
+      "line": 18,
+      "name": "getSpreadDataPoints",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/orderFlowManager.ts",
+      "line": 24,
+      "name": "isSingleSpreadTooLarge",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/orderFlowManager.ts",
+      "line": 29,
+      "name": "isSingleSpreadInAtrPercentTooLarge",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/riskManager.ts",
+      "line": 271,
+      "name": "isOverSized",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/riskManager.ts",
+      "line": 288,
+      "name": "hasEnoughBuyingPower",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/riskManager.ts",
+      "line": 290,
+      "name": "isRealizedProfitLossOverThreshold",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/webRequest.ts",
+      "line": 26,
+      "name": "postForm",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/webRequest.ts",
+      "line": 32,
+      "name": "postForm2",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/webRequest.ts",
+      "line": 41,
+      "name": "asyncGet2",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/webRequest.ts",
+      "line": 53,
+      "name": "asyncGet",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/utils/webRequest.ts",
+      "line": 65,
+      "name": "asyncGetWithoutToken",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 30,
+      "name": "test",
+      "toolConsumers": [
+        "scripts/integrationHealth.test.mjs"
+      ]
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 35,
+      "name": "testReplaceOrder",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 63,
+      "name": "generateRefreshTokenUrl",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 76,
+      "name": "generateRefreshToken",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 120,
+      "name": "getOptionsChain",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 135,
+      "name": "hasWeeklyOptions",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 174,
+      "name": "getFundamentals",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 289,
+      "name": "replaceSingleOrderWithMarketOrder",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 363,
+      "name": "cancelAndReplaceExitPairWithNewPrice",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 415,
+      "name": "cancelAndReplaceWithMarketOrder",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 449,
+      "name": "submitPremarketOrder",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 478,
+      "name": "testReplaceEntry2",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/broker.ts",
+      "line": 14,
+      "name": "getBrokerApi",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/broker.ts",
+      "line": 29,
+      "name": "test1",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/broker.ts",
+      "line": 39,
+      "name": "test2",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/broker.ts",
+      "line": 184,
+      "name": "submitPremarketOrder",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/broker.ts",
+      "line": 217,
+      "name": "cancelOneSideEntryOrders",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/broker.ts",
+      "line": 241,
+      "name": "replaceWithMarketOrder",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/broker.ts",
+      "line": 250,
+      "name": "replaceSimpleOrderWithNewPrice",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/broker.ts",
+      "line": 353,
+      "name": "generateExecutionScriptForOrderExecutions",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/broker.ts",
+      "line": 390,
+      "name": "aggregateExecutionsPerMinutePerSidePerPrice",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/broker.ts",
+      "line": 392,
+      "name": "aggregateExecutionsPerMinutePerSide",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/broker.ts",
+      "line": 394,
+      "name": "aggregateExecutions",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/takeProfit.ts",
+      "line": 23,
+      "name": "getTargetPriceByRiskReward",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/watchlist.ts",
+      "line": 136,
+      "name": "isTopPick",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/watchlist.ts",
+      "line": 155,
+      "name": "isFocusedOnBestStock",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/orderFlow.ts",
+      "line": 213,
+      "name": "adjustSimpleOrdersWithNewPrice",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/orderFlow.ts",
+      "line": 239,
+      "name": "adjustHalfExitOrdersWithNewPrice",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/orderFlow.ts",
+      "line": 246,
+      "name": "moveAllStopExitsToNewPrice",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/orderFlow.ts",
+      "line": 253,
+      "name": "raiseAllTargetsBelow",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/orderFlow.ts",
+      "line": 272,
+      "name": "getHalfExitOrdersPairs",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/orderFlow.ts",
+      "line": 396,
+      "name": "mytest",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/handler.ts",
+      "line": 204,
+      "name": "keyGPressed",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/handler.ts",
+      "line": 313,
+      "name": "raiseTargetsIfWasLess",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/handler.ts",
+      "line": 392,
+      "name": "twoWayBreakout",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/handler.ts",
+      "line": 532,
+      "name": "moveToInitialEntry",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/handler.ts",
+      "line": 636,
+      "name": "addPullbackPrice",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/controllers/handler.ts",
+      "line": 640,
+      "name": "addPullbackPartials",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/questionPopup.ts",
+      "line": 6,
+      "name": "show",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 257,
+      "name": "getHoveredCandle",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 455,
+      "name": "hasCustomEntryPrice",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 508,
+      "name": "getMultiplier",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 843,
+      "name": "drawMaxEntry",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 852,
+      "name": "clearMaxEntry",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 896,
+      "name": "showToolTips",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1084,
+      "name": "showChart",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1091,
+      "name": "invisibleChart",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1098,
+      "name": "visibleChart",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1105,
+      "name": "maximizeChart",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1108,
+      "name": "normalSizeChart",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1111,
+      "name": "resizeChart",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1120,
+      "name": "addMarker",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1236,
+      "name": "blinkChart",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1284,
+      "name": "drawKeyAreas",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1450,
+      "name": "displayState",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1634,
+      "name": "setWatermark",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/autoTrader.ts",
+      "line": 338,
+      "name": "updateAllAlgo",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/autoTrader.ts",
+      "line": 345,
+      "name": "clearExistingAlgos",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/algorithms/autoTrader.ts",
+      "line": 568,
+      "name": "onAccountDataRefresh",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/ui.ts",
+      "line": 37,
+      "name": "reviewChartStart",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/ui.ts",
+      "line": 48,
+      "name": "reviewNextChart",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/ui.ts",
+      "line": 74,
+      "name": "addOneLineDiv",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/ui/ui.ts",
+      "line": 82,
+      "name": "addOneLineSpan",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/tradingState.ts",
+      "line": 104,
+      "name": "set",
+      "toolConsumers": [
+        "scripts/integrationHealth.test.mjs"
+      ]
+    },
+    {
+      "file": "src/models/tradingState.ts",
+      "line": 116,
+      "name": "getInitialBalance",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/tradingState.ts",
+      "line": 120,
+      "name": "setPendingOrderTimeoutID",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/tradingState.ts",
+      "line": 146,
+      "name": "onNativeEntryAccepted",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/tradingState.ts",
+      "line": 252,
+      "name": "setExitDescription",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/tradingPlans/tradingPlans.ts",
+      "line": 40,
+      "name": "hasSingleMomentumLevel",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/tradingPlans/tradingPlans.ts",
+      "line": 45,
+      "name": "getDualMomentumLevels",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/tradingPlans/tradingPlans.ts",
+      "line": 76,
+      "name": "getAnalysisDefaultRiskLevels",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/tradingPlans/tradingPlans.ts",
+      "line": 102,
+      "name": "getTradingSettings",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/tradingPlans/tradingPlans.ts",
+      "line": 161,
+      "name": "noZero",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/tradingPlans/tradingPlans.ts",
+      "line": 170,
+      "name": "hasFirst60PlanForOneSide",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/tradingPlans/tradingPlans.ts",
+      "line": 174,
+      "name": "isInRange",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/tradingPlans/tradingPlans.ts",
+      "line": 190,
+      "name": "getMinTarget",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/tradingPlans/tradingPlans.ts",
+      "line": 230,
+      "name": "populateTargets",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 364,
+      "name": "getCurrentRange",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 556,
+      "name": "getTradebooks",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 570,
+      "name": "getAllLimitExits",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 633,
+      "name": "getBreakoutEntryOrders",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 681,
+      "name": "getRealizedProfitLossPerDirection",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 696,
+      "name": "getRealizedProfitLossForSymbol",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 710,
+      "name": "getProfitLossFromClosedTrades",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 726,
+      "name": "getNetWinningTradesCountPerDirection",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 775,
+      "name": "hasPremarketTrades",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 833,
+      "name": "getInitialFilledPrice",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 920,
+      "name": "getLastEntryTimeFromNowInSeconds",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1124,
+      "name": "getCandlesFromM5SinceOpen",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1129,
+      "name": "getCandlesFromM5SinceTime",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1132,
+      "name": "getCandlesFromM15SinceOpen",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1137,
+      "name": "getCandlesFromM15SinceTime",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1140,
+      "name": "getCandlesFromM30SinceOpen",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1146,
+      "name": "getCandlesFromM30SinceTime",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1160,
+      "name": "getUndefinedCandles",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1176,
+      "name": "getRiskLevelPrice",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1260,
+      "name": "getHighLowBreakoutEntryStopPrice",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1324,
+      "name": "getPreviousCandle",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1346,
+      "name": "getHigherTimeFrameCandles",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1353,
+      "name": "getHigherTimeFrameVolumes",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1361,
+      "name": "getHigherTimeFrameVwaps",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1369,
+      "name": "getCandlesLog",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1384,
+      "name": "aggregateCandles",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1411,
+      "name": "createGroupsByMinuteBucket",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1437,
+      "name": "aggregateVolumes",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1462,
+      "name": "aggregateVwaps",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1506,
+      "name": "getVwapsSinceOpen",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1519,
+      "name": "getVwapsForHigherTimeframe",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1526,
+      "name": "getVwapsSinceOpenForTimeframe",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1539,
+      "name": "openPriceIsAboveVwap",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1673,
+      "name": "getCandlesTimeDifferenceInMinutes",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1693,
+      "name": "toTdaOrderTypeString",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1791,
+      "name": "getDollarTradedAfterOpenInMillions",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1801,
+      "name": "getWatchlistIndex",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1830,
+      "name": "getQuantityDetails",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1877,
+      "name": "getAtrThreshold",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1887,
+      "name": "isSnapMode",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 2053,
+      "name": "getTimeframeFromEntryMethod",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 2094,
+      "name": "getCandlesSinceOpenForTimeframe",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 2107,
+      "name": "getFirstNewLowsHigherTimeframeEntryMethods",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/firestore.ts",
+      "line": 21,
+      "name": "getStatePrefix",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/firestore.ts",
+      "line": 30,
+      "name": "logCandles",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/firestore.ts",
+      "line": 99,
+      "name": "deleteMonthlyLogs",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/firestore.ts",
+      "line": 108,
+      "name": "deleteDailyLogs",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/firestore.ts",
+      "line": 119,
+      "name": "deleteCollectionByName",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/firestore.ts",
+      "line": 123,
+      "name": "deleteLogsAndOrders",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/firestore.ts",
+      "line": 157,
+      "name": "logBreakoutTradeState",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/api.ts",
+      "line": 12,
+      "name": "extractCodeFromUrl",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/api.ts",
+      "line": 43,
+      "name": "replaceWithNewPrice",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/api.ts",
+      "line": 87,
+      "name": "getQuote",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/api.ts",
+      "line": 99,
+      "name": "getPriceHistory",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/api.ts",
+      "line": 116,
+      "name": "getAccount",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/api.ts",
+      "line": 209,
+      "name": "getFundamentals",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/api.ts",
+      "line": 243,
+      "name": "getOptionsChain",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/tdAmeritrade/api.ts",
+      "line": 256,
+      "name": "hasWeeklyOptions",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/marketData.ts",
+      "line": 18,
+      "name": "getQuote",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/marketData.ts",
+      "line": 28,
+      "name": "getFundamentals",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/marketData.ts",
+      "line": 65,
+      "name": "getPriceHistory",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/marketData.ts",
+      "line": 70,
+      "name": "hasWeeklyOptions",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/marketData.ts",
+      "line": 78,
+      "name": "getPreviousTradingDate",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/marketData.ts",
+      "line": 92,
+      "name": "get30MinuteChartFromLastNDays",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/marketData.ts",
+      "line": 99,
+      "name": "getPremarketDollarFromDate",
+      "toolConsumers": []
+    },
+    {
+      "file": "src/api/marketData.ts",
+      "line": 103,
+      "name": "getPremarketDollarStats",
+      "toolConsumers": []
+    }
+  ],
+  "unusedBindings": [
+    {
+      "file": "src/algorithms/autoTrader.ts",
+      "line": 5,
+      "code": 6133,
+      "message": "'TradingPlans' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/autoTrader.ts",
+      "line": 244,
+      "code": 6133,
+      "message": "'scheduleSecondMinuteCloseEvent' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/autoTrader.ts",
+      "line": 279,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/autoTrader.ts",
+      "line": 279,
+      "code": 6133,
+      "message": "'openPrice' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/autoTrader.ts",
+      "line": 303,
+      "code": 6133,
+      "message": "'symbolData' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/autoTrader.ts",
+      "line": 345,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/autoTrader.ts",
+      "line": 510,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/autoTrader.ts",
+      "line": 544,
+      "code": 6133,
+      "message": "'isNewCandleData' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/autoTrader.ts",
+      "line": 555,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/patterns.ts",
+      "line": 546,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/riskManager.ts",
+      "line": 37,
+      "code": 6133,
+      "message": "'setupQuality' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/riskManager.ts",
+      "line": 48,
+      "code": 6133,
+      "message": "'orOverride' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/riskManager.ts",
+      "line": 65,
+      "code": 6133,
+      "message": "'basePlan' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/riskManager.ts",
+      "line": 89,
+      "code": 6133,
+      "message": "'getRiskMultiplerForNextEntry2' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/riskManager.ts",
+      "line": 108,
+      "code": 6133,
+      "message": "'getRiskInDollarForNextEntry' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/riskManager.ts",
+      "line": 121,
+      "code": 6133,
+      "message": "'logTags' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/riskManager.ts",
+      "line": 125,
+      "code": 6133,
+      "message": "'p' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/riskManager.ts",
+      "line": 126,
+      "code": 6133,
+      "message": "'e' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/riskManager.ts",
+      "line": 127,
+      "code": 6133,
+      "message": "'r' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/riskManager.ts",
+      "line": 223,
+      "code": 6133,
+      "message": "'isLong' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 83,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 83,
+      "code": 6133,
+      "message": "'secondsSinceMarketOpen' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 83,
+      "code": 6133,
+      "message": "'stopOutPrice' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 169,
+      "code": 6133,
+      "message": "'riskMultiples' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 206,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/rules.ts",
+      "line": 375,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/strategies.ts",
+      "line": 3,
+      "code": 6133,
+      "message": "'R2Target' is declared but its value is never read."
+    },
+    {
+      "file": "src/algorithms/watchlist.ts",
+      "line": 169,
+      "code": 6133,
+      "message": "'watchlist' is declared but its value is never read."
+    },
+    {
+      "file": "src/api/broker.ts",
+      "line": 356,
+      "code": 6133,
+      "message": "'positionEffectIsOpen' is declared but its value is never read."
+    },
+    {
+      "file": "src/api/broker.ts",
+      "line": 370,
+      "code": 6133,
+      "message": "'aggregateEntriesExecutions' is declared but its value is never read."
+    },
+    {
+      "file": "src/api/broker.ts",
+      "line": 384,
+      "code": 6133,
+      "message": "'key' is declared but its value is never read."
+    },
+    {
+      "file": "src/api/broker.ts",
+      "line": 411,
+      "code": 6133,
+      "message": "'getRealizedPnL' is declared but its value is never read."
+    },
+    {
+      "file": "src/api/broker.ts",
+      "line": 430,
+      "code": 6133,
+      "message": "'isTradeClosed' is declared but its value is never read."
+    },
+    {
+      "file": "src/api/marketData.ts",
+      "line": 103,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 23,
+      "code": 6133,
+      "message": "'fetchBrokerResponse' is declared but its value is never read."
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 27,
+      "code": 6133,
+      "message": "'TRADER_API_HOST' is declared but its value is never read."
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 182,
+      "code": 6133,
+      "message": "'summary' is declared but its value is never read."
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 345,
+      "code": 6133,
+      "message": "'positionIsLong' is declared but its value is never read."
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 389,
+      "code": 6133,
+      "message": "'positionIsLong' is declared but its value is never read."
+    },
+    {
+      "file": "src/api/schwab/api.ts",
+      "line": 528,
+      "code": 6133,
+      "message": "'logErrorForObject' is declared but its value is never read."
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 641,
+      "code": 6133,
+      "message": "'orderType' is declared but its value is never read."
+    },
+    {
+      "file": "src/api/schwab/orderFactory.ts",
+      "line": 641,
+      "code": 6133,
+      "message": "'submitTime' is declared but its value is never read."
+    },
+    {
+      "file": "src/api/schwab/streaming.ts",
+      "line": 79,
+      "code": 6133,
+      "message": "'receivedTime' is declared but its value is never read."
+    },
+    {
+      "file": "src/api/tdAmeritrade/api.ts",
+      "line": 22,
+      "code": 6133,
+      "message": "'placeOrderBase' is declared but its value is never read."
+    },
+    {
+      "file": "src/api/tdAmeritrade/api.ts",
+      "line": 52,
+      "code": 6133,
+      "message": "'getOrdersForSymbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/api/tdAmeritrade/api.ts",
+      "line": 217,
+      "code": 6133,
+      "message": "'summary' is declared but its value is never read."
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 546,
+      "code": 6133,
+      "message": "'orderType' is declared but its value is never read."
+    },
+    {
+      "file": "src/api/tdAmeritrade/orderFactory.ts",
+      "line": 546,
+      "code": 6133,
+      "message": "'submitTime' is declared but its value is never read."
+    },
+    {
+      "file": "src/bookmap/bookmapSocket.ts",
+      "line": 24,
+      "code": 6133,
+      "message": "'DEFAULT_PARTIALS_COUNT' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/adjustExitsHandler.ts",
+      "line": 15,
+      "code": 6133,
+      "message": "'totalCount' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/adjustExitsHandler.ts",
+      "line": 106,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/entryHandler.ts",
+      "line": 19,
+      "code": 6133,
+      "message": "'getOrderType' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/entryHandler.ts",
+      "line": 33,
+      "code": 6133,
+      "message": "'secondsSinceMarketOpen' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/entryHandler.ts",
+      "line": 34,
+      "code": 6133,
+      "message": "'plan' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/entryRulesChecker.ts",
+      "line": 31,
+      "code": 6133,
+      "message": "'stopOutPrice' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/entryRulesChecker.ts",
+      "line": 31,
+      "code": 6133,
+      "message": "'useMarketOrder' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/entryRulesChecker.ts",
+      "line": 140,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/entryRulesChecker.ts",
+      "line": 140,
+      "code": 6133,
+      "message": "'isLong' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/entryRulesChecker.ts",
+      "line": 140,
+      "code": 6133,
+      "message": "'entryPrice' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/entryRulesChecker.ts",
+      "line": 141,
+      "code": 6133,
+      "message": "'logTags' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/entryRulesChecker.ts",
+      "line": 149,
+      "code": 6133,
+      "message": "'isLong' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/entryRulesChecker.ts",
+      "line": 165,
+      "code": 6133,
+      "message": "'isLong' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/exitRulesChecker.ts",
+      "line": 3,
+      "code": 6133,
+      "message": "'TradingPlansModels' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/exitRulesChecker.ts",
+      "line": 6,
+      "code": 6133,
+      "message": "'Patterns' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/exitRulesChecker.ts",
+      "line": 7,
+      "code": 6133,
+      "message": "'Firestore' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/exitRulesCheckerNew.ts",
+      "line": 35,
+      "code": 6133,
+      "message": "'isLong' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/exitRulesCheckerNew.ts",
+      "line": 56,
+      "code": 6133,
+      "message": "'isLong' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/exitRulesCheckerNew.ts",
+      "line": 76,
+      "code": 6133,
+      "message": "'isLong' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/exitRulesCheckerNew.ts",
+      "line": 101,
+      "code": 6133,
+      "message": "'isLong' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/exitRulesCheckerNew.ts",
+      "line": 121,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/exitRulesCheckerNew.ts",
+      "line": 121,
+      "code": 6133,
+      "message": "'logTags' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/exitRulesCheckerSimple.ts",
+      "line": 10,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/exitRulesCheckerSimple.ts",
+      "line": 77,
+      "code": 6133,
+      "message": "'exitPairsCount' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/exitRulesCheckerSimple.ts",
+      "line": 77,
+      "code": 6133,
+      "message": "'isLong' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/exitRulesCheckerSimple.ts",
+      "line": 77,
+      "code": 6133,
+      "message": "'isHigherTimeFrame' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/handler.ts",
+      "line": 10,
+      "code": 6133,
+      "message": "'Patterns' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/handler.ts",
+      "line": 62,
+      "code": 6133,
+      "message": "'totalCount' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/handler.ts",
+      "line": 235,
+      "code": 6133,
+      "message": "'usageKey' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/handler.ts",
+      "line": 240,
+      "code": 6133,
+      "message": "'keyIndex' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/handler.ts",
+      "line": 392,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/keyboardHandler.ts",
+      "line": 30,
+      "code": 6133,
+      "message": "'symbolState' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/keyboardHandler.ts",
+      "line": 31,
+      "code": 6133,
+      "message": "'netQuantity' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/orderFlow.ts",
+      "line": 5,
+      "code": 6133,
+      "message": "'TradingState' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/orderFlow.ts",
+      "line": 167,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/orderFlowManager.ts",
+      "line": 14,
+      "code": 6133,
+      "message": "'bidSize' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/orderFlowManager.ts",
+      "line": 14,
+      "code": 6133,
+      "message": "'askSize' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/orderFlowManager.ts",
+      "line": 14,
+      "code": 6133,
+      "message": "'bidPrice' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/orderFlowManager.ts",
+      "line": 14,
+      "code": 6133,
+      "message": "'askPrice' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/orderFlowManager.ts",
+      "line": 34,
+      "code": 6133,
+      "message": "'atr' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/streamingHandler.ts",
+      "line": 53,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/streamingHandler.ts",
+      "line": 53,
+      "code": 6133,
+      "message": "'data' is declared but its value is never read."
+    },
+    {
+      "file": "src/controllers/streamingHandler.ts",
+      "line": 58,
+      "code": 6133,
+      "message": "'handleOrderRejection' is declared but its value is never read."
+    },
+    {
+      "file": "src/data/db.ts",
+      "line": 8,
+      "code": 6133,
+      "message": "'Firestore' is declared but its value is never read."
+    },
+    {
+      "file": "src/data/db.ts",
+      "line": 234,
+      "code": 6133,
+      "message": "'tradeTime' is declared but its value is never read."
+    },
+    {
+      "file": "src/data/db.ts",
+      "line": 284,
+      "code": 6133,
+      "message": "'vwapCorrectionStartTimeMs' is declared but its value is never read."
+    },
+    {
+      "file": "src/data/db.ts",
+      "line": 285,
+      "code": 6133,
+      "message": "'hasVwapCorrection' is declared but its value is never read."
+    },
+    {
+      "file": "src/firestore.ts",
+      "line": 7,
+      "code": 6133,
+      "message": "'Helper' is declared but its value is never read."
+    },
+    {
+      "file": "src/firestore.ts",
+      "line": 119,
+      "code": 6133,
+      "message": "'accountName' is declared but its value is never read."
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 607,
+      "code": 6133,
+      "message": "'accountCache' is declared but its value is never read."
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 757,
+      "code": 6133,
+      "message": "'key' is declared but its value is never read."
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 878,
+      "code": 6133,
+      "message": "'candleTime' is declared but its value is never read."
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 952,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 968,
+      "code": 6133,
+      "message": "'value' is declared but its value is never read."
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1396,
+      "code": 6133,
+      "message": "'minuteBucketNumber' is declared but its value is never read."
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 1448,
+      "code": 6133,
+      "message": "'minuteBucketNumber' is declared but its value is never read."
+    },
+    {
+      "file": "src/models/tradingPlans/tradingPlans.ts",
+      "line": 3,
+      "code": 6133,
+      "message": "'TimeHelper' is declared but its value is never read."
+    },
+    {
+      "file": "src/models/tradingPlans/tradingPlans.ts",
+      "line": 111,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/models/tradingPlans/tradingPlans.ts",
+      "line": 119,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/models/tradingPlans/tradingPlans.ts",
+      "line": 138,
+      "code": 6133,
+      "message": "'plan' is declared but its value is never read."
+    },
+    {
+      "file": "src/models/tradingPlans/tradingPlans.ts",
+      "line": 138,
+      "code": 6133,
+      "message": "'isLong' is declared but its value is never read."
+    },
+    {
+      "file": "src/models/tradingPlans/tradingPlans.ts",
+      "line": 170,
+      "code": 6133,
+      "message": "'plan' is declared but its value is never read."
+    },
+    {
+      "file": "src/models/tradingPlans/tradingPlans.ts",
+      "line": 230,
+      "code": 6133,
+      "message": "'isLong' is declared but its value is never read."
+    },
+    {
+      "file": "src/models/tradingState.ts",
+      "line": 15,
+      "code": 6133,
+      "message": "'getDefaultAtr' is declared but its value is never read."
+    },
+    {
+      "file": "src/tosClient.ts",
+      "line": 27,
+      "code": 6133,
+      "message": "'r2' is declared but its value is never read."
+    },
+    {
+      "file": "src/tosClient.ts",
+      "line": 28,
+      "code": 6133,
+      "message": "'r3' is declared but its value is never read."
+    },
+    {
+      "file": "src/tosClient.ts",
+      "line": 29,
+      "code": 6133,
+      "message": "'r4' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 93,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 93,
+      "code": 6133,
+      "message": "'keyIndex' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 93,
+      "code": 6133,
+      "message": "'order' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 93,
+      "code": 6133,
+      "message": "'pair' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 93,
+      "code": 6133,
+      "message": "'newPrice' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 102,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 102,
+      "code": 6133,
+      "message": "'keyIndex' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 102,
+      "code": 6133,
+      "message": "'order' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 102,
+      "code": 6133,
+      "message": "'pair' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 102,
+      "code": 6133,
+      "message": "'newPrice' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 111,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 111,
+      "code": 6133,
+      "message": "'keyIndex' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 119,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 119,
+      "code": 6133,
+      "message": "'exitPrice' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 127,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 127,
+      "code": 6133,
+      "message": "'newPrice' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 135,
+      "code": 6133,
+      "message": "'entryPrice' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 141,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 141,
+      "code": 6133,
+      "message": "'entryPrice' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/baseTradebook.ts",
+      "line": 194,
+      "code": 6133,
+      "message": "'newPrice' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 7,
+      "code": 6133,
+      "message": "'GlobalSettings' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 10,
+      "code": 6133,
+      "message": "'GapAndGoAlgo' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 175,
+      "code": 6133,
+      "message": "'logTags' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 219,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 219,
+      "code": 6133,
+      "message": "'keyIndex' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 219,
+      "code": 6133,
+      "message": "'order' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 220,
+      "code": 6133,
+      "message": "'pair' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 220,
+      "code": 6133,
+      "message": "'newPrice' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 220,
+      "code": 6133,
+      "message": "'logTags' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 225,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 225,
+      "code": 6133,
+      "message": "'keyIndex' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 225,
+      "code": 6133,
+      "message": "'order' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 226,
+      "code": 6133,
+      "message": "'pair' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 226,
+      "code": 6133,
+      "message": "'newPrice' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 226,
+      "code": 6133,
+      "message": "'logTags' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 231,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 231,
+      "code": 6133,
+      "message": "'keyIndex' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 231,
+      "code": 6133,
+      "message": "'logTags' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 236,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 236,
+      "code": 6133,
+      "message": "'logTags' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 236,
+      "code": 6133,
+      "message": "'newPrice' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/bookmapWallReversal.ts",
+      "line": 241,
+      "code": 6133,
+      "message": "'newPrice' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/tradebooksManager.ts",
+      "line": 19,
+      "code": 6133,
+      "message": "'isDirectionEnabled' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/tradebooksManager.ts",
+      "line": 109,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/tradebooksManager.ts",
+      "line": 109,
+      "code": 6133,
+      "message": "'openPrice' is declared but its value is never read."
+    },
+    {
+      "file": "src/tradebooks/tradebooksManager.ts",
+      "line": 109,
+      "code": 6133,
+      "message": "'lastVwapBeforeOpen' is declared but its value is never read."
+    },
+    {
+      "file": "src/trading/runtime/tradingRuntime.test.ts",
+      "line": 16,
+      "code": 6133,
+      "message": "'headers' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 92,
+      "code": 6133,
+      "message": "'chartDims' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 215,
+      "code": 6133,
+      "message": "'mouseEvent' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 245,
+      "code": 6133,
+      "message": "'updateToolTip' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 263,
+      "code": 6133,
+      "message": "'updateHoveredCandle' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 332,
+      "code": 6133,
+      "message": "'pointerEvent' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 448,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 508,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 518,
+      "code": 6133,
+      "message": "'widget' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 765,
+      "code": 6133,
+      "message": "'widget' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 808,
+      "code": 6133,
+      "message": "'atr' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 810,
+      "code": 6133,
+      "message": "'hod' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 811,
+      "code": 6133,
+      "message": "'lod' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1257,
+      "code": 6133,
+      "message": "'redColor' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1258,
+      "code": 6133,
+      "message": "'greenColor' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1259,
+      "code": 6133,
+      "message": "'blueColor' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1409,
+      "code": 6133,
+      "message": "'widget' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1441,
+      "code": 6133,
+      "message": "'runPostCandleCloseIndicators' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1445,
+      "code": 6133,
+      "message": "'newlyClosedCandle' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1445,
+      "code": 6133,
+      "message": "'localTime' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1467,
+      "code": 6133,
+      "message": "'hideButtonAfterSeconds' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1473,
+      "code": 6133,
+      "message": "'longContainer' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chart.ts",
+      "line": 1473,
+      "code": 6133,
+      "message": "'shortContainer' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chartSettings.ts",
+      "line": 5,
+      "code": 6133,
+      "message": "'redColor' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chartSettings.ts",
+      "line": 6,
+      "code": 6133,
+      "message": "'greenColor' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/chartSettings.ts",
+      "line": 87,
+      "code": 6133,
+      "message": "'tabIndex' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/ui.ts",
+      "line": 20,
+      "code": 6133,
+      "message": "'source' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/ui.ts",
+      "line": 69,
+      "code": 6133,
+      "message": "'symbolState' is declared but its value is never read."
+    },
+    {
+      "file": "src/ui/ui.ts",
+      "line": 69,
+      "code": 6133,
+      "message": "'symbol' is declared but its value is never read."
+    },
+    {
+      "file": "src/workers/marketDataWorker.ts",
+      "line": 15,
+      "code": 6133,
+      "message": "'symbols' is declared but its value is never read."
+    }
+  ],
+  "unreferencedConstants": [
+    {
+      "file": "src/config/globalSettings.ts",
+      "line": 15,
+      "name": "allowLiveStats",
+      "global": false,
+      "kind": "constant",
+      "refs": 0
+    },
+    {
+      "file": "src/config/globalSettings.ts",
+      "line": 17,
+      "name": "showBestPlans",
+      "global": false,
+      "kind": "constant",
+      "refs": 0
+    },
+    {
+      "file": "src/config/globalSettings.ts",
+      "line": 18,
+      "name": "showTradebooksForPosition",
+      "global": false,
+      "kind": "constant",
+      "refs": 0
+    },
+    {
+      "file": "src/config/globalSettings.ts",
+      "line": 19,
+      "name": "checkMaxEntryThreshold",
+      "global": false,
+      "kind": "constant",
+      "refs": 0
+    },
+    {
+      "file": "src/ui/chartSettings.ts",
+      "line": 214,
+      "name": "cloudAreaCandleSettings",
+      "global": false,
+      "kind": "constant",
+      "refs": 0
+    },
+    {
+      "file": "src/ui/chartSettings.ts",
+      "line": 235,
+      "name": "cloudLineSettings",
+      "global": false,
+      "kind": "constant",
+      "refs": 0
+    },
+    {
+      "file": "src/ui/chartSettings.ts",
+      "line": 254,
+      "name": "openRangeLineSettings",
+      "global": false,
+      "kind": "constant",
+      "refs": 0
+    },
+    {
+      "file": "src/bookmap/priceNormalization.ts",
+      "line": 9,
+      "name": "BOOKMAP_WIRE_PRICE_UNIT_FIELD",
+      "global": false,
+      "kind": "constant",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 141,
+      "name": "TwoCandlesPattern.UpTrend",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 142,
+      "name": "TwoCandlesPattern.StrongUpTrend",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 143,
+      "name": "TwoCandlesPattern.DownTrend",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 144,
+      "name": "TwoCandlesPattern.StrongDownTrend",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 145,
+      "name": "TwoCandlesPattern.InsideBar",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 146,
+      "name": "TwoCandlesPattern.LongEngulfing",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 147,
+      "name": "TwoCandlesPattern.ShortEngulfing",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 150,
+      "name": "BreakoutTradeStatus.None",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 151,
+      "name": "BreakoutTradeStatus.Pending",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 152,
+      "name": "BreakoutTradeStatus.Triggered",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 153,
+      "name": "BreakoutTradeStatus.FirstLeg",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 154,
+      "name": "BreakoutTradeStatus.FirstRetracement",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 155,
+      "name": "BreakoutTradeStatus.SecondLeg",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 156,
+      "name": "BreakoutTradeStatus.SecondRetracement",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 2041,
+      "name": "CommonEntryMethods.FalsePremarketHighBreakout",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 2042,
+      "name": "CommonEntryMethods.LowOfDay",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 2043,
+      "name": "CommonEntryMethods.HighOfDay",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 2047,
+      "name": "TimeFrameEntryMethod.M1",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 2136,
+      "name": "TradebookFamilyName.GapAndCrap",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 2137,
+      "name": "TradebookFamilyName.GapAndGo",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 2138,
+      "name": "TradebookFamilyName.GapGiveAndGo",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 2139,
+      "name": "TradebookFamilyName.GapDownAndGoDown",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/models/models.ts",
+      "line": 2140,
+      "name": "TradebookFamilyName.GapDownAndGoUp",
+      "global": true,
+      "kind": "enum member",
+      "refs": 0
+    },
+    {
+      "file": "src/streaming/timeSaleParse.ts",
+      "line": 4,
+      "name": "conditionsNotUpdateLastPrice",
+      "global": false,
+      "kind": "constant",
+      "refs": 0
+    },
+    {
+      "file": "src/controllers/streamingHandler.ts",
+      "line": 6,
+      "name": "conditionsNotUpdateHighLow",
+      "global": false,
+      "kind": "constant",
+      "refs": 0
+    },
+    {
+      "file": "src/controllers/streamingHandler.ts",
+      "line": 9,
+      "name": "conditionsNotUpdateLastPrice",
+      "global": false,
+      "kind": "constant",
+      "refs": 0
+    },
+    {
+      "file": "src/controllers/streamingHandler.ts",
+      "line": 12,
+      "name": "conditionsNotUpdateLastPriceNumbers",
+      "global": false,
+      "kind": "constant",
+      "refs": 0
+    },
+    {
+      "file": "src/controllers/streamingHandler.ts",
+      "line": 15,
+      "name": "conditionsNotUpdateVolume",
+      "global": false,
+      "kind": "constant",
+      "refs": 0
+    }
+  ],
+  "review": {
+    "date": "2026-10-04",
+    "scope": "Checked-in ViteApp SPA, market worker, tests and generator consumers",
+    "inheritanceHandling": "ExpressionWithTypeArguments scanned as runtime references; base Tradebook and MassiveApi retained",
+    "features": [
+      {
+        "name": "Unreachable ORB/timing checks",
+        "file": "src/utils/entryThresholdValidator.ts",
+        "line": 35,
+        "evidence": "An unconditional return true makes lines 37–81 unreachable (TS7027). The entire file also has no app import path."
+      },
+      {
+        "name": "Test popup button",
+        "file": "src/main.ts",
+        "line": 127,
+        "evidence": "The visible button installs an empty click callback. index.html:254 contains the control; it never opens a popup."
+      },
+      {
+        "name": "Breakeven hotkey E",
+        "file": "src/controllers/keyboardHandler.ts",
+        "line": 72,
+        "evidence": "Only logs that movement is disabled; the call to moveToInitialEntry is commented. The implementation survives through the Handler browser global."
+      },
+      {
+        "name": "Hotkey U",
+        "file": "src/controllers/keyboardHandler.ts",
+        "line": 80,
+        "evidence": "Recognized and logged, but its action branch is empty."
+      },
+      {
+        "name": "Automatic 5m/15m chart switching",
+        "file": "src/ui/chart.ts",
+        "line": 361,
+        "evidence": "showChartForTimeframe ignores _timeframe and always displays chartM1. AutoTrader.getTimeFrameToUse (line 119), updateChartTimeFrame and its minute timer therefore cannot switch displays. Models.getChartsInAllTimeframes/getChartsHtmlInAllTimeframes return only M1 (lines 1621/1627); no timeframebuttons markup exists. Higher-timeframe aggregation remains callable separately."
+      },
+      {
+        "name": "Legacy tradebook button builder",
+        "file": "src/ui/chart.ts",
+        "line": 1525,
+        "evidence": "The sole concrete tradebook returns the nonempty default entry-method list (1 R / 0.1 R); createTradebookUI always returns createTradebookUINew. The fallback main button, 1st High/Low, Cur High/Low, market-with-tight-stop, stats/sizing container and associated listeners at lines 1531–1606 cannot be built by current strategies. The A/B sizing buttons are commented as well."
+      },
+      {
+        "name": "First-new-high/current-candle entry alternatives",
+        "file": "src/ui/chart.ts",
+        "line": 489,
+        "evidence": "The old fallback buttons are unreachable. Active buttons and default parameters set both switches false; BookmapWallReversal.triggerEntry passes default parameters to getBreakoutEntryPrice (line 146). The helpers remain callable from Chart globals."
+      },
+      {
+        "name": "Tradebook live statistics",
+        "file": "src/tradebooks/bookmapWallReversal.ts",
+        "line": 67,
+        "evidence": "refreshLiveStats is empty for the only concrete strategy. The one-second refreshTradebooksStatus timer and generated stats divs do not produce statistics. allowLiveStats is also unread."
+      },
+      {
+        "name": "Tradebook tick/candle hooks",
+        "file": "src/tradebooks/baseTradebook.ts",
+        "line": 194,
+        "evidence": "BookmapWallReversal.onNewTimeSalesData is empty and onNewCandleClose inherits the empty base implementation. Manager iteration on ticks and candle closes reaches no strategy behavior. Entry submission and tradebook enable/disable are active."
+      },
+      {
+        "name": "Open-zone UI and market-open hook",
+        "file": "src/algorithms/autoTrader.ts",
+        "line": 279,
+        "evidence": "updateUIBasedOnOpenZoneForSymbol is empty, as is the effective body of onMarketOpen at line 294. Their startup/market-open calls do not update a UI or strategy. The separate pending-stop refresher remains active."
+      },
+      {
+        "name": "Pre-open and higher-timeframe refresh timers",
+        "file": "src/algorithms/autoTrader.ts",
+        "line": 194,
+        "evidence": "beforeMarketOpen is empty. scheduleRefresh (line 225) schedules an empty callback because reload is commented. scheduleEvents also starts an empty three-second callback (line 147). scheduleSecondMinuteCloseEvent has no caller."
+      },
+      {
+        "name": "Pending-condition and timing checks",
+        "file": "src/algorithms/autoTrader.ts",
+        "line": 510,
+        "evidence": "checkAlgoPendingCondition and checkTimingForEntry (line 555) only inspect elapsed time and return; neither applies a condition or timing rule. Other entry checks remain active."
+      },
+      {
+        "name": "Algorithm clearing/account-refresh wrapper",
+        "file": "src/algorithms/autoTrader.ts",
+        "line": 338,
+        "evidence": "clearExistingAlgos is empty. updateAllAlgo and onAccountDataRefresh have no internal entry path; Chart has commented out the latter (line 763). detectOverRisk is still called directly at Chart line 757 and must be retained."
+      },
+      {
+        "name": "Hovered candle/OHLC tooltip updates",
+        "file": "src/ui/chart.ts",
+        "line": 144,
+        "evidence": "Crosshair handler has commented calls to updateHoveredCandle and updateToolTip (definitions at lines 263/245). The currentCandle OHLC DOM is hidden by public/mystyle.css. Crosshair-price tracking still runs."
+      },
+      {
+        "name": "Candle-close indicator hook",
+        "file": "src/ui/chart.ts",
+        "line": 1409,
+        "evidence": "drawIndicatorsForNewlyClosedCandle only checks the minute range and does no work; DB still calls it. runPostCandleCloseIndicators is uncalled and its checkVwapBeforeOpen helper is empty. Active VWAP calculation and notifications are separate."
+      },
+      {
+        "name": "Trader-focus collapsible sections",
+        "file": "src/main.ts",
+        "line": 308,
+        "evidence": "DOMContentLoaded queries .clickableSectionTitle, but no checked-in HTML or runtime code creates these headers/sections. Related .collapsibleSection, .sectionContent and .collapseIcon CSS is dormant."
+      },
+      {
+        "name": "Hidden empty Bookmap panels",
+        "file": "index.html",
+        "line": 76,
+        "evidence": "bookmap0/2/1/3 at lines 76/122/173/221 are empty and display:none; no local TS code finds or populates them. Their .bookmapPanel style is unused in practice. Bookmap WebSocket integration is active."
+      },
+      {
+        "name": "Question/answer popup flow",
+        "file": "src/ui/questionPopup.ts",
+        "line": 6,
+        "evidence": "show has no internal caller; Test popup does nothing. Hidden popup markup and Submit listeners remain. show always sets hiddenAnswer to an empty string, so it is also only a shell when invoked manually. This module is exposed on window.HybridApp.UI."
+      },
+      {
+        "name": "Network activity/state displays",
+        "file": "src/ui/ui.ts",
+        "line": 20,
+        "evidence": "addToNetwork immediately returns; displayState (line 68) only loops over a commented Chart call. Chart.displayState exists as a browser-global API but has no internal trigger."
+      },
+      {
+        "name": "Percentage quantity sizing and spare quantity input",
+        "file": "src/ui/chart.ts",
+        "line": 508,
+        "evidence": "getMultiplier is uncalled and always returns 1; percentage calculation is commented. largeOrderInput is captured at line 314 and never read. Fixed quantity remains active: Models.getFixedQuantityFromInput parses the first input as an integer and OrderFlow consumes it; a string such as 50% would mean 50 shares, not a percentage."
+      },
+      {
+        "name": "Gap & Crap / Gap Down breakdown variants",
+        "file": "src/tradebooks/bookmapWallReversal.ts",
+        "line": 29,
+        "evidence": "GapAndCrapBreakdownBidSwingLow and GapDownAndGoDownBreakdownBidSwingLow have constructor/add-rule branches and enum IDs, but createTradebookDefinitions never emits either ID. No current factory constructs these variants. The offer step-down/reappear variants are active."
+      },
+      {
+        "name": "Legacy Gap-and-Go entry algorithm",
+        "file": "src/algorithms/gapAndGoAlgo.ts",
+        "line": 30,
+        "evidence": "validateEntry, hasAtLeastOneReasonSet and getAllowedReasonToAddPartial have no callers. The only module import in BookmapWallReversal is unused. Current entries go through triggerEntryCommon/global entry rules and current add handling. Reason validation is implemented by core/configuration/tradingConfig, not the four old hasAtLeastOneReasonSet functions."
+      },
+      {
+        "name": "Per-tradebook exit-adjustment restrictions",
+        "file": "src/tradebooks/bookmapWallReversal.ts",
+        "line": 218,
+        "evidence": "Four adjustment/market-out methods unconditionally return allowed:true with reason exit adjustment rules disabled. ExitRulesCheckerNew.isAllowedToAdjustBatchExitPairs (line 121) also always returns true. These are called pass-throughs; separate core-target and partial-stop checks must be distinguished."
+      },
+      {
+        "name": "Always-success legacy validation",
+        "file": "src/algorithms/watchlist.ts",
+        "line": 169,
+        "evidence": "checkStockSelection always returns OK; its error-alert/fallback branch at lines 82–86 cannot execute. TradingPlans.validateTradingPlansForOneDirection (line 137) always returns an empty string, making both caller rejection branches inert. The active validateTradingPlan core validator still checks plans."
+      },
+      {
+        "name": "Legacy two-way breakout",
+        "file": "src/controllers/handler.ts",
+        "line": 392,
+        "evidence": "Entire body is commented. It remains accessible through Handler globals but performs no action. raiseTargetsIfWasLess (line 313) only logs, without raising targets."
+      },
+      {
+        "name": "Key-area chart overlays",
+        "file": "src/models/tradingPlans/tradingPlans.ts",
+        "line": 111,
+        "evidence": "getKeyAreasToDraw always returns an empty array; current chart creation supplies no filled key areas. drawKeyAreas survives as a browser-global-only helper. Key-level lines and Bookmap key zones remain active."
+      },
+      {
+        "name": "Tradebook native execution definition",
+        "file": "src/tradebooks/bookmapWallReversal.ts",
+        "line": 70,
+        "evidence": "getNativeExecutionDefinition has no local references; it is a leftover raw-plan exporter from the former browser/native bridge. Native parity/headless code is documented and tested separately."
+      },
+      {
+        "name": "Core-target exit protection/popup",
+        "file": "src/config/globalSettings.ts",
+        "line": 36,
+        "evidence": "enableCoreTargetExitFeature=false. CoreTargetExitRules returns allowed results before enforcement; Bookmap core-plan config reports no active trade, reminders are suppressed, and core-plan updates are rejected. This is deliberately disabled code with tests, not automatically removable."
+      },
+      {
+        "name": "Automatic risk-level annotations",
+        "file": "src/config/globalSettings.ts",
+        "line": 38,
+        "evidence": "enableRiskLevel=false makes drawRiskLevels return before drawing automatic long/short risk levels. The R hotkey calls Handler.setRiskLevel -> Chart.drawRiskLevel independently and remains active."
+      },
+      {
+        "name": "Unused feature switches",
+        "file": "src/config/globalSettings.ts",
+        "line": 15,
+        "evidence": "allowLiveStats, showBestPlans, showTradebooksForPosition and checkMaxEntryThreshold have no consumers. enableLeftPaneFeatures only feeds the two constants combined with && false, so changing it has no UI effect. m15ChartEnabledAfterSeconds is read but cannot change the displayed chart."
+      },
+      {
+        "name": "Unused profile knobs",
+        "file": "src/config/profiles/profiles.ts",
+        "line": 8,
+        "evidence": "entryRules.requireVwapSameDirection, entryRules.maxSizeOnEarlyEntry, exitRules.checkTimeSinceEntry, fixedRisk and uiSettings have no live reads. exitRules.allowTightenStop is read only by the uncalled rules.checkTightenStop. Both profiles have identical settings apart from name; their profile names still affect persisted/config state."
+      },
+      {
+        "name": "Legacy brokers/index/test-account branches",
+        "file": "src/config/profiles/schwab.ts",
+        "line": 3,
+        "evidence": "Both supported profiles set brokerName=Schwab, indexOnly=false, isEquity=true, isTestAccount=false and allowTighterStop=true. Alternate broker, index-only, test-account and disallowed-tight-stop branches are dormant under these profiles. TD Ameritrade is still loaded/exported globally; it has no normal trading caller. Profile objects are mutable through Config globals, so these are current-configuration findings."
+      },
+      {
+        "name": "Non-worker market sockets/order-window reads",
+        "file": "src/config/globalSettings.ts",
+        "line": 12,
+        "evidence": "useMarketDataWorker=true selects worker streams; the main-thread Schwab/Massive socket creation in main.ts is an inactive fallback. Config.Settings.fetchOrdersByTimeWindows=false leaves the alternate paginated-order branch inactive. Both can be enabled by changing configuration; keep separate from dead functions."
+      },
+      {
+        "name": "Unused starter assets and scratch test",
+        "file": "src/style.css",
+        "line": 1,
+        "evidence": "src/style.css, src/typescript.svg and public/vite.svg have no checked-in references. src/utils/helper.test.ts registers no tests and is absent from package scripts; it only calls a helper and contains a commented starter test. secret_template.ts remains a setup template."
+      },
+      {
+        "name": "New-position partial profitability check",
+        "file": "src/controllers/entryRulesChecker.ts",
+        "line": 139,
+        "evidence": "checkParitalEntryForNewPosition always returns true; the prior-profit requirement is commented. Existing-position risk checks still execute."
+      },
+      {
+        "name": "VWAP-correction completeness gate",
+        "file": "src/algorithms/watchlist.ts",
+        "line": 66,
+        "evidence": "The zero-volume/zero-trading-sum branch has both its error log and continue commented. It detects missing correction inputs but neither rejects nor reports them. VWAP correction math itself remains active."
+      },
+      {
+        "name": "Maximum-entry threshold/display",
+        "file": "src/ui/chart.ts",
+        "line": 843,
+        "evidence": "drawMaxEntry/clearMaxEntry have no internal trigger, checkMaxEntryThreshold is unread, and validateEntryThreshold is disconnected. The surviving display API is only browser-global reachable."
+      },
+      {
+        "name": "Old broker account/order parsing and execution aggregation",
+        "file": "src/api/schwab/orderFactory.ts",
+        "line": 247,
+        "evidence": "Old order/execution extraction functions have no runtime call path; Schwab getAccountInfo now uses shared projectAccount and browserAccount mapping. Broker private ledger/P&L helpers are also uncalled after shared ledger/execution-export extraction. Active payload factories are retained."
+      },
+      {
+        "name": "Old streaming dispatch and rejection parser",
+        "file": "src/controllers/streamingHandler.ts",
+        "line": 39,
+        "evidence": "handleMessageData has no caller and its TIMESALE_EQUITY, QUOTE and ACCT_ACTIVITY branches are empty. handleTradeUpdates and the XML handleOrderRejection parser are also uncalled. Worker streaming/quote/account activity paths remain active."
+      }
+    ]
+  }
+}
