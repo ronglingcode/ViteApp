@@ -6,6 +6,7 @@ import { calculateCamPivots } from '../src/trading/core/marketdata/levels.ts';
 import { calculateLiquidityScale } from '../src/trading/core/marketdata/liquidity.ts';
 import { mapWebSocketTrade, shouldFilterTrade } from '../src/trading/libraries/massive/mapper.ts';
 import { premarketEligibility, impliedMarketCapInBillions, validatePreviousConsolidationArea } from '../src/trading/core/marketdata/eligibility.ts';
+import { startupEligibility } from '../src/trading/core/marketdata/startupEligibility.ts';
 
 const fixtures = [];
 const base = Date.parse('2026-10-01T13:30:00Z');
@@ -51,6 +52,21 @@ for (const [area, candles] of [
     [{ low: 9, high: 11 }, [{ ...candle(base - 86400000), open: 12, close: 13 }]],
     [null, []], [null, [candle(base - 86400000)]],
 ]) fixtures.push({ kind: 'consolidation', name: `consolidation ${JSON.stringify([area, candles])}`, area, candles, result: validatePreviousConsolidationArea(area ?? undefined, candles) });
+for (const [name, plan, shares, stats, daily, expected] of [
+    ['AMD bypasses hard floor with zero premarket volume', { symbol: 'AMD', marketCapInMillions: 10000 }, 100000000, { lastDayShares: 0, previousDaysSharesAverage: 1000000 }, [], ''],
+    ['AMD bypasses absolute and relative volume thresholds', { symbol: 'AMD', marketCapInMillions: 10000 }, 100000000, { lastDayShares: 600000, previousDaysSharesAverage: 1000000 }, [], ''],
+    ['AAPL still requires premarket hard floor', { symbol: 'AAPL', marketCapInMillions: 10000 }, 100000000, { lastDayShares: 0, previousDaysSharesAverage: 1000000 }, [], 'premarket shares below 500000 hard floor'],
+    ['AAPL still requires absolute or relative volume', { symbol: 'AAPL', marketCapInMillions: 10000 }, 100000000, { lastDayShares: 600000, previousDaysSharesAverage: 1000000 }, [], 'premarket shares below 0.9M and 4x prior average'],
+    ['AAPL qualifies on relative volume', { symbol: 'AAPL', marketCapInMillions: 10000 }, 100000000, { lastDayShares: 600000, previousDaysSharesAverage: 100000 }, [], ''],
+    ['AMD still requires configured market cap', { symbol: 'AMD', marketCapInMillions: 400 }, 100000000, { lastDayShares: 0, previousDaysSharesAverage: 1000000 }, [], 'configured market cap below $500M'],
+    ['AMD still requires implied market cap', { symbol: 'AMD', marketCapInMillions: 10000 }, 1000000, { lastDayShares: 0, previousDaysSharesAverage: 1000000 }, [], 'implied market cap below $0.9B'],
+    ['AMD still requires valid consolidation area', { symbol: 'AMD', marketCapInMillions: 10000, rangeBoundReversalPlan: {} }, 100000000, { lastDayShares: 0, previousDaysSharesAverage: 1000000 }, [candle(base - 86400000)], 'missing previous consolidation area for range bound reversal'],
+]) {
+    const args = [plan, 10, shares, stats, daily];
+    const result = startupEligibility(...args);
+    assert.equal(result, expected, name);
+    fixtures.push({ kind: 'startupEligibility', name, args, result });
+}
 const encoded = JSON.stringify(fixtures, null, 2) + '\n';
 for (const file of [resolve(import.meta.dirname, '../src/trading/market-fixtures.json'), resolve(import.meta.dirname, '../../bookmap-plugin/src/test/resources/market-fixtures.json')]) {
     if (process.argv.includes('--check')) assert.equal(readFileSync(file, 'utf8').replaceAll('\r\n', '\n'), encoded, `Stale fixture ${file}`);

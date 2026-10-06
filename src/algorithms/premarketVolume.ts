@@ -1,4 +1,5 @@
 import { premarketEligibility } from '../trading/core/marketdata/eligibility.ts';
+export { isPremarketVolumeWhitelisted } from '../trading/core/marketdata/eligibility.ts';
 import * as GlobalSettings from '../config/globalSettings';
 import type { PremarketDollarCollection } from '../models/models';
 
