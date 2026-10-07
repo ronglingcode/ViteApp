@@ -1501,6 +1501,9 @@ const createTradebookUINew = (tradebook: Tradebook, sideBar: HTMLElement, classN
     entryMethodButtons.classList.add("entryMethodButtons");
     if (entryMethods.length > 1 && entryMethods.every(entryMethod => entryMethod.trim().length < 10)) {
         entryMethodButtons.classList.add("twoButtonsPerRow");
+        if (entryMethods.length > 4) {
+            entryMethodButtons.style.gridTemplateColumns = `repeat(${Math.ceil(entryMethods.length / 2)}, minmax(0, 1fr))`;
+        }
     }
     container.appendChild(entryMethodButtons);
     let buttons: HTMLElement[] = [];

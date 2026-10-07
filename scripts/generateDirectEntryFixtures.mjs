@@ -43,6 +43,10 @@ function add(name, edit = () => {}, expected = {}) {
 add('long full risk stop with ten protective pairs');
 add('short full risk stop', f => { f.action.tradebook_id = 'RangeBoundOfferReversal'; f.state.entryContext.customEntryPrice = 10; });
 add('small entry has one pair', f => { f.action.entry_method = '0.1 R'; }, { multiplier: 0.1, count: 1, shares: 196 });
+for (const [method, multiplier, count, shares] of [['0.3 R', 0.3, 3, 588], ['0.2 R', 0.2, 2, 392]]) {
+    add(`${method} long entry has ${count} pairs`, f => { f.action.entry_method = method; }, { multiplier, count, shares });
+    add(`${method} short entry has ${count} pairs`, f => { f.action.entry_method = method; f.action.tradebook_id = 'RangeBoundOfferReversal'; f.state.entryContext.customEntryPrice = 10; }, { multiplier, count, shares });
+}
 add('half risk long entry has five pairs', f => { f.action.entry_method = '0.5 R'; }, { multiplier: 0.5, count: 5, shares: 980 });
 add('half risk short entry has five pairs', f => { f.action.entry_method = '0.5 R'; f.action.tradebook_id = 'RangeBoundOfferReversal'; f.state.entryContext.customEntryPrice = 10; }, { multiplier: 0.5, count: 5, shares: 980 });
 add('half risk fixed quantity keeps five pairs', f => { f.action.entry_method = '0.5 R'; f.state.entryContext.fixedQuantity = 23; }, { multiplier: 0.5, count: 5, shares: 23 });

@@ -9,14 +9,14 @@ import ts from 'typescript';
 
 const fixtures = JSON.parse(readFileSync(new URL('./direct-entry-fixtures.json', import.meta.url), 'utf8'));
 
-test('default entry methods include half risk with five exit pairs', () => {
+test('entry methods use default exit partials except for 0.1R', () => {
     const source = readFileSync(new URL('../utils/helper.ts', import.meta.url), 'utf8');
     const compiled = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } });
     const helper: any = {};
     new Function('require', 'exports', compiled.outputText)(
         (id: string) => id === '../config/globalSettings' ? { batchCount: 10 } : {}, helper);
-    assert.deepEqual(helper.returnDefaultEntryMethods(), ['1 R', '0.5 R', '0.1 R']);
-    for (const [method, risk, count] of [['1 R', 1, 10], ['0.5 R', 0.5, 5], ['0.1 R', 0.1, 1]]) {
+    assert.deepEqual(helper.returnDefaultEntryMethods(), ['1 R', '0.5 R', '0.3 R', '0.2 R', '0.1 R']);
+    for (const [method, risk, count] of [['1 R', 1, 10], ['0.5 R', 0.5, 10], ['0.3 R', 0.3, 10], ['0.2 R', 0.2, 10], ['0.1 R', 0.1, 1]]) {
         assert.equal(helper.getRiskMultiplierFromEntryMethod(method), risk);
         assert.equal(helper.getPartialCountFromEntryMethod(method), count);
     }
