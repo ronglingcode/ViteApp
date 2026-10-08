@@ -12,6 +12,22 @@ export function profitResetTargets(targets: { quantity: number; target: number }
     if (remaining > 0) throw new Error('Captured targets do not cover the current position');
     return result;
 }
+export function fallbackProfitReset(netQuantity: number, currentPrice: number, low: number, high: number, batchCount: number) {
+    const isLong = netQuantity > 0, remaining = Math.abs(netQuantity);
+    if (!Number.isFinite(remaining) || remaining <= 0) throw new Error('No position for profit reset');
+    const stopLoss = Math.round((isLong ? low : high) * 100) / 100;
+    if (!Number.isFinite(currentPrice) || currentPrice <= 0 || !Number.isFinite(stopLoss) || stopLoss <= 0
+        || (isLong ? stopLoss >= currentPrice : stopLoss <= currentPrice))
+        throw new Error('Profit reset fallback requires current price and a day stop on the protective side');
+    const target = Math.round((currentPrice + 2 * (currentPrice - stopLoss)) * 100) / 100;
+    if (!Number.isFinite(target) || target <= 0 || (isLong ? target <= currentPrice : target >= currentPrice))
+        throw new Error('Invalid profit reset fallback target');
+    const count = Math.min(Math.max(1, Math.floor(remaining)), Number.isFinite(batchCount) && batchCount > 0 ? Math.floor(batchCount) || 1 : 10);
+    const quantity = Math.floor(remaining / count);
+    // Reverse order matches submitExitPairs, including the distribution of leftover shares.
+    const targets = Array.from({ length: count }, (_, index) => ({ target, quantity: quantity + Math.min(1, Math.max(0, remaining - quantity * count - index)) }));
+    return { stopLoss, targets };
+}
 export function stopDiscipline(phase: string, current: number, initial: number, isLong: boolean, pairs: StateObject[], low: number, high: number) {
     if (!(current > 0) || !(initial > 0)) return { phase: phase || 'idle', remind: false, neededShares: 0 };
     const required = Math.max(0, current - initial * .5);

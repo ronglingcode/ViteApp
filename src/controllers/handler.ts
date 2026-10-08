@@ -1,4 +1,4 @@
-import { profitResetTargets } from '../trading/core/controllers/workflows.ts';
+import { fallbackProfitReset, profitResetTargets } from '../trading/core/controllers/workflows.ts';
 import * as Chart from "../ui/chart";
 import * as Firestore from '../firestore';
 import * as OrderFlow from './orderFlow';
@@ -594,16 +594,25 @@ export const replaceWithProfitTakingExitOrders = (symbol: string, marketOutOnePa
     let isLong = netQuantity > 0;
     let breakoutTradeState = TradingState.getBreakoutTradeState(symbol, isLong);
     let profitTargets = breakoutTradeState.submitEntryResult.profitTargets;
-    if (profitTargets.length <= 1) {
+    let stopLoss = breakoutTradeState.stopLossPrice;
+    const reset = !marketOutOnePartial && limitOutPrice === 0;
+    const missingCapture = !breakoutTradeState.hasValue || profitTargets.length === 0 || !Number.isFinite(stopLoss) || stopLoss <= 0;
+    if (reset && missingCapture) {
+        try {
+            const data = Models.getSymbolData(symbol);
+            const fallback = fallbackProfitReset(netQuantity, Models.getCurrentPrice(symbol), data?.lowOfDay, data?.highOfDay, TakeProfit.BatchCount);
+            profitTargets = fallback.targets.reverse(); stopLoss = fallback.stopLoss;
+            Firestore.logInfo('Reset Targets using day stop and 2R from current price', logTags);
+        } catch (error) { Firestore.logError(error instanceof Error ? error.message : String(error), logTags); return; }
+    } else if (profitTargets.length <= 1) {
         Firestore.logError(`profitTargets length is only ${profitTargets.length}`);
         return;
     }
     Firestore.logInfo(`replace profit targets, length is ${profitTargets.length}`);
-    if (!marketOutOnePartial && limitOutPrice === 0) {
+    if (reset && !missingCapture) {
         try { profitTargets = profitResetTargets(profitTargets, Math.abs(netQuantity)).reverse(); }
         catch (error) { Firestore.logError(error instanceof Error ? error.message : String(error), logTags); return; }
     }
-    let stopLoss = breakoutTradeState.stopLossPrice;
     // cancel current exit orders
     Broker.cancelExitOrders(symbol);
 

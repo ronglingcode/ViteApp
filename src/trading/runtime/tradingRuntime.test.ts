@@ -51,7 +51,8 @@ test('standalone startup owns services, renewal, restored state and teardown wit
     assert.equal(inputs.at(-1).symbols[0].symbol, 'MSFT'); assert.equal(inputs.at(-1).symbols[0].netQuantity, 10);
     account.positions = []; time += 3000; await runtime.refreshAccount(); assert.equal(inputs.at(-1).symbols[0].netQuantity, 0);
     config.stockSelections = []; await runtime.refreshConfig(); assert.equal(runtime.view('AAPL', 'test').plan, undefined);
-    assert.equal(inputs.filter(input => input.type === 'execution_state' && input.symbols[0].symbol === 'AAPL').at(-1).symbols[0].entryContext, undefined);
+    const exitContext = inputs.filter(input => input.type === 'execution_state' && input.symbols[0].symbol === 'AAPL').at(-1).symbols[0].entryContext;
+    assert.ok(exitContext.activeTrade); assert.equal(exitContext.definitions, undefined);
     assert.ok(audits > 0);
     runtime.close(); assert.ok(sockets.every(socket => socket.closed)); assert.ok(tasks.every(task => task.canceled));
     const count = inputs.length, reads = accountReads; for (const task of tasks) task.run(); await runtime.refreshAccount(); assert.equal(inputs.length, count); assert.equal(accountReads, reads);

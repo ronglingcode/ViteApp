@@ -133,6 +133,26 @@ for (const target of ['0', '', 'invalid', 'NaN', 'Infinity', '-Infinity', undefi
 }
 assert.equal(inputs('automatic long add threshold preserved in execution inputs', 90, saved, { plan: automaticLongPlan }).entryContext.addTargetLong, -1);
 assert.equal(inputs('automatic short add threshold preserved in execution inputs', -90, saved, { plan: automaticShortPlan }).entryContext.addTargetShort, -1);
+for (const [name, args] of [
+    ['long uses current price and day low', [103, 10, 9, 11, 10]],
+    ['short uses current price and day high', [-53, 10, 9, 11, 10]],
+    ['small position avoids zero quantity pairs', [3, 10, 9, 11, 10]],
+    ['fractional remainder preserved', [3.5, 10, 9, 11, 10]],
+    ['prices rounded to cents', [50, 10.123, 9.456, 11.456, 10]],
+    ['flat reset blocked', [0, 10, 9, 11, 10]],
+    ['missing current price blocked', [50, 0, 9, 11, 10]],
+    ['missing day low blocked', [50, 10, 0, 11, 10]],
+    ['zero risk long blocked', [50, 10, 10, 11, 10]],
+    ['wrong side short stop blocked', [-50, 10, 9, 9.5, 10]],
+    ['nonpositive short target blocked', [-50, 10, 9, 16, 10]],
+]) {
+    const reset = add('fallback reset: ' + name, 'workflow', 'fallbackProfitReset', args);
+    if (reset) {
+        assert.equal(reset.targets.reduce((sum, item) => sum + item.quantity, 0), Math.abs(args[0]));
+        assert.ok(reset.targets.every(item => item.quantity > 0));
+        if (args[1] === 10 && args[2] === 9 && args[3] === 11) assert.equal(reset.targets[0].target, args[0] > 0 ? 12 : 8);
+    }
+}
 const text = JSON.stringify(fixtures, null, 2) + '\n';
 for (const url of [new URL('../src/trading/state-fixtures.json', import.meta.url), new URL('../../bookmap-plugin/src/test/resources/state-fixtures.json', import.meta.url)]) {
     if (process.argv.includes('--check')) { if (readFileSync(url, 'utf8') !== text) throw new Error(`Fixture drift: ${url}`); } else writeFileSync(url, text);

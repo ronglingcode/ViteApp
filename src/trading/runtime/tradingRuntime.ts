@@ -183,7 +183,9 @@ export class TradingRuntime {
         this.execution.receive({ type: 'execution_state', version: 3, symbols: [inputs] });
     }
     private exitInputs(symbol: string) { const position = this.account?.positions[symbol], net = position?.netQuantity ?? 0, active = this.state!.direction(symbol, net > 0);
+        const loaded = this.market.getState(symbol), prices = loaded?.snapshot().date === marketTime(this.now()).date ? loaded.metrics() : undefined;
         return { symbol, revision: ++this.revision, netQuantity: net, averagePrice: position?.averagePrice ?? 0, currentPrice: this.price(symbol), bid: this.quotes[symbol]?.bidPrice ?? 0, ask: this.quotes[symbol]?.askPrice ?? 0,
+            entryContext: { activeTrade: structuredClone(active), lowOfDay: prices?.lowOfDay ?? 0, highOfDay: prices?.highOfDay ?? 0 },
             batchCount: this.policy.batchCount, splitPartials: !active.submitEntryResult.isSingleOrder, hasPlan: active.hasValue, entryPrice: active.entryPrice,
             coreTarget: active.plan.coreTarget, coreCount: active.plan.coreCount, coreRuleEnabled: this.policy.coreTargetEnabled, rulesSupported: true, entries: this.account?.entryOrders[symbol] ?? [],
             pairs: sortedExitPairs(this.account?.exitPairs[symbol] ?? []).map((pair, index, pairs) => ({ ...pair, originalPartial: Math.max(0, this.policy.batchCount - pairs.length) + index + 1 })) }; }
