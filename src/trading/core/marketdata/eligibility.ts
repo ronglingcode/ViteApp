@@ -2,7 +2,7 @@ import type { Candle } from '../../models/market.ts';
 import { marketTime } from './marketClock.ts';
 
 // These symbols may trade without meeting the premarket volume thresholds.
-export const premarketVolumeWhitelist: readonly string[] = ['AMD', 'MU'];
+export const premarketVolumeWhitelist: readonly string[] = ['AMD', 'MU', 'TSLA'];
 export function isPremarketVolumeWhitelisted(symbol: string): boolean {
     return premarketVolumeWhitelist.includes(symbol);
 }
