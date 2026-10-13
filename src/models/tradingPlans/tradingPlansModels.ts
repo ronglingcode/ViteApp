@@ -36,7 +36,7 @@ export interface ZoneNearEdge {
 export interface Gap {
     pdc: number,
 }
-export type BookmapPatternToMonitor = "falseBreakout";
+export type BookmapPatternToMonitor = "falseBreakout" | "falseBreakdown";
 
 export interface TradingPlans {
     /** An empty list disables Bookmap pattern monitors. */
