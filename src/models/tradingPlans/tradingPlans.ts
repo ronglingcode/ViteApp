@@ -86,7 +86,10 @@ export const fetchConfigData = async () => {
         snapMode: true,
     };
     if (data) {
-        tradingPlans = data.plans as TradingPlansModels.TradingPlans[];
+        tradingPlans = (data.plans as TradingPlansModels.TradingPlans[]).map(plan => ({
+            ...plan,
+            bookmapPatternsToMonitor: plan.bookmapPatternsToMonitor ?? [],
+        }));
         stockSelections = data.stockSelections as string[];
         activeProfileName = data.activeProfileName;
         tradingSettings = data.tradingSettings;

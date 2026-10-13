@@ -280,6 +280,7 @@ export const sendKeyLevelConfigForSymbol = (symbol: string) => {
     websocket.send(JSON.stringify(withBookmapWirePriceUnit({
         type: "key_levels_config",
         symbol: symbol,
+        bookmapPatternsToMonitor: plan?.bookmapPatternsToMonitor ?? [],
         waitForBidRetest: normalizeRetestWaitMode(plan?.analysis?.waitForBidRetest),
         waitForOfferRetest: normalizeRetestWaitMode(plan?.analysis?.waitForOfferRetest),
         levels: levels,
