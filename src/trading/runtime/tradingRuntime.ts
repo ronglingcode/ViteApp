@@ -79,7 +79,7 @@ export class TradingRuntime {
             return response;
         } };
         this.reads = new SchwabReadApi(authenticatedReads);
-        this.firestore = new FirestoreApi(http, sections.firebaseConfig.projectId, () => sections.firebaseConfig.apiKey ?? '');
+        this.firestore = new FirestoreApi(http, sections.firebaseConfig.projectId, () => sections.firebaseConfig.apiKey ?? '', undefined, now);
         this.key = sections.massive?.apiKey ?? '';
         this.massive = new MassiveApi(http, () => this.key); this.market = new MarketLoader(this.massive, now);
         if (typeof sections.tradingPolicy?.coreTargetEnabled === 'boolean') this.policy.coreTargetEnabled = sections.tradingPolicy.coreTargetEnabled;

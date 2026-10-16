@@ -17,7 +17,7 @@ const fixtures = [
     { name: 'empty array and map decode without fields', kind: 'codec', method: 'decodeFields', args: [{ list: { arrayValue: {} }, map: { mapValue: {} } }], result: decodeFields({ list: { arrayValue: {} }, map: { mapValue: {} } }) },
 ];
 const firestoreCases = [
-    { name: 'query only latest configuration snapshot', method: 'fetchConfigData', args: [], pages: [ok([{ readTime: '2026-10-01T14:00:00Z' }, { document: { fields: configFields } }])] },
+    { name: 'query latest pre-open configuration snapshot', method: 'fetchConfigData', args: [], pages: [ok([{ readTime: '2026-10-01T14:00:00Z' }, { document: { fields: configFields } }])] },
     { name: 'missing trading-state document returns null', method: 'getTradingState', args: ['schwab'], pages: [{ status: 404, body: '{}' }] },
     { name: 'restore old trading-state maps', method: 'getTradingState', args: ['schwab'], pages: [ok({ fields: encodeFields(state) })] },
     { name: 'save complete state as existing setDoc behavior', method: 'setTradingState', args: ['schwab', state], pages: [ok({ fields: {} })] },
@@ -25,15 +25,57 @@ const firestoreCases = [
     { name: 'configuration permissions failure remains visible', method: 'fetchConfigData', args: [], pages: [{ status: 403, body: 'test-firestore-key' }] },
     { name: 'empty configuration collection is an error', method: 'fetchConfigData', args: [], pages: [ok([{ readTime: '2026-10-01T14:00:00Z' }])] },
 ];
+// Model Firestore's timestamp filter/order/limit with snapshots around the boundary.
+for (const [name, now, open] of [
+    ['premarket', '2026-10-01T12:00:00Z', '2026-10-01T13:30:00.000Z'],
+    ['exact open', '2026-10-01T13:30:00Z', '2026-10-01T13:30:00.000Z'],
+    ['during first hour', '2026-10-01T14:00:00Z', '2026-10-01T13:30:00.000Z'],
+    ['after open', '2026-10-01T18:15:45.123Z', '2026-10-01T13:30:00.000Z'],
+    ['after close', '2026-10-01T22:00:00Z', '2026-10-01T13:30:00.000Z'],
+    ['winter standard time', '2026-12-01T18:00:00Z', '2026-12-01T14:30:00.000Z'],
+    ['spring DST transition', '2026-03-08T18:00:00Z', '2026-03-08T13:30:00.000Z'],
+    ['fall DST transition', '2026-11-01T18:00:00Z', '2026-11-01T14:30:00.000Z'],
+    ['New York date differs from UTC', '2026-10-02T01:00:00Z', '2026-10-01T13:30:00.000Z'],
+]) {
+    firestoreCases.push({ name: `freeze plans: ${name}`, method: 'fetchConfigData', args: [], now: Date.parse(now), open,
+        candidates: [0, 1, 3599_999, -1, -60_000, -86400_000].map(offset => ({ timestamp: new Date(Date.parse(open) + offset), marker: offset })), expectedMarker: -1, pages: [] });
+}
+for (const offset of [3600_000, 3600_001, 7200_000]) {
+    firestoreCases.push({ name: `plans saved at or after first hour are eligible: ${offset} ms`, method: 'fetchConfigData', args: [],
+        now: Date.parse('2026-10-01T18:00:00Z'), open: '2026-10-01T13:30:00.000Z',
+        candidates: [-1, 0, 3599_999, offset].map(value => ({ timestamp: new Date(Date.parse('2026-10-01T13:30:00Z') + value), marker: value })), expectedMarker: offset, pages: [] });
+}
+firestoreCases.push({ name: 'yesterday post-open edits become eligible on the next market date', method: 'fetchConfigData', args: [],
+    now: Date.parse('2026-10-02T12:00:00Z'), open: '2026-10-02T13:30:00.000Z',
+    candidates: [{ timestamp: new Date('2026-10-01T18:00:00Z'), marker: 1 }], expectedMarker: 1, pages: [] });
+firestoreCases.push({ name: 'only first-hour snapshots is an error', method: 'fetchConfigData', args: [],
+    now: Date.parse('2026-10-01T18:00:00Z'), open: '2026-10-01T13:30:00.000Z',
+    candidates: [{ timestamp: new Date('2026-10-01T13:30:00Z') }, { timestamp: new Date('2026-10-01T14:29:59.999Z') }], expectedError: 'Firestore has no configuration snapshot', pages: [] });
 for (const fixture of firestoreCases) {
+    fixture.now ??= Date.parse('2026-10-01T14:00:00Z');
     const requests = [];
     const api = new FirestoreApi({ request: async (url, method, headers, body) => {
         const path = new URL(url); assert.equal(path.searchParams.get('key'), 'test-firestore-key');
         path.searchParams.delete('key'); requests.push({ path: path.pathname, method, headers, ...(body === undefined ? {} : { body: JSON.parse(body) }) });
+        if (fixture.candidates) {
+            const query = JSON.parse(body).structuredQuery;
+            const composite = query.where.compositeFilter;
+            assert.equal(composite.op, 'OR');
+            const [before, after] = composite.filters.map(filter => filter.fieldFilter);
+            assert.equal(before.op, 'LESS_THAN');
+            assert.equal(before.value.timestampValue, fixture.open);
+            assert.equal(after.op, 'GREATER_THAN_OR_EQUAL');
+            assert.equal(after.value.timestampValue, new Date(Date.parse(fixture.open) + 3600_000).toISOString());
+            const eligible = fixture.candidates.filter(item => item.timestamp.getTime() < Date.parse(before.value.timestampValue) || item.timestamp.getTime() >= Date.parse(after.value.timestampValue))
+                .sort((a, b) => b.timestamp - a.timestamp).slice(0, query.limit);
+            fixture.pages.push(ok(eligible.map(item => ({ document: { fields: encodeFields(item) } }))));
+        }
         return fixture.pages[requests.length - 1];
-    } }, 'test-project', () => 'test-firestore-key');
+    } }, 'test-project', () => 'test-firestore-key', undefined, () => fixture.now);
     let result, error;
     try { result = await api[fixture.method](...fixture.args); } catch (failure) { error = failure.message; }
+    if (fixture.expectedMarker !== undefined) { assert.equal(error, undefined); assert.equal(result.marker, fixture.expectedMarker); }
+    if (fixture.expectedError) assert.equal(error, fixture.expectedError);
     fixtures.push({ kind: 'firestore', ...fixture, requests, ...(error ? { error } : { result: result ?? null }) });
 }
 const oauthCases = [

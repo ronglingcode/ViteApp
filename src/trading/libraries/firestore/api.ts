@@ -1,5 +1,6 @@
 import type { HttpPort } from '../../ports/http.ts';
 import { decodeFields, encodeFields } from './documentCodec.ts';
+import { marketTime } from '../../core/marketdata/marketClock.ts';
 
 /** Firestore's existing user security rules still apply; an API key is not an admin credential. */
 export class FirestoreApi {
@@ -7,9 +8,11 @@ export class FirestoreApi {
     private readonly root: string;
     private readonly apiKey: () => string;
     private readonly idToken: () => string;
-    constructor(http: HttpPort, projectId: string, apiKey = () => '', idToken = () => '') {
+    private readonly now: () => number;
+    constructor(http: HttpPort, projectId: string, apiKey = () => '', idToken = () => '', now = Date.now) {
         this.http = http; this.root = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents`;
         this.apiKey = apiKey; this.idToken = idToken;
+        this.now = now;
     }
     private async request(path: string, method: string, body?: unknown, missingAllowed = false) {
         const url = new URL(`${this.root}${path}`);
@@ -29,7 +32,16 @@ export class FirestoreApi {
         await this.request(`/${encodePath(path)}`, 'PATCH', { fields: encodeFields(data) });
     }
     async fetchConfigData(): Promise<Record<string, any>> {
-        const query = { structuredQuery: { from: [{ collectionId: 'configDataSnapshot' }], orderBy: [{ field: { fieldPath: 'timestamp' }, direction: 'DESCENDING' }], limit: 1 } };
+        // Exclude first-hour edits before limiting so they cannot hide an eligible plan.
+        // A new market date makes yesterday's edits eligible for today's preparation.
+        const now = this.now();
+        const open = now - marketTime(now).minutesSinceMarketOpen * 60_000;
+        const query = { structuredQuery: { from: [{ collectionId: 'configDataSnapshot' }],
+            where: { compositeFilter: { op: 'OR', filters: [
+                { fieldFilter: { field: { fieldPath: 'timestamp' }, op: 'LESS_THAN', value: { timestampValue: new Date(open).toISOString() } } },
+                { fieldFilter: { field: { fieldPath: 'timestamp' }, op: 'GREATER_THAN_OR_EQUAL', value: { timestampValue: new Date(open + 60 * 60_000).toISOString() } } },
+            ] } },
+            orderBy: [{ field: { fieldPath: 'timestamp' }, direction: 'DESCENDING' }], limit: 1 } };
         const rows = await this.request(':runQuery', 'POST', query);
         if (!Array.isArray(rows)) throw new Error('Firestore config query returned invalid rows');
         const document = rows.find(row => row.document)?.document;
