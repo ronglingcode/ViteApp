@@ -47,6 +47,8 @@ export interface TradingPlans {
     atr: AverageTrueRange,
     marketCapInMillions: number,
     fixedQuantity?: number,
+    /** An empty list hides fixed-share entry buttons. */
+    fixedShares?: number[],
     keyLevels: keyLevels,
     defaultConfigs: PlanConfigs,
     rangeBoundReversalPlan?: RangeBoundReversalPlan,

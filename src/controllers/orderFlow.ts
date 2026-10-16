@@ -1,3 +1,4 @@
+import { fixedSharesFromMethod, FIXED_SHARE_PARTIALS } from '../trading/core/algorithms/entrySizing';
 import { buyingPowerTargets } from '../trading/core/controllers/workflows';
 import * as RiskManager from '../algorithms/riskManager';
 import * as TakeProfit from '../algorithms/takeProfit';
@@ -60,7 +61,13 @@ export const submitBreakoutOrders = (
     if ((isLong && currentPrice > entryPrice) || (!isLong && currentPrice < entryPrice)) {
         orderType = Models.OrderType.LIMIT;
     }
-    let fixedQuantity = Models.getFixedQuantityFromInput(symbol);
+    const method = entryParameters?.entryMethod;
+    const requestedShares = fixedSharesFromMethod(method);
+    let fixedQuantity = requestedShares ?? (method ? 0 : Models.getFixedQuantityFromInput(symbol));
+    if (requestedShares !== undefined) {
+        partialsCount = FIXED_SHARE_PARTIALS;
+        plan.planConfigs.sizingCount = partialsCount;
+    }
     if (fixedQuantity > 0) {
         Firestore.logInfo(`fix quantity ${fixedQuantity}`, logTags);
         let submitEntryResult = submitEntryOrdersWithFixedQuantity(
@@ -68,7 +75,7 @@ export const submitBreakoutOrders = (
             entryPrice, stopOut,
             fixedQuantity, tradebookID, logTags, orderIdToReplace,
             entryParameters?.bookmapOrderbook,
-            partialsCount
+            partialsCount, requestedShares !== undefined
         );
         return submitEntryResult;
     } else {
@@ -93,13 +100,19 @@ export const submitMarketEntryOrders = (
     Firestore.logInfo("Submitting market orders!!! submitMarketEntryOrders()", logTags);
     let partialsCount = getPartialsCountFromPlan(plan);
     let orderIdToReplace = '';
-    let fixedQuantity = Models.getFixedQuantityFromInput(symbol);
+    const method = entryParameters?.entryMethod;
+    const requestedShares = fixedSharesFromMethod(method);
+    let fixedQuantity = requestedShares ?? (method ? 0 : Models.getFixedQuantityFromInput(symbol));
+    if (requestedShares !== undefined) {
+        partialsCount = FIXED_SHARE_PARTIALS;
+        plan.planConfigs.sizingCount = partialsCount;
+    }
     if (fixedQuantity > 0) {
         let submitEntryResult = submitEntryOrdersWithFixedQuantity(
             symbol, Models.OrderType.MARKET, isLong, estimatedEntryPrice, stopOutPrice,
             fixedQuantity, tradebookID, logTags, orderIdToReplace,
             entryParameters?.bookmapOrderbook,
-            partialsCount
+            partialsCount, requestedShares !== undefined
         );
         return submitEntryResult;
     } else {
@@ -149,7 +162,8 @@ export const submitEntryOrdersWithFixedQuantity = (
     tradebookID: string, logTags: Models.LogTags,
     orderIdToReplace: string,
     bookmapOrderbook?: Models.BookmapOrderbookSnapshot,
-    partialsCount: number = TakeProfit.BatchCount
+    partialsCount: number = TakeProfit.BatchCount,
+    exactQuantity = false
 ) => {
     let isEquity = Config.getProfileSettingsForSymbol(symbol).isEquity;
     let afterSplippage = addSlippage(symbol, isLong, entryPrice, stopOutPrice, isEquity);
@@ -160,7 +174,7 @@ export const submitEntryOrdersWithFixedQuantity = (
 
     let profitTargets = TakeProfit.getEntryProfitTargets(
         symbol, totalShares, entryPrice, stopOutPrice, isLong, bookmapOrderbook, logTags, partialsCount);
-    let submitResult = submitEntryOrders(symbol, isLong, orderType, entryPrice, stopOutPrice, profitTargets, tradebookID, logTags, orderIdToReplace);
+    let submitResult = submitEntryOrders(symbol, isLong, orderType, entryPrice, stopOutPrice, profitTargets, tradebookID, logTags, orderIdToReplace, exactQuantity);
     return submitResult;
 };
 
@@ -185,9 +199,11 @@ export const submitEntryOrders = (symbol: string, isLong: boolean,
     orderType: Models.OrderType, entryPrice: number, stopOutPrice: number, profitTargets: Models.ProfitTarget[],
     tradebookID: string,
     logTags: Models.LogTags,
-    orderIdToReplace: string) => {
+    orderIdToReplace: string, exactQuantity = false) => {
 
-    const allocation = buyingPowerTargets(profitTargets, entryPrice, RiskManager.getAvailableBuyingPower());
+    const allocation = exactQuantity
+        ? { targets: profitTargets, totalQuantity: profitTargets.reduce((sum, target) => sum + target.quantity, 0), insufficient: false }
+        : buyingPowerTargets(profitTargets, entryPrice, RiskManager.getAvailableBuyingPower());
     profitTargets = allocation.targets;
     const totalQuantity = allocation.totalQuantity;
     if (allocation.insufficient) Firestore.logError('Estimated buying power insufficient after half sizing; broker will decide', logTags);

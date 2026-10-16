@@ -1,6 +1,7 @@
 import type * as LightweightCharts from 'sunrise-tv-lightweight-charts'
 import * as TimeHelper from './timeHelper';
 import * as GlobalSettings from '../config/globalSettings';
+import { fixedSharesFromMethod, FIXED_SHARE_PARTIALS } from '../trading/core/algorithms/entrySizing';
 
 export const getCurrentMarketTime = () => {
     return new Date();
@@ -41,6 +42,7 @@ export const getRiskMultiplierFromEntryMethod = (entryMethod: string | undefined
     return parseRiskMultipleFromEntryMethod(entryMethod) ?? defaultMultiplier;
 };
 export const getPartialCountFromEntryMethod = (entryMethod: string | undefined, defaultCount = GlobalSettings.batchCount) => {
+    if (fixedSharesFromMethod(entryMethod) !== undefined) return FIXED_SHARE_PARTIALS;
     let multiplier = parseRiskMultipleFromEntryMethod(entryMethod);
     let config = entryMethodConfigs.find(config => config.riskMultiple === multiplier);
     return config ? config.partialsCount : defaultCount;

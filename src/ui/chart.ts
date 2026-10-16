@@ -1499,16 +1499,22 @@ const createTradebookUINew = (tradebook: Tradebook, sideBar: HTMLElement, classN
     container.appendChild(stats);
     let entryMethodButtons = document.createElement("div");
     entryMethodButtons.classList.add("entryMethodButtons");
-    if (entryMethods.length > 1 && entryMethods.every(entryMethod => entryMethod.trim().length < 10)) {
+    const riskMethods = entryMethods.filter(method => !method.endsWith(" sh"));
+    if (riskMethods.length > 1 && riskMethods.every(entryMethod => entryMethod.trim().length < 10)) {
         entryMethodButtons.classList.add("twoButtonsPerRow");
-        if (entryMethods.length > 4) {
-            entryMethodButtons.style.gridTemplateColumns = `repeat(${Math.ceil(entryMethods.length / 2)}, minmax(0, 1fr))`;
-        }
+        entryMethodButtons.style.gridTemplateColumns = `repeat(${riskMethods.length}, minmax(0, 1fr))`;
     }
     container.appendChild(entryMethodButtons);
+    const shareButtons = document.createElement("div");
+    shareButtons.classList.add("entryMethodButtons", "twoButtonsPerRow");
+    const shareMethods = entryMethods.filter(method => method.endsWith(" sh"));
+    if (shareMethods.length > 0) {
+        shareButtons.style.gridTemplateColumns = `repeat(${shareMethods.length}, minmax(0, 1fr))`;
+        container.appendChild(shareButtons);
+    }
     let buttons: HTMLElement[] = [];
     entryMethods.forEach(entryMethod => {
-        let entryMethodButton = createButton(entryMethod, "div", entryMethodButtons);
+        let entryMethodButton = createButton(entryMethod, "div", entryMethod.endsWith(" sh") ? shareButtons : entryMethodButtons);
         entryMethodButton.classList.add(className);
         buttons.push(entryMethodButton);
         entryMethodButton.addEventListener("click", (pointerEvent) => {

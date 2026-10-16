@@ -1,4 +1,5 @@
 import { Tradebook } from './baseTradebook';
+import { entryMethods, fixedSharesFromMethod } from '../trading/core/algorithms/entrySizing';
 import type * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 import * as Chart from '../ui/chart';
 import * as Models from '../models/models';
@@ -12,6 +13,7 @@ import * as GapAndCrapAlgo from '../algorithms/gapAndCrapAlgo';
 import * as GapDownAndGoDownAlgo from '../algorithms/gapDownAndGoDownAlgo';
 import * as GapDownAndGoUpAlgo from '../algorithms/gapDownAndGoUpAlgo';
 import * as SupportResistance from '../models/tradingPlans/supportResistance';
+import { getTradingPlans } from '../models/tradingPlans/tradingPlans';
 
 export class BookmapWallReversal extends Tradebook {
     private basePlan: TradingPlansModels.BasePlan;
@@ -153,6 +155,11 @@ export class BookmapWallReversal extends Tradebook {
             stopOutPrice = this.isLong ? symbolData.lowOfDay : symbolData.highOfDay;
         }
         let entryMethod = parameters.entryMethod;
+        const shares = fixedSharesFromMethod(entryMethod);
+        if (shares !== undefined && !getTradingPlans(this.symbol).fixedShares?.includes(shares)) {
+            Firestore.logError(`unconfigured fixed shares: ${shares}`, logTags);
+            return 0;
+        }
         let riskReduction = Helper.getRiskMultiplierFromEntryMethod(entryMethod);
         let partialsCount = Helper.getPartialCountFromEntryMethod(entryMethod);
         Firestore.logInfo(`risk multiplier: ${riskReduction}, partials count: ${partialsCount}`, logTags);
@@ -212,7 +219,7 @@ export class BookmapWallReversal extends Tradebook {
         });
                 return entryMethods;
 */
-        return Helper.returnDefaultEntryMethods();
+        return entryMethods(getTradingPlans(this.symbol).fixedShares);
     }
 
     getDisallowedReasonToAdjustSingleLimitOrder(

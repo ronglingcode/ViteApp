@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import ts from 'typescript';
+import * as Sizing from '../trading/core/algorithms/entrySizing.ts';
 import { createBracketedEquityEntry } from '../api/schwab/entryOrderFactory.ts';
 import { createClosingEquityOrder } from '../api/schwab/closingOrderFactory.ts';
 
@@ -13,6 +14,7 @@ function capture(isLong: boolean, opposite: boolean, quote: number) {
         STOP: { orderID: `stop-${id}`, quantity: 10, isBuy: opposite ? isLong : !isLong },
     }));
     const mocks: Record<string, any> = {
+        '../trading/core/algorithms/entrySizing': Sizing,
         '../models/models': {
             OrderType: { STOP: 'STOP', LIMIT: 'LIMIT' },
             getSymbolData: () => ({ bidPrice: quote, askPrice: quote }),

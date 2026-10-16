@@ -40,6 +40,7 @@ export function createExecutionInputs(symbol: string, plan: TradingPlans, market
         entryContext: {
             activeTrade: active, longTrade: state.direction(symbol, true), shortTrade: state.direction(symbol, false), candles: market.candles,
             definitions: createTradebookDefinitions(plan), attendanceAllowed: true,
+            ...(plan.fixedShares !== undefined ? { fixedShares: [...plan.fixedShares] } : {}),
             watchlistBlockReason: watchlist.length > 1 ? `more than 1 stocks in watchlist: ${watchlist.join(', ')}` : '',
             startupBlockReason: '',
             realizedPnl: ledger.realizedPnL, dailyMaxLoss: policy.dailyMaxLoss, riskDollars: policy.riskDollars,
