@@ -1,4 +1,5 @@
 import { SchwabReadApi } from '../../trading/libraries/broker/schwab/readApi.ts';
+import { observeStopLossProtection } from '../../controllers/stopLossProtection';
 import { projectAccount } from '../../trading/libraries/broker/schwab/accountProjection.ts';
 import { toBrowserAccount } from '../../trading/adapters/browserAccount.ts';
 import { SchwabOAuth } from '../../trading/libraries/broker/schwab/oauth.ts';
@@ -222,6 +223,7 @@ export const getAccountInfo = async () => {
     if (!canApplyBrokerObservation(observationStartedAt)) return window.HybridApp.AccountCache;
     window.HybridApp.AccountCache = result;
     recordBrokerObservation(observationStartedAt);
+    observeStopLossProtection(result);
 
     return result;
 }

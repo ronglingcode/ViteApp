@@ -7,6 +7,7 @@
     "test:integration-health": "node --experimental-strip-types --test scripts/integrationHealth.test.mjs",
     "test:execution-exports": "node --experimental-strip-types scripts/generateExecutionExportFixtures.mjs --check",
     "test:runtime": "node --experimental-strip-types --test src/trading/runtime/tradingRuntime.test.ts",
+    "test:stop-loss-protection": "node --experimental-strip-types --test src/trading/core/controllers/stopLossMonitor.test.ts src/trading/runtime/tradingRuntime.test.ts",
     "test:broker-read": "node --experimental-strip-types scripts/generateBrokerReadFixtures.mjs --check",
     "test:streams": "node --experimental-strip-types scripts/generateStreamFixtures.mjs --check && node --experimental-strip-types --test src/trading/runtime/marketStreams.test.ts",
     "test:state": "node --experimental-strip-types scripts/generateStateFixtures.mjs --check",

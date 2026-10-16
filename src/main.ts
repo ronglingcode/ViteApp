@@ -3,6 +3,7 @@
  * When you're ready to start on your site, clear the file. Happy hacking!
  **/
 import * as WebRequest from './utils/webRequest';
+import { startStopLossProtection } from './controllers/stopLossProtection';
 import * as Helper from './utils/helper';
 import * as TimeHelper from './utils/timeHelper';
 import * as Firestore from './firestore';
@@ -187,6 +188,7 @@ const setupAppUi = () => {
 };
 
 const startLive = () => window.TradingApp.TOS.initialize().then(async () => {
+    startStopLossProtection();
     startIntegrationChecks();
     setInterval(() => schwabApi.maintainAccessToken().catch(Firestore.logError), 30000);
     setupAppUi();

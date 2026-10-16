@@ -1,4 +1,5 @@
 import type { HttpPort } from '../ports/http.ts';
+import { StopLossMonitor } from '../core/controllers/stopLossMonitor.ts';
 import type { CredentialPort } from '../ports/credentials.ts';
 import type { SocketPort, SchedulerPort } from '../ports/socket.ts';
 import { SchwabOAuth } from '../libraries/broker/schwab/oauth.ts';
@@ -48,6 +49,7 @@ export class TradingRuntime {
     private readonly histories: Record<string, StateObject> = {};
     private readonly eligibility: Record<string, string> = {};
     private readonly pendingReplacements: Record<string, string> = {};
+    private readonly stopLossMonitor = new StopLossMonitor();
     private readonly reminders: Record<string, number> = {};
     private readonly entryWarnings: Record<string, number> = {};
     private readonly dirty = new Set<string>();
@@ -95,8 +97,8 @@ export class TradingRuntime {
             if (this.stopped) return;
             this.config = config; this.account = account; this.ledger = projectTradeLedger(account.executions, this.policy.dailyMaxLoss);
             this.state = new TradeState(date, account.currentBalance, this.now(), restored);
-            this.publishToken(); this.startStreamsAndHistory(); this.publishAccount();
-            this.repeat(30000, () => { void this.refreshToken(); }); this.repeat(15000, () => { void this.refreshAccount(); });
+            this.publishToken(); this.startStreamsAndHistory(); this.publishAccount(); this.checkStopLossProtection();
+            this.repeat(30000, () => { void this.refreshToken(); }); this.repeat(3000, () => { void this.refreshAccount(); });
             this.repeat(60000, () => { void this.refreshConfig(); }); this.repeat(100, () => this.publishDirty());
             this.repeat(1000, () => this.pendingJobs()); this.repeat(20000, () => this.disciplineJobs());
             this.events.log('', 'Native trading runtime started; local credentials, Firestore, Massive and Schwab');
@@ -148,7 +150,7 @@ export class TradingRuntime {
             const token = await this.oauth.accessToken(), date = marketTime(this.now()).date;
             const raw = await this.reads.getAccount(token), orders = await this.reads.getOrders(this.accountHash(), token, date);
             const account = projectAccount(raw, orders, date, symbol => this.price(symbol));
-            if (this.stopped) return; this.account = account; this.ledger = projectTradeLedger(account.executions, this.policy.dailyMaxLoss); this.publishToken(); this.publishAccount(); this.disciplineJobs(); this.accountNotifications();
+            if (this.stopped) return; this.account = account; this.ledger = projectTradeLedger(account.executions, this.policy.dailyMaxLoss); this.publishToken(); this.publishAccount(); this.checkStopLossProtection(); this.disciplineJobs(); this.accountNotifications();
         } catch (error) { this.failure('', 'Account refresh', error); this.accountAgain = true; }
         finally { this.accountReading = false; if (this.accountAgain) { this.accountAgain = false; void this.refreshAccount(); } }
     }
@@ -216,6 +218,17 @@ export class TradingRuntime {
     persistState() { if (this.stopped || !this.state || !this.config) return; const saved = this.state.snapshot(), profile = this.config.profile;
         this.persistence = this.persistence.catch(() => {}).then(() => this.firestore.setTradingState(profile, saved)).catch(error => this.failure('', 'State persistence', error)); }
     pendingPersistence() { return this.persistence; }
+    private checkStopLossProtection() {
+        if (this.stopped || !this.account) return;
+        const decision = this.stopLossMonitor.observe(Object.entries(this.account.positions).map(([symbol, position]) => ({
+            symbol, netQuantity: position.netQuantity, pairs: this.account!.exitPairs[symbol] ?? [],
+        })), this.now());
+        for (const { symbol, uncovered } of decision.warnings) this.events.notify(symbol, `ERROR: ${uncovered} shares without stop loss; will close the full position if this persists more than 10 seconds`);
+        for (const symbol of decision.close) {
+            this.events.notify(symbol, 'ERROR: Missing stop-loss coverage for more than 10 seconds; closing FULL position');
+            this.dispatch({ type: 'native_job', symbol, keyCode: 'SafetyClosePosition' });
+        }
+    }
     private pendingJobs() {
         if (this.stopped || !this.config || !this.account) return; const time = this.now(), seconds = marketTime(time).minutesSinceMarketOpen * 60;
         for (const symbol of this.config.symbols) { const market = this.market.getState(symbol)?.metrics(); if (!market) continue; const entries: AccountOrder[] = this.account.entryOrders[symbol] ?? [];

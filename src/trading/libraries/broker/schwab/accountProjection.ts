@@ -92,6 +92,11 @@ export function projectAccount(account: VendorOrder, orders: VendorOrder[], date
             }
             if (model.quantity > 0) add(entryOrders, symbol, model);
         }
+        if (order.orderStrategyType === 'SINGLE' && working.includes(order.status) && order.status !== 'AWAITING_PARENT_ORDER'
+            && leg?.positionEffect === 'CLOSING' && ['STOP', 'LIMIT'].includes(order.orderType)) {
+            const model = orderModel(order, currentPrice);
+            if (model.quantity > 0) add(exitPairs, symbol, { symbol, source: 'SINGLE', parentOrderID: '', [order.orderType]: model });
+        }
         if (order.orderStrategyType === 'OCO') {
             const pair = exitPair(order, order, 'OCO', currentPrice); if (pair) add(exitPairs, symbol, pair);
         } else if (order.orderStrategyType === 'TRIGGER' && (order.status === 'FILLED' || Number(order.filledQuantity) > 0)) {

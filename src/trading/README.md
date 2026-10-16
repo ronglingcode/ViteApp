@@ -33,6 +33,20 @@ Both apps execute their own operations. Run one at a time because each owns the
 vendor streams. Bookmap configuration/data/state now originate from the same
 Massive, Firestore and Schwab sources instead of being forwarded by ViteApp.
 
+Both apps poll broker positions and orders every three seconds for stop-loss
+coverage, including held symbols outside the watchlist. Any uncovered shares
+start a continuous exposure timer. Full coverage, a flat position, or a direction
+change resets it. On the first successful account read after more than ten
+seconds, the monitor requests closure of the entire position: market replacements
+for existing exit partials plus a market order for the remaining shares. This
+bypasses the manual flatten action's uncovered-shares-only branch. A close is
+requested once per exposure episode to avoid duplicate market orders while broker
+updates arrive; execution failures remain visible in the normal error logs.
+Standalone closing stop orders count toward coverage; limit-only partials do not.
+The monitor runs only while the app/runtime is running, and account read failures
+or broker backoff can delay the close. Run `npm run test:stop-loss-protection` for
+the timer and runtime regression tests.
+
 Behavior preserved includes risk sizing, ten-partial/$1,000 R policy, optional
 core-target protection, daily loss/startup eligibility, protected entry payloads,
 reload/swap delays and exits without preflight GETs. Explicit corrections include
