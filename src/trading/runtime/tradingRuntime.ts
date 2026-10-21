@@ -91,7 +91,7 @@ export class TradingRuntime {
             if (!this.key) throw new Error('Massive API key missing from local secrets');
             const config = readTradingConfig(await this.firestore.fetchConfigData()); this.validateProfile(config.profile);
             const token = await this.oauth.accessToken(), date = marketTime(this.now()).date;
-            const raw = await this.reads.getAccount(token), orders = await this.reads.getOrders(this.accountHash(), token, date);
+            const raw = await this.reads.getAccount(token), orders = await this.reads.getOrders(this.accountHash(), token, date, false, 59);
             const account = projectAccount(raw, orders, date, symbol => this.price(symbol));
             const restored = await this.firestore.getTradingState(config.profile);
             if (this.stopped) return;
@@ -148,7 +148,7 @@ export class TradingRuntime {
         if (this.accountReading) { this.accountAgain = true; return; } this.accountReading = true; this.nextAccountRead = this.now() + 3000;
         try {
             const token = await this.oauth.accessToken(), date = marketTime(this.now()).date;
-            const raw = await this.reads.getAccount(token), orders = await this.reads.getOrders(this.accountHash(), token, date);
+            const raw = await this.reads.getAccount(token), orders = await this.reads.getOrders(this.accountHash(), token, date, false, 59);
             const account = projectAccount(raw, orders, date, symbol => this.price(symbol));
             if (this.stopped) return; this.account = account; this.ledger = projectTradeLedger(account.executions, this.policy.dailyMaxLoss); this.publishToken(); this.publishAccount(); this.checkStopLossProtection(); this.disciplineJobs(); this.accountNotifications();
         } catch (error) { this.failure('', 'Account refresh', error); this.accountAgain = true; }

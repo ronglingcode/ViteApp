@@ -229,9 +229,9 @@ export const getAccountInfo = async () => {
 }
 
 export const getAllOrders = (accountId: string, accessToken: string) =>
-    readApi.getOrders(accountId, accessToken, TimeHelper.getTodayString());
+    readApi.getOrders(accountId, accessToken, TimeHelper.getTodayString(), false, 59);
 export const getAllOrdersByTimeWindows = (accountId: string, accessToken: string) =>
-    readApi.getOrders(accountId, accessToken, TimeHelper.getTodayString(), true);
+    readApi.getOrders(accountId, accessToken, TimeHelper.getTodayString(), true, 59);
 
 /* #endregion */
 

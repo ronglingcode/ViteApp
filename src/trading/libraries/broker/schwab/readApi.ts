@@ -22,18 +22,25 @@ export class SchwabReadApi {
         if (!info || fields.some(field => typeof info[field] !== 'string' || !info[field])) throw new Error('Schwab preferences missing streamer information');
         return Object.fromEntries(fields.map(field => [field, info[field]]));
     }
-    async getOrders(account: string, token: string, date: string, useTimeWindows = false): Promise<Record<string, any>[]> {
-        const start = Date.parse(`${date}T00:00:00Z`), end = Date.parse(`${addDays(date, 1)}T00:00:00Z`);
+    async getOrders(account: string, token: string, date: string, useTimeWindows = false, lookbackDays = 0): Promise<Record<string, any>[]> {
+        if (!Number.isInteger(lookbackDays) || lookbackDays < 0 || lookbackDays > 59) throw new Error('Order lookback must be 0-59 days');
+        const start = Date.parse(`${addDays(date, -lookbackDays)}T00:00:00Z`), end = Date.parse(`${addDays(date, 1)}T00:00:00Z`);
         const orders = new Map<string, Record<string, any>>();
-        const window = async (from: number, to: number, subdivision: number): Promise<void> => {
+        const window = async (from: number, to: number): Promise<void> => {
             const query = `fromEnteredTime=${encodeURIComponent(new Date(from).toISOString())}&toEnteredTime=${encodeURIComponent(new Date(to).toISOString())}&maxResults=500`;
             const data = await this.read(`accounts/${encodeURIComponent(account)}/orders?${query}`, token);
             const list = Array.isArray(data) ? data : data?.orders;
             if (!Array.isArray(list)) throw new Error('Schwab order response is not an array');
-            if (list.length >= 500) {
-                if (to - from <= 60000) throw new Error('Schwab orders reached 500 in a one-minute window; read may be incomplete');
-                for (let cursor = from; cursor < to; cursor += subdivision)
-                    await window(cursor, Math.min(to, cursor + subdivision), subdivision >= 3600000 ? 600000 : 60000);
+            // Bracket responses can be truncated with far fewer than 500 roots.
+            // Conservatively count every nested record (orders, legs, activities)
+            // so a large order tree also triggers subdivision.
+            if (this.recordCount(list, from, to) >= 500) {
+                // Schwab has no page cursor. Split capped ranges, including bursts
+                // within one minute. Overlap endpoints and deduplicate by order ID.
+                if (to - from <= 1) throw new Error('Schwab orders reached 500 in a one-millisecond window; read may be incomplete');
+                const middle = from + Math.floor((to - from) / 2);
+                await window(from, middle);
+                await window(middle, to);
                 return;
             }
             for (const order of list) {
@@ -42,20 +49,32 @@ export class SchwabReadApi {
                 orders.set(String(id), order);
             }
         };
-        if (!useTimeWindows) await window(start, end, 3600000);
+        if (!useTimeWindows) await window(start, end);
         else {
-            // Historical DST determines which UTC hour contains 9:30 Eastern.
-            const openHour = Array.from({ length: 24 }, (_, hour) => hour)
-                .find(hour => marketTime(start + hour * 3600000 + 1800000).minutesSinceMarketOpen === 0)!;
-            for (let hour = 0; hour < 24; hour++) {
-                const from = start + hour * 3600000, to = from + 3600000;
-                if (hour !== openHour) await window(from, to, 600000);
+            const today = Date.parse(`${date}T00:00:00Z`);
+            // Only pre-split today; older history subdivides on demand.
+            if (start < today) await window(start, today);
+            for (let from = today; from < end; from += 3600000) {
+                const to = from + 3600000;
+                // Historical DST determines which UTC hour contains the open.
+                if (marketTime(from + 1800000).minutesSinceMarketOpen !== 0) await window(from, to);
                 else {
-                    await window(from, from + 1800000, 60000);
-                    for (let cursor = from + 1800000; cursor < to; cursor += 300000) await window(cursor, cursor + 300000, 60000);
+                    await window(from, from + 1800000);
+                    for (let cursor = from + 1800000; cursor < to; cursor += 300000) await window(cursor, cursor + 300000);
                 }
             }
         }
         return [...orders.values()];
+    }
+    private recordCount(value: unknown, from: number, to: number, inWindow = true): number {
+        if (Array.isArray(value)) return value.reduce((sum, item) => sum + this.recordCount(item, from, to, inWindow), 0);
+        if (value && typeof value === 'object') {
+            const entered = Date.parse((value as Record<string, any>).enteredTime);
+            // Schwab also returns older working trees outside the requested range.
+            // Their size must not force endless subdivision of an empty window.
+            if (Number.isFinite(entered)) inWindow = entered >= from && entered <= to;
+            return (inWindow ? 1 : 0) + Object.values(value).reduce<number>((sum, item) => sum + this.recordCount(item, from, to, inWindow), 0);
+        }
+        return 0;
     }
 }

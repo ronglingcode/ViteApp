@@ -46,7 +46,7 @@ export const Settings = {
     // I can focus on no more than 4 stocks at the same time,
     // see details in https://sunrisetrading.atlassian.net/browse/TPS-161
     'maxStocksCount': 4,
-    /** When true, fetch today's orders via time-window pagination (getAllOrdersByTimeWindows). When false, use single-request getAllOrders. */
+    /** Pre-split order history into intraday windows. Both modes automatically subdivide capped responses. */
     fetchOrdersByTimeWindows: false,
 };
 

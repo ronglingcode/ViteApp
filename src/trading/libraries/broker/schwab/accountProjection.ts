@@ -59,9 +59,13 @@ export function projectAccount(account: VendorOrder, orders: VendorOrder[], date
         if (typeof symbol !== 'string') throw new Error('Schwab position missing symbol');
         positions[symbol] = { ...position, symbol, netQuantity: Number(position.longQuantity ?? 0) - Number(position.shortQuantity ?? 0) };
     }
+    const seenFillOrders = new Set<string>();
     const visitFills = (order: VendorOrder) => {
         const leg = order.orderLegCollection?.[0], symbol = orderSymbol(order);
-        if (leg && (leg.instrument?.assetType === 'EQUITY' || leg.orderLegType === 'EQUITY')) {
+        const id = order.orderId === undefined ? '' : String(order.orderId);
+        // Pagination can return the same child both independently and in its parent.
+        if (leg && (!id || !seenFillOrders.has(id)) && (leg.instrument?.assetType === 'EQUITY' || leg.orderLegType === 'EQUITY')) {
+            if (id && order.orderActivityCollection?.length) seenFillOrders.add(id);
             for (const activity of order.orderActivityCollection ?? []) {
                 if (activity.activityType !== 'EXECUTION' || activity.executionType !== 'FILL') continue;
                 const legs = (activity.executionLegs ?? []).filter((fill: VendorOrder) => fill.legId === undefined || leg.legId === undefined || fill.legId === leg.legId);

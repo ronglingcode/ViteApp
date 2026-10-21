@@ -42,6 +42,12 @@ projection('partially filled exit uses remaining quantity', [{ orderId: 2, order
 projection('nested OCO and one surviving stop', [{ orderId: 2, orderStrategyType: 'OCO', childOrderStrategies: [{ orderStrategyType: 'OCO', childOrderStrategies: [single(3, 'STOP', 'WORKING', 20, false), single(4, 'LIMIT', 'CANCELED', 20, false)] }] }]);
 projection('out of date and non fill activities ignored', [{ ...single(1, 'MARKET', 'FILLED'), orderActivityCollection: [fill(100, 10, '2026-09-30T13:30:00Z'), { activityType: 'CANCEL', executionType: 'FILL' }, fill(50, 11)] }]);
 projection('missing account balance is an error', [], {});
+const sharedChild = { ...single(2, 'LIMIT', 'FILLED', 100, false), orderActivityCollection: [fill(50, 11), fill(50, 11)] };
+projection('child returned on separate pages is counted once with all partial fills', [
+    { ...single(1, 'MARKET', 'FILLED'), orderStrategyType: 'TRIGGER', orderActivityCollection: [fill(100, 10)],
+        childOrderStrategies: [{ orderId: 3, orderStrategyType: 'OCO', childOrderStrategies: [sharedChild] }] },
+    sharedChild,
+]);
 async function read(name, method, args, pages) {
     const requests = [], fixture = { name, kind: 'read', method, args, pages };
     const api = new SchwabReadApi({ request: async (url, method, headers) => {
@@ -59,12 +65,12 @@ await read('invalid JSON is sanitized', 'getAccount', ['fake-token'], [{ body: '
 await read('streamer info', 'getStreamerInfo', ['fake-token'], [{ body: { streamerInfo: [{ streamerSocketUrl: 'wss://test.invalid', schwabClientCustomerId: 'customer', schwabClientCorrelId: 'correl', schwabClientChannel: 'channel', schwabClientFunctionId: 'function' }] } }]);
 await read('missing streamer info', 'getStreamerInfo', ['fake-token'], [{ body: {} }]);
 await read('daily order read', 'getOrders', ['fake-account', 'fake-token', '2026-10-01'], [{ body: [{ orderId: 1 }, { orderID: 2 }] }]);
+await read('older orders filled today use the full lookback', 'getOrders', ['fake-account', 'fake-token', '2026-10-01', false, 59], [{ body: [{ orderId: 1 }] }]);
 await read('orders wrapper', 'getOrders', ['fake-account', 'fake-token', '2026-10-01'], [{ body: { orders: [] } }]);
 await read('missing order ID', 'getOrders', ['fake-account', 'fake-token', '2026-10-01'], [{ body: [{}] }]);
 await read('invalid order envelope', 'getOrders', ['fake-account', 'fake-token', '2026-10-01'], [{ body: {} }]);
 const capped = Array.from({ length: 500 }, (_, orderId) => ({ orderId }));
-await read('daily cap subdivides and deduplicates boundaries', 'getOrders', ['fake-account', 'fake-token', '2026-10-01'], [{ body: capped }, ...Array.from({ length: 24 }, (_, hour) => ({ body: [{ orderId: hour % 2 }] }))]);
-await read('one minute cap fails explicitly', 'getOrders', ['fake-account', 'fake-token', '2026-10-01'], [{ body: capped }, { body: capped }, { body: capped }, { body: capped }]);
+await read('daily cap subdivides and deduplicates boundaries', 'getOrders', ['fake-account', 'fake-token', '2026-10-01'], [{ body: capped }, { body: [{ orderId: 1 }] }, { body: [{ orderId: 1 }, { orderId: 2 }] }]);
 await read('summer open uses five minute windows', 'getOrders', ['fake-account', 'fake-token', '2026-10-01', true], Array.from({ length: 30 }, () => ({ body: [] })));
 await read('winter open uses five minute windows', 'getOrders', ['fake-account', 'fake-token', '2026-12-01', true], Array.from({ length: 30 }, () => ({ body: [] })));
 const text = JSON.stringify(scenarios, null, 2) + '\n';

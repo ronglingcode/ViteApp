@@ -8,7 +8,7 @@
     "test:execution-exports": "node --experimental-strip-types scripts/generateExecutionExportFixtures.mjs --check",
     "test:runtime": "node --experimental-strip-types --test src/trading/runtime/tradingRuntime.test.ts",
     "test:stop-loss-protection": "node --experimental-strip-types --test src/trading/core/controllers/stopLossMonitor.test.ts src/trading/runtime/tradingRuntime.test.ts",
-    "test:broker-read": "node --experimental-strip-types scripts/generateBrokerReadFixtures.mjs --check",
+    "test:broker-read": "node --experimental-strip-types scripts/generateBrokerReadFixtures.mjs --check && node --experimental-strip-types --test src/trading/libraries/broker/schwab/readApi.test.ts",
     "test:streams": "node --experimental-strip-types scripts/generateStreamFixtures.mjs --check && node --experimental-strip-types --test src/trading/runtime/marketStreams.test.ts",
     "test:state": "node --experimental-strip-types scripts/generateStateFixtures.mjs --check",
     "test:market": "node --experimental-strip-types scripts/generateMarketFixtures.mjs --check && node --experimental-strip-types --test scripts/tradeFlushBuffer.test.mjs scripts/browserMarketAdapter.test.mjs src/trading/runtime/marketLoader.test.ts",
