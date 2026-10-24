@@ -1,7 +1,7 @@
 import type { TradingPlans } from '../../../models/tradingPlans/tradingPlansModels';
 import type { MarketState } from '../marketdata/marketState.ts';
 import { marketTime } from '../marketdata/marketClock.ts';
-import { createTradebookDefinitions } from '../configuration/tradingConfig.ts';
+import { createTradebookDefinitions, maxTradableStocksCount } from '../configuration/tradingConfig.ts';
 import type { TradeState, StateObject } from '../state/tradeState.ts';
 import { addedPartialStack, type projectTradeLedger } from '../account/tradeLedger.ts';
 import type { projectAccount, AccountExitPair } from '../../libraries/broker/schwab/accountProjection.ts';
@@ -41,7 +41,7 @@ export function createExecutionInputs(symbol: string, plan: TradingPlans, market
             activeTrade: active, longTrade: state.direction(symbol, true), shortTrade: state.direction(symbol, false), candles: market.candles,
             definitions: createTradebookDefinitions(plan), attendanceAllowed: true,
             ...(plan.fixedShares !== undefined ? { fixedShares: [...plan.fixedShares] } : {}),
-            watchlistBlockReason: watchlist.length > 1 ? `more than 1 stocks in watchlist: ${watchlist.join(', ')}` : '',
+            watchlistBlockReason: watchlist.length > maxTradableStocksCount ? `more than ${maxTradableStocksCount} stocks in watchlist: ${watchlist.join(', ')}` : '',
             startupBlockReason: '',
             realizedPnl: ledger.realizedPnL, dailyMaxLoss: policy.dailyMaxLoss, riskDollars: policy.riskDollars,
             liquidityScale: market.liquidityScale, secondsSinceMarketOpen: marketTime(now).minutesSinceMarketOpen * 60,

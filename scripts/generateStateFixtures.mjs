@@ -65,15 +65,22 @@ const range = { ...entry.basePlan, support: { low: 9, high: 8, requireEntryWithi
 add('range normalized and constructed even for disabled directions', 'config', 'createTradebookDefinitions', [{ ...plan, long: { enabled: false }, rangeBoundReversalPlan: range }]);
 add('range overlap rejected', 'config', 'validateTradingPlan', [{ ...plan, rangeBoundReversalPlan: { ...range, resistance: { low: 8, high: 10 } } }]);
 add('stock selections config', 'config', 'readTradingConfig', [{ plans: [plan], stockSelections: ['AAPL'], activeProfileName: 'schwab' }]);
-add('watchlist attention limit', 'config', 'readTradingConfig', [{ plans: [plan], stockSelections: ['AAPL', 'TSLA'], activeProfileName: 'schwab' }]);
+const secondPlan = { ...automaticShortPlan, symbol: 'TSLA' };
+const twoStockConfig = { plans: [plan, secondPlan], stockSelections: ['AAPL', 'TSLA'], activeProfileName: 'schwab' };
+assert.deepEqual(add('two selected stocks config', 'config', 'readTradingConfig', [twoStockConfig]).symbols, ['AAPL', 'TSLA']);
+add('watchlist attention limit', 'config', 'readTradingConfig', [{ ...twoStockConfig, stockSelections: ['AAPL', 'TSLA', 'MSFT'] }]);
+assert.equal(fixtures.at(-1).error, 'more than 2 stocks in watchlist: AAPL, TSLA, MSFT');
+add('second selected stock still requires a valid plan', 'config', 'readTradingConfig', [{ ...twoStockConfig, plans: [plan, { ...secondPlan, corePlan: '' }] }]);
+assert.equal(fixtures.at(-1).error, 'TSLA core plan must contain more than 50 characters');
 add('missing selected plan', 'config', 'readTradingConfig', [{ plans: [plan], stockSelections: ['TSLA'] }]);
 add('missing config', 'config', 'readTradingConfig', [null]);
 function inputs(name, netQuantity, restored, options = {}) {
-    const market = { symbol: 'AAPL', date: '2026-10-01', candles: [{ datetime: base - 60000, volume: 1000 }, { datetime: base, volume: 2000 }], currentPrice: 11, vwap: 10.5, liquidityScale: .5, openPrice: 10, highOfDay: 12, lowOfDay: 9, premarketHigh: 11, premarketLow: 8 };
-    const pair = (id, price, quantity = 10) => ({ symbol: 'AAPL', source: 'OCO', parentOrderID: id, STOP: { orderID: id + 's', quantity, price: 9, isBuy: netQuantity < 0 }, LIMIT: { orderID: id + 'l', quantity, price, isBuy: netQuantity < 0 } });
-    const account = { positions: { AAPL: { netQuantity, averagePrice: 10 } }, entryOrders: {}, exitPairs: { AAPL: [pair('one', 12), pair('two', 11), { symbol: 'AAPL', source: 'OCO', parentOrderID: 'three', STOP: { orderID: 'three', quantity: 10, price: 9, isBuy: netQuantity < 0 } }] }, currentBalance: 25000 };
-    const ledger = Ledger.projectTradeLedger({ AAPL: [fill(netQuantity >= 0, 100, 10), fill(netQuantity < 0, 10, 11, 60000)] });
-    const args = ['AAPL', plan, market, { bidPrice: 10.99, askPrice: 11.01 }, account, ledger, restored, ['AAPL'], { AAPL: market }, { customStopLong: 9.5, fixedQuantity: 0 }, base + 1000, 2, defaultTradingPolicy];
+    const symbol = options.symbol ?? 'AAPL';
+    const market = { symbol, date: '2026-10-01', candles: [{ datetime: base - 60000, volume: 1000 }, { datetime: base, volume: 2000 }], currentPrice: 11, vwap: 10.5, liquidityScale: .5, openPrice: 10, highOfDay: 12, lowOfDay: 9, premarketHigh: 11, premarketLow: 8 };
+    const pair = (id, price, quantity = 10) => ({ symbol, source: 'OCO', parentOrderID: id, STOP: { orderID: id + 's', quantity, price: 9, isBuy: netQuantity < 0 }, LIMIT: { orderID: id + 'l', quantity, price, isBuy: netQuantity < 0 } });
+    const account = { positions: { [symbol]: { netQuantity, averagePrice: 10 } }, entryOrders: {}, exitPairs: { [symbol]: [pair('one', 12), pair('two', 11), { symbol, source: 'OCO', parentOrderID: 'three', STOP: { orderID: 'three', quantity: 10, price: 9, isBuy: netQuantity < 0 } }] }, currentBalance: 25000 };
+    const ledger = Ledger.projectTradeLedger({ [symbol]: [fill(netQuantity >= 0, 100, 10), fill(netQuantity < 0, 10, 11, 60000)].map(value => ({ ...value, symbol })) });
+    const args = [symbol, plan, market, { bidPrice: 10.99, askPrice: 11.01 }, account, ledger, restored, options.watchlist ?? [symbol], options.markets ?? { [symbol]: market }, { customStopLong: 9.5, fixedQuantity: 0 }, base + 1000, 2, defaultTradingPolicy];
     Object.assign(account, options.account); args[12] = { ...defaultTradingPolicy, ...options.policy };
     if (options.plan) args[1] = options.plan;
     const result = createExecutionInputs(...args.slice(0, 6), new State.TradeState('2026-10-01', 25000, base, restored), ...args.slice(7));
@@ -110,6 +117,8 @@ add('no initial quantity partial fallback', 'workflow', 'completedPartials', [0,
 for (const input of fixtures.filter(f => f.kind === 'inputs')) {
     const args = structuredClone(input.args), view = { type: 'account_ready', symbol: args[0], timestamp: args[10], plan: args[1], market: args[2], account: args[4], ledger: args[5], state: args[6], policy: { ...args[12], coreTargetEnabled: true }, history: { dailyBars: [{ high: 12, low: 8, close: 10 }] } };
     view.plan.keyLevels = { otherLevels: [{ price: 10.5, label: 'key' }, { price: 10.5, label: 'duplicate' }, { price: -1 }], zones: [{ low: 11, high: 9, label: 'zone', color: 'red' }, { low: 9, high: 11 }, { low: 0, high: 1 }] };
+    // Browser and native views have different default zone labels; use an explicit shared label.
+    view.plan.long.gapAndGoPlan.support.label = 'support';
     view.plan.analysis.waitForBidRetest = 'yes'; view.plan.analysis.waitForOfferRetest = 'warning';
     view.account.executions = { AAPL: [{ price: 11, quantity: 30, isBuy: false, positionEffectIsOpen: false, timestamp: args[10] }] };
     const projected = add('local views: ' + input.name, 'views', 'nativeViews', [view]);
@@ -117,6 +126,24 @@ for (const input of fixtures.filter(f => f.kind === 'inputs')) {
     add('live VWAP: ' + input.name, 'views', 'nativeViews', [{ type: 'market_update', symbol: args[0], timestamp: args[10], market: { vwap: 11, latestPriceTime: args[10] - 1, closedVwap: { datetime: args[10] - 60000, value: 10.05 } } }]);
 }
 add('empty held-symbol display clears old buttons and levels', 'views', 'nativeViews', [{ type: 'account_ready', symbol: 'MSFT', timestamp: base, account: { positions: { MSFT: { netQuantity: -100, averagePrice: 20 } } } }]);
+const twoStockState = store('two stocks retain independent long and short entry state', saved, [
+    ['acceptEntry', 'TSLA', { ...entry, isLong: false, stopOutPrice: 11, submitEntryResult: { ...entry.submitEntryResult, totalQuantity: 50 } }, secondPlan.atr, base + 456],
+]);
+assert.equal(twoStockState.stateBySymbol.AAPL.breakoutTradeStateForLong.initialQuantity, 100);
+assert.equal(twoStockState.stateBySymbol.TSLA.breakoutTradeStateForShort.initialQuantity, 50);
+const twoStockPositions = { AAPL: { netQuantity: 90, averagePrice: 10 }, TSLA: { netQuantity: -40, averagePrice: 10 } };
+const twoStockMarkets = { AAPL: { currentPrice: 11 }, TSLA: { currentPrice: 12 } };
+for (const symbol of ['AAPL', 'TSLA']) {
+    const result = inputs('two-stock execution inputs for ' + symbol, twoStockPositions[symbol].netQuantity, twoStockState, {
+        symbol, plan: symbol === 'AAPL' ? plan : secondPlan, watchlist: ['AAPL', 'TSLA'], markets: twoStockMarkets, account: { positions: twoStockPositions },
+    });
+    assert.equal(result.entryContext.watchlistBlockReason, '');
+    assert.equal(result.entryContext.availableBuyingPower, 97500 - 90 * 11 - 40 * 12);
+    assert.equal(result.entryContext.activeTrade.initialQuantity, symbol === 'AAPL' ? 100 : 50);
+    assert.ok(result.pairs.every(pair => pair.symbol === symbol));
+}
+assert.equal(inputs('three stocks block execution inputs', 90, saved, { watchlist: ['AAPL', 'TSLA', 'MSFT'] }).entryContext.watchlistBlockReason,
+    'more than 2 stocks in watchlist: AAPL, TSLA, MSFT');
 add('risk clips protective coverage at current remaining position', 'views', 'positionRisk', [30, 10, [{ STOP: { price: 9, quantity: 100 } }], 8, 12]);
 add('risk includes unprotected position day extreme', 'views', 'positionRisk', [-100, 10, [{ STOP: { price: 11, quantity: 30 } }], 8, 12]);
 for (const available of [2000, 1000, 600, 500, 0]) add('buying power allocation ' + available, 'workflow', 'buyingPowerTargets', [[{ target: 11, quantity: 40 }, { target: 12, quantity: 60 }], 10, available]);

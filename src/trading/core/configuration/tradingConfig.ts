@@ -1,5 +1,7 @@
 import type { TradingPlans, BasePlan, SupportResistanceArea } from '../../../models/tradingPlans/tradingPlansModels';
 
+export const maxTradableStocksCount = 2;
+
 export interface TradebookDefinition { tradebookID: string; isLong: boolean; enabled: boolean; basePlan: BasePlan; entryArea: SupportResistanceArea }
 export function createTradebookDefinitions(plan: TradingPlans): TradebookDefinition[] {
     const definitions: TradebookDefinition[] = [];
@@ -70,7 +72,7 @@ export function validateTradingPlan(plan: TradingPlans): string {
     }
     return '';
 }
-export function readTradingConfig(raw: Record<string, any> | null, maxStocks = 1) {
+export function readTradingConfig(raw: Record<string, any> | null, maxStocks = maxTradableStocksCount) {
     if (!raw || !Array.isArray(raw.plans) || !Array.isArray(raw.stockSelections)) throw new Error('Trading configuration missing plans/stockSelections');
     const plans = raw.plans as TradingPlans[], symbols = raw.stockSelections as string[];
     if (symbols.some(symbol => typeof symbol !== 'string' || !symbol)) throw new Error('Trading configuration contains an invalid stock selection');

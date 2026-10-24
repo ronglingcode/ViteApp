@@ -6,8 +6,8 @@ export const premarketVolumeThresholdInMillions: number = 0.9;
 export const premarketRelativeVolumeThreshold: number = 4;
 // Hard floor: block trading below this many premarket shares even if the relative-volume rule passes.
 export const premarketVolumeHardFloorInShares: number = 500000;
-// Block trading when the watchlist contains more than this many stocks.
-export const maxTradableStocksCount: number = 1; // do not change, trade management requires full attention
+// Share the two-stock watchlist limit with the standalone trading engine.
+export { maxTradableStocksCount } from '../trading/core/configuration/tradingConfig';
 // true: offload time & sales socket receipt + parsing to a Web Worker (main app).
 export const useMarketDataWorker: boolean = true;
 // false: late T&S records still flow into chart/state updates.
