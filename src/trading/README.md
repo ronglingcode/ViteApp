@@ -33,9 +33,9 @@ Both apps execute their own operations. Run one at a time because each owns the
 vendor streams. Bookmap configuration/data/state now originate from the same
 Massive, Firestore and Schwab sources instead of being forwarded by ViteApp.
 
-Both apps support trading up to two selected stocks at the same time. Each stock
+Both apps support trading up to four selected stocks at the same time. Each stock
 requires a valid trading plan. Startup configuration and entry validation block
-watchlists containing more than two stocks.
+watchlists containing more than four stocks.
 
 Both apps poll broker positions and orders every three seconds for stop-loss
 coverage, including held symbols outside the watchlist. Any uncovered shares

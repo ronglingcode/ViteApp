@@ -1,6 +1,6 @@
 import type { TradingPlans, BasePlan, SupportResistanceArea } from '../../../models/tradingPlans/tradingPlansModels';
 
-export const maxTradableStocksCount = 2;
+export const maxTradableStocksCount = 4;
 
 export interface TradebookDefinition { tradebookID: string; isLong: boolean; enabled: boolean; basePlan: BasePlan; entryArea: SupportResistanceArea }
 export function createTradebookDefinitions(plan: TradingPlans): TradebookDefinition[] {

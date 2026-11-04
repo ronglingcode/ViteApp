@@ -113,8 +113,8 @@ test('two stocks start and refresh with independent positions, entry inputs and 
         config.stockSelections = ['AAPL', 'TSLA']; await runtime.refreshConfig(); await new Promise(resolve => setImmediate(resolve));
         assert.equal(latest('TSLA').entryContext.watchlistBlockReason, '');
         assert.equal(latest('TSLA').entryContext.activeTrade.initialQuantity, 50);
-        config.stockSelections.push('MSFT'); await runtime.refreshConfig();
-        assert.ok(logs.some(value => value.includes('more than 2 stocks in watchlist: AAPL, TSLA, MSFT')));
+        config.stockSelections.push('MSFT', 'AMD', 'NVDA'); await runtime.refreshConfig();
+        assert.ok(logs.some(value => value.includes('more than 4 stocks in watchlist: AAPL, TSLA, MSFT, AMD, NVDA')));
         assert.equal(runtime.view('TSLA', 'test').plan.symbol, 'TSLA');
         await runtime.pendingPersistence();
     } finally { runtime.close(); }

@@ -68,8 +68,13 @@ add('stock selections config', 'config', 'readTradingConfig', [{ plans: [plan], 
 const secondPlan = { ...automaticShortPlan, symbol: 'TSLA' };
 const twoStockConfig = { plans: [plan, secondPlan], stockSelections: ['AAPL', 'TSLA'], activeProfileName: 'schwab' };
 assert.deepEqual(add('two selected stocks config', 'config', 'readTradingConfig', [twoStockConfig]).symbols, ['AAPL', 'TSLA']);
-add('watchlist attention limit', 'config', 'readTradingConfig', [{ ...twoStockConfig, stockSelections: ['AAPL', 'TSLA', 'MSFT'] }]);
-assert.equal(fixtures.at(-1).error, 'more than 2 stocks in watchlist: AAPL, TSLA, MSFT');
+const fourStockSymbols = ['AAPL', 'TSLA', 'MSFT', 'AMD'];
+const fourStockConfig = { ...twoStockConfig, plans: fourStockSymbols.map(symbol => ({ ...plan, symbol })), stockSelections: fourStockSymbols };
+assert.deepEqual(add('four selected stocks config', 'config', 'readTradingConfig', [fourStockConfig]).symbols, fourStockSymbols);
+add('fourth selected stock still requires a valid plan', 'config', 'readTradingConfig', [{ ...fourStockConfig, plans: fourStockConfig.plans.slice(0, 3) }]);
+assert.equal(fixtures.at(-1).error, 'AMD missing trading plans');
+add('watchlist attention limit', 'config', 'readTradingConfig', [{ ...fourStockConfig, stockSelections: [...fourStockSymbols, 'NVDA'] }]);
+assert.equal(fixtures.at(-1).error, 'more than 4 stocks in watchlist: AAPL, TSLA, MSFT, AMD, NVDA');
 add('second selected stock still requires a valid plan', 'config', 'readTradingConfig', [{ ...twoStockConfig, plans: [plan, { ...secondPlan, corePlan: '' }] }]);
 assert.equal(fixtures.at(-1).error, 'TSLA core plan must contain more than 50 characters');
 add('missing selected plan', 'config', 'readTradingConfig', [{ plans: [plan], stockSelections: ['TSLA'] }]);
@@ -142,8 +147,11 @@ for (const symbol of ['AAPL', 'TSLA']) {
     assert.equal(result.entryContext.activeTrade.initialQuantity, symbol === 'AAPL' ? 100 : 50);
     assert.ok(result.pairs.every(pair => pair.symbol === symbol));
 }
-assert.equal(inputs('three stocks block execution inputs', 90, saved, { watchlist: ['AAPL', 'TSLA', 'MSFT'] }).entryContext.watchlistBlockReason,
-    'more than 2 stocks in watchlist: AAPL, TSLA, MSFT');
+for (const symbol of fourStockSymbols) {
+    assert.equal(inputs('four-stock execution inputs for ' + symbol, 90, saved, { symbol, watchlist: fourStockSymbols }).entryContext.watchlistBlockReason, '');
+}
+assert.equal(inputs('five stocks block execution inputs', 90, saved, { watchlist: [...fourStockSymbols, 'NVDA'] }).entryContext.watchlistBlockReason,
+    'more than 4 stocks in watchlist: AAPL, TSLA, MSFT, AMD, NVDA');
 add('risk clips protective coverage at current remaining position', 'views', 'positionRisk', [30, 10, [{ STOP: { price: 9, quantity: 100 } }], 8, 12]);
 add('risk includes unprotected position day extreme', 'views', 'positionRisk', [-100, 10, [{ STOP: { price: 11, quantity: 30 } }], 8, 12]);
 for (const available of [2000, 1000, 600, 500, 0]) add('buying power allocation ' + available, 'workflow', 'buyingPowerTargets', [[{ target: 11, quantity: 40 }, { target: 12, quantity: 60 }], 10, available]);
