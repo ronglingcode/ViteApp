@@ -22,6 +22,23 @@ export function positionRisk(net: number, average: number, pairs: StateObject[],
     if (extreme > 0) dollars += Math.abs(average - extreme) * Math.max(0, Math.abs(net) - covered);
     return dollars;
 }
+/** Fixed plan targets are visible before entry, including targets already reached. */
+export function plannedTargetLevels(plan: StateObject | undefined): { price: number; label: string }[] {
+    const levels: { price: number; label: string }[] = [];
+    for (const side of ['long', 'short']) {
+        const direction = plan?.[side];
+        if (!direction?.enabled) continue;
+        for (const target of direction.finalTargets ?? []) {
+            const price = target.level;
+            if (!Number.isFinite(price) || price <= 0) continue;
+            const label = `${side === 'long' ? 'Long' : 'Short'} target${target.text?.trim() ? ': ' + target.text.trim() : ''}`;
+            const existing = levels.find(level => level.price === price);
+            if (existing) { if (!existing.label.split(' / ').includes(label)) existing.label += ' / ' + label; }
+            else levels.push({ price, label });
+        }
+    }
+    return levels;
+}
 /** Local domain -> existing Bookmap display protocol, without plugin or browser APIs. */
 export function nativeViews(view: StateObject): StateObject[] {
     const symbol = view.symbol, timestamp = view.timestamp, market = view.market ?? {}, plan = view.plan ?? {}, policy = view.policy ?? {}, account = view.account ?? {};
@@ -34,6 +51,11 @@ export function nativeViews(view: StateObject): StateObject[] {
     const active = view.state?.stateBySymbol?.[symbol]?.[net > 0 ? 'breakoutTradeStateForLong' : 'breakoutTradeStateForShort'] ?? {}, captured = active.plan ?? {};
     const levels: StateObject[] = [], zones: StateObject[] = [], seen = new Set<number>(), zoneKeys = new Set<string>();
     for (const level of plan.keyLevels?.otherLevels ?? []) if (Number.isFinite(level.price) && level.price > 0 && !seen.has(level.price)) { seen.add(level.price); levels.push({ ...level }); }
+    for (const target of plannedTargetLevels(plan)) {
+        const existing = levels.find(level => level.price === target.price);
+        if (existing) existing.label = [existing.label, target.label].filter(Boolean).join(' / ');
+        else levels.push(target);
+    }
     const addZone = (area: StateObject | undefined, label = '', color = '') => { if (!area) return; const low = Math.min(area.low, area.high), high = Math.max(area.low, area.high), key = `${low}:${high}`;
         if (!(low > 0 && high > low) || !Number.isFinite(high) || zoneKeys.has(key)) return; zoneKeys.add(key); zones.push({ low, high, label: area.label?.trim() || label, color: area.color?.trim() || color }); };
     for (const zone of plan.keyLevels?.zones ?? []) addZone(zone);

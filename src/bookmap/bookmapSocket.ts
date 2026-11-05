@@ -1,3 +1,4 @@
+import { plannedTargetLevels } from '../trading/core/controllers/nativeViews';
 /**
  * WebSocket client for the Bookmap Active Trader plugin.
  * Connects to the local WebSocket server to push display configurations
@@ -809,6 +810,11 @@ const getBookmapKeyLevelsForSymbol = (symbol: string): BookmapKeyLevel[] => {
         }
         seen.add(price);
         levels.push({ price, label: level.label });
+    }
+    for (const target of plannedTargetLevels(plan)) {
+        const existing = levels.find(level => level.price === target.price);
+        if (existing) existing.label = [existing.label, target.label].filter(Boolean).join(' / ');
+        else levels.push(target);
     }
     return levels;
 };

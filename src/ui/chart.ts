@@ -1,3 +1,4 @@
+import { plannedTargetLevels } from '../trading/core/controllers/nativeViews';
 import * as RiskManager from '../algorithms/riskManager';
 
 import * as Helper from '../utils/helper';
@@ -24,6 +25,7 @@ import * as ExitOrderPairs from '../utils/exitOrderPairs';
 declare let window: Models.MyWindow;
 
 const updateUiTargetCache = new WeakMap<HTMLElement, Map<string, HTMLElement>>();
+const plannedTargetLines = new WeakMap<object, LightweightCharts.IPriceLine[]>();
 const candleSeriesVisibility = new WeakMap<object, boolean>();
 
 export const syncCandlestickVisibility = (timeframeCharts: Models.TimeFrameChart[], currentTime: Date): void => {
@@ -750,7 +752,8 @@ export const updateAccountUIStatusForSymbol = (symbol: string) => {
 
     let position = cache?.positions.get(symbol);
     drawFilledPrice(position, widget);
-    drawTradeManagementInChart(symbol, position, widget);
+    drawPlannedTargets(symbol);
+    drawTradeManagementInChart(symbol, position);
     let riskMultiple = showPositionSize(symbol, position, widget);
     drawProfitRatio(symbol, position, widget, riskMultiple);
     drawWorkingOrders(symbol, position, widget);
@@ -762,36 +765,33 @@ export const updateAccountUIStatusForSymbol = (symbol: string) => {
     //drawMomentumLevels(widget);
     //AutoTrader.onAccountDataRefresh(symbol);
 };
-const drawTradeManagementInChart = (symbol: string, position: Models.Position | undefined, widget: Models.ChartWidget) => {
-    if (!position) {
-        return;
+const drawPlannedTargets = (symbol: string) => {
+    const targets = plannedTargetLevels(TradingPlans.getTradingPlans(symbol));
+    for (const chart of Models.getChartsInAllTimeframes(symbol)) {
+        for (const line of plannedTargetLines.get(chart) ?? []) chart.candleSeries.removePriceLine(line);
+        const lines = targets.map(target => createPriceLine(
+            chart.candleSeries, target.price, target.label, "#8b5a00", 2, false, "dashed"));
+        plannedTargetLines.set(chart, lines);
     }
-    let isLong = position.netQuantity > 0;
-    // clear previous lines
-    let allCharts = Models.getChartsInAllTimeframes(symbol);
-    allCharts.forEach(chart => {
-        for (let i = 0; chart.tradeManagementLevels.length > i; i++) {
-            let l = chart.tradeManagementLevels[i];
-            chart.candleSeries.removePriceLine(l);
-        }
-        chart.tradeManagementLevels = [];
-    });
+}
 
-    let breakoutTradeState = TradingState.getBreakoutTradeState(symbol, isLong);
-    let tradebookID = breakoutTradeState.submitEntryResult.tradeBookID;
-    let tradebook = TradebooksManager.getTradebookByID(symbol, tradebookID);
-    if (!tradebook) {
-        return;
+// Keep entry-dependent ATR/R targets available during an active trade.
+const drawTradeManagementInChart = (symbol: string, position: Models.Position | undefined) => {
+    const charts = Models.getChartsInAllTimeframes(symbol);
+    for (const chart of charts) {
+        for (const line of chart.tradeManagementLevels) chart.candleSeries.removePriceLine(line);
+        chart.tradeManagementLevels = [];
     }
-    // draw final target
-    let finalTargets = TradingPlans.calculateTargets(symbol, isLong);
-    TradingPlans.populateTargetsLabels(symbol, finalTargets);
-    finalTargets.forEach(target => {
-        allCharts.forEach(chart => {
-            let line = createPriceLine(chart.candleSeries, target.level, target.label ?? "", "black", null, false, "solid");
-            chart.tradeManagementLevels.push(line);
-        });
-    });
+    if (!position || position.netQuantity === 0) return;
+    const isLong = position.netQuantity > 0;
+    const state = TradingState.getBreakoutTradeState(symbol, isLong);
+    if (!TradebooksManager.getTradebookByID(symbol, state.submitEntryResult.tradeBookID)) return;
+    const fixedPrices = new Set(plannedTargetLevels(TradingPlans.getTradingPlans(symbol)).map(target => target.price));
+    const targets = TradingPlans.calculateTargets(symbol, isLong).filter(target => Number.isFinite(target.level) && target.level > 0 && !fixedPrices.has(target.level));
+    TradingPlans.populateTargetsLabels(symbol, targets);
+    for (const chart of charts) for (const target of targets) {
+        chart.tradeManagementLevels.push(createPriceLine(chart.candleSeries, target.level, target.label ?? "", "black", null, false, "solid"));
+    }
 }
 
 const drawProfitRatio = (symbol: string, position: Models.Position | undefined,
@@ -1384,6 +1384,7 @@ export const drawLevelsAfterChartInitialize = (widget: Models.ChartWidget) => {
     let tradingPlans = TradingPlans.getTradingPlans(widget.symbol);
     let keyLevels = tradingPlans.keyLevels;
     drawKeyLevels(widget, keyLevels, [], []);
+    drawPlannedTargets(widget.symbol);
 }
 
 export const drawKeyLevels = (widget: Models.ChartWidget, keyLevels: TradingPlansModels.keyLevels,

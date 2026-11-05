@@ -188,6 +188,13 @@ for (const [name, args] of [
         if (args[1] === 10 && args[2] === 9 && args[3] === 11) assert.equal(reset.targets[0].target, args[0] > 0 ? 12 : 8);
     }
 }
+const targetPlan = { keyLevels: { otherLevels: [{ price: 45, label: 'support' }] },
+    long: { enabled: true, finalTargets: [{ level: 50, text: 'daily high' }, { level: 45, text: '' }] },
+    short: { enabled: true, finalTargets: [{ level: 45, text: 'daily low' }, { level: 45, text: 'daily low' }, { level: 0, atr: 1 }, { level: -1 }] } };
+const targetKeys = add('planned targets visible while flat and merge shared levels', 'views', 'nativeViews', [{ symbol: 'U', timestamp: base, plan: targetPlan }]).find(message => message.type === 'key_levels_config');
+assert.deepEqual(targetKeys.levels, [{ price: 45, label: 'support / Long target / Short target: daily low' }, { price: 50, label: 'Long target: daily high' }]);
+const disabledKeys = add('disabled direction targets removed', 'views', 'nativeViews', [{ symbol: 'U', timestamp: base, plan: { short: { enabled: false, finalTargets: [{ level: 45 }] } } }]).find(message => message.type === 'key_levels_config');
+assert.deepEqual(disabledKeys.levels, []);
 const text = JSON.stringify(fixtures, null, 2) + '\n';
 for (const url of [new URL('../src/trading/state-fixtures.json', import.meta.url), new URL('../../bookmap-plugin/src/test/resources/state-fixtures.json', import.meta.url)]) {
     if (process.argv.includes('--check')) { if (readFileSync(url, 'utf8') !== text) throw new Error(`Fixture drift: ${url}`); } else writeFileSync(url, text);
