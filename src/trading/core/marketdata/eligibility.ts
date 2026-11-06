@@ -8,9 +8,8 @@ export function isPremarketVolumeWhitelisted(symbol: string): boolean {
 }
 
 export function premarketEligibility(lastDayShares: number, previousDaysSharesAverage: number,
-    hardFloor: number, absoluteThresholdInMillions: number, relativeThreshold: number) {
+    absoluteThresholdInMillions: number, relativeThreshold: number) {
     return {
-        hardFloorPassed: lastDayShares >= hardFloor,
         absolutePassed: lastDayShares / 1000000 >= absoluteThresholdInMillions,
         relativePassed: Number.isFinite(previousDaysSharesAverage) && previousDaysSharesAverage > 0 && Number.isFinite(lastDayShares)
             && lastDayShares >= previousDaysSharesAverage * relativeThreshold,

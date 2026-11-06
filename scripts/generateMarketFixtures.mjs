@@ -43,7 +43,7 @@ for (const instant of ['2026-03-06T14:29:59.999Z', '2026-03-06T14:30:00Z', '2026
     const result = mapWebSocketTrade(input);
     fixtures.push({ kind: 'mapper', name: `condition boundary ${instant}`, input, result, filtered: shouldFilterTrade(result) });
 }
-for (const args of [[499999, 1000, 500000, 0.9, 4], [500000, 125000, 500000, 0.9, 4], [899999, 0, 500000, 0.9, 4], [900000, 0, 500000, 0.9, 4]])
+for (const args of [[499999, 1000, 0.9, 4], [500000, 125000, 0.9, 4], [899999, 0, 0.9, 4], [900000, 0, 0.9, 4]])
     fixtures.push({ kind: 'premarketEligibility', name: `shares eligibility ${args}`, args, result: premarketEligibility(...args) });
 for (const args of [[100000000, 10], [100000000, 8.95], [0, 10]]) fixtures.push({ kind: 'marketCap', name: `implied cap ${args}`, args, result: impliedMarketCapInBillions(...args) });
 for (const [area, candles] of [
@@ -53,10 +53,13 @@ for (const [area, candles] of [
     [null, []], [null, [candle(base - 86400000)]],
 ]) fixtures.push({ kind: 'consolidation', name: `consolidation ${JSON.stringify([area, candles])}`, area, candles, result: validatePreviousConsolidationArea(area ?? undefined, candles) });
 for (const [name, plan, shares, stats, daily, expected] of [
-    ['AMD bypasses hard floor with zero premarket volume', { symbol: 'AMD', marketCapInMillions: 10000 }, 100000000, { lastDayShares: 0, previousDaysSharesAverage: 1000000 }, [], ''],
+    ['AMD bypasses volume thresholds with zero premarket volume', { symbol: 'AMD', marketCapInMillions: 10000 }, 100000000, { lastDayShares: 0, previousDaysSharesAverage: 1000000 }, [], ''],
     ['AMD bypasses absolute and relative volume thresholds', { symbol: 'AMD', marketCapInMillions: 10000 }, 100000000, { lastDayShares: 600000, previousDaysSharesAverage: 1000000 }, [], ''],
-    ['AAPL still requires premarket hard floor', { symbol: 'AAPL', marketCapInMillions: 10000 }, 100000000, { lastDayShares: 0, previousDaysSharesAverage: 1000000 }, [], 'premarket shares below 500000 hard floor'],
+    ['AAPL with zero volume still fails absolute and relative thresholds', { symbol: 'AAPL', marketCapInMillions: 10000 }, 100000000, { lastDayShares: 0, previousDaysSharesAverage: 1000000 }, [], 'premarket shares below 0.9M and 4x prior average'],
     ['AAPL still requires absolute or relative volume', { symbol: 'AAPL', marketCapInMillions: 10000 }, 100000000, { lastDayShares: 600000, previousDaysSharesAverage: 1000000 }, [], 'premarket shares below 0.9M and 4x prior average'],
+    ['ABNB below former floor qualifies at exactly 4x prior average', { symbol: 'ABNB', marketCapInMillions: 10000 }, 100000000, { lastDayShares: 100000, previousDaysSharesAverage: 25000 }, [], ''],
+    ['ABNB below former floor fails below 4x prior average', { symbol: 'ABNB', marketCapInMillions: 10000 }, 100000000, { lastDayShares: 99999, previousDaysSharesAverage: 25000 }, [], 'premarket shares below 0.9M and 4x prior average'],
+    ['ABNB qualifies at absolute threshold without relative volume', { symbol: 'ABNB', marketCapInMillions: 10000 }, 100000000, { lastDayShares: 900000, previousDaysSharesAverage: 1000000 }, [], ''],
     ['AAPL qualifies on relative volume', { symbol: 'AAPL', marketCapInMillions: 10000 }, 100000000, { lastDayShares: 600000, previousDaysSharesAverage: 100000 }, [], ''],
     ['AMD still requires configured market cap', { symbol: 'AMD', marketCapInMillions: 400 }, 100000000, { lastDayShares: 0, previousDaysSharesAverage: 1000000 }, [], 'configured market cap below $500M'],
     ['AMD still requires implied market cap', { symbol: 'AMD', marketCapInMillions: 10000 }, 1000000, { lastDayShares: 0, previousDaysSharesAverage: 1000000 }, [], 'implied market cap below $0.9B'],

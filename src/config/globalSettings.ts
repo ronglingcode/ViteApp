@@ -4,8 +4,6 @@ export const impliedMarketCapThresholdInBillions: number = 0.9;
 export const premarketVolumeThresholdInMillions: number = 0.9;
 // Stocks qualify by meeting either the absolute volume threshold or this multiple of the prior days' average.
 export const premarketRelativeVolumeThreshold: number = 4;
-// Hard floor: block trading below this many premarket shares even if the relative-volume rule passes.
-export const premarketVolumeHardFloorInShares: number = 500000;
 // Share the four-stock watchlist limit with the standalone trading engine.
 export { maxTradableStocksCount } from '../trading/core/configuration/tradingConfig';
 // true: offload time & sales socket receipt + parsing to a Web Worker (main app).

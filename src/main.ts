@@ -238,14 +238,6 @@ const startLive = () => window.TradingApp.TOS.initialize().then(async () => {
             }
 
             const volumeWhitelisted = PremarketVolume.isPremarketVolumeWhitelisted(symbol);
-            // Non-whitelisted symbols must meet the hard floor regardless of relative volume.
-            const volumeFloor = PremarketVolume.checkPremarketVolumeHardFloor(priceHistory.premarketDollarCollection);
-            if (!volumeWhitelisted && !volumeFloor.passed) {
-                Firestore.logError(`${symbol} blocked: ${volumeFloor.description}; below hard floor`);
-                Chart.hideChart(symbol);
-                return;
-            }
-
             // Allow stocks that meet either premarket volume threshold.
             const absoluteVolume = PremarketVolume.checkAbsolutePremarketVolume(priceHistory.premarketDollarCollection);
             const relativeVolume = PremarketVolume.checkRelativePremarketVolume(priceHistory.premarketDollarCollection);
