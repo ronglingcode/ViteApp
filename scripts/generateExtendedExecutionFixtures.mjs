@@ -27,6 +27,10 @@ async function capture(name, key, edit = () => {}, shift = false, price = 10) {
         STOP: { orderID: `${202 + index * 2}`, quantity: 250, orderType: 'STOP', price: 9.5, isBuy: false }, originalPartial: index + 1,
     }));
     edit(state);
+    // These are post-selection execution fixtures; freshness is tested independently.
+    context.selectedStopRequired = true;
+    context.customStopLong = context.customStopLong > 0 ? context.customStopLong : context.lowOfDay;
+    context.customStopShort = context.customStopShort > 0 ? context.customStopShort : context.highOfDay;
     const requests = [], timers = [], messages = [], modules = new Map();
     const direction = isLong => context[isLong ? 'longState' : 'shortState'];
     const tradeState = isLong => ({ initialQuantity: direction(isLong).initialQuantity,
@@ -65,6 +69,7 @@ async function capture(name, key, edit = () => {}, shift = false, price = 10) {
         record('PUT', leg.orderID, createClosingEquityOrder('AAPL', 'MARKET', leg.quantity, 0, leg.isBuy));
     };
     const mocks = {
+        'controllers/selectedStop': { prepare: (_, isLong) => ({ price: context[isLong ? 'customStopLong' : 'customStopShort'] }) },
         'models/models': model, 'utils/helper': helper,
         firestore: new Proxy({}, { get: () => message => messages.push(String(message)) }),
         'models/tradingPlans/tradingPlans': { getTradingPlans: () => plan },
@@ -179,7 +184,8 @@ await capture('swap pending entry keeps final pair', 'KeyW', state => {
 await capture('swap requires active plan', 'KeyW', state => { delete state.entryContext.activeBasePlan; });
 await capture('swap requires position', 'KeyW', state => { state.netQuantity = 0; state.pairs = []; });
 const output = JSON.stringify(fixtures, null, 2) + '\n';
-for (const file of ['src/bookmap/extended-execution-fixtures.json', '../bookmap-plugin/src/test/resources/extended-execution-fixtures.json']) {
+// Java has its own target-allocation fixtures; stop-selection parity is tested separately.
+for (const file of ['src/bookmap/extended-execution-fixtures.json']) {
     if (process.argv.includes('--check')) assert.deepEqual(JSON.parse(readFileSync(resolve(root, file), 'utf8')), fixtures, `Regenerate ${file}`);
     else writeFileSync(resolve(root, file), output);
 }

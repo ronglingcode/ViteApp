@@ -1,3 +1,4 @@
+import { SelectedStop } from '../core/controllers/selectedStop.ts';
 import type { HttpPort } from '../ports/http.ts';
 import { StopLossMonitor } from '../core/controllers/stopLossMonitor.ts';
 import type { CredentialPort } from '../ports/credentials.ts';
@@ -5,14 +6,13 @@ import type { SocketPort, SchedulerPort } from '../ports/socket.ts';
 import { SchwabOAuth } from '../libraries/broker/schwab/oauth.ts';
 import { SchwabReadApi } from '../libraries/broker/schwab/readApi.ts';
 import { projectAccount } from '../libraries/broker/schwab/accountProjection.ts';
-import type { AccountOrder } from '../libraries/broker/schwab/accountProjection.ts';
 import { FirestoreApi } from '../libraries/firestore/api.ts';
 import { MassiveApi } from '../libraries/massive/api.ts';
-import { readTradingConfig } from '../core/configuration/tradingConfig.ts';
+import { readTradingConfig, createTradebookDefinitions } from '../core/configuration/tradingConfig.ts';
 import { TradeState, dateLabel, type StateObject } from '../core/state/tradeState.ts';
 import { sortedExitPairs, positionRisk, nativeViews } from '../core/controllers/nativeViews.ts';
 import { LogRepository } from '../libraries/firestore/logRepository.ts';
-import { stopDiscipline, pendingStopRefresh, firstVwapTouch } from '../core/controllers/workflows.ts';
+import { stopDiscipline, firstVwapTouch } from '../core/controllers/workflows.ts';
 import { projectTradeLedger } from '../core/account/tradeLedger.ts';
 import { marketTime } from '../core/marketdata/marketClock.ts';
 import { startupEligibility } from '../core/marketdata/startupEligibility.ts';
@@ -48,10 +48,9 @@ export class TradingRuntime {
     private readonly manual: Record<string, ManualInputs> = {};
     private readonly histories: Record<string, StateObject> = {};
     private readonly eligibility: Record<string, string> = {};
-    private readonly pendingReplacements: Record<string, string> = {};
+    readonly selectedStop = new SelectedStop();
     private readonly stopLossMonitor = new StopLossMonitor();
     private readonly reminders: Record<string, number> = {};
-    private readonly entryWarnings: Record<string, number> = {};
     private readonly dirty = new Set<string>();
     private readonly accountSymbols = new Set<string>();
     private readonly timers = new Set<() => void>();
@@ -100,7 +99,7 @@ export class TradingRuntime {
             this.publishToken(); this.startStreamsAndHistory(); this.publishAccount(); this.checkStopLossProtection();
             this.repeat(30000, () => { void this.refreshToken(); }); this.repeat(3000, () => { void this.refreshAccount(); });
             this.repeat(60000, () => { void this.refreshConfig(); }); this.repeat(100, () => this.publishDirty());
-            this.repeat(1000, () => this.pendingJobs()); this.repeat(20000, () => this.disciplineJobs());
+            this.repeat(20000, () => this.disciplineJobs());
             this.events.log('', 'Native trading runtime started; local credentials, Firestore, Massive and Schwab');
         } catch (error) { this.failure('', 'Native startup', error); throw error; }
     }
@@ -165,7 +164,7 @@ export class TradingRuntime {
             const removed = this.config.symbols.filter(symbol => !loaded.symbols.includes(symbol)); this.config = loaded;
             if (rollover) for (const symbol of loaded.symbols) this.market.forget(symbol);
             for (const symbol of removed) { this.execution.unregister?.(symbol); this.market.forget(symbol); delete this.histories[symbol]; delete this.eligibility[symbol]; delete this.manual[symbol]; this.events.message(this.view(symbol, 'account_ready')); }
-            if (rollover) { this.state = new TradeState(date, this.account!.currentBalance, this.now(), restored); for (const values of [this.histories, this.eligibility, this.pendingReplacements, this.reminders, this.entryWarnings]) for (const key of Object.keys(values)) delete values[key]; }
+            if (rollover) { this.selectedStop.clear(); this.state = new TradeState(date, this.account!.currentBalance, this.now(), restored); for (const values of [this.histories, this.eligibility, this.reminders]) for (const key of Object.keys(values)) delete values[key]; }
             for (const symbol of loaded.symbols) { const history = this.histories[symbol], plan = loaded.plans.find(plan => plan.symbol === symbol)!;
                 if (history) this.eligibility[symbol] = startupEligibility(plan, this.price(symbol), history.sharesOutstanding, history.premarketDollarCollection, history.dailyBars); }
             if (restart) { this.streams?.close(); this.startStreamsAndHistory(); } this.publishAccount();
@@ -175,12 +174,13 @@ export class TradingRuntime {
     view(symbol: string, type: string): StateObject { if (type === 'market_update') return { type, symbol, timestamp: this.now(), priceUnit: 'real', market: this.market.getState(symbol)?.metrics() }; return structuredClone({ type, symbol, timestamp: this.now(), priceUnit: 'real',
         plan: this.selectedPlan(symbol), tradingSettings: this.config?.tradingSettings,
         policy: this.policy, account: this.account, ledger: this.ledger, state: this.state?.snapshot(), history: this.histories[symbol], market: this.market.getState(symbol)?.snapshot() }); }
-    private publishInputs(symbol: string) {
+    private publishInputs(symbol: string, stop?: number) {
         const market = this.market.getState(symbol), plan = this.selectedPlan(symbol);
         if (this.stopped || !this.config || !this.account || !this.ledger || !this.state) return;
         if (!market || !plan) { this.execution.receive({ type: 'execution_state', version: 3, symbols: [this.exitInputs(symbol)] }); return; }
         const inputs = createExecutionInputs(symbol, plan, market.snapshot(), this.quotes[symbol] ?? {}, this.account, this.ledger, this.state, this.config.symbols,
             Object.fromEntries(this.config.symbols.map(stock => [stock, { currentPrice: this.price(stock) }])), this.manual[symbol] ?? {}, this.now(), ++this.revision, this.policy);
+        if (stop !== undefined) Object.assign(inputs.entryContext, { customStopLong: stop, customStopShort: stop, selectedStopRequired: true });
         inputs.entryContext.startupBlockReason = this.eligibility[symbol] ?? 'startup eligibility pending';
         this.execution.receive({ type: 'execution_state', version: 3, symbols: [inputs] });
     }
@@ -196,22 +196,39 @@ export class TradingRuntime {
         try {
             if (action.type === 'core_plan_update') { for (const field of ['coreTarget', 'coreCount']) if (typeof action[field] !== 'number' || !Number.isFinite(action[field])) throw new Error(`Invalid core plan input: ${field}`); const net = this.account?.positions[symbol]?.netQuantity ?? 0; if (!this.policy.coreTargetEnabled || !net || !this.state) throw new Error('No active core plan');
                 this.state.updateCorePlan(symbol, net > 0, Math.round(action.coreTarget * 100) / 100, action.coreCount); this.persistState(); this.events.message({ ...this.view(symbol, 'command_state'), requestId: action.requestId, updateStatus: 'success' }); return true; }
-            if (action.type === 'manual_inputs' || key === 'KeyZ' || key === 'Space') {
+            if (action.type === 'clear_selected_stop' || key === 'Space' || key === 'KeyC') this.selectedStop.clear();
+            if (key === 'KeyZ') { this.selectedStop.select(symbol, action.price); return true; }
+            if (action.type === 'manual_inputs' || key === 'Space') {
                 if (key === 'Space') { const value = this.manual[symbol] ?? {}; for (const field of ['customEntryPrice', 'customStopLong', 'customStopShort'] as const) delete value[field]; }
-                else if (key === 'KeyZ') { if (!(action.price > 0)) throw new Error('Hover price unavailable for custom stop'); Object.assign(this.manual[symbol] ??= {}, { customStopLong: action.price, customStopShort: action.price });
-                    const net = this.account?.positions[symbol]?.netQuantity ?? 0; if (net && this.state) { const market = this.market.getState(symbol)?.metrics(), extreme = net > 0 ? market?.lowOfDay : market?.highOfDay; this.state.direction(symbol, net > 0).coreInvalidationLevel = extreme && extreme > 0 ? net > 0 ? Math.min(extreme, action.price) : Math.max(extreme, action.price) : action.price; } }
                 else for (const field of ['customEntryPrice', 'customStopLong', 'customStopShort', 'fixedQuantity'] as const) if (field in action) { if (typeof action[field] !== 'number' || !Number.isFinite(action[field]) || action[field] < 0) throw new Error(`Invalid manual input: ${field}`); (this.manual[symbol] ??= {})[field] = action[field]; }
                 this.persistState(); this.events.message(this.view(symbol, 'command_state')); return true;
             }
             if (['KeyE', 'KeyR', 'KeyV'].includes(key)) { this.events.log(symbol, `${key} is disabled or has no active tradebook in the current browser profile`); return true; }
             if (action.retest_warning) this.events.notify(symbol, action.retest_warning);
-            this.publishInputs(symbol); return this.execution.route(action);
+            if (key === 'RefreshEntryStop') throw new Error('Selected entry stops cannot be automatically widened');
+            const net = this.account?.positions[symbol]?.netQuantity ?? 0;
+            const pending = (this.account?.entryOrders[symbol] ?? []).some(order => order.isBuy === (net > 0));
+            const opening = ['KeyA', 'KeyB', 'KeyS'].includes(key) || !!(action.tradebook_id || action.tradebookId)
+                || key === 'KeyW' && !pending;
+            let stop: number | undefined;
+            if (opening) {
+                const claim = this.selectedStop.consume(symbol);
+                const definition = this.selectedPlan(symbol) ? createTradebookDefinitions(this.selectedPlan(symbol)!)
+                    .find(value => value.tradebookID === (action.tradebook_id || action.tradebookId)) : undefined;
+                const isLong = key === 'KeyB' ? true : key === 'KeyS' ? false
+                    : key === 'KeyA' || key === 'KeyW' ? net >= 0 : definition?.isLong;
+                if (isLong === undefined) throw new Error('Entry direction unavailable');
+                const entry = action.use_market_order || action.useMarketOrder || action.shiftKey || action.shift_key
+                    ? this.price(symbol) : action.price > 0 ? action.price : this.price(symbol);
+                claim.validate(isLong, entry); stop = claim.price;
+                action = { ...action, selectedStopPrice: stop, selectedStopRequired: true };
+            }
+            this.publishInputs(symbol, stop); return this.execution.route(action);
         } catch (error) { this.failure(symbol, 'Native command', error); if (action.type === 'core_plan_update') this.events.message({ ...this.view(symbol, 'command_state'), requestId: action.requestId, updateStatus: 'error', error: error instanceof Error ? error.message : String(error) }); return true; }
     }
     manualInputs(symbol: string) { return structuredClone(this.manual[symbol] ?? {}); }
     executionEvent(result: StateObject) {
         const symbol = result.symbol ?? '', plan = this.selectedPlan(symbol);
-        if (result.type === 'execution_result' && result.action === 'refresh_pending_entry' && !['accepted', 'unknown'].includes(result.outcome) || result.type === 'execution_blocked') delete this.pendingReplacements[symbol];
         if (result.entry && this.state?.acceptEntry(symbol, result.entry, plan?.atr ?? {}, this.now())) { this.persistState(); this.audit('breakout', symbol, this.state.symbol(symbol)); }
         this.events.message(structuredClone(result)); if (result.type === 'execution_result') { this.publishInputs(symbol); void this.refreshAccount(); }
     }
@@ -227,17 +244,6 @@ export class TradingRuntime {
         for (const symbol of decision.close) {
             this.events.notify(symbol, 'ERROR: Missing stop-loss coverage for more than 10 seconds; closing FULL position');
             this.dispatch({ type: 'native_job', symbol, keyCode: 'SafetyClosePosition' });
-        }
-    }
-    private pendingJobs() {
-        if (this.stopped || !this.config || !this.account) return; const time = this.now(), seconds = marketTime(time).minutesSinceMarketOpen * 60;
-        for (const symbol of this.config.symbols) { const market = this.market.getState(symbol)?.metrics(); if (!market) continue; const entries: AccountOrder[] = this.account.entryOrders[symbol] ?? [];
-            const decision = pendingStopRefresh(entries, this.account.exitPairs[symbol]?.length ?? 0, seconds, this.pendingReplacements[symbol] ?? '', market.lowOfDay, market.highOfDay);
-            if (decision) { this.pendingReplacements[symbol] = decision.orderID; this.dispatch({ type: 'native_job', symbol, keyCode: 'RefreshEntryStop' }); }
-            const activeKeys = new Set<string>(); for (const order of entries) { const stop = order.exitStopPrice ?? 0, extreme = order.isBuy ? market.lowOfDay : market.highOfDay;
-                if (stop <= 0 || extreme <= 0 || !(order.isBuy ? stop > extreme : stop < extreme)) continue; const key = `${symbol}:${order.orderID}:${stop}`; activeKeys.add(key); const last = this.entryWarnings[key];
-                if (last === undefined || seconds >= 0 && seconds < 180 && time - last >= 60000) { this.entryWarnings[key] = time; this.events.notify(symbol, `Pending entry stop ${stop} is inside day extreme ${extreme}`); } }
-            for (const key of Object.keys(this.entryWarnings)) if (key.startsWith(`${symbol}:`) && !activeKeys.has(key)) delete this.entryWarnings[key];
         }
     }
     private disciplineJobs() {
@@ -281,5 +287,5 @@ export class TradingRuntime {
     private repeat(delay: number, task: () => void) { if (this.stopped) return; const cancel = this.scheduler.after(delay, () => { this.timers.delete(cancel); if (this.stopped) return; task(); this.repeat(delay, task); }); this.timers.add(cancel); }
     private failure(symbol: string, operation: string, error: unknown) { if (this.stopped) return; const value = this.credentials.loadSchwab(); let reason = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
         for (const secret of [value.access_token, value.refresh_token, value.accountHashValue, this.key]) if (secret) reason = reason.split(secret).join('[redacted]'); this.events.log(symbol, `${operation} failed: ${reason}`); }
-    close() { this.stopped = true; this.accountRetry?.(); this.accountRetry = undefined; this.timers.forEach(cancel => cancel()); this.timers.clear(); this.streams?.close(); this.market.close(); this.execution.close(); }
+    close() { this.selectedStop.clear(); this.stopped = true; this.accountRetry?.(); this.accountRetry = undefined; this.timers.forEach(cancel => cancel()); this.timers.clear(); this.streams?.close(); this.market.close(); this.execution.close(); }
 }

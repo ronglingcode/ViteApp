@@ -1,3 +1,4 @@
+import * as SelectedStop from '../controllers/selectedStop';
 import { plannedTargetLevels } from '../trading/core/controllers/nativeViews';
 import * as RiskManager from '../algorithms/riskManager';
 
@@ -137,6 +138,7 @@ const createTimeFrameChart = (timeframe: number, htmlElement: HTMLElement, tabIn
 
     function myCrosshairMoveHandler(param: any) {
         if (!param.point) {
+            chartState.crosshairPrice = 0;
             return;
         }
         let price = timeframeChart.candleSeries.coordinateToPrice(param.point.y);
@@ -222,6 +224,7 @@ export const createChartWidget = (tabIndex: number, watchlistItem: Models.Watchl
                 continue;
             if (i === myWidget.tabIndex) {
                 element.classList.add("active");
+                if (window.HybridApp.UIState.activeSymbol !== myWidget.stock.symbol) SelectedStop.selection.clear();
                 window.HybridApp.UIState.activeSymbol = myWidget.stock.symbol;
                 window.HybridApp.UIState.activeTabIndex = myWidget.tabIndex;
                 myWidget.htmlContents.container.focus();
@@ -405,17 +408,8 @@ const setupQuantityBar = (symbol: string, quantityElements: Models.QuantityEleme
 };
 
 export const getCustomStopLossPrice = (symbol: string, isLong: boolean) => {
-    let p = 0;
-    let widget = Models.getChartWidget(symbol);
-    if (!widget)
-        return 0;
-    if (widget.stopLossPriceLine) {
-        p = widget.stopLossPriceLine.options().price;
-        if (p != 0)
-            return roundStopLossPrice(symbol, isLong, p);
-    }
-    return 0;
-}
+    return SelectedStop.selection.peek(symbol) ?? 0;
+};
 
 /**
  * First check any drawn stop level if allow chart drawing, 
@@ -423,28 +417,7 @@ export const getCustomStopLossPrice = (symbol: string, isLong: boolean) => {
  * last use high/low of the day
  */
 export const getStopLossPrice = (symbol: string, isLong: boolean, allowChartDrawing: boolean, presetStopOutPrice: number | null) => {
-    let p = 0;
-    if (allowChartDrawing) {
-        let widget = Models.getChartWidget(symbol);
-        if (!widget)
-            return 0;
-        if (widget.stopLossPriceLine) {
-            p = widget.stopLossPriceLine.options().price;
-            if (p != 0)
-                return roundStopLossPrice(symbol, isLong, p);
-        }
-    }
-    if (presetStopOutPrice) {
-        p = presetStopOutPrice;
-        return roundStopLossPrice(symbol, isLong, p);
-    }
-
-    if (isLong) {
-        p = Models.getLowestPrice(symbol, false);
-    } else {
-        p = Models.getHighestPrice(symbol, false);
-    }
-    return roundStopLossPrice(symbol, isLong, p);
+    return SelectedStop.selection.peek(symbol) ?? 0;
 };
 
 const roundStopLossPrice = (symbol: string, isLong: boolean, p: number) => {
@@ -1126,6 +1099,7 @@ export const addMarker = (
 };
 
 export const clearPriceLines = (symbol: string) => {
+    SelectedStop.selection.clear();
     let widget = Models.getChartWidget(symbol);
     if (!widget)
         return;
@@ -1177,6 +1151,13 @@ export const drawRiskLevel = (symbol: string, price: number) => {
             : createStoredPriceLine(price);
     }
 };
+export const clearSelectedStopLine = (symbol: string) => {
+    const widget = Models.getChartWidget(symbol);
+    if (widget?.stopLossPriceLine) {
+        removeWidgetPriceLine(widget, widget.stopLossPriceLine);
+        widget.stopLossPriceLine = undefined;
+    }
+};
 export const drawStopLoss = (symbol: string, price: number) => {
     let widget = Models.getChartWidget(symbol);
     if (!widget)
@@ -1187,7 +1168,7 @@ export const drawStopLoss = (symbol: string, price: number) => {
     }
     let candleSeries = getRenderableCandleSeries(widget);
     widget.stopLossPriceLine = candleSeries
-        ? createPriceLine(candleSeries, price, "S/L", null, null, false, "solid")
+        ? createPriceLine(candleSeries, price, "Stop", null, 1, false, "solid")
         : createStoredPriceLine(price);
 };
 export const drawEntry = (symbol: string, price: number) => {

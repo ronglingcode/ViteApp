@@ -1,3 +1,4 @@
+import * as SelectedStop from './selectedStop';
 import { fallbackProfitReset, profitResetTargets } from '../trading/core/controllers/workflows.ts';
 import * as Chart from "../ui/chart";
 import * as Firestore from '../firestore';
@@ -356,6 +357,9 @@ export const swapPositionKeyPressed = async (symbol: string) => {
     if (hasEntry) {
         Broker.marketOutExitPairsButOne(symbol, netQuantity, logTags);
     } else {
+        const selected = SelectedStop.prepare(symbol, isLong, newEntryPrice, logTags);
+        if (!selected) return;
+        stopOutPrice = selected.price;
         flattenPositionWithoutCheckingRules(symbol, netQuantity, logTags);
         setTimeout(() => {
             EntryHandler.breakoutEntryWithoutRules(symbol, isLong, newEntryPrice, stopOutPrice, stopOutPrice, logTags, initialMultiplier, oldPlan, "", "")
@@ -505,7 +509,9 @@ const canReloadPartial = (
 
 const reloadPartial = async (
     symbol: string, isLong: boolean, entryPrice: number, orderType: Models.OrderType, logTags: Models.LogTags) => {
-    let stopOutPrice = Chart.getStopLossPrice(symbol, isLong, true, null);
+    const selected = SelectedStop.prepare(symbol, isLong, entryPrice, logTags);
+    if (!selected) return;
+    let stopOutPrice = selected.price;
     let quantity = getPartialQuantity(symbol, isLong);
     if (quantity == 0) {
         Firestore.logError(`getPartialQuantity() returns 0`, logTags)
@@ -564,27 +570,10 @@ const getPartialQuantity = (symbol: string, isLong: boolean) => {
     return Math.round(partialSize);
 };
 
-export const setCustomStopLoss = (symbol: string) => {
-    let crosshairPrice = Chart.getCrossHairPrice(symbol);
-    if (!crosshairPrice) {
-        return;
-    }
-
-    if (Config.getProfileSettingsForSymbol(symbol).allowTighterStop) {
-        Chart.drawStopLoss(symbol, crosshairPrice);
-    }
-
-    let netQuantity = Models.getPositionNetQuantity(symbol);
-    if (netQuantity === 0) {
-        return;
-    }
-
-    let tradebook = TraderFocus.getTradebookFromPosition(symbol);
-    if (!tradebook) {
-        return;
-    }
-
-    tradebook.setCoreInvalidationLevel(crosshairPrice);
+export const setCustomStopLoss = (symbol: string, priceOverride?: number) => {
+    const price = priceOverride ?? Chart.getCrossHairPrice(symbol);
+    try { SelectedStop.selection.select(symbol, price ?? 0); }
+    catch (error) { Firestore.logError(error instanceof Error ? error.message : String(error)); }
 };
 
 export const replaceWithProfitTakingExitOrders = (symbol: string, marketOutOnePartial: boolean,

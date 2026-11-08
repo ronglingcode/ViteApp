@@ -179,6 +179,7 @@
           "tradebookID": "RangeBoundOfferReversal",
           "stopTightenPhase": "idle"
         },
+        "selectedStopRequired": true,
         "premktHigh": 11,
         "premktLow": 9
       },
@@ -443,6 +444,7 @@
           "tradebookID": "RangeBoundOfferReversal",
           "stopTightenPhase": "idle"
         },
+        "selectedStopRequired": true,
         "premktHigh": 11,
         "premktLow": 9
       },
@@ -708,6 +710,7 @@
           "tradebookID": "RangeBoundOfferReversal",
           "stopTightenPhase": "idle"
         },
+        "selectedStopRequired": true,
         "premktHigh": 11,
         "premktLow": 9
       },
@@ -973,6 +976,7 @@
           "tradebookID": "RangeBoundOfferReversal",
           "stopTightenPhase": "idle"
         },
+        "selectedStopRequired": true,
         "premktHigh": 11,
         "premktLow": 9
       },
@@ -1270,6 +1274,7 @@
           "tradebookID": "RangeBoundOfferReversal",
           "stopTightenPhase": "idle"
         },
+        "selectedStopRequired": true,
         "premktHigh": 11,
         "premktLow": 9
       },
@@ -1538,6 +1543,7 @@
           "tradebookID": "RangeBoundOfferReversal",
           "stopTightenPhase": "idle"
         },
+        "selectedStopRequired": true,
         "premktHigh": 11,
         "premktLow": 9
       },
@@ -1736,6 +1742,7 @@
           "tradebookID": "RangeBoundOfferReversal",
           "stopTightenPhase": "idle"
         },
+        "selectedStopRequired": true,
         "premktHigh": 11,
         "premktLow": 9
       },
@@ -2000,6 +2007,7 @@
           "tradebookID": "RangeBoundOfferReversal",
           "stopTightenPhase": "idle"
         },
+        "selectedStopRequired": true,
         "premktHigh": 11,
         "premktLow": 9
       },
@@ -2198,6 +2206,7 @@
           "tradebookID": "RangeBoundOfferReversal",
           "stopTightenPhase": "idle"
         },
+        "selectedStopRequired": true,
         "premktHigh": 11,
         "premktLow": 9
       },
@@ -2396,6 +2405,7 @@
           "tradebookID": "RangeBoundOfferReversal",
           "stopTightenPhase": "idle"
         },
+        "selectedStopRequired": true,
         "premktHigh": 11,
         "premktLow": 9
       },
@@ -2603,6 +2613,7 @@
           "tradebookID": "RangeBoundOfferReversal",
           "stopTightenPhase": "idle"
         },
+        "selectedStopRequired": true,
         "premktHigh": 11,
         "premktLow": 9
       },
@@ -2801,6 +2812,7 @@
           "tradebookID": "RangeBoundOfferReversal",
           "stopTightenPhase": "idle"
         },
+        "selectedStopRequired": true,
         "premktHigh": 11,
         "premktLow": 9
       },
@@ -2999,6 +3011,7 @@
           "tradebookID": "RangeBoundOfferReversal",
           "stopTightenPhase": "idle"
         },
+        "selectedStopRequired": true,
         "premktHigh": 11,
         "premktLow": 9
       },
@@ -3127,6 +3140,7 @@
           "tradebookID": "RangeBoundOfferReversal",
           "stopTightenPhase": "idle"
         },
+        "selectedStopRequired": true,
         "premktHigh": 11,
         "premktLow": 9
       },
@@ -3390,6 +3404,7 @@
           "tradebookID": "RangeBoundOfferReversal",
           "stopTightenPhase": "idle"
         },
+        "selectedStopRequired": true,
         "premktHigh": 11,
         "premktLow": 9
       },
@@ -3526,7 +3541,7 @@
                   ],
                   "orderType": "STOP",
                   "orderStrategyType": "SINGLE",
-                  "stopPrice": 9.49
+                  "stopPrice": 9.5
                 },
                 {
                   "session": "NORMAL",
@@ -3567,7 +3582,7 @@
                   ],
                   "orderType": "STOP",
                   "orderStrategyType": "SINGLE",
-                  "stopPrice": 9.49
+                  "stopPrice": 9.5
                 },
                 {
                   "session": "NORMAL",
@@ -3608,7 +3623,7 @@
                   ],
                   "orderType": "STOP",
                   "orderStrategyType": "SINGLE",
-                  "stopPrice": 9.49
+                  "stopPrice": 9.5
                 },
                 {
                   "session": "NORMAL",
@@ -3649,7 +3664,7 @@
                   ],
                   "orderType": "STOP",
                   "orderStrategyType": "SINGLE",
-                  "stopPrice": 9.49
+                  "stopPrice": 9.5
                 },
                 {
                   "session": "NORMAL",
@@ -3690,7 +3705,7 @@
                   ],
                   "orderType": "STOP",
                   "orderStrategyType": "SINGLE",
-                  "stopPrice": 9.49
+                  "stopPrice": 9.5
                 },
                 {
                   "session": "NORMAL",
@@ -3731,7 +3746,7 @@
                   ],
                   "orderType": "STOP",
                   "orderStrategyType": "SINGLE",
-                  "stopPrice": 9.49
+                  "stopPrice": 9.5
                 },
                 {
                   "session": "NORMAL",
@@ -3772,7 +3787,7 @@
                   ],
                   "orderType": "STOP",
                   "orderStrategyType": "SINGLE",
-                  "stopPrice": 9.49
+                  "stopPrice": 9.5
                 },
                 {
                   "session": "NORMAL",
@@ -3813,7 +3828,7 @@
                   ],
                   "orderType": "STOP",
                   "orderStrategyType": "SINGLE",
-                  "stopPrice": 9.49
+                  "stopPrice": 9.5
                 },
                 {
                   "session": "NORMAL",
@@ -3854,7 +3869,7 @@
                   ],
                   "orderType": "STOP",
                   "orderStrategyType": "SINGLE",
-                  "stopPrice": 9.49
+                  "stopPrice": 9.5
                 },
                 {
                   "session": "NORMAL",
@@ -3895,7 +3910,7 @@
                   ],
                   "orderType": "STOP",
                   "orderStrategyType": "SINGLE",
-                  "stopPrice": 9.49
+                  "stopPrice": 9.5
                 },
                 {
                   "session": "NORMAL",
@@ -4110,6 +4125,7 @@
           "tradebookID": "RangeBoundOfferReversal",
           "stopTightenPhase": "idle"
         },
+        "selectedStopRequired": true,
         "premktHigh": 11,
         "premktLow": 9
       },
@@ -4246,7 +4262,7 @@
                   ],
                   "orderType": "STOP",
                   "orderStrategyType": "SINGLE",
-                  "stopPrice": 10.51
+                  "stopPrice": 10.5
                 },
                 {
                   "session": "NORMAL",
@@ -4287,7 +4303,7 @@
                   ],
                   "orderType": "STOP",
                   "orderStrategyType": "SINGLE",
-                  "stopPrice": 10.51
+                  "stopPrice": 10.5
                 },
                 {
                   "session": "NORMAL",
@@ -4328,7 +4344,7 @@
                   ],
                   "orderType": "STOP",
                   "orderStrategyType": "SINGLE",
-                  "stopPrice": 10.51
+                  "stopPrice": 10.5
                 },
                 {
                   "session": "NORMAL",
@@ -4369,7 +4385,7 @@
                   ],
                   "orderType": "STOP",
                   "orderStrategyType": "SINGLE",
-                  "stopPrice": 10.51
+                  "stopPrice": 10.5
                 },
                 {
                   "session": "NORMAL",
@@ -4410,7 +4426,7 @@
                   ],
                   "orderType": "STOP",
                   "orderStrategyType": "SINGLE",
-                  "stopPrice": 10.51
+                  "stopPrice": 10.5
                 },
                 {
                   "session": "NORMAL",
@@ -4451,7 +4467,7 @@
                   ],
                   "orderType": "STOP",
                   "orderStrategyType": "SINGLE",
-                  "stopPrice": 10.51
+                  "stopPrice": 10.5
                 },
                 {
                   "session": "NORMAL",
@@ -4492,7 +4508,7 @@
                   ],
                   "orderType": "STOP",
                   "orderStrategyType": "SINGLE",
-                  "stopPrice": 10.51
+                  "stopPrice": 10.5
                 },
                 {
                   "session": "NORMAL",
@@ -4533,7 +4549,7 @@
                   ],
                   "orderType": "STOP",
                   "orderStrategyType": "SINGLE",
-                  "stopPrice": 10.51
+                  "stopPrice": 10.5
                 },
                 {
                   "session": "NORMAL",
@@ -4574,7 +4590,7 @@
                   ],
                   "orderType": "STOP",
                   "orderStrategyType": "SINGLE",
-                  "stopPrice": 10.51
+                  "stopPrice": 10.5
                 },
                 {
                   "session": "NORMAL",
@@ -4615,7 +4631,7 @@
                   ],
                   "orderType": "STOP",
                   "orderStrategyType": "SINGLE",
-                  "stopPrice": 10.51
+                  "stopPrice": 10.5
                 },
                 {
                   "session": "NORMAL",
@@ -4838,6 +4854,7 @@
           "tradebookID": "RangeBoundOfferReversal",
           "stopTightenPhase": "idle"
         },
+        "selectedStopRequired": true,
         "premktHigh": 11,
         "premktLow": 9
       },
@@ -5063,6 +5080,7 @@
           "tradebookID": "RangeBoundOfferReversal",
           "stopTightenPhase": "idle"
         },
+        "selectedStopRequired": true,
         "premktHigh": 11,
         "premktLow": 9
       },
@@ -5193,6 +5211,7 @@
           "tradebookID": "RangeBoundOfferReversal",
           "stopTightenPhase": "idle"
         },
+        "selectedStopRequired": true,
         "premktHigh": 11,
         "premktLow": 9
       },

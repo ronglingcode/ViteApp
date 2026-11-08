@@ -7,6 +7,7 @@ import * as TradingPlansModels from '../models/tradingPlans/tradingPlansModels';
 
 import * as Broker from '../api/broker';
 import * as Calculator from '../utils/calculator';
+import * as SelectedStop from './selectedStop';
 
 
 export const getLogTagsForEntryAction = (symbol: string, isLong: boolean, entryType: string) => {
@@ -65,9 +66,12 @@ export const breakoutEntryWithoutRules = (symbol: string, isLong: boolean,
     orderIdToReplace: string,
     entryParameters?: Models.TradebookEntryParameters
 ) => {
+    entryPrice = Calculator.updateStopPriceFromCurrentQuote(symbol, entryPrice, isLong);
+    const selected = SelectedStop.prepare(symbol, isLong, entryPrice, logTags);
+    if (!selected) return;
+    stopOutPrice = riskLevel = selected.price;
     let logMessage = createEntryLogMessage('stop', isLong, entryPrice, stopOutPrice, riskLevel, allowedSizeMutiplier);
     Firestore.logInfo(logMessage, logTags);
-    entryPrice = Calculator.updateStopPriceFromCurrentQuote(symbol, entryPrice, isLong);
 
     // move stop if having opposite position
     let exitPairs = Models.getExitPairs(symbol);
@@ -98,6 +102,9 @@ export const marketEntryWithoutRules = (symbol: string, isLong: boolean,
     let bookmapEstimatedEntryPrice = entryParameters?.bookmapEstimatedEntryPrice;
     let estimatedEntryPrice = Calculator.selectMarketEntryEstimate(
         viteAppEstimatedEntryPrice, bookmapEstimatedEntryPrice, isLong) ?? viteAppEstimatedEntryPrice;
+    const selected = SelectedStop.prepare(symbol, isLong, estimatedEntryPrice, logTags);
+    if (!selected) return;
+    stopOutPrice = riskLevel = selected.price;
     let bookmapEstimateText = bookmapEstimatedEntryPrice === undefined
         ? "unavailable"
         : Helper.roundPrice(symbol, bookmapEstimatedEntryPrice);

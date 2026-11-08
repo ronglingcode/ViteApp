@@ -1,3 +1,4 @@
+import * as SelectedStop from './selectedStop';
 import * as Models from '../models/models';
 import * as TradingState from '../models/tradingState';
 import * as Helper from '../utils/helper';
@@ -36,6 +37,7 @@ export const handleKeyPressed = (
     } else if (code === 'Space') {
         Chart.clearPriceLines(symbol);
     } else if (code === "KeyC") {
+        SelectedStop.selection.clear();
         // shift + c or just c: cancel breakout entry orders
         Handler.cancelKeyPressed(symbol);
         Firestore.logInfo("cancel new entries for " + symbol);
@@ -70,7 +72,7 @@ export const handleKeyPressed = (
         //let isLong = netQuantity > 0;
         //Handler.moveToInitialEntry(symbol, isLong);
     } else if (code === 'KeyZ') {
-        Handler.setCustomStopLoss(symbol);
+        Handler.setCustomStopLoss(symbol, sourcePrice);
     } else if (code === 'KeyP') {
         Handler.replaceWithProfitTakingExitOrders(symbol, false, 0);
     } else if (code === 'KeyU') {

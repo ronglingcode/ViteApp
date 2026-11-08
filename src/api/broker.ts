@@ -1,3 +1,4 @@
+import * as SelectedStop from '../controllers/selectedStop';
 import { executionScript, executionBubbleScript, aggregateExecutionBubbles } from '../trading/core/account/executionExports.ts';
 import { groupTradeExecutions } from '../trading/core/account/tradeLedger.ts';
 import { toCoreFill, toBrowserFill } from '../trading/adapters/browserAccount.ts';
@@ -129,6 +130,7 @@ const submitEntryOrderWithBracketCore = (
 export const submitEntryOrderWithBracket = (
     symbol: string, quantity: number, isLong: boolean, orderType: Models.OrderType,
     entryPrice: number, limitPrice: number, stopPrice: number, logTags: Models.LogTags) => {
+    if (!SelectedStop.authorize(symbol, isLong, entryPrice, stopPrice, logTags)) return;
     emitBookmapActionLog(symbol, `Submit ${isLong ? 'long' : 'short'} ${quantity} ${formatOrderPrice(orderType, entryPrice)}`);
     submitEntryOrderWithBracketCore(
         symbol, quantity, isLong, orderType, entryPrice, limitPrice, stopPrice, logTags
@@ -139,6 +141,7 @@ export const submitEntryOrderWithMultipleBrackets = (
     symbol: string, quantity: number, isLong: boolean, orderType: Models.OrderType,
     entryPrice: number, profitTargets: Models.ProfitTarget[], stopPrice: number, logTags: Models.LogTags,
     orderIdToReplace: string) => {
+    if (!SelectedStop.authorize(symbol, isLong, entryPrice, stopPrice, logTags)) return;
     emitBookmapActionLog(symbol, `Submit ${isLong ? 'long' : 'short'} ${quantity} ${formatOrderPrice(orderType, entryPrice)}`);
     let brokerName = config.getProfileSettings().brokerName;
     if (brokerName == 'Schwab') {

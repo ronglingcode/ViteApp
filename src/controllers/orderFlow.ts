@@ -1,3 +1,4 @@
+import * as SelectedStop from './selectedStop';
 import { fixedSharesFromMethod, FIXED_SHARE_PARTIALS } from '../trading/core/algorithms/entrySizing';
 import { buyingPowerTargets } from '../trading/core/controllers/workflows';
 import * as RiskManager from '../algorithms/riskManager';
@@ -183,10 +184,8 @@ const addSlippage = (symbol: string, isLong: boolean, entryPrice: number, stopOu
         // add 1 cent for slippage
         if (isLong) {
             entryPrice = RiskManager.addCents(entryPrice, 1);
-            stopOutPrice = RiskManager.minusCents(stopOutPrice, 1);
         } else {
             entryPrice = RiskManager.minusCents(entryPrice, 1);
-            stopOutPrice = RiskManager.addCents(stopOutPrice, 1);
         }
     }
     return {
@@ -364,6 +363,7 @@ export const replaceEntryWithNewStopByCancelAndResubmit = (symbol: string, isLon
     entryPrice: number, newStopLoss: number,
     initialSizeMultiplier: number, plan: TradingPlansModels.BasePlan,
     tradebookID: string, logTags: Models.LogTags) => {
+    if (!SelectedStop.prepare(symbol, isLong, entryPrice, logTags)) return;
     Firestore.logDebug('update entry orders by cancel and resubmit', logTags);
     Broker.cancelBreakoutEntryOrders(symbol);
     EntryHandler.breakoutEntryWithoutRules(

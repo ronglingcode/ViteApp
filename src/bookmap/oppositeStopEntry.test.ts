@@ -1,3 +1,4 @@
+import { SelectedStop, StopClaims } from '../trading/core/controllers/selectedStop.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -7,13 +8,18 @@ import { createBracketedEquityEntry } from '../api/schwab/entryOrderFactory.ts';
 import { createClosingEquityOrder } from '../api/schwab/closingOrderFactory.ts';
 
 // Exercise the live entry handler and order flow with a recording broker only.
-function capture(isLong: boolean, opposite: boolean, quote: number) {
+function capture(isLong: boolean, opposite: boolean, quote: number, armed = true) {
     const requests: any[] = [];
+    const selection = new SelectedStop(), claims = new StopClaims(selection);
+    if (armed) selection.select('AAPL', isLong ? 9 : 13);
     const pairs = [1, 2].map(id => ({ symbol: 'AAPL',
         LIMIT: { orderID: `target-${id}`, quantity: 10, isBuy: opposite ? isLong : !isLong },
         STOP: { orderID: `stop-${id}`, quantity: 10, isBuy: opposite ? isLong : !isLong },
     }));
     const mocks: Record<string, any> = {
+        './selectedStop': { prepare: (symbol: string, side: boolean, entry: number, tags: object) => {
+            try { return claims.prepare(tags, symbol, side, entry); } catch { return undefined; }
+        } },
         '../trading/core/algorithms/entrySizing': Sizing,
         '../models/models': {
             OrderType: { STOP: 'STOP', LIMIT: 'LIMIT' },
@@ -31,8 +37,10 @@ function capture(isLong: boolean, opposite: boolean, quote: number) {
             replaceExitPairWithNewPrice: (pair: any, price: number) => requests.push({ method: 'PUT',
                 orderID: pair.STOP.orderID, body: createClosingEquityOrder('AAPL', 'STOP', 10, price, isLong) }),
             submitEntryOrderWithMultipleBrackets: (_: string, quantity: number, side: boolean,
-                type: 'STOP' | 'LIMIT' | 'MARKET', entry: number, targets: any[], stop: number) => requests.push({ method: 'POST',
-                body: createBracketedEquityEntry('AAPL', side, type, quantity, entry, targets, stop) }),
+                type: 'STOP' | 'LIMIT' | 'MARKET', entry: number, targets: any[], stop: number, tags: object) => {
+                claims.submit(tags, 'AAPL', side, entry, stop);
+                requests.push({ method: 'POST', body: createBracketedEquityEntry('AAPL', side, type, quantity, entry, targets, stop) });
+            },
         },
         '../trading/core/controllers/workflows': {
             buyingPowerTargets: (targets: any[]) => ({ targets, totalQuantity: 20, insufficient: false }) },
@@ -82,3 +90,7 @@ for (const isLong of [false, true]) {
         assert.deepEqual(capture(isLong, false, isLong ? 10 : 12).map(request => request.method), ['POST']);
     });
 }
+
+for (const side of [false, true]) test(`missing selected stop blocks ${side ? 'long' : 'short'} before opposite-position changes`, () => {
+    assert.deepEqual(capture(side, true, side ? 10 : 12, false), []);
+});

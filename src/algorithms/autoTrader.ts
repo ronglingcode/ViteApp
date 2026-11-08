@@ -437,74 +437,9 @@ export const refreshEntryStopLoss = () => {
         refreshEntryStopLossForSymbol(item.symbol, logTags);
     });
 }
+/** Human-selected entry stops must never widen automatically. */
 export const refreshEntryStopLossForSymbol = (symbol: string, logTags: Models.LogTags) => {
-    let exitOrders = Models.getExitOrdersPairs(symbol);
-    if (exitOrders.length > 0) {
-        // already filled entry, exiting algo
-        return;
-    }
-    let entryOrders = Models.getEntryOrders(symbol);
-    if (entryOrders.length == 0) {
-        // This is also the expected temporary state while a replacement is
-        // propagating. Keep any order-ID lock and wait for the new order.
-        return;
-    }
-
-    if (entryOrders.length != 1) {
-        const refreshingOrderID = entryOrderRefreshInProgress.get(symbol);
-        if (refreshingOrderID !== undefined && entryOrders.some(order => order.orderID === refreshingOrderID)) {
-            return;
-        }
-        Firestore.logError(`refreshEntryStopLossForSymbol: expected 1 entry order, got ${entryOrders.length}`, logTags);
-        return;
-    }
-
-    const entryOrder = entryOrders[0];
-    const stopLoss = entryOrder.exitStopPrice;
-    if (!stopLoss || stopLoss <= 0) {
-        // no stop loss from entry orders, nothing to update
-        return;
-    }
-    const entryPrice = entryOrder.price;
-    if (!entryPrice) {
-        return;
-    }
-
-    const symbolData = Models.getSymbolData(symbol);
-    const isLong = entryOrder.isBuy;
-    const newStopLoss = isLong ? symbolData.lowOfDay : symbolData.highOfDay;
-    const needsRefresh = isLong ? newStopLoss < stopLoss : newStopLoss > stopLoss;
-    if (!needsRefresh) {
-        // Normal path: the entry stop is still at the current LOD/HOD.
-        return;
-    }
-
-    const refreshingOrderID = entryOrderRefreshInProgress.get(symbol);
-    if (refreshingOrderID !== undefined) {
-        if (entryOrder.orderID === refreshingOrderID) {
-            // The old order still exists, so its replacement is not complete.
-            return;
-        }
-        Firestore.logInfo(`entry refresh completed: ${refreshingOrderID} replaced by ${entryOrder.orderID}`, logTags);
-        entryOrderRefreshInProgress.delete(symbol);
-    }
-
-
-    Firestore.logInfo(`refresh with new stop ${newStopLoss}`, logTags);
-    const breakoutTradeState = TradingState.getBreakoutTradeState(symbol, isLong);
-    entryOrderRefreshInProgress.set(symbol, entryOrder.orderID);
-    const useReplacement = true;
-    if (useReplacement) {
-        OrderFlow.replaceEntryWithNewStopByReplacement(
-            symbol, isLong, entryPrice, newStopLoss,
-            breakoutTradeState.sizeMultipler, breakoutTradeState.plan, breakoutTradeState.submitEntryResult.tradeBookID, logTags,
-        );
-    } else {
-        OrderFlow.replaceEntryWithNewStopByCancelAndResubmit(
-            symbol, isLong, entryPrice, newStopLoss,
-            breakoutTradeState.sizeMultipler, breakoutTradeState.plan, breakoutTradeState.submitEntryResult.tradeBookID, logTags,
-        );
-    }
+    return;
 };
 
 export const checkAlgoPendingCondition = (symbol: string) => {
