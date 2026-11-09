@@ -1,4 +1,4 @@
-/** A human-selected stop is a five-second, single-use opening permission. */
+/** A human-selected stop is a 30-second, single-use opening permission. */
 export interface StopClaim {
     readonly symbol: string;
     readonly price: number;
@@ -6,7 +6,7 @@ export interface StopClaim {
     submit(isLong: boolean, entryPrice: number, stopPrice: number): void;
 }
 export class SelectedStop {
-    static readonly lifetimeMs = 5000;
+    static readonly lifetimeMs = 30000;
     private selection?: { symbol: string; price: number; time: number };
     private changed?: (selection?: { symbol: string; price: number }) => void;
     private timer?: ReturnType<typeof setTimeout>;
@@ -36,7 +36,7 @@ export class SelectedStop {
     consume(symbol: string): StopClaim {
         const price = this.peek(symbol), selection = this.selection;
         this.clear();
-        if (price === undefined || !selection) throw new Error('Select stop: hover + Z (valid for 5 seconds, one entry)');
+        if (price === undefined || !selection) throw new Error('Select stop: hover + Z (valid for 30 seconds, one entry)');
         let submitted = false;
         const validate = (isLong: boolean, entry: number) => {
             const age = this.clock() - selection.time;
