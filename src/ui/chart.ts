@@ -1,5 +1,5 @@
 import * as SelectedStop from '../controllers/selectedStop';
-import { plannedTargetLevels } from '../trading/core/controllers/nativeViews';
+import { plannedTargetLevels, midpointCheckLevels } from '../trading/core/controllers/nativeViews';
 import * as RiskManager from '../algorithms/riskManager';
 
 import * as Helper from '../utils/helper';
@@ -739,11 +739,15 @@ export const updateAccountUIStatusForSymbol = (symbol: string) => {
     //AutoTrader.onAccountDataRefresh(symbol);
 };
 const drawPlannedTargets = (symbol: string) => {
-    const targets = plannedTargetLevels(TradingPlans.getTradingPlans(symbol));
+    const plan = TradingPlans.getTradingPlans(symbol);
+    const targets = plannedTargetLevels(plan);
+    const midpoints = midpointCheckLevels(plan);
     for (const chart of Models.getChartsInAllTimeframes(symbol)) {
         for (const line of plannedTargetLines.get(chart) ?? []) chart.candleSeries.removePriceLine(line);
         const lines = targets.map(target => createPriceLine(
             chart.candleSeries, target.price, target.label, "#8b5a00", 2, false, "dashed"));
+        lines.push(...midpoints.map(level => createPriceLine(
+            chart.candleSeries, level.price, level.label, "#c86a00", 2, false, "dashed")));
         plannedTargetLines.set(chart, lines);
     }
 }

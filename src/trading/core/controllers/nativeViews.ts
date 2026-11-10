@@ -39,6 +39,24 @@ export function plannedTargetLevels(plan: StateObject | undefined): { price: num
     }
     return levels;
 }
+/** Halfway from trigger to nearest target edge: the midpoint check, not an exit target. */
+export function midpointCheckLevels(plan: StateObject | undefined): { price: number; label: string }[] {
+    const levels: { price: number; label: string }[] = [];
+    for (const side of ['long', 'short']) {
+        const direction = plan?.[side];
+        if (!direction?.enabled) continue;
+        const label = `${side === 'long' ? 'Long' : 'Short'} midpoint check`;
+        for (const [name, setup] of Object.entries(direction)) {
+            if (!name.endsWith('Plan')) continue;
+            const price = (setup as StateObject | undefined)?.midpointCheck;
+            if (!Number.isFinite(price) || price <= 0) continue;
+            const existing = levels.find(level => level.price === price);
+            if (existing) { if (!existing.label.split(' / ').includes(label)) existing.label += ' / ' + label; }
+            else levels.push({ price, label });
+        }
+    }
+    return levels;
+}
 /** Local domain -> existing Bookmap display protocol, without plugin or browser APIs. */
 export function nativeViews(view: StateObject): StateObject[] {
     const symbol = view.symbol, timestamp = view.timestamp, market = view.market ?? {}, plan = view.plan ?? {}, policy = view.policy ?? {}, account = view.account ?? {};
@@ -51,7 +69,7 @@ export function nativeViews(view: StateObject): StateObject[] {
     const active = view.state?.stateBySymbol?.[symbol]?.[net > 0 ? 'breakoutTradeStateForLong' : 'breakoutTradeStateForShort'] ?? {}, captured = active.plan ?? {};
     const levels: StateObject[] = [], zones: StateObject[] = [], seen = new Set<number>(), zoneKeys = new Set<string>();
     for (const level of plan.keyLevels?.otherLevels ?? []) if (Number.isFinite(level.price) && level.price > 0 && !seen.has(level.price)) { seen.add(level.price); levels.push({ ...level }); }
-    for (const target of plannedTargetLevels(plan)) {
+    for (const target of [...plannedTargetLevels(plan), ...midpointCheckLevels(plan)]) {
         const existing = levels.find(level => level.price === target.price);
         if (existing) existing.label = [existing.label, target.label].filter(Boolean).join(' / ');
         else levels.push(target);

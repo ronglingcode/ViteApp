@@ -7,6 +7,15 @@ message uses `priceUnit: "real"` and real instrument prices. Price validation
 and message marking are centralized in `priceNormalization.ts`; only the Java
 plugin converts those values to or from Bookmap price levels using `pips`.
 
+Each enabled directional setup can set `midpointCheck` in the shared plan
+model (also in TradingData's `dataPusher/models.ts`). It is the midpoint of
+`triggerLevel` and the nearest edge of `mainTargetZone`: zone high for shorts,
+zone low for longs. Vite charts draw an orange dashed line; the desktop plugin
+receives it as a labeled key level through both browser and native plan updates.
+Short entries below the midpoint and long entries above it are late under this
+opening rule. Zero/missing values and disabled directions are hidden. This is
+a visual reminder, without entry blocking or exit-target behavior.
+
 ## Architecture
 
 Uses a **pure canvas chart** (no TradingView LWC) for continuous time axis rendering. The canvas handles its own zoom, pan, crosshair, and axis drawing. This was chosen because LWC is bar-based (1-minute candle snappping) which doesn't support the sub-second continuous time positioning bookmap requires.

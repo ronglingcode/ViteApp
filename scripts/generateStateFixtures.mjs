@@ -195,6 +195,23 @@ const targetKeys = add('planned targets visible while flat and merge shared leve
 assert.deepEqual(targetKeys.levels, [{ price: 45, label: 'support / Long target / Short target: daily low' }, { price: 50, label: 'Long target: daily high' }]);
 const disabledKeys = add('disabled direction targets removed', 'views', 'nativeViews', [{ symbol: 'U', timestamp: base, plan: { short: { enabled: false, finalTargets: [{ level: 45 }] } } }]).find(message => message.type === 'key_levels_config');
 assert.deepEqual(disabledKeys.levels, []);
+const midpointPlan = {
+    keyLevels: { otherLevels: [{ price: 175.73, label: 'daily level' }] },
+    long: { enabled: true, gapAndGoPlan: { midpointCheck: 175.73 }, gapDownAndGoUpPlan: { midpointCheck: 0 } },
+    short: { enabled: true, gapDownAndGoDownPlan: { midpointCheck: 175.73 }, gapAndCrapPlan: { midpointCheck: 175.73 },
+        levelMomentumPlan: { midpointCheck: 174 }, ignored: { midpointCheck: 999 }, vwapBounceFailPlan: { midpointCheck: -1 } },
+};
+const midpointKeys = add('midpoint checks merge directions and preserve separate setup levels', 'views', 'nativeViews', [{ symbol: 'NVDA', timestamp: base, plan: midpointPlan }]).find(message => message.type === 'key_levels_config');
+assert.deepEqual(midpointKeys.levels, [
+    { price: 175.73, label: 'daily level / Long midpoint check / Short midpoint check' },
+    { price: 174, label: 'Short midpoint check' },
+]);
+assert.deepEqual(Views.plannedTargetLevels(midpointPlan), []); // Midpoint checks must never become exit targets.
+const clearedMidpoints = add('disabled and unfilled midpoint checks clear stale levels', 'views', 'nativeViews', [{ symbol: 'NVDA', timestamp: base, plan: {
+    long: { enabled: false, gapAndGoPlan: { midpointCheck: 175.73 } },
+    short: { enabled: true, gapAndCrapPlan: {}, gapDownAndGoDownPlan: { midpointCheck: 0 } },
+} }]).find(message => message.type === 'key_levels_config');
+assert.deepEqual(clearedMidpoints.levels, []);
 const text = JSON.stringify(fixtures, null, 2) + '\n';
 for (const url of [new URL('../src/trading/state-fixtures.json', import.meta.url), new URL('../../bookmap-plugin/src/test/resources/state-fixtures.json', import.meta.url)]) {
     if (process.argv.includes('--check')) { if (readFileSync(url, 'utf8') !== text) throw new Error(`Fixture drift: ${url}`); } else writeFileSync(url, text);
