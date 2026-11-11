@@ -104,8 +104,6 @@ export interface keyLevels {
 };
 
 export interface BasePlan {
-    /** Structural level that activates this setup. */
-    triggerLevel: number,
     /** Halfway to the nearest target edge. Below is late for shorts; above is late for longs. */
     midpointCheck: number,
     planConfigs: PlanConfigs,

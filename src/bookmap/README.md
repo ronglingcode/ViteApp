@@ -8,10 +8,9 @@ and message marking are centralized in `priceNormalization.ts`; only the Java
 plugin converts those values to or from Bookmap price levels using `pips`.
 
 Each enabled directional setup can set `midpointCheck` in the shared plan
-model (also in TradingData's `dataPusher/models.ts`). It is halfway between
-`triggerLevel` and the nearest edge of the planned target area. Vite charts draw
-an orange dashed line, and the desktop plugin receives it as a labeled key level
-through both browser and native plan updates.
+model (also in TradingData's `dataPusher/models.ts`). Vite charts draw an orange
+dashed line, and the desktop plugin receives it as a labeled key level through
+both browser and native plan updates.
 Short entries below the midpoint and long entries above it are late under this
 opening rule. Zero/missing values and disabled directions are hidden. This is
 a visual reminder, without entry blocking or exit-target behavior.
