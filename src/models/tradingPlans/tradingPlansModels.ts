@@ -106,8 +106,6 @@ export interface keyLevels {
 export interface BasePlan {
     /** Structural level that activates this setup. */
     triggerLevel: number,
-    /** First major target/reversal zone; use equal high/low for one level. */
-    mainTargetZone: LevelArea,
     /** Halfway to the nearest target edge. Below is late for shorts; above is late for longs. */
     midpointCheck: number,
     planConfigs: PlanConfigs,
