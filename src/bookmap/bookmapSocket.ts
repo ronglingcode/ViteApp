@@ -175,10 +175,14 @@ export const createWebSocket = () => {
             Firestore.logError(`Parse Bookmap WebSocket message failed: ${describeError(error)}`);
             return;
         }
+        const events = data.type === "cairo_batch" && data.version === 1 && Array.isArray(data.events) ? data.events : [data];
+        for (const data of events) {
+            // Cairo's batched market records are consumed by Cairo, not this trading UI.
+            if (!data || typeof data.type !== "string" || data.type.startsWith("cairo_")) continue;
         let type = data.type;
         if (!isSupportedBookmapWirePriceUnit(data.priceUnit)) {
             console.warn(`[BookmapSocket] Ignoring ${type || "message"} with unsupported priceUnit`, data);
-            return;
+            continue;
         }
         if (type !== "custom_button_click") {
             console.log(data);
@@ -193,6 +197,7 @@ export const createWebSocket = () => {
             handleCorePlanUpdate(data);
         } else {
             console.log(`[BookmapSocket] Unknown message type: ${type}`, data);
+        }
         }
     };
 
