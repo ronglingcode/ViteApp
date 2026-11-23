@@ -34,6 +34,7 @@ import {
     withBookmapWirePriceUnit,
 } from "./priceNormalization";
 import { buildVwapUpdate } from "./vwapUpdate";
+import { WallOutSnapshotClient } from './wallOutSnapshot';
 import {
     BOOKMAP_SCREEN_LOG_EVENT,
     type BookmapScreenLogDetail,
@@ -132,6 +133,8 @@ const normalizeSymbol = (raw: string): string => {
 };
 
 let websocket: WebSocket | null = null;
+const wallOutSnapshots = new WallOutSnapshotClient();
+export const requestWallOutSnapshot = (symbol: string) => wallOutSnapshots.request(symbol, websocket);
 let reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
 let configPushIntervalId: ReturnType<typeof setInterval> | null = null;
 let accountUiRefreshListenerRegistered = false;
@@ -180,6 +183,7 @@ export const createWebSocket = () => {
             // Cairo's batched market records are consumed by Cairo, not this trading UI.
             if (!data || typeof data.type !== "string" || data.type.startsWith("cairo_")) continue;
         let type = data.type;
+        if (wallOutSnapshots.receive(data)) continue;
         if (!isSupportedBookmapWirePriceUnit(data.priceUnit)) {
             console.warn(`[BookmapSocket] Ignoring ${type || "message"} with unsupported priceUnit`, data);
             continue;
@@ -202,6 +206,7 @@ export const createWebSocket = () => {
     };
 
     websocket.onclose = function () {
+        wallOutSnapshots.disconnect();
         console.log(`[BookmapSocket] Disconnected, reconnecting in ${RECONNECT_DELAY_MS}ms...`);
         stopPeriodicConfigPush();
         lastSentVwapTimeBySymbol.clear();

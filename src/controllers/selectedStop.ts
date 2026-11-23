@@ -7,9 +7,9 @@ export const selection = new SelectedStop();
 const claims = new StopClaims(selection);
 let drawnSymbol: string | undefined;
 selection.onChange(value => {
-    if (drawnSymbol) Chart.clearSelectedStopLine(drawnSymbol);
+    if (drawnSymbol && drawnSymbol !== value?.symbol) Chart.clearSelectedStopLine(drawnSymbol);
     drawnSymbol = value?.symbol;
-    if (value) Chart.drawStopLoss(value.symbol, value.price);
+    if (value) Chart.drawStopLoss(value.symbol, value.price, value.remainingSeconds);
 });
 export function prepare(symbol: string, isLong: boolean, entry: number, tags: LogTags) {
     try { return claims.prepare(tags, symbol, isLong, entry); }

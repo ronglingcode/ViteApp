@@ -8,12 +8,16 @@ declare let window: Models.MyWindow;
 
 
 
+let activeSocket: WebSocket | undefined;
+
 export const createWebSocket = async () => {
+    if (activeSocket && activeSocket.readyState !== WebSocket.CLOSED) return;
     health.startStream(Models.getWatchlist().map(item => item.symbol));
     let socketUrl = "wss://socket.massive.com/stocks";
     let websocket: WebSocket;
     try { websocket = new WebSocket(socketUrl); }
     catch (error) { health.streamPhase('failed', 'Massive socket could not start'); throw error; }
+    activeSocket = websocket;
 
     websocket.onmessage = function (messageEvent) {
         let messageData;

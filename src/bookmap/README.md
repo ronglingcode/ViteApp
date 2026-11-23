@@ -7,6 +7,16 @@ message uses `priceUnit: "real"` and real instrument prices. Price validation
 and message marking are centralized in `priceNormalization.ts`; only the Java
 plugin converts those values to or from Bookmap price levels using `pips`.
 
+Each chart sidebar has **Wall Out 1** and **Wall Out 2**. They request current
+depth from the desktop plugin, then move the next one/two smallest-quantity exit
+pairs to the same nearest opposing wall with at least 5,000 lots. Sell limits
+go two cents below an offer wall; buy-to-cover limits go two cents above a bid
+wall (rounded outward to whole ticks). The floor is inclusive and independent
+of adaptive entry thresholds. Existing exit rules apply; only LIMIT legs move.
+Wall Out 2 moves one pair if only one remains. Missing depth or a disconnected
+plugin blocks the action. The depth request is read-only; browser clicks execute
+through the browser broker, and desktop clicks execute through the native broker.
+
 Each enabled directional setup can set `midpointCheck` in the shared plan
 model (also in TradingData's `dataPusher/models.ts`). Vite charts draw an orange
 dashed line, and the desktop plugin receives it as a labeled key level through

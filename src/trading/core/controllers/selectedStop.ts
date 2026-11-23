@@ -8,19 +8,29 @@ export interface StopClaim {
 export class SelectedStop {
     static readonly lifetimeMs = 30000;
     private selection?: { symbol: string; price: number; time: number };
-    private changed?: (selection?: { symbol: string; price: number }) => void;
+    private changed?: (selection?: { symbol: string; price: number; remainingSeconds: number }) => void;
     private timer?: ReturnType<typeof setTimeout>;
     private readonly clock: () => number;
     constructor(clock = () => performance.now()) { this.clock = clock; }
-    onChange(listener: (selection?: { symbol: string; price: number }) => void) { this.changed = listener; }
+    onChange(listener: (selection?: { symbol: string; price: number; remainingSeconds: number }) => void) { this.changed = listener; }
     select(symbol: string, price: number) {
         if (!symbol || !Number.isFinite(price) || price <= 0) throw new Error('Select stop: hover + Z');
         this.clear();
         this.selection = { symbol, price: Math.round(price * 100) / 100, time: this.clock() };
         if (this.selection.price <= 0) { this.clear(); throw new Error('Invalid stop price'); }
-        this.changed?.(this.selection);
-        this.timer = setTimeout(() => this.clear(), SelectedStop.lifetimeMs);
+        this.tick();
+    }
+    private tick() {
+        if (!this.selection) return;
+        const remaining = SelectedStop.lifetimeMs - (this.clock() - this.selection.time);
+        if (remaining <= 0 || remaining > SelectedStop.lifetimeMs) { this.clear(); return; }
+        this.changed?.({ symbol: this.selection.symbol, price: this.selection.price, remainingSeconds: Math.ceil(remaining / 1000) });
+        this.timer = setTimeout(() => this.tick(), Math.min(1000, remaining));
         (this.timer as unknown as { unref?: () => void }).unref?.();
+    }
+    remainingSeconds(symbol: string) {
+        if (this.peek(symbol) === undefined || !this.selection) return 0;
+        return Math.ceil((SelectedStop.lifetimeMs - (this.clock() - this.selection.time)) / 1000);
     }
     clear() {
         if (this.timer !== undefined) clearTimeout(this.timer);

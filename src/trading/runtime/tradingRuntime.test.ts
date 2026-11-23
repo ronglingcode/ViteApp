@@ -69,7 +69,7 @@ test('two stocks start and refresh with independent positions, entry inputs and 
     const fixtures = JSON.parse(readFileSync(new URL('../state-fixtures.json', import.meta.url), 'utf8'));
     const config = fixtures.find((f: any) => f.name === 'two selected stocks config').args[0];
     const saved = fixtures.find((f: any) => f.name === 'two stocks retain independent long and short entry state').result;
-    const now = Date.parse('2026-10-01T13:32:00Z'), inputs: any[] = [], logs: string[] = [];
+    const now = Date.parse('2026-10-01T13:32:00Z'), inputs: any[] = [], logs: string[] = [], sockets: any[] = [];
     const positions = [
         { instrument: { symbol: 'AAPL', assetType: 'EQUITY' }, longQuantity: 90, averagePrice: 10 },
         { instrument: { symbol: 'TSLA', assetType: 'EQUITY' }, shortQuantity: 40, averagePrice: 10 },
@@ -81,7 +81,7 @@ test('two stocks start and refresh with independent positions, entry inputs and 
         if (path.endsWith('/tradingState')) return { status: 200, body: method === 'PATCH' ? '{}' : JSON.stringify({ fields: encodeFields(saved) }) };
         if (path.endsWith('/accounts')) return { status: 200, body: JSON.stringify([{ securitiesAccount: { positions, currentBalances: { liquidationValue: 25000 } } }]) };
         if (path.endsWith('/orders')) return { status: 200, body: '[]' };
-        if (path.endsWith('/userPreference')) return { status: 200, body: JSON.stringify({ streamerInfo: [{ streamerSocketUrl: 'wss://fake.invalid' }] }) };
+        if (path.endsWith('/userPreference')) return { status: 200, body: JSON.stringify({ streamerInfo: [{ streamerSocketUrl: 'wss://fake.invalid', schwabClientCustomerId: 'customer', schwabClientCorrelId: 'correl', schwabClientChannel: 'channel', schwabClientFunctionId: 'function' }] }) };
         if (path.includes('/reference/')) return { status: 200, body: '{"results":{"weighted_shares_outstanding":1000000000}}' };
         if (path.includes('/v3/trades/')) return { status: 200, body: '{"results":[]}' };
         if (path.includes('/aggs/')) return { status: 200, body: JSON.stringify({ results: [
@@ -91,12 +91,17 @@ test('two stocks start and refresh with independent positions, entry inputs and 
         throw new Error(`Unexpected fake route ${path}`);
     } }, { loadSchwab: () => credentials, saveSchwab: async () => {} },
     { firebaseConfig: { projectId: 'fake-project' }, massive: { apiKey: 'fake-massive' } },
-    { open: () => ({ send: () => {}, close: () => {} }) }, { after: () => () => {} },
+    { open: (url, handlers) => {
+        const socket = { url, handlers, closed: false, sent: [] as any[], send(value: string) { this.sent.push(JSON.parse(value)); }, close() { this.closed = true; } };
+        sockets.push(socket); return socket;
+    } }, { after: () => () => {} },
     { receive: value => inputs.push(value), route: () => true, close: () => {} },
     { message: () => {}, log: (_symbol, value) => logs.push(value), notify: () => {} }, value => value, () => now);
     const latest = (symbol: string) => inputs.flatMap(value => value.symbols ?? []).filter(value => value.symbol === symbol).at(-1);
     try {
-        await runtime.start(); await new Promise(resolve => setImmediate(resolve));
+        await Promise.all([runtime.start(), runtime.start()]); await runtime.start();
+        await new Promise(resolve => setImmediate(resolve));
+        assert.equal(sockets.length, 2, 'both stocks share one stream per vendor across repeated starts');
         for (const [symbol, quantity, initialQuantity] of [['AAPL', 90, 100], ['TSLA', -40, 50]] as const) {
             assert.equal(latest(symbol).netQuantity, quantity);
             assert.equal(latest(symbol).entryContext.watchlistBlockReason, '');
@@ -108,9 +113,12 @@ test('two stocks start and refresh with independent positions, entry inputs and 
         assert.equal(runtime.manualInputs('AAPL').fixedQuantity, 20);
         assert.equal(runtime.manualInputs('TSLA').fixedQuantity, 30);
         config.stockSelections = ['AAPL']; await runtime.refreshConfig();
+        await new Promise(resolve => setImmediate(resolve));
+        assert.equal(sockets.filter(socket => !socket.closed).length, 2);
         assert.equal(runtime.view('TSLA', 'test').plan, undefined);
         assert.equal(latest('TSLA').netQuantity, -40);
         config.stockSelections = ['AAPL', 'TSLA']; await runtime.refreshConfig(); await new Promise(resolve => setImmediate(resolve));
+        assert.equal(sockets.filter(socket => !socket.closed).length, 2);
         assert.equal(latest('TSLA').entryContext.watchlistBlockReason, '');
         assert.equal(latest('TSLA').entryContext.activeTrade.initialQuantity, 50);
         config.stockSelections.push('MSFT', 'AMD', 'NVDA'); await runtime.refreshConfig();

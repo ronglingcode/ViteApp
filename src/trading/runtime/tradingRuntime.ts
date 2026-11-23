@@ -55,6 +55,7 @@ export class TradingRuntime {
     private readonly accountSymbols = new Set<string>();
     private readonly timers = new Set<() => void>();
     private stopped = false;
+    private startup?: Promise<void>;
     private revision = 0;
     private accountReading = false;
     private accountAgain = false;
@@ -85,7 +86,11 @@ export class TradingRuntime {
         this.massive = new MassiveApi(http, () => this.key); this.market = new MarketLoader(this.massive, now);
         if (typeof sections.tradingPolicy?.coreTargetEnabled === 'boolean') this.policy.coreTargetEnabled = sections.tradingPolicy.coreTargetEnabled;
     }
-    async start() {
+    start(): Promise<void> {
+        if (this.stopped) return Promise.resolve();
+        return this.startup ??= this.initialize().catch(error => { this.startup = undefined; throw error; });
+    }
+    private async initialize() {
         try {
             if (!this.key) throw new Error('Massive API key missing from local secrets');
             const config = readTradingConfig(await this.firestore.fetchConfigData()); this.validateProfile(config.profile);

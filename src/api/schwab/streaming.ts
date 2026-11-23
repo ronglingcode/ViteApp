@@ -9,9 +9,13 @@ declare let window: Models.MyWindow;
 
 
 
+let activeSocket: WebSocket | undefined;
+
 export const createWebSocket = async () => {
+    if (activeSocket && activeSocket.readyState !== WebSocket.CLOSED) return;
     let socketUrl = window.HybridApp.Secrets.schwab.streamerSocketUrl;
     let websocket = new WebSocket(socketUrl);
+    activeSocket = websocket;
 
     websocket.onmessage = function (messageEvent) {
         let messageData = JSON.parse(messageEvent.data);

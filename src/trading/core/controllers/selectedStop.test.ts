@@ -2,6 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { SelectedStop, StopClaims } from './selectedStop.ts';
 
+test('countdown rounds up, reaches one and clears at expiry or consumption', () => {
+    let time = 0; const stop = new SelectedStop(() => time);
+    stop.select('AAPL', 99); assert.equal(stop.remainingSeconds('AAPL'), 30);
+    time = 1000; assert.equal(stop.remainingSeconds('AAPL'), 29);
+    time = 29999; assert.equal(stop.remainingSeconds('AAPL'), 1);
+    time = 30000; assert.equal(stop.remainingSeconds('AAPL'), 0);
+    stop.select('AAPL', 99); stop.consume('AAPL'); assert.equal(stop.remainingSeconds('AAPL'), 0);
+});
+
 test('selection expires at 30 seconds, clears on use and cannot cross symbols', () => {
     let time = 0; const stop = new SelectedStop(() => time);
     assert.throws(() => stop.consume('AAPL'), /Select stop/);

@@ -23,6 +23,8 @@ import * as GlobalSettings from '../config/globalSettings';
 import * as ChartSeries from '../utils/chartSeries';
 import * as CandlestickVisibility from '../utils/candlestickVisibility';
 import * as ExitOrderPairs from '../utils/exitOrderPairs';
+import { requestWallOutSnapshot } from '../bookmap/bookmapSocket';
+import { wallOutPartials, reportWallOutError } from '../controllers/wallOutHandler';
 declare let window: Models.MyWindow;
 
 const updateUiTargetCache = new WeakMap<HTMLElement, Map<string, HTMLElement>>();
@@ -333,6 +335,7 @@ const getHtmlContentsAndTradebooks = (symbol: string, tabIndex: number) => {
 
     let tradebooksMap = setupTradingPlans(symbol, htmlContents.tradingPlans, htmlContents.tradebookButtons);
     setupAddCountButtons(htmlContents.container, symbol);
+    setupWallOutButtons(htmlContents.sideBar, symbol);
     let refreshButton = htmlContents.container.getElementsByClassName("refresh")[0] as HTMLElement;
     refreshButton.addEventListener("click", (pointerEvent) => {
         Firestore.logInfo(`refresh for ${symbol}`);
@@ -344,6 +347,24 @@ const getHtmlContentsAndTradebooks = (symbol: string, tabIndex: number) => {
     });
     htmlContents.symbol.innerText = symbol;
     return { htmlContents, tradebooksMap };
+};
+
+const setupWallOutButtons = (sideBar: HTMLElement, symbol: string) => {
+    sideBar.querySelector('.wallOutButtons')?.remove();
+    const controls = document.createElement('div');
+    controls.className = 'wallOutButtons';
+    for (const count of [1, 2]) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = `Wall Out ${count}`;
+        button.title = `Move the next ${count} exit pair(s) two cents ahead of the nearest wall with at least 5,000 lots`;
+        button.addEventListener('click', async () => {
+            try { await wallOutPartials(symbol, count, await requestWallOutSnapshot(symbol)); }
+            catch (error) { reportWallOutError(symbol, error); }
+        });
+        controls.appendChild(button);
+    }
+    sideBar.prepend(controls);
 };
 
 const setupAddCountButtons = (container: HTMLElement, symbol: string) => {
@@ -1162,17 +1183,18 @@ export const clearSelectedStopLine = (symbol: string) => {
         widget.stopLossPriceLine = undefined;
     }
 };
-export const drawStopLoss = (symbol: string, price: number) => {
+export const drawStopLoss = (symbol: string, price: number, remainingSeconds: number = 30) => {
     let widget = Models.getChartWidget(symbol);
     if (!widget)
         return;
 
     if (widget.stopLossPriceLine) {
-        removeWidgetPriceLine(widget, widget.stopLossPriceLine);
+        widget.stopLossPriceLine.applyOptions({ price, title: `Stop ${price.toFixed(2)} (${remainingSeconds})` });
+        return;
     }
     let candleSeries = getRenderableCandleSeries(widget);
     widget.stopLossPriceLine = candleSeries
-        ? createPriceLine(candleSeries, price, "Stop", null, 1, false, "solid")
+        ? createPriceLine(candleSeries, price, `Stop ${price.toFixed(2)} (${remainingSeconds})`, null, 1, false, "solid")
         : createStoredPriceLine(price);
 };
 export const drawEntry = (symbol: string, price: number) => {

@@ -1,7 +1,8 @@
 # Fresh stop selection for every entry
 
 Hover the stop price and press **Z**, then use the normal entry button or key
-within 30 seconds. A thin **Stop** line appears on the chart. No extra panel
+within 30 seconds. A thin **Stop {price} ({seconds remaining})** line appears on
+the chart and counts down until expiry or consumption. No extra panel
 or dialog is required. Z prepares only the next entry; it does not adjust the
 protection or invalidation of existing shares.
 
